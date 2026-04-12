@@ -68,38 +68,39 @@ Run the following scripts from the plugin's `scripts/` directory. All output goe
 
 Skip `--with` if the user selected no stacks for that generator.
 
-### 8. Create `PROJECT.md`
+### 7. Add Project Stack to `AGENTS.md`
 
-Create `PROJECT.md` in the project root with the following template:
+After generators complete, append a **Project Stack** section to `AGENTS.md` (before `### Reference`), with items based on the framework:
 
+**Next.js:**
 ```markdown
-# Project Configuration
-
-## Project
-- Name: {project name}
-- Framework: {framework}
-
-## Stack
-<!-- Project-specific libraries and tools -->
-- DB: <!-- e.g., MongoDB, Supabase, PostgreSQL -->
-- Auth: <!-- e.g., NextAuth, Firebase Auth -->
-- UI: <!-- e.g., Mantine, Tailwind, Material UI -->
-- State: <!-- e.g., TanStack Query, Zustand, Jotai -->
-
-## Notes
-<!-- Any other project-specific details -->
+### Project Stack
+<!-- Fill in after init -->
+- DB: 
+- Auth: 
+- UI: 
+- State: 
 ```
 
-### 9. Report
+**NestJS:**
+```markdown
+### Project Stack
+<!-- Fill in after init -->
+- DB: 
+- Auth: 
+- Queue: 
+- Cache: 
+```
+
+### 8. Report
 
 Tell the user what was created:
-- `AGENTS.md` — AI agent entry point
+- `AGENTS.md` — AI agent entry point (fill in Project Stack section)
 - `CLAUDE.md` → `AGENTS.md` symlink
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
 - `CONVENTIONS.md` — Conventions with selected stacks
 - `eslint.config.mjs` — ESLint config with selected stacks
 - `tsconfig.json` — Patched with framework-specific settings
-- `PROJECT.md` — Project-specific config (fill in manually)
 
-Remind them to fill in `PROJECT.md` with project-specific details.
+Remind them to fill in the **Project Stack** section in `AGENTS.md`.
