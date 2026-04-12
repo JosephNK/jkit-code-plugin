@@ -61,33 +61,40 @@ If `nextjs`:
 If `nestjs`:
 > Available tsconfig stacks: `typeorm`
 
-### 6. Run generator scripts
+### 6. Ask AGENTS.md generation
 
-Run the following scripts from the plugin's `scripts/` directory. All output goes to the current project directory (`.`).
+Ask the user whether to generate `AGENTS.md` and `CLAUDE.md` symlink.
+This step is optional because the user may need to customize these files.
+
+If yes:
+```bash
+./scripts/gen-agents.sh <framework> -p . -n "<project-name>" --docs-dir docs
+```
+
+### 7. Run generator scripts
+
+Run the following scripts from the plugin's `scripts/` directory.
 
 ```bash
-# 1. AGENTS.md + CLAUDE.md symlink
-./scripts/gen-agents.sh <framework> -p . -n "<project-name>"
+# 1. GIT.md
+./scripts/gen-git.sh -p docs
 
-# 2. GIT.md
-./scripts/gen-git.sh -p .
+# 2. ARCHITECTURE.md
+./scripts/gen-architecture.sh <framework> -p docs
 
-# 3. ARCHITECTURE.md
-./scripts/gen-architecture.sh <framework> -p .
+# 3. CONVENTIONS.md
+./scripts/gen-conventions.sh <framework> -p docs --with <conventions-stacks>
 
-# 4. CONVENTIONS.md
-./scripts/gen-conventions.sh <framework> -p . --with <conventions-stacks>
-
-# 5. ESLint config
+# 4. ESLint config
 ./scripts/gen-eslint.sh <framework> -p . --with <eslint-stacks>
 
-# 6. tsconfig.json patch
+# 5. tsconfig.json patch
 ./scripts/gen-tsconfig.sh <framework> -p . --with <tsconfig-stacks>
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
 
-### 7. Report
+### 8. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point

@@ -4,7 +4,7 @@ set -euo pipefail
 # ─── Usage ───
 usage() {
   cat <<'EOF'
-Usage: gen-agents.sh <framework> -p <output-dir> [-n <project-name>]
+Usage: gen-agents.sh <framework> -p <output-dir> [-n <project-name>] [--docs-dir <dir>]
 
 Generates AGENTS.md and creates CLAUDE.md symlink.
 
@@ -14,10 +14,12 @@ Arguments:
 Options:
   -p <dir>       Output directory (required)
   -n <name>      Project name (default: directory name)
+  --docs-dir <dir>  Docs directory prefix for reference paths (default: root)
 
 Examples:
-  ./scripts/gen-agents.sh nextjs -p ./my-project -n "My Project"
-  ./scripts/gen-agents.sh nestjs -p ./my-project
+  ./scripts/gen-agents.sh nextjs -p . -n "My Project"              # refs: ARCHITECTURE.md
+  ./scripts/gen-agents.sh nextjs -p . -n "My Project" --docs-dir docs      # refs: docs/ARCHITECTURE.md
+  ./scripts/gen-agents.sh nestjs -p .
 EOF
   exit 1
 }
@@ -29,6 +31,7 @@ PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FRAMEWORK=""
 OUTPUT_DIR=""
 PROJECT_NAME=""
+DOCS_DIR=""
 
 [ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
 
@@ -40,6 +43,10 @@ while [ $# -gt 0 ]; do
       ;;
     -n)
       PROJECT_NAME="${2:?-n requires a project name}"
+      shift 2
+      ;;
+    --docs-dir)
+      DOCS_DIR="${2:?--docs-dir requires a directory}"
       shift 2
       ;;
     -h|--help)
@@ -54,6 +61,11 @@ done
 
 [ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+
+# Build DOCS_DIR: add trailing slash if not empty
+if [ -n "$DOCS_DIR" ]; then
+  DOCS_DIR="${DOCS_DIR%/}/"
+fi
 
 # Default project name to directory basename
 if [ -z "$PROJECT_NAME" ]; then
@@ -72,7 +84,7 @@ mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/AGENTS.md"
 
 # Replace placeholders in template
-sed "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" "$TEMPLATE" > "$OUTPUT_FILE"
+sed -e "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" -e "s|{{DOCS_DIR}}|$DOCS_DIR|g" "$TEMPLATE" > "$OUTPUT_FILE"
 
 # Create CLAUDE.md symlink
 SYMLINK="$OUTPUT_DIR/CLAUDE.md"
