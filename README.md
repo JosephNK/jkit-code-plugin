@@ -2,6 +2,23 @@
 
 Claude Code plugin for project scaffolding, conventions and ESLint config generation.
 
+## Agents Generator
+
+AGENTS.md + CLAUDE.md 심볼릭 링크를 생성합니다.
+
+```bash
+./scripts/gen-agents.sh nextjs -p /path/to/project -n "My Project"
+./scripts/gen-agents.sh nestjs -p /path/to/project
+```
+
+## Git Guide Generator
+
+공통 GIT.md를 생성합니다.
+
+```bash
+./scripts/gen-git.sh -p /path/to/project
+```
+
 ## Conventions Generator
 
 Base conventions + stack별 conventions를 concat하여 conventions.md를 생성합니다.
