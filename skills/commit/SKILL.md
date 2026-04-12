@@ -2,7 +2,6 @@
 name: commit
 description: Git commit with auto-generated message. Analyzes changes and suggests 3 commit messages in Korean.
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git diff:*), Bash(git log:*)
-disable-model-invocation: true
 origin: JKit
 ---
 
