@@ -65,7 +65,7 @@ const eslintConfig = [
 
   // ─── Project-specific rules below ───
 
-  ...baseIgnores,
+  baseIgnores,
 ];
 
 export default eslintConfig;

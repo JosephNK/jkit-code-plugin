@@ -23,7 +23,7 @@ Ask the user for the project name. Default: current directory name.
 
 ### 3. Ask conventions stacks
 
-Show the **conventions** stacks below and ask the user to select (comma-separated, or empty for base only).
+Show the **conventions** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
 If `nextjs`:
 > Available conventions stacks: `mantine`, `design-system`, `tanstack-query`, `next-proxy`
@@ -33,7 +33,7 @@ If `nestjs`:
 
 ### 4. Ask ESLint stacks
 
-Show the **ESLint** stacks below and ask the user to select (comma-separated, or empty for base only).
+Show the **ESLint** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 **IMPORTANT: ESLint stacks are NOT the same as conventions stacks. You MUST show ALL items from the list below — do NOT omit any.**
 
 If `nextjs` (7 items):
@@ -53,7 +53,7 @@ If `nestjs` (4 items):
 
 ### 5. Ask tsconfig stacks
 
-Show the **tsconfig** stacks below and ask the user to select (comma-separated, or empty for base only).
+Show the **tsconfig** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
 If `nextjs`:
 > Available tsconfig stacks: (none — base only, skip selection)
