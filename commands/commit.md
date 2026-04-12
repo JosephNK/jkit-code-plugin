@@ -39,47 +39,47 @@ argument-hint: '[--auto] ["commit message" (optional)]'
 
 Analyze changes and generate messages in the appropriate language and format.
 
-**CRITICAL: Commit messages MUST be written in Korean by default. Use English ONLY when the user explicitly writes in English.**
+**CRITICAL: Commit messages MUST be written in English by default. Use Korean ONLY when the user explicitly writes in Korean.**
 
 Language selection based on user input:
 
-- If user message is in Korean → Korean
 - If user message is in English → English
-- If no input → Korean (default)
+- If user message is in Korean → Korean
+- If no input → English (default)
 
 **When no argument is provided:**
 
 ```
-type: 한국어 제목
-- 한국어 본문
+type: English subject
+- English body
 ```
 
 **When an argument is provided:**
 
 ```
-type: 사용자 입력
-- 한국어 본문
+type: user input
+- English body
 ```
 
 Types:
 
-- `feat`: 새 기능
-- `fix`: 버그 수정
-- `refactor`: 리팩토링
-- `perf`: 성능 개선
-- `docs`: 문서 변경
-- `test`: 테스트 추가/수정
-- `chore`: 빌드, 설정, 의존성 등
+- `feat`: New feature
+- `fix`: Bug fix
+- `refactor`: Refactoring
+- `perf`: Performance improvement
+- `docs`: Documentation changes
+- `test`: Add/modify tests
+- `chore`: Build, config, dependencies, etc.
 
-**예시: `/commit 커밋 커맨드 업데이트` 실행 시**
+**Example: `/commit Update commit command` →**
 
 ```
-1. chore: 커밋 커맨드 업데이트
-   - Claude 커스텀 커밋 커맨드 추가
-2. feat: 커밋 커맨드 업데이트
-   - Claude Code용 커밋 커맨드 설정 추가
-3. chore: 커밋 커맨드 업데이트
-   - .claude/commands 디렉토리 및 커밋 스킬 추가
+1. chore: Update commit command
+   - Add Claude custom commit command
+2. feat: Update commit command
+   - Add commit command config for Claude Code
+3. chore: Update commit command
+   - Add .claude/commands directory and commit skill
 ```
 
 ---
