@@ -14,6 +14,23 @@ Personal development toolkit for Claude Code — scaffolding, conventions, and c
 
 After installation, use `/jkit:init` to initialize your project.
 
+### Team Setup
+
+Add to your project's `.claude/settings.json` so teammates get the plugin automatically:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "jkit": {
+      "source": {
+        "source": "github",
+        "repo": "JosephNK/jkit-code-plugin"
+      }
+    }
+  }
+}
+```
+
 ## Agents Generator
 
 AGENTS.md + CLAUDE.md 심볼릭 링크를 생성합니다.
