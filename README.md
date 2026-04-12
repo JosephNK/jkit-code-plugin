@@ -16,6 +16,18 @@ Base conventions + stack별 conventions를 concat하여 conventions.md를 생성
   --with typeorm
 ```
 
+## Architecture Generator
+
+Base architecture.md를 복사하여 ARCHITECTURE.md를 생성합니다.
+
+```bash
+# Next.js
+./scripts/gen-architecture.sh nextjs -p /path/to/project
+
+# NestJS
+./scripts/gen-architecture.sh nestjs -p /path/to/project
+```
+
 ## ESLint Config Generator
 
 Template + manifest 조합으로 eslint.config.mjs를 생성합니다.

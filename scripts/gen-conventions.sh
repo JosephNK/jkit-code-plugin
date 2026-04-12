@@ -6,7 +6,7 @@ usage() {
   cat <<'EOF'
 Usage: gen-conventions.sh <framework> -p <output-dir> [--with stack1,stack2,...]
 
-Concatenates base/conventions.md + selected stack conventions.md files.
+Concatenates base/CONVENTIONS.md + selected stack CONVENTIONS.md files.
 
 Arguments:
   <framework>    Framework name (e.g. nextjs, nestjs)
@@ -56,7 +56,7 @@ done
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
-BASE_CONV="$RULES_DIR/base/conventions.md"
+BASE_CONV="$RULES_DIR/base/CONVENTIONS.md"
 
 if [ ! -f "$BASE_CONV" ]; then
   echo "Error: Base conventions not found: $BASE_CONV" >&2
@@ -65,7 +65,7 @@ fi
 
 # ─── Concatenate base + stacks ───
 mkdir -p "$OUTPUT_DIR"
-OUTPUT_FILE="$OUTPUT_DIR/conventions.md"
+OUTPUT_FILE="$OUTPUT_DIR/CONVENTIONS.md"
 
 cp "$BASE_CONV" "$OUTPUT_FILE"
 
@@ -73,10 +73,10 @@ if [ -n "$STACKS" ]; then
   IFS=',' read -ra STACK_LIST <<< "$STACKS"
   for stack in "${STACK_LIST[@]}"; do
     stack=$(echo "$stack" | xargs)
-    STACK_CONV="$RULES_DIR/$stack/conventions.md"
+    STACK_CONV="$RULES_DIR/$stack/CONVENTIONS.md"
 
     if [ ! -f "$STACK_CONV" ]; then
-      echo "Warning: conventions.md not found for stack '$stack': $STACK_CONV" >&2
+      echo "Warning: CONVENTIONS.md not found for stack '$stack': $STACK_CONV" >&2
       continue
     fi
 
