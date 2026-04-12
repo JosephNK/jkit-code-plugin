@@ -23,24 +23,34 @@ Ask the user for the project name. Default: current directory name.
 
 ### 3. Ask conventions stacks
 
-Show available conventions stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+Show the **conventions** stacks below and ask the user to select (comma-separated, or empty for base only).
 
-**Next.js:** `mantine`, `design-system`, `tanstack-query`, `next-proxy`
-**NestJS:** `typeorm`
+If `nextjs`:
+> Available conventions stacks: `mantine`, `design-system`, `tanstack-query`, `next-proxy`
+
+If `nestjs`:
+> Available conventions stacks: `typeorm`
 
 ### 4. Ask ESLint stacks
 
-Show available ESLint stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+Show the **ESLint** stacks below and ask the user to select (comma-separated, or empty for base only).
+**These are different from conventions stacks — show the exact list below.**
 
-**Next.js:** `mantine`, `mongodb`, `nextauth`, `email-template`, `tanstack-query`, `next-proxy`, `theme`
-**NestJS:** `typeorm`, `gcp`, `anthropic-ai`, `local-rules`
+If `nextjs`:
+> Available ESLint stacks: `mantine`, `mongodb`, `nextauth`, `email-template`, `tanstack-query`, `next-proxy`, `theme`
+
+If `nestjs`:
+> Available ESLint stacks: `typeorm`, `gcp`, `anthropic-ai`, `local-rules`
 
 ### 5. Ask tsconfig stacks
 
-Show available tsconfig stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+Show the **tsconfig** stacks below and ask the user to select (comma-separated, or empty for base only).
 
-**Next.js:** (none)
-**NestJS:** `typeorm`
+If `nextjs`:
+> Available tsconfig stacks: (none — skip this step)
+
+If `nestjs`:
+> Available tsconfig stacks: `typeorm`
 
 ### 6. Run generator scripts
 
