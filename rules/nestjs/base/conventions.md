@@ -2,8 +2,6 @@
 
 ## Dependency Rules
 
-> Layer structure and flow: see [Architecture](architecture.md#components)
-
 1. **model/ imports nothing** (no frameworks, no external libraries)
 2. **service/ depends on model/ and port/ for business logic** (no direct references to controller/ or provider/; framework DI decorators like `@Injectable` and `@Inject` are allowed)
 3. **provider/ implements outbound-port from port/**
@@ -32,12 +30,8 @@
 - **controller/ converts domain exceptions to HTTP exceptions** using `mapDomainException()` from `common/exceptions/exception-mapper.ts` in catch blocks.
 - **Exception creation checklist**: When adding a new domain exception (`exception/`):
   1. Create the error class in `exception/`
-  2. Register the error code in **all 4** i18n translation files:
-     - `src/infrastructure/i18n/locales/en/error.json`
-     - `src/infrastructure/i18n/locales/ko/error.json`
-     - `src/infrastructure/i18n/locales/ja/error.json`
-     - `src/infrastructure/i18n/locales/zh/error.json`
-  3. Use the error code (e.g., `VOCAB_ENTRY_DUPLICATE`) as key with the localized message as value
+  2. Register the error code in all i18n translation files (`src/infrastructure/i18n/locales/<lang>/error.json`)
+  3. Use the error code (e.g., `ORDER_NOT_FOUND`) as key with the localized message as value
 
 ## Response DTO Patterns
 
@@ -64,8 +58,8 @@ The `ApiSuccessResponse` decorator wraps all responses in `{ success, data }`. D
 
 | Role | Suffix | Example |
 |---|---|---|
-| Direct child of `data` | `*DataResponseDto` | `QuizSessionListDataResponseDto`, `QuizSessionCreateDataResponseDto` |
-| Array element / nested object | `*ItemDto` | `QuizSessionItemDto`, `QuizQuestionItemDto` |
+| Direct child of `data` | `*DataResponseDto` | `OrderListDataResponseDto`, `OrderCreateDataResponseDto` |
+| Array element / nested object | `*ItemDto` | `OrderItemDto`, `ProductItemDto` |
 
 - **`*DataResponseDto`**: Top-level DTO mapped directly to the `data` field of a success response. Prefix with the action (`List`, `Create`, `Detail`, etc.). Omit the action prefix when no disambiguation is needed.
 - **`*ItemDto`**: DTO for individual elements in `*DataResponseDto.items` or any array field inside a `*DataResponseDto`.
@@ -73,18 +67,18 @@ The `ApiSuccessResponse` decorator wraps all responses in `{ success, data }`. D
 
 ```typescript
 // List response example
-// GET /quiz-sessions → { success: true, data: QuizSessionListDataResponseDto }
-class QuizSessionListDataResponseDto {
-  readonly items: readonly QuizSessionItemDto[];
+// GET /orders → { success: true, data: OrderListDataResponseDto }
+class OrderListDataResponseDto {
+  readonly items: readonly OrderItemDto[];
   readonly limit: number;
   readonly total?: number;
 }
 
 // Single response example
-// POST /quiz-sessions → { success: true, data: QuizSessionCreateDataResponseDto }
-class QuizSessionCreateDataResponseDto {
+// POST /orders → { success: true, data: OrderCreateDataResponseDto }
+class OrderCreateDataResponseDto {
   readonly id: string;
-  readonly questions: readonly QuizQuestionItemDto[];
+  readonly items: readonly ProductItemDto[];
 }
 ```
 
@@ -114,16 +108,14 @@ class QuizSessionCreateDataResponseDto {
 
 ```typescript
 // Service unit test example
-describe('ExtractVocabularyService', () => {
-  it('should extract vocabulary from image', async () => {
-    const mockAnalyzer: AiAnalyzerPort = {
-      analyzeImage: jest
-        .fn()
-        .mockResolvedValue('[{"word":"apple","meaning":"사과","pos":"noun"}]'),
+describe('CreateOrderService', () => {
+  it('should create an order with calculated total', async () => {
+    const mockRepo: OrderRepositoryPort = {
+      save: jest.fn().mockResolvedValue({ id: '1', status: 'pending' }),
     };
-    const service = new ExtractVocabularyService(mockAnalyzer);
-    const result = await service.execute(mockImage);
-    expect(result.words).toHaveLength(1);
+    const service = new CreateOrderService(mockRepo);
+    const result = await service.execute({ items: [{ productId: '1', quantity: 2 }] });
+    expect(result.status).toBe('pending');
   });
 });
 ```
