@@ -2,6 +2,45 @@
 
 Claude Code plugin for project scaffolding and ESLint config generation.
 
+## Conventions Generator
+
+Stack-based conventions.md generator. Base conventions + stack별 conventions를 concat하여 프로젝트별 conventions.md를 생성합니다.
+
+### Usage
+
+```bash
+./scripts/gen-conventions.sh <framework> -p <output-dir> [--with stack1,stack2,...]
+```
+
+### Next.js
+
+```bash
+# Base only
+./scripts/gen-conventions.sh nextjs -p /path/to/project
+
+# With stacks
+./scripts/gen-conventions.sh nextjs -p /path/to/project \
+  --with mantine,tanstack-query,next-proxy
+```
+
+**Available stacks:**
+
+| Stack | Description |
+|-------|-------------|
+| `mantine` | Mantine UI/Styling rules, DESIGN.md mapping, navigation patterns |
+| `tanstack-query` | TanStack Query hook layer error handling patterns |
+| `next-proxy` | Next.js 16 middleware → proxy breaking changes |
+
+### How it works
+
+1. `base/conventions.md` — 프레임워크 공통 conventions (architecture, layer rules, error handling 등)
+2. `<stack>/conventions.md` — 스택별 추가 conventions
+3. `gen-conventions.sh` — base + 선택된 stacks를 순서대로 concat하여 최종 conventions.md 생성
+
+생성된 파일은 프로젝트에서 직접 수정하여 관리합니다 (one-time generation).
+
+---
+
 ## ESLint Config Generator
 
 Stack-based ESLint config generator. Template + manifest 조합으로 프레임워크별 eslint.config.mjs를 생성합니다.
