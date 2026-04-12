@@ -2,21 +2,21 @@
 
 ## Commit
 
-Always use the `/commit` command when committing.
+Always use the `/jkit:commit` command when committing.
 
 ```bash
 # Auto-generate commit message from changes
-/commit
+/jkit:commit
 
 # Specify commit message directly
-/commit Add login form validation
+/jkit:commit Add login form validation
 
 # Auto mode: generate and commit without confirmation (for automation pipelines)
-/commit --auto
-/commit --auto 로그인 폼 검증 추가
+/jkit:commit --auto
+/jkit:commit --auto Add login form validation
 ```
 
-- `/commit` analyzes changes and suggests 3 commit messages
+- `/jkit:commit` analyzes changes and suggests 3 commit messages
 - Does not commit until the user selects one
 - `--auto` skips confirmation and commits immediately with the best message
 - Commit messages are written in Korean by default, following conventional commit format
