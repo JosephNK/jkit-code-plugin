@@ -59,6 +59,19 @@ Template + manifest 조합으로 eslint.config.mjs를 생성합니다.
   --with typeorm,gcp,anthropic-ai,local-rules
 ```
 
+## TSConfig Patcher
+
+기존 tsconfig.json에 프레임워크별 설정을 패치합니다.
+
+```bash
+# Next.js
+./scripts/gen-tsconfig.sh nextjs -p /path/to/project
+
+# NestJS
+./scripts/gen-tsconfig.sh nestjs -p /path/to/project \
+  --with typeorm
+```
+
 ## How it works
 
 ### Conventions (`gen-conventions.sh`)
@@ -81,3 +94,4 @@ Template + manifest 조합으로 eslint.config.mjs를 생성합니다.
 1. `rules/<framework>/<stack-name>/` 디렉토리 생성
 2. ESLint: `eslint.rules.mjs` + `eslint.manifest` 작성
 3. Conventions: `conventions.md` 작성
+4. TSConfig: `tsconfig.patch.json` 작성 (필요 시)

@@ -1,40 +1,82 @@
 ---
 description: Initialize JKit in current project
-argument-hint: <framework> (nextjs | flutter | nestjs)
+argument-hint: <framework> (nextjs | nestjs | flutter)
 ---
 
 # JKit Init
 
-Initialize JKit configuration for the current project.
+Initialize JKit configuration for the current project using generator scripts.
 
 ## Arguments
 
-- `framework` (required): one of `nextjs`, `flutter`, `nestjs`
+- `framework` (required): one of `nextjs`, `nestjs`
 
 ## Steps
 
-### 1. Validate framework argument
+### 1. Ask framework
 
-If no framework is provided or it's not one of `nextjs`, `flutter`, `nestjs`, ask the user to specify one.
+If no framework argument is provided, ask the user to select one: `nextjs`, `nestjs`, or `flutter`.
 
-### 2. Create `.jkit/` directory and copy rules
+### 2. Ask project name
 
-1. Create the `.jkit/` directory
-2. Copy rules from plugin:
-   - `rules/common/git.md` → `.jkit/git.md`
-   - `rules/{framework}/architecture.md` → `.jkit/architecture.md`
-   - `rules/{framework}/conventions.md` → `.jkit/conventions.md`
-   - `rules/{framework}/eslint.base.mjs` → `.jkit/eslint.base.mjs` (if exists)
-3. Handle `eslint.config.mjs`:
-   - **If not exists**: Create from `rules/{framework}/eslint.sample.mjs`
-   - **If exists**: Backup to `eslint.config.mjs.bak`, then create new from `rules/{framework}/eslint.sample.mjs`. Notify the user: "Existing eslint.config.mjs backed up to eslint.config.mjs.bak. Please migrate your project-specific rules to the new file."
-4. Create `PROJECT.md` in the project root with the following template:
+Ask the user for the project name. Default: current directory name.
+
+### 3. Ask conventions stacks
+
+Show available conventions stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+
+**Next.js:** `mantine`, `design-system`, `tanstack-query`, `next-proxy`
+**NestJS:** `typeorm`
+
+### 4. Ask ESLint stacks
+
+Show available ESLint stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+
+**Next.js:** `mantine`, `mongodb`, `nextauth`, `email-template`, `tanstack-query`, `next-proxy`, `theme`
+**NestJS:** `typeorm`, `gcp`, `anthropic-ai`, `local-rules`
+
+### 5. Ask tsconfig stacks
+
+Show available tsconfig stacks for the selected framework and ask the user to select (comma-separated, or empty for base only).
+
+**Next.js:** (none)
+**NestJS:** `typeorm`
+
+### 6. Run generator scripts
+
+Run the following scripts from the plugin's `scripts/` directory. All output goes to the current project directory (`.`).
+
+```bash
+# 1. AGENTS.md + CLAUDE.md symlink
+./scripts/gen-agents.sh <framework> -p . -n "<project-name>"
+
+# 2. GIT.md
+./scripts/gen-git.sh -p .
+
+# 3. ARCHITECTURE.md
+./scripts/gen-architecture.sh <framework> -p .
+
+# 4. CONVENTIONS.md
+./scripts/gen-conventions.sh <framework> -p . --with <conventions-stacks>
+
+# 5. ESLint config
+./scripts/gen-eslint.sh <framework> -p . --with <eslint-stacks>
+
+# 6. tsconfig.json patch
+./scripts/gen-tsconfig.sh <framework> -p . --with <tsconfig-stacks>
+```
+
+Skip `--with` if the user selected no stacks for that generator.
+
+### 8. Create `PROJECT.md`
+
+Create `PROJECT.md` in the project root with the following template:
 
 ```markdown
 # Project Configuration
 
 ## Project
-- Name: {project directory name}
+- Name: {project name}
 - Framework: {framework}
 
 ## Stack
@@ -44,36 +86,20 @@ If no framework is provided or it's not one of `nextjs`, `flutter`, `nestjs`, as
 - UI: <!-- e.g., Mantine, Tailwind, Material UI -->
 - State: <!-- e.g., TanStack Query, Zustand, Jotai -->
 
-## Project-specific Files
-<!-- Files unique to this project that don't follow the shared architecture -->
-<!-- e.g., auth.ts (NextAuth config), proxy.ts (locale redirect) -->
-
 ## Notes
 <!-- Any other project-specific details -->
 ```
 
-### 3. Create `AGENTS.md`
+### 9. Report
 
-Create `AGENTS.md` with the following content:
+Tell the user what was created:
+- `AGENTS.md` — AI agent entry point
+- `CLAUDE.md` → `AGENTS.md` symlink
+- `GIT.md` — Git & GitHub guide
+- `ARCHITECTURE.md` — Architecture details
+- `CONVENTIONS.md` — Conventions with selected stacks
+- `eslint.config.mjs` — ESLint config with selected stacks
+- `tsconfig.json` — Patched with framework-specific settings
+- `PROJECT.md` — Project-specific config (fill in manually)
 
-```markdown
-# {project directory name}
-
-### Project Specific
-- [Project Config](PROJECT.md) — Read when you need project-specific context
-
-### Reference
-- [Architecture](.jkit/architecture.md) — **MUST read when creating a new module.** Architecture details with code examples
-- [Conventions](.jkit/conventions.md) — **MUST read when writing or modifying code.** Conventions with code examples
-- [Git](.jkit/git.md) — **MUST read when committing or using git/GitHub commands.** Git & GitHub guide with commit conventions
-```
-
-### 4. Create `CLAUDE.md` symlink
-
-```bash
-ln -sf AGENTS.md CLAUDE.md
-```
-
-### 5. Report
-
-Tell the user what was created and remind them to fill in `PROJECT.md` with project-specific details.
+Remind them to fill in `PROJECT.md` with project-specific details.
