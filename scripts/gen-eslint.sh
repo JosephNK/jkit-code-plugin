@@ -204,11 +204,18 @@ if [ -n "$STACKS" ]; then
   IFS=',' read -ra COPY_LIST <<< "$STACKS"
   for stack in "${COPY_LIST[@]}"; do
     stack=$(echo "$stack" | xargs)
-    RULES_FILE="$RULES_DIR/$stack/eslint.rules.mjs"
-    if [ -f "$RULES_FILE" ]; then
+    STACK_DIR="$RULES_DIR/$stack"
+    # Copy all .mjs files (excluding manifest) to .jkit/rules/<stack>/
+    copied=false
+    for mjs_file in "$STACK_DIR"/*.mjs; do
+      [ -f "$mjs_file" ] || continue
       mkdir -p "$OUTPUT_DIR/.jkit/rules/$stack"
-      cp "$RULES_FILE" "$OUTPUT_DIR/.jkit/rules/$stack/eslint.rules.mjs"
-      echo "Copied: $OUTPUT_DIR/.jkit/rules/$stack/eslint.rules.mjs"
+      cp "$mjs_file" "$OUTPUT_DIR/.jkit/rules/$stack/"
+      echo "Copied: $OUTPUT_DIR/.jkit/rules/$stack/$(basename "$mjs_file")"
+      copied=true
+    done
+    if [ "$copied" = false ]; then
+      echo "Warning: No .mjs files found for stack '$stack'" >&2
     fi
   done
 fi

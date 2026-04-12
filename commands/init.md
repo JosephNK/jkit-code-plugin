@@ -49,7 +49,7 @@ If `nestjs` (4 items):
 1. `typeorm`
 2. `gcp`
 3. `anthropic-ai`
-4. `local-rules`
+4. `custom-lint`
 
 ### 5. Ask tsconfig stacks
 

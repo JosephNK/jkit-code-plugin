@@ -1,5 +1,5 @@
 --- import ---
-import localPlugin from './eslint-rules/index.mjs';
+import localPlugin from './.jkit/rules/custom-lint/index.mjs';
 --- framework ---
 --- infra ---
 --- elements ---

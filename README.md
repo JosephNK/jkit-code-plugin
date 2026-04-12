@@ -97,7 +97,7 @@ Template + manifest 조합으로 eslint.config.mjs를 생성합니다.
 
 # NestJS
 ./scripts/gen-eslint.sh nestjs -p /path/to/project \
-  --with typeorm,gcp,anthropic-ai,local-rules
+  --with typeorm,gcp,anthropic-ai,custom-lint
 ```
 
 ## TSConfig Patcher
