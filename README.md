@@ -14,6 +14,18 @@ Personal development toolkit for Claude Code — scaffolding, conventions, and c
 
 After installation, use `/jkit:init` to initialize your project.
 
+### Local Development (Plugin Testing)
+
+플러그인 개발 시 로컬에서 직접 테스트하려면:
+
+```bash
+# 플러그인 디렉토리에서 직접 실행
+claude --plugin-dir .
+
+# 다른 경로에서 실행
+claude --plugin-dir /path/to/jkit-code-plugin
+```
+
 ### Team Setup
 
 Add to your project's `.claude/settings.json` so teammates get the plugin automatically:
