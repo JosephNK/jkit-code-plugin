@@ -1,6 +1,6 @@
 # jkit-code-plugin
 
-Claude Code plugin for project scaffolding, conventions and ESLint config generation.
+Personal development toolkit for Claude Code — scaffolding, conventions, and config generation.
 
 ## Agents Generator
 

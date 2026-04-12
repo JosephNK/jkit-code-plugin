@@ -1,0 +1,31 @@
+{
+  "name": "jkit",
+  "owner": {
+    "name": "josephnk"
+  },
+  "metadata": {
+    "description": "Personal development toolkit for Claude Code — scaffolding, conventions, and config generation"
+  },
+  "plugins": [
+    {
+      "name": "jkit",
+      "source": "./",
+      "description": "Personal development toolkit for Claude Code — scaffolding, conventions, and config generation",
+      "version": "0.1.0",
+      "author": {
+        "name": "josephnk"
+      },
+      "repository": "https://github.com/JosephNK/jkit-code-plugin",
+      "license": "MIT",
+      "keywords": [
+        "scaffolding",
+        "conventions",
+        "eslint",
+        "nextjs",
+        "nestjs",
+        "flutter"
+      ],
+      "category": "workflow"
+    }
+  ]
+}

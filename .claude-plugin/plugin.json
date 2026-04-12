@@ -1,7 +1,7 @@
 {
   "name": "jkit",
   "version": "0.1.0",
-  "description": "JKit - Personal Claude Code plugin kit for frontend, backend, and more",
+  "description": "Personal development toolkit for Claude Code — scaffolding, conventions, and config generation",
   "author": {
     "name": "josephnk"
   },
