@@ -87,39 +87,13 @@ Run the following scripts from the plugin's `scripts/` directory. All output goe
 
 Skip `--with` if the user selected no stacks for that generator.
 
-### 7. Add Project Stack to `AGENTS.md`
-
-After generators complete, append a **Project Stack** section to `AGENTS.md` (before `### Reference`), with items based on the framework:
-
-**Next.js:**
-```markdown
-### Project Stack
-<!-- Fill in after init -->
-- DB: 
-- Auth: 
-- UI: 
-- State: 
-```
-
-**NestJS:**
-```markdown
-### Project Stack
-<!-- Fill in after init -->
-- DB: 
-- Auth: 
-- Queue: 
-- Cache: 
-```
-
-### 8. Report
+### 7. Report
 
 Tell the user what was created:
-- `AGENTS.md` — AI agent entry point (fill in Project Stack section)
+- `AGENTS.md` — AI agent entry point
 - `CLAUDE.md` → `AGENTS.md` symlink
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
 - `CONVENTIONS.md` — Conventions with selected stacks
 - `eslint.config.mjs` — ESLint config with selected stacks
 - `tsconfig.json` — Patched with framework-specific settings
-
-Remind them to fill in the **Project Stack** section in `AGENTS.md`.
