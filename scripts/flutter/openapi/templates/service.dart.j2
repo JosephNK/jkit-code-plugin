@@ -1,0 +1,162 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:flutter_leaf_kit/flutter_leaf_kit.dart';
+{% if has_built_list %}
+import 'package:built_collection/built_collection.dart';
+{% endif %}
+{% for import_line in extra_imports %}
+{{ import_line }}
+{% endfor %}
+import '../../endpoints.dart';
+{% if has_serializers %}
+import '../../models/src/serializers/serializers.dart';
+{% endif %}
+
+{% if description %}
+/// {{ description }}
+{% endif %}
+/// Service for {{ tag }} endpoints.
+class {{ class_name }} extends LeafDioService {
+{% for method in methods %}
+
+{% if method.summary %}
+  /// {{ method.summary }}
+{% endif %}
+{% if method.is_multipart %}
+  Future<LeafDioResponse<{{ method.response_type }}, {{ method.error_type }}>> {{ method.name }}(
+{% for param in method.path_params %}
+    {{ param.dart_type }} {{ param.dart_name }},
+{% endfor %}
+    {
+{% for field in method.multipart_fields %}
+{% if field.is_required %}
+    required {{ field.dart_type }} {{ field.dart_name }},
+{% else %}
+    {{ field.dart_type }}? {{ field.dart_name }},
+{% endif %}
+{% endfor %}
+    }
+  ) async {
+{% for field in method.multipart_fields %}
+{% if field.is_file and field.is_array %}
+    final {{ field.dart_name }}Files = await Future.wait(
+      {{ field.dart_name }}.map((e) => e.toMultipartFile()),
+    );
+{% elif field.is_file %}
+    final {{ field.dart_name }}File = await {{ field.dart_name }}.toMultipartFile();
+{% endif %}
+{% endfor %}
+    final formData = FormData.fromMap({
+{% for field in method.multipart_fields %}
+{% if field.is_file and field.is_array %}
+{% if field.is_required %}
+      '{{ field.name }}': {{ field.dart_name }}Files,
+{% else %}
+      '{{ field.name }}': ?{{ field.dart_name }}Files,
+{% endif %}
+{% elif field.is_file %}
+{% if field.is_required %}
+      '{{ field.name }}': {{ field.dart_name }}File,
+{% else %}
+      '{{ field.name }}': ?{{ field.dart_name }}File,
+{% endif %}
+{% else %}
+{% if field.is_required %}
+      '{{ field.name }}': {{ field.dart_name }},
+{% else %}
+      '{{ field.name }}': ?{{ field.dart_name }},
+{% endif %}
+{% endif %}
+{% endfor %}
+    });
+    return {{ method.http_method }}<{{ method.response_type }}, {{ method.error_type }}>(
+      {{ method.endpoint_call }},
+      data: formData,
+{% if method.query_params %}
+      queryParameters: {
+{% for param in method.query_params %}
+{% if param.is_nullable %}
+        '{{ param.name }}': ?{{ param.dart_name }},
+{% else %}
+        '{{ param.name }}': {{ param.dart_name }},
+{% endif %}
+{% endfor %}
+      },
+{% endif %}
+{% if method.error_parser_code %}
+      errorParser: (statusCode, body) {
+        switch (statusCode) {
+{% for error in method.error_schemas %}
+          case {{ error.status_code }}:
+            return serializers.deserializeWith(
+              {{ error.serializer }},
+              body,
+            );
+{% endfor %}
+          default:
+            return null;
+        }
+      },
+{% endif %}
+    );
+  }
+{% else %}
+  Future<LeafDioResponse<{{ method.response_type }}, {{ method.error_type }}>> {{ method.name }}(
+{% for param in method.path_params %}
+    {{ param.dart_type }} {{ param.dart_name }},
+{% endfor %}
+{% if method.request_body %}
+    {{ method.request_body_type }} {{ method.request_body_name }},
+{% endif %}
+{%- if method.query_params %}
+    {
+{% for param in method.query_params %}
+{% if param.is_nullable %}
+    {{ param.dart_type }}? {{ param.dart_name }},
+{% else %}
+    required {{ param.dart_type }} {{ param.dart_name }},
+{% endif %}
+{% endfor %}
+    }
+{% endif %}
+  ) {
+    return {{ method.http_method }}<{{ method.response_type }}, {{ method.error_type }}>(
+      {{ method.endpoint_call }},
+{% if method.request_body %}
+      data: serializers.serializeWith(
+        {{ method.request_body_serializer }},
+        {{ method.request_body_name }},
+      ),
+{% endif %}
+{% if method.query_params %}
+      queryParameters: {
+{% for param in method.query_params %}
+{% if param.is_nullable %}
+        '{{ param.name }}': ?{{ param.dart_name }},
+{% else %}
+        '{{ param.name }}': {{ param.dart_name }},
+{% endif %}
+{% endfor %}
+      },
+{% endif %}
+{% if method.error_parser_code %}
+      errorParser: (statusCode, body) {
+        switch (statusCode) {
+{% for error in method.error_schemas %}
+          case {{ error.status_code }}:
+            return serializers.deserializeWith(
+              {{ error.serializer }},
+              body,
+            );
+{% endfor %}
+          default:
+            return null;
+        }
+      },
+{% endif %}
+    );
+  }
+{% endif %}
+{% endfor %}
+}

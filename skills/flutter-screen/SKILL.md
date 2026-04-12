@@ -1,0 +1,175 @@
+---
+name: flutter-screen
+description: Generates Flutter Screen files. Use for requests like "Create Login screen", "Generate Settings screen", "Add new page".
+argument-hint: "<ScreenName> [-entry <dir>] [-path <dir>]"
+---
+
+# Flutter Screen Generation Skill
+
+Generates new Screen files along with BLoC files in a Flutter project.
+
+## Arguments
+
+- First value of `$ARGUMENTS`: Screen name (required, e.g. Login, Settings)
+- `-entry <dir>`: Entry directory (optional, e.g. `-entry app`). Defaults to `lib/features/...` if omitted.
+- `-path <dir>`: Parent feature path (optional, e.g. `-path user`, `-path account`). The screen name (snake_case) is automatically appended under this path.
+
+## Workflow
+
+1. **Parse arguments**: Extract Screen name, `-entry` option, and `-path` option from `$ARGUMENTS`
+   - If `-entry app` is present, set entry directory to `app`
+   - If `-entry` is absent, use `lib/features/...` as base path
+   - If `-path <dir>` is present, use it as parent directory (screen name is appended automatically)
+2. **Determine path**:
+   - `{feature_dir}` = `{path_value}/{screen_name_snake_case}` if `-path` is provided, otherwise `{screen_name_snake_case}`
+   - Final path: `{entry}/lib/features/{feature_dir}/presentation/pages`
+   - Example (with -path): `Settings -entry app -path user` → `app/lib/features/user/settings/presentation/pages/settings_screen.dart`
+   - Example (no -path): `Login -entry app` → `app/lib/features/login/presentation/pages/login_screen.dart`
+   - Example (no entry): `Login` → `lib/features/login/presentation/pages/login_screen.dart`
+3. **Determine views path**:
+   - Create views folder under the presentation folder
+   - Example: `{entry}/lib/features/{feature_path}/presentation/views/`
+4. **Determine BLoC path**:
+   - Create bloc folder under the presentation folder (sibling of pages)
+   - Example: `{entry}/lib/features/{feature_path}/presentation/bloc/`
+5. **Generate templates**: Generate template code with the following commands
+   ```bash
+   # Install dependencies (once)
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
+
+   # Screen template
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_screen_template.py <ScreenName>
+
+   # View templates
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_app_bar_template.py <ScreenName>
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_body_view_template.py <ScreenName>
+
+   # BLoC templates
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> bloc
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> event
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> state
+   ```
+6. **Generate filenames**: Convert Screen name to snake_case
+7. **Create directories**: Create directories with mkdir -p if they don't exist
+8. **Save files**: Create files at the specified paths
+9. **Run code generation**: Run build_runner in the entry folder (freezed 코드 생성)
+   ```bash
+   (cd {entry} && dart run build_runner build --delete-conflicting-outputs)
+   ```
+   - If no entry, run in the current directory
+10. **Register DI**: Add BLoC registration to `{entry}/lib/di/injection_container.dart`
+    - Generate DI registration template:
+      ```bash
+      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_di_template.py <ScreenName> <feature_dir>
+      ```
+    - `<feature_dir>` = `{path_value}/{screen_name_snake_case}` if `-path` provided, otherwise `{screen_name_snake_case}`
+    - Add the import at the top of the file (with other BLoC imports)
+    - Add `sl.registerFactory(() => {ScreenName}Bloc());` in the `// BLoCs` section of `setupDependencies()`
+    - If the BLoC already exists in DI, confirm with the user before proceeding (use AskUserQuestion with options: ["Yes, overwrite", "No, skip"])
+11. **Register route**: Add route to `{entry}/lib/router/router.dart`
+    - Ask the user whether to use NoTransitionPage before adding the route (use AskUserQuestion with options: ["Yes", "No"])
+    - Generate route template:
+      ```bash
+      # Default (using builder)
+      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_route_template.py <ScreenName> <path>
+
+      # NoTransitionPage wrapping (using pageBuilder)
+      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_route_template.py <ScreenName> <path> -nt
+      ```
+    - `<path>` rule:
+      - If `-path` is provided: Use `/{path_value}/{screen_name_snake_case}` as route path (e.g. `-path user` + `Settings` → `/user/settings`)
+      - If `-path` is absent: Append `/` to the snake_case of the Screen name (e.g. `Login` → `/login`, `UserSettings` → `/user-settings`)
+      - Exception: Use `/` for the first route (home)
+    - Insert generated code inside the `routes: <RouteBase>[...]` array (append after existing routes)
+    - Add required imports to router.dart:
+      ```dart
+      // {feature_dir} = {path_value}/{screen_name_snake_case} if -path provided, otherwise {screen_name_snake_case}
+      import '../features/{feature_dir}/presentation/bloc/{screen_name_snake_case}_bloc.dart';
+      import '../features/{feature_dir}/presentation/pages/{screen_name_snake_case}_screen.dart';
+      ```
+    - If a route for the same Screen already exists, confirm with the user before proceeding (use AskUserQuestion with options: ["Yes, overwrite route", "No, skip route"])
+
+## Generated Files
+
+When running `/screen Login -entry app`:
+```
+app/lib/features/login/presentation/
+├── bloc/
+│   ├── login_bloc.dart
+│   ├── login_bloc.freezed.dart  ← Auto-generated by build_runner
+│   ├── login_event.dart
+│   └── login_state.dart
+├── pages/
+│   └── login_screen.dart
+└── views/
+    ├── login_app_bar.dart
+    └── login_body_view.dart
+```
+
+When running `/screen Settings -entry app -path user`:
+```
+app/lib/features/user/settings/presentation/
+├── bloc/
+│   ├── settings_bloc.dart
+│   ├── settings_bloc.freezed.dart  ← Auto-generated by build_runner
+│   ├── settings_event.dart
+│   └── settings_state.dart
+├── pages/
+│   └── settings_screen.dart
+└── views/
+    ├── settings_app_bar.dart
+    └── settings_body_view.dart
+```
+
+## Filename Conversion Rules
+
+- PascalCase → snake_case
+- Includes appropriate suffix for each file type
+- Example: `Login` → `login_screen.dart`, `login_bloc.dart`, `login_app_bar.dart`, `login_body_view.dart`
+- Example: `UserSettings` → `user_settings_screen.dart`, `user_settings_bloc.dart`, `user_settings_app_bar.dart`, `user_settings_body_view.dart`
+
+## Usage Examples
+
+```
+/screen Login -entry app
+→ Create app/lib/features/login/presentation/pages/login_screen.dart
+→ Create app/lib/features/login/presentation/bloc/login_bloc.dart
+→ Create app/lib/features/login/presentation/bloc/login_event.dart
+→ Create app/lib/features/login/presentation/bloc/login_state.dart
+→ Create app/lib/features/login/presentation/views/login_app_bar.dart
+→ Create app/lib/features/login/presentation/views/login_body_view.dart
+→ Route path: /login
+
+/screen Login
+→ Create lib/features/login/presentation/pages/login_screen.dart (no entry)
+→ Create lib/features/login/presentation/bloc/login_bloc.dart
+→ ...
+
+/screen Settings -entry app -path user
+→ Create app/lib/features/user/settings/presentation/pages/settings_screen.dart
+→ Create app/lib/features/user/settings/presentation/bloc/settings_bloc.dart
+→ Create app/lib/features/user/settings/presentation/bloc/settings_event.dart
+→ Create app/lib/features/user/settings/presentation/bloc/settings_state.dart
+→ Create app/lib/features/user/settings/presentation/views/settings_app_bar.dart
+→ Create app/lib/features/user/settings/presentation/views/settings_body_view.dart
+→ Route path: /user/settings
+
+/screen Profile -entry app -path account
+→ Create app/lib/features/account/profile/presentation/pages/profile_screen.dart
+→ Create app/lib/features/account/profile/presentation/bloc/profile_bloc.dart
+→ Create app/lib/features/account/profile/presentation/bloc/profile_event.dart
+→ Create app/lib/features/account/profile/presentation/bloc/profile_state.dart
+→ Create app/lib/features/account/profile/presentation/views/profile_app_bar.dart
+→ Create app/lib/features/account/profile/presentation/views/profile_body_view.dart
+→ Route path: /account/profile
+```
+
+## Notes
+
+- If `-entry` is absent, uses default path `lib/features/{feature_dir}/presentation/pages`
+- If `-entry app`, uses default path `app/lib/features/{feature_dir}/presentation/pages`
+- `{feature_dir}` = `{path_value}/{screen_name_snake_case}` if `-path` provided, otherwise `{screen_name_snake_case}`
+- `-path` supports nested directories (e.g. `-path user`, `-path account/sub`)
+- Creates directories first if the path doesn't exist
+- If a file already exists, confirms with the user before overwriting (use AskUserQuestion with options: ["Yes, overwrite", "No, skip"])
+- BLoC folder is created at the same level as pages (under presentation)

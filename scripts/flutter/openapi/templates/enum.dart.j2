@@ -1,0 +1,26 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
+
+part '{{ filename_without_ext }}.g.dart';
+
+{% if description %}
+/// {{ description }}
+{% endif %}
+class {{ class_name }} extends EnumClass {
+  static Serializer<{{ class_name }}> get serializer => _${{ serializer_name }}Serializer;
+
+{% for value in enum_values %}
+  @BuiltValueEnumConst(wireName: '{{ value.wire_name }}')
+  static const {{ class_name }} {{ value.dart_name }} = _${{ value.dart_name }};
+{% endfor %}
+
+  const {{ class_name }}._(super.name);
+
+  static BuiltSet<{{ class_name }}> get values => _${{ values_name }}Values;
+
+  static {{ class_name }} valueOf(String name) => _${{ value_of_name }}ValueOf(name);
+}

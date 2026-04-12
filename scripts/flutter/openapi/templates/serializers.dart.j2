@@ -1,0 +1,19 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:built_value/serializer.dart';
+import 'package:built_value/standard_json_plugin.dart';
+import 'package:built_collection/built_collection.dart';
+{% for import_line in model_imports %}
+{{ import_line }}
+{% endfor %}
+
+part 'serializers.g.dart';
+
+@SerializersFor([
+{% for class_name in model_classes %}
+  {{ class_name }},
+{% endfor %}
+])
+final Serializers serializers =
+    (_$serializers.toBuilder()..addPlugin(StandardJsonPlugin())).build();

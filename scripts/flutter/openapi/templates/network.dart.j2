@@ -1,0 +1,38 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:flutter_leaf_kit/flutter_leaf_kit.dart';
+
+{% for import_line in api_imports %}
+{{ import_line }}
+{% endfor %}
+
+/// Network initialization entry point.
+///
+/// Provides factory methods to initialize all API clients.
+class Network {
+  Network._();
+{% for api in apis %}
+
+  /// Initialize {{ api.name_pascal }} API client.
+  static void init{{ api.name_pascal }}({
+    String? baseUrl,
+    LeafDioInterceptorBuilder? interceptorBuilder,
+    LeafDioJsonUndefinedKey? jsonUndefinedKey,
+    Duration connectTimeout = const Duration(seconds: 5),
+    Duration receiveTimeout = const Duration(seconds: 60),
+    LeafDioOnHeader? onHeader,
+    Future<String> Function()? getTemporaryDirectoryPath,
+  }) {
+    {{ api.client_class }}.init(
+      baseUrl: baseUrl,
+      interceptorBuilder: interceptorBuilder,
+      jsonUndefinedKey: jsonUndefinedKey,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
+      onHeader: onHeader,
+      getTemporaryDirectoryPath: getTemporaryDirectoryPath,
+    );
+  }
+{% endfor %}
+}

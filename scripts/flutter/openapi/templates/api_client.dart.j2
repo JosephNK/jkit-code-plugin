@@ -1,0 +1,43 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:flutter_leaf_kit/flutter_leaf_kit.dart';
+
+import 'endpoints.dart';
+{% for import_line in service_imports %}
+{{ import_line }}
+{% endfor %}
+import 'models/src/serializers/serializers.dart';
+
+/// {{ api_name_pascal }} API Client
+///
+/// Initializes a [LeafDioSharedClient] configured for the {{ api_name_pascal }} API.
+class {{ api_name_pascal }}Api {
+  {{ api_name_pascal }}Api._();
+
+  static void init({
+    String? baseUrl,
+    LeafDioInterceptorBuilder? interceptorBuilder,
+    LeafDioJsonUndefinedKey? jsonUndefinedKey,
+    Duration connectTimeout = const Duration(seconds: 5),
+    Duration receiveTimeout = const Duration(seconds: 60),
+    LeafDioOnHeader? onHeader,
+    Future<String> Function()? getTemporaryDirectoryPath,
+  }) {
+    LeafDioSharedClient.shared.init(
+      baseUrl: Uri.parse(baseUrl ?? {{ api_name_pascal }}ApiEndpoints.baseUrl),
+      responseSerializers: serializers,
+      services: [
+{% for service_class in service_classes %}
+        {{ service_class }}(),
+{% endfor %}
+      ],
+      interceptorBuilder: interceptorBuilder,
+      jsonUndefinedKey: jsonUndefinedKey,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
+      onHeader: onHeader,
+      getTemporaryDirectoryPath: getTemporaryDirectoryPath,
+    );
+  }
+}

@@ -1,0 +1,26 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+/// {{ api_name_pascal }} API Endpoints
+class {{ api_name_pascal }}ApiEndpoints {
+  {{ api_name_pascal }}ApiEndpoints._();
+
+  static const String baseUrl = '{{ base_url }}';
+{% for endpoint in endpoints %}
+
+{% if endpoint.is_dynamic %}
+  /// {{ endpoint.method }} {{ endpoint.path }}
+{% if endpoint.summary %}
+  /// {{ endpoint.summary }}
+{% endif %}
+  static String {{ endpoint.constant_name }}({% for param in endpoint.path_params %}{{ param.dart_type }} {{ param.dart_name }}{% if not loop.last %}, {% endif %}{% endfor %}) =>
+      '{{ endpoint.dart_path_template }}';
+{% else %}
+  /// {{ endpoint.method }} {{ endpoint.path }}
+{% if endpoint.summary %}
+  /// {{ endpoint.summary }}
+{% endif %}
+  static const String {{ endpoint.constant_name }} = '{{ endpoint.path }}';
+{% endif %}
+{% endfor %}
+}

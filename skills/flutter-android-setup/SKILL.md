@@ -1,0 +1,111 @@
+---
+name: flutter-android-setup
+description: Generates Flutter Android build configuration files. Use for requests like "Set up Android", "Create build.gradle.kts".
+argument-hint: "<AppName> [-entry <dir>] [package_name]"
+---
+
+# Flutter Android Setup Skill
+
+Automatically configures Android build settings for a Flutter project.
+- build.gradle.kts: Full replacement (signing, flavor, scheme configuration)
+- AndroidManifest.xml: Patch (only adds/modifies required settings in existing file)
+- proguard-rules.pro: Created only if not exists
+
+## Arguments
+
+- First value of `$ARGUMENTS`: App name (required, PascalCase, e.g. MyApp)
+- `-entry <dir>`: Entry directory (optional, e.g. `-entry app`). Defaults to `android/...` if omitted.
+- Package name (optional, e.g. com.example.myapp). If omitted, extracted from the existing build.gradle.kts namespace.
+
+## Workflow
+
+1. **Parse arguments**: Extract App name, `-entry` option, and package name from `$ARGUMENTS`
+   - If `-entry app` is present, set entry directory to `app`
+   - If `-entry` is absent, use `android/...` as base path
+2. **Determine package name**: If package name is omitted
+   - If `{entry}/android/app/build.gradle.kts` exists, extract the `namespace` value
+   - If the file doesn't exist, prompt the user for the package name
+3. **Install dependencies** (once):
+   ```bash
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
+   ```
+4. **Generate build.gradle.kts** (full replacement): Generate template code with the following command
+   ```bash
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_android_build_gradle_template.py <AppName> <package_name>
+   ```
+   Save the output to `{entry}/android/app/build.gradle.kts`
+5. **Patch AndroidManifest.xml** (modify existing file): Generate patched code with the following command
+   ```bash
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/setup/flutter_android_manifest_setup.py {entry}/android/app/src/main/AndroidManifest.xml
+   ```
+   Save the output to `{entry}/android/app/src/main/AndroidManifest.xml`
+6. **Generate proguard-rules.pro** (only if not exists): If the file doesn't exist, generate with the following command
+   ```bash
+   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_android_proguard_template.py
+   ```
+   Save the output to `{entry}/android/app/proguard-rules.pro`
+7. **Verify results**: Display the list of created/modified files to the user
+
+## Target Files
+
+When running `/flutter-android-setup MyApp -entry app com.example.myapp`:
+```
+app/android/app/
+├── build.gradle.kts              ← Full replacement (signing, build types, 4 flavors)
+├── proguard-rules.pro            ← Created only if not exists
+└── src/main/
+    └── AndroidManifest.xml       ← Patched (preserves existing settings, adds only required parts)
+```
+
+## Configuration Details
+
+### build.gradle.kts (full replacement)
+- Plugins: android application, kotlin-android, flutter gradle plugin
+- `key.properties` loading (using FileInputStream)
+- signingConfigs: debug (debug keystore) + release
+- buildTypes: debug + release (references proguard-rules.pro)
+- 4 productFlavors: production, staging, development, qa
+  - production: no suffix, scheme = `{appname_lowercase}`
+  - staging: `.stg` suffix, scheme = `{appname_lowercase}-stg`
+  - development: `.dev` suffix, scheme = `{appname_lowercase}-dev`
+  - qa: `.test` suffix, scheme = `{appname_lowercase}-test`
+- Java/Kotlin target: Java 17
+
+### AndroidManifest.xml (patch - 6 items)
+Reads the existing file and adds the following items if missing, skips if already present:
+1. Add `xmlns:tools` namespace
+2. Add INTERNET permission
+3. Change `android:label` to `@string/app_name`
+4. Add application attributes: `requestLegacyExternalStorage`, `usesCleartextTraffic`, `allowBackup=false`, `tools:replace`
+5. Change `launchMode` to `singleTask`
+6. Add deep link intent-filter (`${scheme}` placeholder)
+
+### proguard-rules.pro (created only if not exists)
+- Contains only default comments (empty rules file)
+
+## Usage Examples
+
+```
+/flutter-android-setup MyApp -entry app com.example.myapp
+→ Replace app/android/app/build.gradle.kts (com.example.myapp, scheme: myapp)
+→ Patch app/android/app/src/main/AndroidManifest.xml
+→ Create app/android/app/proguard-rules.pro (only if not exists)
+
+/flutter-android-setup MyApp -entry app
+→ Extract namespace from existing build.gradle.kts (com.example.myapp)
+→ Process same as above
+
+/flutter-android-setup MyApp
+→ Replace android/app/build.gradle.kts (no entry, prompt user for package_name)
+→ Patch android/app/src/main/AndroidManifest.xml
+→ Create android/app/proguard-rules.pro (only if not exists)
+```
+
+## Notes
+
+- build.gradle.kts is fully replaced, so confirm with the user if custom settings exist
+- AndroidManifest.xml uses a patch approach, so existing settings are preserved (idempotent)
+- Flavor configuration is fixed (production/staging/development/qa) - same across all projects
+- Scheme is generated by converting the app name to lowercase (e.g. MyApp → myapp)
+- If `-entry` is absent, uses `android/...` as base path
+- If `-entry app`, uses `app/android/...` as base path

@@ -1,0 +1,34 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// Generator: flutter-openapi-gen
+
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
+{% if has_built_list %}
+import 'package:built_collection/built_collection.dart';
+{% endif %}
+{% for import_line in extra_imports %}
+{{ import_line }}
+{% endfor %}
+
+part '{{ filename_without_ext }}.g.dart';
+
+{% if description %}
+/// {{ description }}
+{% endif %}
+abstract class {{ class_name }} implements Built<{{ class_name }}, {{ class_name }}Builder> {
+  {{ class_name }}._();
+  factory {{ class_name }}([void Function({{ class_name }}Builder) updates]) = _${{ class_name }};
+
+  static Serializer<{{ class_name }}> get serializer => _${{ serializer_name }}Serializer;
+{% for field in fields %}
+
+{% if field.fixme %}
+  // FIXME: {{ field.fixme }}
+{% endif %}
+{% if field.description %}
+  /// {{ field.description }}
+{% endif %}
+  @BuiltValueField(wireName: '{{ field.name }}')
+  {{ field.dart_type }}? get {{ field.dart_name }};
+{% endfor %}
+}
