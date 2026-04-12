@@ -1,0 +1,13 @@
+--- import ---
+import {
+  gcpFrameworkPackages,
+  gcpInfraPackages,
+} from './.jkit/gcp/eslint.rules.mjs';
+--- framework ---
+    ...gcpFrameworkPackages,
+--- infra ---
+    ...gcpInfraPackages,
+--- elements ---
+--- rules ---
+--- ignores ---
+--- custom ---

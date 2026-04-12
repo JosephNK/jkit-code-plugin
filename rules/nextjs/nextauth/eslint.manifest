@@ -1,0 +1,18 @@
+--- import ---
+import {
+  nextauthBoundaryAllowPatches,
+  nextauthBoundaryElements,
+  nextauthBoundaryRules,
+  nextauthDomainBannedPackages,
+} from './.jkit/nextauth/eslint.rules.mjs';
+--- restricted ---
+--- domain ---
+    ...nextauthDomainBannedPackages,
+--- syntax ---
+--- elements ---
+      ...nextauthBoundaryElements,
+--- rules ---
+        ...nextauthBoundaryRules,
+--- patches ---
+        ...nextauthBoundaryAllowPatches,
+--- ignores ---

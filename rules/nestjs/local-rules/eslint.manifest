@@ -1,0 +1,46 @@
+--- import ---
+import localPlugin from './eslint-rules/index.mjs';
+--- framework ---
+--- infra ---
+--- elements ---
+--- rules ---
+--- ignores ---
+--- custom ---
+  // ─── Local custom rules (conventions.md enforcement) ────────────
+  {
+    plugins: { local: localPlugin },
+  },
+
+  // DTO: @ApiProperty required + union type restriction
+  {
+    files: ['src/modules/**/dto/**/*.dto.ts'],
+    rules: {
+      'local/require-api-property': 'error',
+      'local/dto-union-type-restriction': 'error',
+    },
+  },
+
+  // DTO naming: *ResponseDto → *DataResponseDto / *ItemDto
+  {
+    files: ['src/modules/**/dto/**/*.dto.ts'],
+    rules: {
+      'local/dto-naming-convention': 'warn',
+    },
+  },
+
+  // ORM Entity: Date columns must use timestamptz
+  {
+    files: ['src/modules/**/provider/**/*.orm-entity.ts'],
+    rules: {
+      'local/require-timestamptz': 'error',
+    },
+  },
+
+  // Controller: catch blocks must use mapDomainException()
+  {
+    files: ['src/modules/**/controller/**/*.controller.ts'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'local/require-map-domain-exception': 'error',
+    },
+  },

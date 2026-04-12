@@ -1,0 +1,13 @@
+{
+  "name": "jkit",
+  "version": "0.1.0",
+  "description": "JKit - Personal Claude Code plugin kit for frontend, backend, and more",
+  "author": {
+    "name": "josephnk"
+  },
+  "license": "MIT",
+  "keywords": ["claude-code", "jkit", "skills", "agents"],
+  "agents": [],
+  "skills": ["./skills/"],
+  "commands": ["./commands/"]
+}

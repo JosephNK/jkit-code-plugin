@@ -1,0 +1,18 @@
+--- import ---
+import {
+  mongodbBoundaryAllowPatches,
+  mongodbBoundaryElements,
+  mongodbBoundaryRules,
+  mongodbDomainBannedPackages,
+} from './.jkit/mongodb/eslint.rules.mjs';
+--- restricted ---
+--- domain ---
+    ...mongodbDomainBannedPackages,
+--- syntax ---
+--- elements ---
+      ...mongodbBoundaryElements,
+--- rules ---
+        ...mongodbBoundaryRules,
+--- patches ---
+        ...mongodbBoundaryAllowPatches,
+--- ignores ---

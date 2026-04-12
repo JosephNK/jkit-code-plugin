@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ ! -d ~/.claude/plugins/cache/everything-claude-code ]; then echo \"[jkit] WARNING: ECC plugin is required. Run: /plugin install ecc@ecc\" >&2; fi'",
+            "description": "Check ECC plugin dependency on session start"
+          }
+        ]
+      }
+    ]
+  }
+}

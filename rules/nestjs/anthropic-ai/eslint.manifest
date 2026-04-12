@@ -1,0 +1,13 @@
+--- import ---
+import {
+  anthropicFrameworkPackages,
+  anthropicInfraPackages,
+} from './.jkit/anthropic-ai/eslint.rules.mjs';
+--- framework ---
+    ...anthropicFrameworkPackages,
+--- infra ---
+    ...anthropicInfraPackages,
+--- elements ---
+--- rules ---
+--- ignores ---
+--- custom ---

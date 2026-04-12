@@ -1,0 +1,11 @@
+--- import ---
+import {
+  typeormFrameworkPackages,
+} from './.jkit/typeorm/eslint.rules.mjs';
+--- framework ---
+    ...typeormFrameworkPackages,
+--- infra ---
+--- elements ---
+--- rules ---
+--- ignores ---
+--- custom ---

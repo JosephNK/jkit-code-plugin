@@ -1,0 +1,16 @@
+--- import ---
+import {
+  mantineDomainBannedPackages,
+  mantineRestrictedPatterns,
+  mantineRestrictedSyntax,
+} from './.jkit/mantine/eslint.rules.mjs';
+--- restricted ---
+    ...mantineRestrictedPatterns,
+--- domain ---
+    ...mantineDomainBannedPackages,
+--- syntax ---
+        ...mantineRestrictedSyntax,
+--- elements ---
+--- rules ---
+--- patches ---
+--- ignores ---
