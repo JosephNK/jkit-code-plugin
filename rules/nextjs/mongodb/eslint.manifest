@@ -4,7 +4,7 @@ import {
   mongodbBoundaryElements,
   mongodbBoundaryRules,
   mongodbDomainBannedPackages,
-} from './.jkit/mongodb/eslint.rules.mjs';
+} from './.jkit/rules/mongodb/eslint.rules.mjs';
 --- restricted ---
 --- domain ---
     ...mongodbDomainBannedPackages,

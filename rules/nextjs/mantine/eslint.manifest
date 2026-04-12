@@ -3,7 +3,7 @@ import {
   mantineDomainBannedPackages,
   mantineRestrictedPatterns,
   mantineRestrictedSyntax,
-} from './.jkit/mantine/eslint.rules.mjs';
+} from './.jkit/rules/mantine/eslint.rules.mjs';
 --- restricted ---
     ...mantineRestrictedPatterns,
 --- domain ---

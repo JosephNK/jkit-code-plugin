@@ -2,7 +2,7 @@
 import {
   anthropicFrameworkPackages,
   anthropicInfraPackages,
-} from './.jkit/anthropic-ai/eslint.rules.mjs';
+} from './.jkit/rules/anthropic-ai/eslint.rules.mjs';
 --- framework ---
     ...anthropicFrameworkPackages,
 --- infra ---

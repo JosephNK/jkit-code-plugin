@@ -3,7 +3,7 @@ import {
   emailTemplateBoundaryAllowPatches,
   emailTemplateBoundaryElements,
   emailTemplateBoundaryRules,
-} from './.jkit/email-template/eslint.rules.mjs';
+} from './.jkit/rules/email-template/eslint.rules.mjs';
 --- restricted ---
 --- domain ---
 --- syntax ---

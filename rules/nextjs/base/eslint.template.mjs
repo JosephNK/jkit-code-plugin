@@ -11,7 +11,7 @@ import {
   buildArchitectureBoundaries,
   buildDomainPurity,
   buildRestrictedImports,
-} from './.jkit/base/eslint.base.mjs';
+} from './.jkit/rules/base/eslint.base.mjs';
 // {{STACK_IMPORTS}}
 
 // ─── Helper: patch additional allow rules into base boundary rules ───

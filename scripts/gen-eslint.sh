@@ -190,6 +190,28 @@ done
 mkdir -p "$OUTPUT_DIR"
 echo "$content" > "$OUTPUT_FILE"
 echo "Generated: $OUTPUT_FILE"
+
+# ─── Copy base and stack files to target project ───
+BASE_FILE="$RULES_DIR/base/eslint.base.mjs"
+if [ -f "$BASE_FILE" ]; then
+  mkdir -p "$OUTPUT_DIR/.jkit/rules/base"
+  cp "$BASE_FILE" "$OUTPUT_DIR/.jkit/rules/base/eslint.base.mjs"
+  echo "Copied: $OUTPUT_DIR/.jkit/rules/base/eslint.base.mjs"
+fi
+
+if [ -n "$STACKS" ]; then
+  IFS=',' read -ra COPY_LIST <<< "$STACKS"
+  for stack in "${COPY_LIST[@]}"; do
+    stack=$(echo "$stack" | xargs)
+    RULES_FILE="$RULES_DIR/$stack/eslint.rules.mjs"
+    if [ -f "$RULES_FILE" ]; then
+      mkdir -p "$OUTPUT_DIR/.jkit/rules/$stack"
+      cp "$RULES_FILE" "$OUTPUT_DIR/.jkit/rules/$stack/eslint.rules.mjs"
+      echo "Copied: $OUTPUT_DIR/.jkit/rules/$stack/eslint.rules.mjs"
+    fi
+  done
+fi
+
 if [ -n "$STACKS" ]; then
   echo "Stacks: $STACKS"
 fi
