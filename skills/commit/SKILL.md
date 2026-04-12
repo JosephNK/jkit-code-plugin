@@ -2,7 +2,7 @@
 name: commit
 description: Git 커밋 메시지 자동 생성 (commit). 변경 사항을 분석하고 한국어 커밋 메시지 3개를 제안합니다. Use when user says "커밋", "커밋 하자", or wants to commit changes.
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git diff:*), Bash(git log:*)
-origin: JKit
+origin: jKit
 ---
 
 ## Current State
