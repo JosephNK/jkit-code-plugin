@@ -1,8 +1,8 @@
 import {
-  baseConfig,
   baseBoundaryElements,
   baseBoundaryIgnores,
   baseBoundaryRules,
+  baseConfig,
   baseFileSizeRules,
   baseFrameworkPackages,
   baseIgnores,

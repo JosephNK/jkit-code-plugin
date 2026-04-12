@@ -92,6 +92,7 @@ CUSTOM=""
 
 if [ -n "$STACKS" ]; then
   IFS=',' read -ra STACK_LIST <<< "$STACKS"
+  IFS=$'\n' STACK_LIST=($(sort <<< "${STACK_LIST[*]}")); unset IFS
   for stack in "${STACK_LIST[@]}"; do
     stack=$(echo "$stack" | xargs)  # trim whitespace
     MANIFEST="$RULES_DIR/$stack/eslint.manifest"
