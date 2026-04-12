@@ -145,6 +145,7 @@ export const baseBoundaryIgnores = [
   'src/modules/health/**',
   'src/modules/**/common/**',
   'test/**',
+  '.jkit/**',
 ];
 
 // ─── Pre-built config (ESLint + TypeScript + Prettier + Import sorting) ───
@@ -251,7 +252,7 @@ export const baseFileSizeRules = defineConfig({
 });
 
 // ─── Pre-built: Global ignores ───
-export const baseIgnores = globalIgnores(['eslint.config.mjs', 'eslint-rules/**', 'dist/**', 'coverage/**']);
+export const baseIgnores = globalIgnores(['eslint.config.mjs', 'eslint-rules/**', 'dist/**', 'coverage/**', '.jkit/**']);
 
 // ─── Builder: Hexagonal layer import restrictions ───
 export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pathAliasPattern = basePathAliasPattern) {

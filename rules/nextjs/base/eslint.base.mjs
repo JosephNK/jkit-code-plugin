@@ -149,6 +149,7 @@ export const baseBoundaryIgnores = [
   '*.d.ts',
   'types/**',
   'src/common/types/**',
+  '.jkit/**',
 ];
 
 export const baseRestrictedSyntax = [
@@ -266,7 +267,7 @@ export const baseServerComponentRules = defineConfig([
 ]);
 
 // ─── Pre-built: Global ignores ───
-export const baseIgnores = globalIgnores(['.next/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts']);
+export const baseIgnores = globalIgnores(['.next/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts', '.jkit/**']);
 
 // ─── Builder: Global restricted imports (merge base + stack patterns) ───
 export function buildRestrictedImports(patterns) {
