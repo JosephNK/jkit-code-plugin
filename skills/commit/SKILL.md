@@ -1,7 +1,9 @@
 ---
-description: Git commit (auto-generate message, always confirm before committing)
+name: commit
+description: Git commit with auto-generated message. Analyzes changes and suggests 3 commit messages in Korean.
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git diff:*), Bash(git log:*)
-argument-hint: '[--auto] ["commit message" (optional)]'
+disable-model-invocation: true
+origin: JKit
 ---
 
 ## Current State
@@ -23,7 +25,7 @@ argument-hint: '[--auto] ["commit message" (optional)]'
 | text     | Use the provided text as subject, generate body from changes         |
 | `--auto` | Auto mode: generate the best message and commit without confirmation |
 
-> `--auto` can be combined with other arguments: `/commit --auto Add login form validation`
+> `--auto` can be combined with other arguments: `/jkit:commit --auto Add login form validation`
 
 ---
 
@@ -141,5 +143,3 @@ Commit automatically without user confirmation. Used by automation pipelines (e.
 #### Step 3: Report
 
 - Output the commit hash and message
-
----
