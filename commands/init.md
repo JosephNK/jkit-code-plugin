@@ -90,6 +90,9 @@ Run the following scripts from the plugin's `scripts/` directory.
 
 # 5. tsconfig.json patch
 ./scripts/gen-tsconfig.sh <framework> -p . --with <tsconfig-stacks>
+
+# 6. Husky hooks
+./scripts/gen-husky.sh <framework> -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
@@ -104,3 +107,4 @@ Tell the user what was created:
 - `CONVENTIONS.md` — Conventions with selected stacks
 - `eslint.config.mjs` — ESLint config with selected stacks
 - `tsconfig.json` — Patched with framework-specific settings
+- `.husky/` — Git hooks (pre-commit, commit-msg)
