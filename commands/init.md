@@ -34,13 +34,22 @@ If `nestjs`:
 ### 4. Ask ESLint stacks
 
 Show the **ESLint** stacks below and ask the user to select (comma-separated, or empty for base only).
-**These are different from conventions stacks — show the exact list below.**
+**IMPORTANT: ESLint stacks are NOT the same as conventions stacks. You MUST show ALL items from the list below — do NOT omit any.**
 
-If `nextjs`:
-> Available ESLint stacks: `mantine`, `mongodb`, `nextauth`, `email-template`, `tanstack-query`, `next-proxy`, `theme`
+If `nextjs` (7 items):
+1. `mantine`
+2. `mongodb`
+3. `nextauth`
+4. `email-template`
+5. `tanstack-query`
+6. `next-proxy`
+7. `theme`
 
-If `nestjs`:
-> Available ESLint stacks: `typeorm`, `gcp`, `anthropic-ai`, `local-rules`
+If `nestjs` (4 items):
+1. `typeorm`
+2. `gcp`
+3. `anthropic-ai`
+4. `local-rules`
 
 ### 5. Ask tsconfig stacks
 
