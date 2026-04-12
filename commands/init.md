@@ -56,7 +56,7 @@ If `nestjs` (4 items):
 Show the **tsconfig** stacks below and ask the user to select (comma-separated, or empty for base only).
 
 If `nextjs`:
-> Available tsconfig stacks: (none — skip this step)
+> Available tsconfig stacks: (none — base only, skip selection)
 
 If `nestjs`:
 > Available tsconfig stacks: `typeorm`
