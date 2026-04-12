@@ -2,6 +2,18 @@
 
 Personal development toolkit for Claude Code — scaffolding, conventions, and config generation.
 
+## Quick Start
+
+```bash
+# Add marketplace
+/plugin marketplace add https://github.com/JosephNK/jkit-code-plugin
+
+# Install plugin
+/plugin install jkit@jkit
+```
+
+After installation, use `/jkit:init` to initialize your project.
+
 ## Agents Generator
 
 AGENTS.md + CLAUDE.md 심볼릭 링크를 생성합니다.
