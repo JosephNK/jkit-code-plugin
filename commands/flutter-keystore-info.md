@@ -8,19 +8,29 @@ Display Android keystore certificate information (validity, fingerprints, etc.).
 
 ## Steps
 
-### 1. Ask keystore file path
+### 1. Find keystore files
 
-Ask the user for the keystore file path.
+Search for keystore files (`*.keystore`, `*.jks`) in the current project directory and list them.
+
+### 2. Ask keystore file path
+
+If keystore files are found, show the list and let the user select one.
+If no keystore files are found, ask the user to input the keystore file path manually.
 
 Example: `my-release-key.keystore`, `app/android/release.keystore`
 
-### 2. Run script
+### 3. Verify and run script
+
+Verify the selected keystore file exists, then run:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python features/flutter/scripts/android_show_info_keystore.py <keystore-path>
+cd ${CLAUDE_PLUGIN_ROOT} && poetry run python features/flutter/scripts/android_show_info_keystore.py <keystore-path> --project-dir <user-project-dir>
 ```
 
-### 3. Report
+- `<keystore-path>`: keystore file name or relative path
+- `<user-project-dir>`: the user's current working directory (absolute path)
+
+### 4. Report
 
 Show the keystore information to the user.
 If the command fails, inform the user about the possible cause (e.g., JDK not installed, keystore file not found).
