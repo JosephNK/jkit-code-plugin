@@ -35,6 +35,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="iOS export-options-plist 파일 경로 (예: ios/ExportOptions.plist)",
     )
+    parser.add_argument(
+        "--project-dir",
+        type=str,
+        required=True,
+        help="프로젝트 루트 디렉토리",
+    )
     return parser.parse_args()
 
 
@@ -116,8 +122,7 @@ def main() -> int:
     args = parse_args()
 
     # Flutter 프로젝트 경로 결정
-    script_dir = Path(__file__).resolve().parent
-    project_root = script_dir.parent  # scripts/ 폴더의 상위 = 프로젝트 루트
+    project_root = Path(args.project_dir).resolve()
     flutter_dir = find_flutter_project_dir(project_root)
 
     if flutter_dir is None:

@@ -21,8 +21,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--project-dir",
-        default=None,
-        help="프로젝트 루트 디렉토리 (기본값: 현재 디렉토리)",
+        required=True,
+        help="프로젝트 루트 디렉토리",
     )
     return parser.parse_args()
 
@@ -63,7 +63,7 @@ def main() -> int:
     apk_path = Path(args.apk)
     if not apk_path.is_absolute():
         # 상대 경로인 경우 프로젝트 루트 기준으로 설정
-        project_root = Path(args.project_dir) if args.project_dir else Path.cwd()
+        project_root = Path(args.project_dir)
         flutter_dir = find_flutter_project_dir(project_root)
 
         if flutter_dir is None:

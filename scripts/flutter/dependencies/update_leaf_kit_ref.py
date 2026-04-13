@@ -24,8 +24,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--project-dir",
         type=str,
-        default=None,
-        help="프로젝트 루트 디렉토리 (기본값: 스크립트 기준 상위 디렉토리)",
+        required=True,
+        help="프로젝트 루트 디렉토리",
     )
     return parser.parse_args()
 
@@ -95,11 +95,7 @@ def main() -> int:
     ref = normalize_ref(args.ref)
 
     # 프로젝트 루트 경로 결정
-    if args.project_dir:
-        project_root = Path(args.project_dir).resolve()
-    else:
-        script_dir = Path(__file__).resolve().parent
-        project_root = script_dir.parent
+    project_root = Path(args.project_dir).resolve()
 
     print(f"프로젝트 루트: {project_root}")
     print(f"새 ref: {ref}")

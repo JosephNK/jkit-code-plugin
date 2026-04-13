@@ -15,8 +15,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--project-dir",
-        default=None,
-        help="프로젝트 루트 디렉토리 (기본값: 현재 디렉토리)",
+        required=True,
+        help="프로젝트 루트 디렉토리",
     )
     return parser.parse_args()
 
@@ -43,7 +43,7 @@ def main() -> int:
     keystore_path = Path(args.keystore)
     if not keystore_path.is_absolute():
         # 상대 경로인 경우 프로젝트 루트 기준으로 android 폴더를 찾아서 설정
-        project_root = Path(args.project_dir) if args.project_dir else Path.cwd()
+        project_root = Path(args.project_dir)
         android_dir = find_android_dir(project_root)
 
         if android_dir is None:

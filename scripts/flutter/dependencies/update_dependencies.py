@@ -21,11 +21,6 @@ from typing import Optional
 import ruamel.yaml
 
 
-def get_project_root() -> Path:
-    """프로젝트 루트 디렉토리 반환"""
-    return Path(__file__).parent.parent
-
-
 def get_latest_version(package_name: str) -> Optional[str]:
     """pub.dev API에서 패키지의 최신 버전을 조회"""
     url = f"https://pub.dev/api/packages/{package_name}"
@@ -271,17 +266,14 @@ def main():
     parser.add_argument(
         "--project-dir",
         type=str,
-        default=None,
-        help="프로젝트 루트 디렉토리 (기본값: 스크립트 기준 상위 디렉토리)",
+        required=True,
+        help="프로젝트 루트 디렉토리",
     )
 
     args = parser.parse_args()
 
     # 프로젝트 루트 결정
-    if args.project_dir:
-        project_root = Path(args.project_dir).resolve()
-    else:
-        project_root = get_project_root()
+    project_root = Path(args.project_dir).resolve()
 
     os.chdir(project_root)
 
