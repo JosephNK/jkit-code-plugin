@@ -246,9 +246,6 @@ def main():
     yaml = ruamel.yaml.YAML()
     yaml.preserve_quotes = True
 
-    project_root = get_project_root()
-    os.chdir(project_root)
-
     parser = argparse.ArgumentParser(
         description="Flutter Packages - Dependencies Update Script"
     )
@@ -271,8 +268,22 @@ def main():
         default=[],
         help="제외할 패키지 prefix 목록 (예: --exclude flutter_leaf my_internal)",
     )
+    parser.add_argument(
+        "--project-dir",
+        type=str,
+        default=None,
+        help="프로젝트 루트 디렉토리 (기본값: 스크립트 기준 상위 디렉토리)",
+    )
 
     args = parser.parse_args()
+
+    # 프로젝트 루트 결정
+    if args.project_dir:
+        project_root = Path(args.project_dir).resolve()
+    else:
+        project_root = get_project_root()
+
+    os.chdir(project_root)
 
     # 패키지 목록 가져오기
     package_filter = args.package if args.package else None
