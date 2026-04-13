@@ -24,7 +24,7 @@ EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # ─── Parse arguments ───
 FRAMEWORK=""
@@ -82,7 +82,7 @@ repos:
 
       - id: architecture-lint
         name: architecture lint
-        entry: python3 ${PLUGIN_ROOT}/rules/flutter/custom-lint/architecture-lint.py ${ENTRY}
+        entry: poetry run python ${PLUGIN_ROOT}/rules/flutter/custom-lint/architecture-lint.py ${ENTRY}
         language: system
         pass_filenames: false
         types: [file]
