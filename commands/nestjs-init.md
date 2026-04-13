@@ -59,13 +59,13 @@ Run the following scripts from the plugin's `scripts/` directory.
 ./scripts/gen-conventions.sh nestjs -p docs --with <conventions-stacks>
 
 # 4. ESLint config
-./scripts/gen-eslint.sh nestjs -p . --with <eslint-stacks>
+./scripts/typescript/gen-eslint.sh nestjs -p . --with <eslint-stacks>
 
 # 5. tsconfig.json patch
-./scripts/gen-tsconfig.sh nestjs -p . --with <tsconfig-stacks>
+./scripts/typescript/gen-tsconfig.sh nestjs -p . --with <tsconfig-stacks>
 
 # 6. Husky hooks
-./scripts/gen-husky.sh nestjs -p .
+./scripts/typescript/gen-husky.sh nestjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.

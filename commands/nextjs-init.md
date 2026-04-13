@@ -60,13 +60,13 @@ Run the following scripts from the plugin's `scripts/` directory.
 ./scripts/gen-conventions.sh nextjs -p docs --with <conventions-stacks>
 
 # 4. ESLint config
-./scripts/gen-eslint.sh nextjs -p . --with <eslint-stacks>
+./scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
 
 # 5. tsconfig.json patch
-./scripts/gen-tsconfig.sh nextjs -p .
+./scripts/typescript/gen-tsconfig.sh nextjs -p .
 
 # 6. Husky hooks
-./scripts/gen-husky.sh nextjs -p .
+./scripts/typescript/gen-husky.sh nextjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
