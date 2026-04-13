@@ -4,7 +4,7 @@ Hexagonal Architecture (Ports and Adapters) + Next.js App Router colocated compo
 Domain logic is pure TypeScript with no framework dependencies.
 Pages are Server Components (data loading, i18n). Client Components are colocated in `_components/` directories.
 
-## Components
+## Layer Diagram
 
 ```
 [page]             app/[locale]/        Server Component (data fetching, i18n)

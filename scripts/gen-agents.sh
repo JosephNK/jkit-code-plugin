@@ -9,7 +9,7 @@ Usage: gen-agents.sh <framework> -p <output-dir> [-n <project-name>] [--docs-dir
 Generates AGENTS.md and creates CLAUDE.md symlink.
 
 Arguments:
-  <framework>    Framework name (e.g. nextjs, nestjs)
+  <framework>    Framework name (e.g. nextjs, nestjs, flutter)
 
 Options:
   -p <dir>       Output directory (required)
@@ -20,6 +20,7 @@ Examples:
   ./scripts/gen-agents.sh nextjs -p . -n "My Project"              # refs: ARCHITECTURE.md
   ./scripts/gen-agents.sh nextjs -p . -n "My Project" --docs-dir docs      # refs: docs/ARCHITECTURE.md
   ./scripts/gen-agents.sh nestjs -p .
+  ./scripts/gen-agents.sh flutter -p .
 EOF
   exit 1
 }

@@ -4,7 +4,7 @@ Hexagonal Architecture (Ports and Adapters) + NestJS modular structure.
 Domain logic is pure TypeScript with no framework dependencies.
 Core principle: **Business logic knows nothing about external infrastructure.**
 
-## Components
+## Layer Diagram 
 
 ```
 [inbound-adapter]  controller/   Request entry point (REST, GraphQL, gRPC, CLI...)

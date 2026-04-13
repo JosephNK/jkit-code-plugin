@@ -16,23 +16,17 @@ Ask the user for the project name. Default: current directory name.
 
 Show the **conventions** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
-> Available conventions stacks: `typeorm`
+> Available conventions stacks: `bloc`, `freezed`, `go-router`, `leaf-kit`, `easy-localization`
 
-### 3. Ask ESLint stacks
+### 3. Ask pre-commit entry directory
 
-Show the **ESLint** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
-**IMPORTANT: ESLint stacks are NOT the same as conventions stacks. You MUST show ALL items from the list below — do NOT omit any.**
+Ask the user for the Flutter entry directory. Default: `app`.
 
-1. `typeorm`
-2. `gcp`
-3. `anthropic-ai`
-4. `custom-lint`
+### 4. Ask pyproject.toml options
 
-### 4. Ask tsconfig stacks
-
-Show the **tsconfig** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
-
-> Available tsconfig stacks: `typeorm`
+Ask the user for:
+- **description** (default: "Flutter project scripts")
+- **author** (optional, e.g. "Name <email>")
 
 ### 5. Ask AGENTS.md generation
 
@@ -41,7 +35,7 @@ This step is optional because the user may need to customize these files.
 
 If yes:
 ```bash
-./scripts/gen-agents.sh nestjs -p . -n "<project-name>" --docs-dir docs
+./scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Run generator scripts
@@ -53,24 +47,30 @@ Run the following scripts from the plugin's `scripts/` directory.
 ./scripts/gen-git.sh -p docs
 
 # 2. ARCHITECTURE.md
-./scripts/gen-architecture.sh nestjs -p docs
+./scripts/gen-architecture.sh flutter -p docs
 
 # 3. CONVENTIONS.md
-./scripts/gen-conventions.sh nestjs -p docs --with <conventions-stacks>
+./scripts/gen-conventions.sh flutter -p docs --with <conventions-stacks>
 
-# 4. ESLint config
-./scripts/gen-eslint.sh nestjs -p . --with <eslint-stacks>
+# 4. .pre-commit-config.yaml
+./scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
 
-# 5. tsconfig.json patch
-./scripts/gen-tsconfig.sh nestjs -p . --with <tsconfig-stacks>
-
-# 6. Husky hooks
-./scripts/gen-husky.sh nestjs -p .
+# 5. pyproject.toml
+./scripts/flutter/gen-pyproject.sh flutter -p . -n "<project-name>" -d "<description>" -a "<author>"
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
+Skip `-d` and `-a` in gen-pyproject.sh if the user did not provide them.
 
-### 7. Report
+### 7. Install dependencies
+
+```bash
+poetry install
+git config --local --unset-all core.hooksPath || true
+poetry run pre-commit install
+```
+
+### 8. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point
@@ -78,6 +78,5 @@ Tell the user what was created:
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
 - `CONVENTIONS.md` — Conventions with selected stacks
-- `eslint.config.mjs` — ESLint config with selected stacks
-- `tsconfig.json` — Patched with framework-specific settings
-- `.husky/` — Git hooks (pre-commit, commit-msg)
+- `.pre-commit-config.yaml` — Pre-commit hooks (dart format, flutter analyze, flutter test)
+- `pyproject.toml` — Poetry config for project scripts

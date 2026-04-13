@@ -56,7 +56,7 @@ done
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
-BASE_CONV="$RULES_DIR/base/CONVENTIONS.md"
+BASE_CONV="$RULES_DIR/base/conventions.md"
 
 if [ ! -f "$BASE_CONV" ]; then
   echo "Error: Base conventions not found: $BASE_CONV" >&2
@@ -73,10 +73,10 @@ if [ -n "$STACKS" ]; then
   IFS=',' read -ra STACK_LIST <<< "$STACKS"
   for stack in "${STACK_LIST[@]}"; do
     stack=$(echo "$stack" | xargs)
-    STACK_CONV="$RULES_DIR/$stack/CONVENTIONS.md"
+    STACK_CONV="$RULES_DIR/$stack/conventions.md"
 
     if [ ! -f "$STACK_CONV" ]; then
-      echo "Warning: CONVENTIONS.md not found for stack '$stack': $STACK_CONV" >&2
+      echo "Warning: conventions.md not found for stack '$stack': $STACK_CONV" >&2
       continue
     fi
 
