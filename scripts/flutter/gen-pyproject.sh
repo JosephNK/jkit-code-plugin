@@ -85,6 +85,7 @@ name = "$NAME"
 version = "0.1.0"
 description = "$DESCRIPTION"
 $AUTHORS_LINE
+packages = [{include = "scripts"}]
 package-mode = false
 
 [tool.poetry.dependencies]
@@ -93,6 +94,10 @@ python = "^3.11"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.5.1"
 pytest = "^8.3.5"
+
+[tool.poetry.scripts]
+update-leaf-kit-ref = "scripts.update_leaf_kit_ref:main"
+update-deps = "scripts.update_dependencies:main"
 
 [build-system]
 requires = ["poetry-core"]

@@ -80,6 +80,14 @@ repos:
         types: [file]
         files: \\.dart\$
 
+      - id: architecture-lint
+        name: architecture lint
+        entry: python3 ${PLUGIN_ROOT}/rules/flutter/custom-lint/architecture-lint.py ${ENTRY}
+        language: system
+        pass_filenames: false
+        types: [file]
+        files: \\.dart\$
+
       - id: flutter-analyze
         name: flutter analyze
         entry: bash -c 'cd ${ENTRY} && flutter analyze --fatal-infos'
