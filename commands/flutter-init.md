@@ -57,6 +57,9 @@ Run the following scripts from the plugin's `scripts/` directory.
 
 # 5. pyproject.toml
 ./scripts/flutter/gen-pyproject.sh flutter -p . -n "<project-name>" -d "<description>" -a "<author>"
+
+# 6. Utility scripts
+./scripts/flutter/gen-scripts.sh -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
@@ -80,3 +83,9 @@ Tell the user what was created:
 - `CONVENTIONS.md` — Conventions with selected stacks
 - `.pre-commit-config.yaml` — Pre-commit hooks (dart format, flutter analyze, flutter test)
 - `pyproject.toml` — Poetry config for project scripts
+- `scripts/flutter-build-deploy.sh` — Flutter build wrapper
+- `scripts/update-dependencies.sh` — Dependencies update wrapper
+- `scripts/update-leaf-kit-ref.sh` — Leaf kit ref update wrapper
+- `scripts/android-show-info-keystore.sh` — Keystore info wrapper
+- `scripts/android-signing-report.sh` — Signing report wrapper
+- `scripts/android-signing-verify-apk.sh` — APK verify wrapper
