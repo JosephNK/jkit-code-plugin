@@ -1,6 +1,6 @@
 # jkit-code-plugin
 
-Claude Code plugin for Flutter / Next.js / NestJS — project init, code generation, build, TDD, and conventions.
+Flutter / Next.js / NestJS용 Claude Code 플러그인 — 프로젝트 셋업, 스크린·BLoC 스캐폴딩, OpenAPI 코드젠, 빌드·배포, TDD·코드리뷰, 컨벤션 관리를 하나로.
 
 ## Quick Start
 
@@ -11,8 +11,6 @@ Claude Code plugin for Flutter / Next.js / NestJS — project init, code generat
 # Install plugin
 /plugin install jkit@jkit
 ```
-
-After installation, use `/jkit:init` to initialize your project.
 
 ### Local Development (Plugin Testing)
 
