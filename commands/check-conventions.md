@@ -11,7 +11,7 @@ Changed files: !`git diff --name-only HEAD~1 2>/dev/null || git diff --cached --
 
 ## Rules
 
-**Read `CONVENTIONS.md` first**, then verify ALL rules against the changed files only.
+**Find and read `CONVENTIONS.md`** (check: `./CONVENTIONS.md`, `./docs/CONVENTIONS.md`), then verify ALL rules against the changed files only.
 
 ## Output Format
 
