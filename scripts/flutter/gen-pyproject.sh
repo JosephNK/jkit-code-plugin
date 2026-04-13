@@ -90,6 +90,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
+ruamel-yaml = "^0.19.1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.5.1"
