@@ -75,19 +75,27 @@ BLOC_ALLOWED_PACKAGES = CODEGEN_PACKAGES | frozenset(
 # Infrastructure packages forbidden in domain layers
 INFRA_PACKAGES = frozenset(
     {
+        # Remote API
         "dio",
         "http",
-        "flutter_secure_storage",
-        "shared_preferences",
+        "retrofit",
+        "chopper",
+        # Local DB
+        "drift",
         "sqflite",
+        "isar",
         "hive",
         "hive_flutter",
+        "floor",
+        "objectbox",
+        # Storage
+        "flutter_secure_storage",
+        "shared_preferences",
+        # Firebase
         "firebase_core",
         "firebase_auth",
         "firebase_messaging",
         "cloud_firestore",
-        "retrofit",
-        "chopper",
     }
 )
 

@@ -5,12 +5,14 @@
 | Package | Key Rules |
 |---------|-----------|
 | **leaf_component** | `LeafText` instead of `Text`. Colors via `context.leafColors`. Typography via `context.leafTypography`. Follow Atomic Design hierarchy. |
-| **leaf_network** | HTTP client via `LeafDioSharedClient.shared`. Service calls via `.getService<T>()`. Response checks: `.isSuccessful`, `.isHttpUnauthorisedException`. File uploads: `LeafMultipartFile.fromBytes()`. |
+| **leaf_network** | (API 사용 시) HTTP client via `LeafDioSharedClient.shared`. Service calls via `.getService<T>()`. Response checks: `.isSuccessful`, `.isHttpUnauthorisedException`. File uploads: `LeafMultipartFile.fromBytes()`. |
 | **leaf_state** | Screens extend `LeafScreenStatefulWidget` / `LeafScreenState`. BLoC consumption via `BlocScreenConsumer<BlocType, StateType>`. |
 | **leaf_common** | Shared utilities (Cancelable, Converter, DateTime Extension, Logger, Model). |
 | **leaf_platform** | Platform features (Config, System, Device, File, Permission, WebView). |
 
-### Network
+### Network (API 사용 시)
+
+> 이 섹션은 Remote API를 데이터 소스로 사용하는 경우에 해당합니다. 로컬 DB만 사용하는 프로젝트에서는 적용하지 않습니다.
 
 #### Initialization
 
@@ -19,7 +21,7 @@ Network initialization in `app.dart` via `LeafDioSharedClient` with automatic to
 #### Adapter Pattern
 
 ```dart
-class ProductAdapter implements ProductPort {
+class ProductApiAdapter implements ProductPort {
   @override
   Future<ProductPage> getProducts({required int page, required int limit}) async {
     final service = LeafDioSharedClient.shared.getService<ProductService>();
@@ -37,7 +39,9 @@ class ProductAdapter implements ProductPort {
 }
 ```
 
-### Error Handling (401)
+### Error Handling — 401 (API 사용 시)
+
+> 이 섹션은 Remote API를 데이터 소스로 사용하는 경우에 해당합니다.
 
 ```
 HTTP Response

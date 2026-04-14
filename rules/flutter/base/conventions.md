@@ -25,7 +25,7 @@
 
 | Location | When to use | Example |
 |----------|-------------|---------|
-| `common/services/` | Service used by **multiple features** or global infrastructure | Token storage, TTS, image compression |
+| `common/services/` | Service used by **multiple features** or global infrastructure | Token storage, TTS, database, image compression |
 | `features/<feature>/domain/ports/` | Port specific to **one feature's domain** | Product CRUD, order processing |
 
 Both follow the same Port & Adapter pattern. The only difference is scope.
@@ -79,7 +79,7 @@ Both follow the same Port & Adapter pattern. The only difference is scope.
 
 | Purpose | Pattern | Example |
 |---------|---------|---------|
-| DTO -> Entity conversion | `_toEntity()` or `_to{EntityName}()` | `_toProduct()`, `_toOrder()` |
+| Raw data → Entity conversion | `_toEntity()` or `_to{EntityName}()` | `_toProduct()`, `_toOrder()` |
 | Complex parsing | `_parse{Name}()` | `_parseProductPage()` |
 
 ## UseCase Patterns
@@ -103,18 +103,18 @@ class CreateOrderUseCase {
 ## Port & Adapter Patterns
 
 - **Port**: `abstract class` with domain types only
-- **Adapter**: implements Port, handles DTO -> Entity conversion via `_to{Entity}()` methods
+- **Adapter**: implements Port, handles raw data → Entity conversion via `_to{Entity}()` methods
 - Multiple data sources (remote + local): combine in a single Adapter, fallback to cache on network failure
 
 ```dart
-// Port
+// Port — data source agnostic
 abstract class ProductPort {
   Future<ProductPage> getProducts({required int page, required int limit});
   Future<Product> getProductById({required String id});
 }
 
-// Adapter
-class ProductAdapter implements ProductPort {
+// Adapter (Remote API)
+class ProductApiAdapter implements ProductPort {
   @override
   Future<ProductPage> getProducts({required int page, required int limit}) async {
     final response = await apiClient.getProducts(page: page, limit: limit);
@@ -130,6 +130,26 @@ class ProductAdapter implements ProductPort {
 
   Product _toProduct(ProductDto dto) => Product(
     id: dto.id, name: dto.name, price: dto.price, createdAt: dto.createdAt,
+  );
+}
+
+// Adapter (Local DB)
+class ProductLocalAdapter implements ProductPort {
+  final AppDatabase _db;
+  const ProductLocalAdapter({required AppDatabase db}) : _db = db;
+
+  @override
+  Future<ProductPage> getProducts({required int page, required int limit}) async {
+    final rows = await _db.productDao.getProducts(page: page, limit: limit);
+    final total = await _db.productDao.count();
+    return ProductPage(
+      items: rows.map(_toProduct).toList(),
+      total: total,
+    );
+  }
+
+  Product _toProduct(ProductRow row) => Product(
+    id: row.id, name: row.name, price: row.price, createdAt: row.createdAt,
   );
 }
 ```
@@ -156,13 +176,21 @@ void setupDependencies() {
 
 | Layer | Responsibility |
 |-------|---------------|
-| Adapter | Check response success. Throw `ServerException` for failures (403, 404, 429, 5xx). |
+| Adapter (API) | Check response success. Throw `ServerException` for failures (403, 404, 429, 5xx). |
+| Adapter (Local DB) | Catch DB exceptions. Throw `DatabaseException` for failures (not found, constraint violation, etc.). |
 | UseCase | Let exceptions propagate. Add domain-specific validation errors if needed. |
 
 ```dart
 class ServerException implements Exception {
   final String message;
   const ServerException(this.message);
+  @override
+  String toString() => message;
+}
+
+class DatabaseException implements Exception {
+  final String message;
+  const DatabaseException(this.message);
   @override
   String toString() => message;
 }

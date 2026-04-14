@@ -30,19 +30,19 @@ UseCase             Business logic (pure Dart, depends only on Ports)
     |
 Port                Calls Adapter through interface
     |
-Adapter Impl        Calls API via HTTP client
+Adapter Impl        Calls data source (API, local DB, platform SDK, etc.)
     |
-Backend API
+Data Source          Remote API / Local DB / Platform Service
 ```
 
 ### Response (return direction)
 
 ```
-Backend API
-    |  HTTP Response (JSON)
-API DTO             Raw backend response shape
+Data Source          Raw response (JSON, DB row, SDK result, etc.)
     |
-Adapter Impl        DTO -> Entity conversion via _toEntity()
+Raw Data Model      DTO (API) / DB Model (local) / SDK Result
+    |
+Adapter Impl        Raw data → Entity conversion via _toEntity()
     |
 Entity              Immutable value object (domain model)
     |
@@ -54,7 +54,7 @@ Presentation        Renders UI based on state
 ## Dependency Direction
 
 ```
-Presentation -> UseCase -> Port (interface) <- Adapter Impl -> HTTP Client + DTO
+Presentation -> UseCase -> Port (interface) <- Adapter Impl -> Data Source (API / DB / SDK)
                              |
                            Entity  <-  <-  <-  <-  <-  <-  <-
                           (all layers depend on this)
@@ -76,7 +76,7 @@ Orchestrate domain operations through Port interfaces. Each UseCase has a single
 
 ### adapters/ — Port Implementations
 
-Implement Port interfaces to communicate with external services (HTTP, SDK, Storage). Responsible for DTO -> Entity conversion.
+Implement Port interfaces to communicate with data sources (Remote API, Local DB, Platform SDK, etc.). Responsible for raw data → Entity conversion.
 
 ### pages/, views/, widgets/ — Presentation
 

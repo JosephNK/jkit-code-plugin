@@ -40,11 +40,15 @@ Root (Melos workspace)
 |       +-- main.dart                    # Entry point
 |
 +-- packages/
-    +-- <network_package>/               # Auto-generated HTTP client (OpenAPI)
-        +-- src/api/<api_name>/
-            |-- models/                  # DTO models with JSON serialization
-            |-- services/                # API service classes
-            +-- endpoints.dart           # Endpoint definitions
+    +-- <package>/                       # Shared or generated packages
+        +-- src/
+            |-- (API) api/<api_name>/    # Auto-generated HTTP client (OpenAPI)
+            |   |-- models/              # DTO models with JSON serialization
+            |   |-- services/            # API service classes
+            |   +-- endpoints.dart       # Endpoint definitions
+            +-- (Local DB) database/     # Database tables, DAOs, migrations
+                |-- tables/              # Table definitions
+                +-- daos/                # Data Access Objects
 ```
 
 ## Test Structure
