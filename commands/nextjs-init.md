@@ -6,6 +6,16 @@ description: Initialize JKit in Next.js project
 
 Initialize JKit configuration for a Next.js project using generator scripts.
 
+## Resolve plugin path
+
+Before running any script, resolve the jkit plugin install path:
+
+```bash
+JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
+```
+
+All script paths below use `$JKIT_DIR` as the base directory.
+
 ## Steps
 
 ### 1. Ask project name
@@ -42,7 +52,7 @@ This step is optional because the user may need to customize these files.
 
 If yes:
 ```bash
-./scripts/gen-agents.sh nextjs -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.sh nextjs -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Run generator scripts
@@ -51,22 +61,22 @@ Run the following scripts from the plugin's `scripts/` directory.
 
 ```bash
 # 1. GIT.md
-./scripts/gen-git.sh -p docs
+$JKIT_DIR/scripts/gen-git.sh -p docs
 
 # 2. ARCHITECTURE.md
-./scripts/gen-architecture.sh nextjs -p docs
+$JKIT_DIR/scripts/gen-architecture.sh nextjs -p docs
 
 # 3. CONVENTIONS.md
-./scripts/gen-conventions.sh nextjs -p docs --with <conventions-stacks>
+$JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs --with <conventions-stacks>
 
 # 4. ESLint config
-./scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
+$JKIT_DIR/scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
 
 # 5. tsconfig.json patch
-./scripts/typescript/gen-tsconfig.sh nextjs -p .
+$JKIT_DIR/scripts/typescript/gen-tsconfig.sh nextjs -p .
 
 # 6. Husky hooks
-./scripts/typescript/gen-husky.sh nextjs -p .
+$JKIT_DIR/scripts/typescript/gen-husky.sh nextjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.

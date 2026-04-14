@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Bash",
+      "WebSearch",
+      "WebFetch(domain:*)",
+      "Skill(commit)",
+      "Skill(commit:*)",
+      "Skill(jkit:commit)",
+      "Skill(jkit:commit:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}

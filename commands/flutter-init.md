@@ -6,6 +6,16 @@ description: Initialize JKit in Flutter project
 
 Initialize JKit configuration for a Flutter project using generator scripts.
 
+## Resolve plugin path
+
+Before running any script, resolve the jkit plugin install path:
+
+```bash
+JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
+```
+
+All script paths below use `$JKIT_DIR` as the base directory.
+
 ## Steps
 
 ### 1. Ask project name
@@ -35,7 +45,7 @@ This step is optional because the user may need to customize these files.
 
 If yes:
 ```bash
-./scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Run generator scripts
@@ -44,22 +54,22 @@ Run the following scripts from the plugin's `scripts/` directory.
 
 ```bash
 # 1. GIT.md
-./scripts/gen-git.sh -p docs
+$JKIT_DIR/scripts/gen-git.sh -p docs
 
 # 2. ARCHITECTURE.md
-./scripts/gen-architecture.sh flutter -p docs
+$JKIT_DIR/scripts/gen-architecture.sh flutter -p docs
 
 # 3. CONVENTIONS.md
-./scripts/gen-conventions.sh flutter -p docs --with <conventions-stacks>
+$JKIT_DIR/scripts/gen-conventions.sh flutter -p docs --with <conventions-stacks>
 
 # 4. .pre-commit-config.yaml
-./scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
 
 # 5. pyproject.toml
-./scripts/flutter/gen-pyproject.sh flutter -p . -n "<project-name>" -d "<description>" -a "<author>"
+$JKIT_DIR/scripts/flutter/gen-pyproject.sh flutter -p . -n "<project-name>" -d "<description>" -a "<author>"
 
 # 6. Utility scripts
-./scripts/flutter/gen-scripts.sh -p .
+$JKIT_DIR/scripts/flutter/gen-scripts.sh -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
