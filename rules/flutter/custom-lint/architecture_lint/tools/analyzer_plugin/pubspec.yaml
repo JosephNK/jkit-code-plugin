@@ -1,0 +1,13 @@
+name: architecture_lint_analyzer_plugin
+version: 0.1.0
+description: Analyzer plugin entry point for architecture_lint.
+
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  architecture_lint:
+    path: ../../
+  candies_analyzer_plugin: any

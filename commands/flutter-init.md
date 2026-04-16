@@ -83,7 +83,22 @@ git config --local --unset-all core.hooksPath || true
 poetry run pre-commit install
 ```
 
-### 8. Report
+### 8. Inject architecture lint plugin
+
+Inject `architecture_lint` analyzer plugin into the Flutter entry project.
+This must run **after** `poetry install` (requires `ruamel-yaml`).
+
+```bash
+$JKIT_DIR/scripts/flutter/gen-architecture-lint.sh flutter -p . -entry <entry-dir>
+```
+
+After injection, run `dart pub get` in the entry directory to resolve the new dependency:
+
+```bash
+cd <entry-dir> && dart pub get && cd ..
+```
+
+### 9. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point
@@ -99,3 +114,4 @@ Tell the user what was created:
 - `scripts/android-show-info-keystore.sh` — Keystore info wrapper
 - `scripts/android-signing-report.sh` — Signing report wrapper
 - `scripts/android-signing-verify-apk.sh` — APK verify wrapper
+- `architecture_lint` — IDE analyzer plugin injected into `pubspec.yaml` + `analysis_options.yaml`
