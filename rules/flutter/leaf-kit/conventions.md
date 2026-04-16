@@ -1,5 +1,25 @@
 ## flutter_leaf_kit
 
+### LLM Documentation
+
+이 라이브러리는 `llms.txt`를 제공합니다. 상세 API, 제공 패키지, 사용법은 아래 순서로 참조:
+
+#### 1순위: 로컬 캐시
+
+- **패키지 캐시 경로 찾기**: `{entry}/.dart_tool/package_config.json`에서 `flutter_leaf_kit`의 `rootUri` 확인
+  - `package_config.json`에 없으면 `~/.pub-cache/git/`에서 `flutter_leaf_kit-*` 디렉토리 검색
+- **메인 인덱스**: `{package_root}/llms.txt`
+- **서브 패키지별 문서**: `{package_root}/llms/{package}/llms.txt`
+  - leaf, leaf_common, leaf_component, leaf_network, leaf_platform, leaf_state
+
+#### 2순위: GitHub (로컬 캐시에 없을 때 fallback)
+
+- **Repository**: `https://github.com/JosephNK/flutter_leaf_kit`
+- **메인 인덱스**: `gh api repos/JosephNK/flutter_leaf_kit/contents/llms.txt --jq '.content' | base64 -d`
+- **서브 패키지별 문서**: `gh api repos/JosephNK/flutter_leaf_kit/contents/llms/{package}/llms.txt --jq '.content' | base64 -d`
+- **상세 문서**: 서브 패키지 llms.txt에 링크된 `.md` 파일도 동일 방식으로 읽기
+  - 예: `gh api repos/JosephNK/flutter_leaf_kit/contents/llms/leaf_component/v2/atoms/text.md --jq '.content' | base64 -d`
+
 ### Usage Rules
 
 | Package | Key Rules |
