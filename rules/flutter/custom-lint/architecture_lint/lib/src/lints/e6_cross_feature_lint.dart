@@ -2,10 +2,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
-import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
-
 import '../classification.dart';
 import '../constants.dart';
+import '../dart_lint.dart';
 
 /// E6: No cross-feature imports of internal layers.
 ///

@@ -48,7 +48,7 @@ String? extractFeature(String filePath) {
 String? getFilePath(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
-    return unit.declaredElement?.source.fullName;
+    return unit.declaredFragment?.source.fullName;
   }
   return null;
 }
@@ -57,12 +57,13 @@ String? getFilePath(AstNode node) {
 String? getProjectPackageName(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
-    final uri = unit.declaredElement?.source.uri;
+    final fragment = unit.declaredFragment;
+    final uri = fragment?.source.uri;
     if (uri != null && uri.scheme == 'package') {
       return uri.pathSegments.first;
     }
     // Fallback: try from library
-    final libraryUri = unit.declaredElement?.library.source.uri;
+    final libraryUri = fragment?.element.firstFragment.source.uri;
     if (libraryUri != null && libraryUri.scheme == 'package') {
       return libraryUri.pathSegments.first;
     }

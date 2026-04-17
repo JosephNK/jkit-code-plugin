@@ -5,3 +5,8 @@ __pycache__/
 .venv/
 example/
 settings.local.json
+code-harness/harness-state/
+code-harness/reports/
+
+# Dart
+.dart_tool/

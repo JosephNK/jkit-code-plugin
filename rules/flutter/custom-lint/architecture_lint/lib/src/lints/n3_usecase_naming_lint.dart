@@ -2,9 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
-import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
-
 import '../classification.dart';
+import '../dart_lint.dart';
 
 /// N3: UseCase classes must end with 'UseCase' or 'Params'.
 class N3UseCaseNamingLint extends DartLint {
@@ -32,9 +31,9 @@ class N3UseCaseNamingLint extends DartLint {
     final layer = classifyLayer(filePath);
     if (layer != 'usecases') return null;
 
-    final className = node.name.lexeme;
-    if (!className.endsWith('UseCase') && !className.endsWith('Params')) {
-      return node.name;
+    final name = node.namePart.typeName;
+    if (!name.lexeme.endsWith('UseCase') && !name.lexeme.endsWith('Params')) {
+      return name;
     }
 
     return null;

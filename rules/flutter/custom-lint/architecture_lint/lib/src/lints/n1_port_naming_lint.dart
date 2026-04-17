@@ -2,9 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
-import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
-
 import '../classification.dart';
+import '../dart_lint.dart';
 
 /// N1: Port classes must end with 'Port'.
 class N1PortNamingLint extends DartLint {
@@ -32,9 +31,9 @@ class N1PortNamingLint extends DartLint {
     final layer = classifyLayer(filePath);
     if (layer != 'ports') return null;
 
-    final className = node.name.lexeme;
-    if (!className.endsWith('Port')) {
-      return node.name;
+    final name = node.namePart.typeName;
+    if (!name.lexeme.endsWith('Port')) {
+      return name;
     }
 
     return null;

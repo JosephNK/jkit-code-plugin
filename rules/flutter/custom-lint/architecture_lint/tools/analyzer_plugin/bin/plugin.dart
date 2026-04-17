@@ -1,10 +1,13 @@
 import 'dart:isolate';
 
+import 'package:analyzer/file_system/physical_file_system.dart';
+import 'package:analyzer_plugin/starter.dart';
 import 'package:architecture_lint/architecture_lint.dart';
-import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
-
-CandiesAnalyzerPlugin get plugin => ArchitectureLintPlugin();
 
 void main(List<String> args, SendPort sendPort) {
-  CandiesAnalyzerPluginStarter.start(args, sendPort, plugin: plugin);
+  ServerPluginStarter(
+    ArchitectureLintPlugin(
+      resourceProvider: PhysicalResourceProvider.INSTANCE,
+    ),
+  ).start(sendPort);
 }

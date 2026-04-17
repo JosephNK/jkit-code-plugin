@@ -2,9 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
-import 'package:candies_analyzer_plugin/candies_analyzer_plugin.dart';
-
 import '../classification.dart';
+import '../dart_lint.dart';
 
 /// N2: Adapter classes must end with 'Adapter'.
 class N2AdapterNamingLint extends DartLint {
@@ -32,9 +31,9 @@ class N2AdapterNamingLint extends DartLint {
     final layer = classifyLayer(filePath);
     if (layer != 'adapters') return null;
 
-    final className = node.name.lexeme;
-    if (!className.endsWith('Adapter')) {
-      return node.name;
+    final name = node.namePart.typeName;
+    if (!name.lexeme.endsWith('Adapter')) {
+      return name;
     }
 
     return null;

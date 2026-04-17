@@ -10,4 +10,8 @@ environment:
 dependencies:
   architecture_lint:
     path: ../../
-  candies_analyzer_plugin: any
+  analyzer: ">=6.0.0 <13.0.0"
+  analyzer_plugin: ">=0.13.0 <0.15.0"
+
+dev_dependencies:
+  lints: ^5.0.0
