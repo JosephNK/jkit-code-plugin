@@ -76,3 +76,14 @@ poetry run python3 "$SCRIPT_DIR/architecture_lint/inject_architecture_lint.py" \
   --pubspec "$ENTRY/pubspec.yaml" \
   --analysis-options "$ENTRY/analysis_options.yaml" \
   --lint-path "$LINT_PATH"
+
+# ─── Invalidate Dart analyzer plugin cache ───
+# Dart analyzer copies tools/analyzer_plugin/ into ~/.dartServer/.plugin_manager/
+# on first load and keys it by a content hash. When JKit upgrades (new $LINT_PATH)
+# or the bootstrap pubspec changes, the stale copy can linger and break resolution.
+# Dropping the cache forces Dart to re-copy from the patched source on next analyze.
+PLUGIN_MANAGER_CACHE="$HOME/.dartServer/.plugin_manager"
+if [ -d "$PLUGIN_MANAGER_CACHE" ]; then
+  rm -rf "$PLUGIN_MANAGER_CACHE"
+  echo "  Cleared $PLUGIN_MANAGER_CACHE"
+fi
