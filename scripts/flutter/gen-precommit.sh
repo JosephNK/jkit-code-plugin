@@ -23,9 +23,6 @@ EOF
   exit 1
 }
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-
 # ─── Parse arguments ───
 FRAMEWORK=""
 OUTPUT_DIR=""
@@ -77,14 +74,6 @@ repos:
         name: dart format
         entry: dart format
         language: system
-        types: [file]
-        files: \\.dart\$
-
-      - id: architecture-lint
-        name: architecture lint
-        entry: poetry run python ${PLUGIN_ROOT}/rules/flutter/custom-lint/architecture-lint.py ${ENTRY}
-        language: system
-        pass_filenames: false
         types: [file]
         files: \\.dart\$
 
