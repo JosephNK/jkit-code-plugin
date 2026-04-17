@@ -87,7 +87,7 @@ repos:
 
       - id: architecture-lint
         name: architecture lint
-        entry: bash -c 'cd ${ENTRY} && dart run architecture_lint:lint lib'
+        entry: bash -c 'cd ${ENTRY} && dart run architecture_lint:lint'
         language: system
         pass_filenames: false
         types: [file]

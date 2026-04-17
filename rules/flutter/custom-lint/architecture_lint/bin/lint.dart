@@ -5,7 +5,7 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:architecture_lint/architecture_lint.dart';
 
 Future<int> main(List<String> args) async {
-  final roots = args.isEmpty ? <String>['lib'] : args;
+  final roots = args.isEmpty ? <String>['.'] : args;
   final lints = createArchitectureLints();
 
   final absRoots = roots.map((r) => Directory(r).absolute.path).toList();
