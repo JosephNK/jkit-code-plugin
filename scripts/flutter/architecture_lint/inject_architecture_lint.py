@@ -4,11 +4,16 @@
 Uses ruamel.yaml for round-trip YAML editing — preserves comments,
 formatting, and existing structure.
 
+architecture_lint is injected as a git dependency so the generated
+pubspec.yaml is portable across developer machines and CI.
+
 Usage:
     poetry run python3 inject_architecture_lint.py \
         --pubspec app/pubspec.yaml \
         --analysis-options app/analysis_options.yaml \
-        --lint-path /path/to/architecture_lint
+        --git-url https://github.com/JosephNK/jkit-code-plugin.git \
+        --git-path rules/flutter/custom-lint/architecture_lint \
+        --git-ref v0.1.28
 """
 
 from __future__ import annotations
@@ -22,11 +27,17 @@ from ruamel.yaml import YAML
 PACKAGE_NAME = "architecture_lint"
 
 
+def _build_git_dep(url: str, path: str, ref: str) -> dict:
+    return {"git": {"url": url, "path": path, "ref": ref}}
+
+
 # ─── pubspec.yaml ───
 
 
-def inject_pubspec(pubspec_path: Path, lint_path: str) -> bool:
-    """Add architecture_lint as dev_dependency to pubspec.yaml."""
+def inject_pubspec(
+    pubspec_path: Path, git_url: str, git_path: str, git_ref: str
+) -> bool:
+    """Add architecture_lint as git dev_dependency to pubspec.yaml."""
     if not pubspec_path.is_file():
         print(f"Error: {pubspec_path} not found", file=sys.stderr)
         return False
@@ -39,24 +50,31 @@ def inject_pubspec(pubspec_path: Path, lint_path: str) -> bool:
         print(f"Error: {pubspec_path} is empty", file=sys.stderr)
         return False
 
-    # Ensure dev_dependencies section exists
     if "dev_dependencies" not in data:
         data["dev_dependencies"] = {}
 
     if data["dev_dependencies"] is None:
         data["dev_dependencies"] = {}
 
-    # Idempotent: skip if already present
-    if PACKAGE_NAME in data["dev_dependencies"]:
-        print(f"  {PACKAGE_NAME} already in {pubspec_path}, skipping")
+    desired = _build_git_dep(git_url, git_path, git_ref)
+    current = data["dev_dependencies"].get(PACKAGE_NAME)
+
+    if (
+        isinstance(current, dict)
+        and isinstance(current.get("git"), dict)
+        and current["git"].get("url") == git_url
+        and current["git"].get("path") == git_path
+        and current["git"].get("ref") == git_ref
+    ):
+        print(f"  {PACKAGE_NAME} already pinned to {git_ref} in {pubspec_path}")
         return True
 
-    data["dev_dependencies"][PACKAGE_NAME] = {"path": lint_path}
+    data["dev_dependencies"][PACKAGE_NAME] = desired
 
     with open(pubspec_path, "w") as f:
         yaml.dump(data, f)
 
-    print(f"  Injected {PACKAGE_NAME} into {pubspec_path}")
+    print(f"  Injected {PACKAGE_NAME} (git ref {git_ref}) into {pubspec_path}")
     return True
 
 
@@ -76,7 +94,6 @@ def inject_analysis_options(analysis_path: Path) -> bool:
     if data is None:
         data = {}
 
-    # Ensure analyzer section exists
     if "analyzer" not in data:
         data["analyzer"] = {}
 
@@ -86,16 +103,13 @@ def inject_analysis_options(analysis_path: Path) -> bool:
     plugins = data["analyzer"].get("plugins")
 
     if plugins is None:
-        # No plugins yet — create list
         data["analyzer"]["plugins"] = [PACKAGE_NAME]
     elif isinstance(plugins, list):
-        # Already a list — append if not present
         if PACKAGE_NAME in plugins:
             print(f"  {PACKAGE_NAME} already in {analysis_path}, skipping")
             return True
         plugins.append(PACKAGE_NAME)
     else:
-        # Scalar value — convert to list
         if str(plugins) == PACKAGE_NAME:
             print(f"  {PACKAGE_NAME} already in {analysis_path}, skipping")
             return True
@@ -108,50 +122,6 @@ def inject_analysis_options(analysis_path: Path) -> bool:
     return True
 
 
-# ─── tools/analyzer_plugin/pubspec.yaml ───
-
-
-def fix_bootstrap_pubspec(lint_path: str) -> bool:
-    """Rewrite architecture_lint's tools/analyzer_plugin/pubspec.yaml so
-    its path dependency points to an absolute location.
-
-    Dart analyzer copies only tools/analyzer_plugin/ into
-    ~/.dartServer/.plugin_manager/<hash>/analyzer_plugin/ before running,
-    breaking any relative 'path: ../../' reference. Replace with the
-    absolute $LINT_PATH so resolution survives the copy.
-    """
-    bootstrap = Path(lint_path) / "tools" / "analyzer_plugin" / "pubspec.yaml"
-    if not bootstrap.is_file():
-        print(f"  Warning: {bootstrap} not found, skipping", file=sys.stderr)
-        return True  # non-fatal: plugin may not have bootstrap
-
-    yaml = YAML()
-    yaml.preserve_quotes = True
-    data = yaml.load(bootstrap)
-
-    if data is None:
-        return True
-
-    deps = data.get("dependencies")
-    if not isinstance(deps, dict) or PACKAGE_NAME not in deps:
-        return True
-
-    current = deps[PACKAGE_NAME]
-    desired = {"path": lint_path}
-
-    if isinstance(current, dict) and current.get("path") == lint_path:
-        print(f"  {bootstrap} already uses absolute path, skipping")
-        return True
-
-    deps[PACKAGE_NAME] = desired
-
-    with open(bootstrap, "w") as f:
-        yaml.dump(data, f)
-
-    print(f"  Patched {bootstrap}")
-    return True
-
-
 # ─── Main ───
 
 
@@ -159,29 +129,39 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Inject architecture_lint into Flutter project config"
     )
-    parser.add_argument(
-        "--pubspec",
-        required=True,
-        help="Path to pubspec.yaml",
-    )
+    parser.add_argument("--pubspec", required=True, help="Path to pubspec.yaml")
     parser.add_argument(
         "--analysis-options",
         required=True,
         help="Path to analysis_options.yaml",
     )
     parser.add_argument(
-        "--lint-path",
+        "--git-url",
         required=True,
-        help="Absolute path to architecture_lint package",
+        help="Git repository URL for architecture_lint",
+    )
+    parser.add_argument(
+        "--git-path",
+        required=True,
+        help="Path to architecture_lint package within the repo",
+    )
+    parser.add_argument(
+        "--git-ref",
+        required=True,
+        help="Git ref (tag recommended, e.g. v0.1.28)",
     )
     args = parser.parse_args()
 
     print(f"Injecting {PACKAGE_NAME}...")
 
     ok = True
-    ok = inject_pubspec(Path(args.pubspec), args.lint_path) and ok
+    ok = (
+        inject_pubspec(
+            Path(args.pubspec), args.git_url, args.git_path, args.git_ref
+        )
+        and ok
+    )
     ok = inject_analysis_options(Path(args.analysis_options)) and ok
-    ok = fix_bootstrap_pubspec(args.lint_path) and ok
 
     if ok:
         print("Done.")
