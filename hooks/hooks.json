@@ -19,8 +19,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\"); if echo \"$COMMAND\" | grep -qE \"rm\\s+(-[a-zA-Z]*r[a-zA-Z]*\\s+)*-?-?[a-zA-Z]*f[a-zA-Z]*\\s+(/|~|\\.\\.)\"; then echo \"차단: 위험한 삭제 명령어가 감지되었습니다.\"; exit 2; fi; if echo \"$COMMAND\" | grep -qE \"rm\\s+(-[a-zA-Z]*f[a-zA-Z]*\\s+)*-?-?[a-zA-Z]*r[a-zA-Z]*\\s+(/|~|\\.\\.)\"; then echo \"차단: 위험한 삭제 명령어가 감지되었습니다.\"; exit 2; fi; if echo \"$COMMAND\" | grep -qiE \"(DROP\\s+DATABASE|TRUNCATE\\s+TABLE|DELETE\\s+FROM\\s+\\S+\\s*;)\"; then if echo \"$COMMAND\" | grep -qiE \"(-h\\s+|-host[= ]\\s*|--host[= ]\\s*)\" && ! echo \"$COMMAND\" | grep -qiE \"(-h\\s+|-host[= ]\\s*|--host[= ]\\s*)(localhost|127\\.0\\.0\\.1)\"; then echo \"차단: 외부 DB에 대한 삭제 명령어가 감지되었습니다.\"; exit 2; fi; fi; if echo \"$COMMAND\" | grep -qE \"chmod\\s+0?777\"; then echo \"차단: chmod 777은 보안 정책에 의해 금지되었습니다.\"; exit 2; fi; exit 0'",
-            "description": "Block dangerous bash commands (rm -rf /, DROP DATABASE on remote, chmod 777)"
+            "command": "bash -c 'INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\"); if echo \"$COMMAND\" | grep -qiE \"(DROP\\s+DATABASE|TRUNCATE\\s+TABLE|DELETE\\s+FROM\\s+\\S+\\s*;)\"; then if echo \"$COMMAND\" | grep -qiE \"(-h\\s+|-host[= ]\\s*|--host[= ]\\s*)\" && ! echo \"$COMMAND\" | grep -qiE \"(-h\\s+|-host[= ]\\s*|--host[= ]\\s*)(localhost|127\\.0\\.0\\.1)\"; then echo \"차단: 외부 DB에 대한 삭제 명령어가 감지되었습니다.\"; exit 2; fi; fi; exit 0'",
+            "description": "Block DROP DATABASE / TRUNCATE / DELETE on external hosts"
+          },
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\"); if echo \"$COMMAND\" | grep -qE \"chmod\\s+0?777\"; then echo \"차단: chmod 777은 보안 정책에 의해 금지되었습니다.\"; exit 2; fi; exit 0'",
+            "description": "Block chmod 777"
           }
         ]
       }
