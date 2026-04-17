@@ -23,6 +23,8 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./common.sh
+source "$SCRIPT_DIR/common.sh"
 
 # ─── Parse arguments ───
 FRAMEWORK=""
@@ -49,6 +51,14 @@ done
 [ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
+# ─── Guardrail: cwd must be a git repo root ───
+# ARCHITECTURE.md is a project-level doc; refuse to write it from a random dir.
+jkit::ensure_git_repo "."
+
+# ─── Normalize -p to absolute (create if missing so docs/ works) ───
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
+
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
 BASE_ARCH="$RULES_DIR/base/architecture.md"
 
@@ -57,7 +67,6 @@ if [ ! -f "$BASE_ARCH" ]; then
   exit 1
 fi
 
-mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/ARCHITECTURE.md"
 
 cp "$BASE_ARCH" "$OUTPUT_FILE"

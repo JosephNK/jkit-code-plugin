@@ -16,6 +16,16 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 
 All script paths below use `$JKIT_DIR` as the base directory.
 
+## Pin project root
+
+**IMPORTANT**: Capture the project root **before** running any step, and `cd` into it at the start of every step that executes scripts. cwd drift is the most common cause of wrong-directory bugs (e.g., generating `AGENTS.md` inside a subdir).
+
+```bash
+PROJECT_ROOT="$(pwd)"   # run this from the intended project root
+```
+
+Every shell block below assumes `cd "$PROJECT_ROOT"` has already been executed in that step.
+
 ## Steps
 
 ### 1. Ask project name
@@ -51,6 +61,7 @@ This step is optional because the user may need to customize these files.
 
 If yes:
 ```bash
+cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/gen-agents.sh nestjs -p . -n "<project-name>" --docs-dir docs
 ```
 
@@ -59,6 +70,8 @@ $JKIT_DIR/scripts/gen-agents.sh nestjs -p . -n "<project-name>" --docs-dir docs
 Run the following scripts from the plugin's `scripts/` directory.
 
 ```bash
+cd "$PROJECT_ROOT"
+
 # 1. GIT.md
 $JKIT_DIR/scripts/gen-git.sh -p docs
 

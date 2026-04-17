@@ -19,6 +19,8 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./common.sh
+source "$SCRIPT_DIR/common.sh"
 
 # ─── Parse arguments ───
 OUTPUT_DIR=""
@@ -41,6 +43,13 @@ done
 
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
+# ─── Guardrail: cwd must be a git repo root ───
+jkit::ensure_git_repo "."
+
+# ─── Normalize -p to absolute ───
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
+
 SOURCE="$PLUGIN_ROOT/rules/common/git.md"
 
 if [ ! -f "$SOURCE" ]; then
@@ -48,7 +57,6 @@ if [ ! -f "$SOURCE" ]; then
   exit 1
 fi
 
-mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/GIT.md"
 
 cp "$SOURCE" "$OUTPUT_FILE"

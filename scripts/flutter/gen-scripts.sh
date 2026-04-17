@@ -1,30 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=../common.sh
+source "$SCRIPT_DIR/../common.sh"
+
 # ─── Usage ───
 usage() {
   cat <<'EOF'
-Usage: gen-scripts.sh -p <output-dir>
+Usage: gen-scripts.sh -p <output-dir> [-entry <dir>]
 
 Generates wrapper shell scripts for Flutter project utilities.
 
 Options:
-  -p <dir>         Output directory (required, project root)
+  -p <dir>         Output directory (required, Flutter project root)
+  -entry <dir>     Flutter entry directory (default: app). Used only for project-root validation.
 
 Examples:
   ./scripts/flutter/gen-scripts.sh -p .
   ./scripts/flutter/gen-scripts.sh -p /path/to/my-flutter-project
+  ./scripts/flutter/gen-scripts.sh -p . -entry client
 EOF
   exit 1
 }
 
 # ─── Parse arguments ───
 OUTPUT_DIR=""
+ENTRY="app"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     -p)
       OUTPUT_DIR="${2:?-p requires a directory}"
+      shift 2
+      ;;
+    -entry)
+      ENTRY="${2:?-entry requires a directory}"
       shift 2
       ;;
     -h|--help)
@@ -38,6 +49,12 @@ while [ $# -gt 0 ]; do
 done
 
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+
+# ─── Guardrail: -p must be a Flutter project root ───
+jkit::ensure_flutter_root "$OUTPUT_DIR" "$ENTRY"
+
+# ─── Normalize -p to absolute ───
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
 
 # ─── Ensure scripts directory exists ───
 SCRIPTS_DIR="$OUTPUT_DIR/scripts"

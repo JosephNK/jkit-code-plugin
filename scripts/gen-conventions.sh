@@ -24,6 +24,8 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./common.sh
+source "$SCRIPT_DIR/common.sh"
 
 # ─── Parse arguments ───
 FRAMEWORK=""
@@ -55,6 +57,13 @@ done
 [ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
+# ─── Guardrail: cwd must be a git repo root ───
+jkit::ensure_git_repo "."
+
+# ─── Normalize -p to absolute ───
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
+
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
 BASE_CONV="$RULES_DIR/base/conventions.md"
 
@@ -64,7 +73,6 @@ if [ ! -f "$BASE_CONV" ]; then
 fi
 
 # ─── Concatenate base + stacks ───
-mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/CONVENTIONS.md"
 
 cp "$BASE_CONV" "$OUTPUT_FILE"

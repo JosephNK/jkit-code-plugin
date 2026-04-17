@@ -16,6 +16,16 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 
 All script paths below use `$JKIT_DIR` as the base directory.
 
+## Pin project root
+
+**IMPORTANT**: Capture the project root **before** running any step, and `cd` into it at the start of every step that executes scripts or `poetry run` commands. cwd drift (e.g., a prior `cd app/` that was not reverted) is the most common cause of wrong-directory bugs (overwriting `app/AGENTS.md`, pre-commit hooks baking wrong config paths, etc.).
+
+```bash
+PROJECT_ROOT="$(pwd)"   # run this from the intended project root
+```
+
+Every shell block below assumes `cd "$PROJECT_ROOT"` has already been executed in that step.
+
 ## Steps
 
 ### 1. Ask project name
@@ -45,6 +55,7 @@ This step is optional because the user may need to customize these files.
 
 If yes:
 ```bash
+cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
 ```
 
@@ -53,6 +64,8 @@ $JKIT_DIR/scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
 Run the following scripts from the plugin's `scripts/` directory.
 
 ```bash
+cd "$PROJECT_ROOT"
+
 # 1. GIT.md
 $JKIT_DIR/scripts/gen-git.sh -p docs
 
@@ -66,10 +79,10 @@ $JKIT_DIR/scripts/gen-conventions.sh flutter -p docs --with <conventions-stacks>
 $JKIT_DIR/scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
 
 # 5. pyproject.toml
-$JKIT_DIR/scripts/flutter/gen-pyproject.sh flutter -p . -n "<project-name>" -d "<description>" -a "<author>"
+$JKIT_DIR/scripts/flutter/gen-pyproject.sh flutter -p . -entry <entry-dir> -n "<project-name>" -d "<description>" -a "<author>"
 
 # 6. Utility scripts
-$JKIT_DIR/scripts/flutter/gen-scripts.sh -p .
+$JKIT_DIR/scripts/flutter/gen-scripts.sh -p . -entry <entry-dir>
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
@@ -77,7 +90,10 @@ Skip `-d` and `-a` in gen-pyproject.sh if the user did not provide them.
 
 ### 7. Install dependencies
 
+**IMPORTANT**: Always `cd "$PROJECT_ROOT"` before `poetry run pre-commit install`. If cwd is wrong, the generated `.git/hooks/pre-commit` bakes in a wrong relative `--config` path and every subsequent commit fails with "No .pre-commit-config.yaml found".
+
 ```bash
+cd "$PROJECT_ROOT"
 poetry install
 git config --local --unset-all core.hooksPath || true
 poetry run pre-commit install
@@ -89,13 +105,14 @@ Inject `architecture_lint` analyzer plugin into the Flutter entry project.
 This must run **after** `poetry install` (requires `ruamel-yaml`).
 
 ```bash
+cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/flutter/gen-architecture-lint.sh flutter -p . -entry <entry-dir>
 ```
 
 After injection, run `dart pub get` in the entry directory to resolve the new dependency:
 
 ```bash
-cd <entry-dir> && dart pub get && cd ..
+cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
 ### 9. Report

@@ -27,6 +27,8 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./common.sh
+source "$SCRIPT_DIR/common.sh"
 
 # ─── Parse arguments ───
 FRAMEWORK=""
@@ -63,6 +65,14 @@ done
 [ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
 
+# ─── Guardrail: -p must be a project root (git repo) ───
+# AGENTS.md/CLAUDE.md symlink live at the project root. Refuse to write them
+# into a random subdirectory (e.g. accidental `-p .` from inside `app/`).
+jkit::ensure_git_repo "$OUTPUT_DIR"
+
+# ─── Normalize -p to absolute so downstream paths ignore cwd drift ───
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
+
 # Build DOCS_DIR: add trailing slash if not empty
 if [ -n "$DOCS_DIR" ]; then
   DOCS_DIR="${DOCS_DIR%/}/"
@@ -70,7 +80,7 @@ fi
 
 # Default project name to directory basename
 if [ -z "$PROJECT_NAME" ]; then
-  PROJECT_NAME="$(basename "$(cd "$OUTPUT_DIR" 2>/dev/null && pwd || echo "$OUTPUT_DIR")")"
+  PROJECT_NAME="$(basename "$OUTPUT_DIR")"
 fi
 
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"

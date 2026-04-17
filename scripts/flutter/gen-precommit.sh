@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=../common.sh
+source "$SCRIPT_DIR/../common.sh"
+
 # ─── Usage ───
 usage() {
   cat <<'EOF'
@@ -53,6 +57,12 @@ done
 
 [ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
 [ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+
+# ─── Guardrail: -p must be a Flutter project root ───
+jkit::ensure_flutter_root "$OUTPUT_DIR" "$ENTRY"
+
+# ─── Normalize -p to absolute ───
+OUTPUT_DIR="$(jkit::normalize_path "$OUTPUT_DIR")"
 
 # ─── Generate .pre-commit-config.yaml ───
 DEST="$OUTPUT_DIR/.pre-commit-config.yaml"

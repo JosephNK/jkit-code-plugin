@@ -30,6 +30,8 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=../common.sh
+source "$SCRIPT_DIR/../common.sh"
 
 # ─── Git coordinates ───
 GIT_URL="https://github.com/JosephNK/jkit-code-plugin.git"
@@ -78,11 +80,15 @@ if [ -z "$REF" ]; then
   REF="v${VERSION}"
 fi
 
+# ─── Guardrail: -p must be a Flutter project root ───
+jkit::ensure_flutter_root "$PROJECT_DIR" "$ENTRY"
+
+# ─── Normalize -p to absolute ───
+PROJECT_DIR="$(jkit::normalize_path "$PROJECT_DIR")"
+
 # ─── Resolve paths ───
 PUBSPEC="$PROJECT_DIR/$ENTRY/pubspec.yaml"
 ANALYSIS_OPTIONS="$PROJECT_DIR/$ENTRY/analysis_options.yaml"
-
-[ ! -f "$PUBSPEC" ] && { echo "Error: $PUBSPEC not found" >&2; exit 1; }
 
 # ─── Inject ───
 cd "$PROJECT_DIR"
