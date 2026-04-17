@@ -193,7 +193,7 @@ PY
 # ─── Commit + tag + push ───
 git add "$PLUGIN_JSON" "$MARKETPLACE_JSON" "$BOOTSTRAP_PUBSPEC"
 git commit -m "chore: 버전 ${NEW} 범프"
-git tag "$TAG"
+git tag -a "$TAG" -m "Release $TAG"
 
 echo ""
 echo "Pushing commit and tag..."
