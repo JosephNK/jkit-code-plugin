@@ -108,6 +108,50 @@ def inject_analysis_options(analysis_path: Path) -> bool:
     return True
 
 
+# ─── tools/analyzer_plugin/pubspec.yaml ───
+
+
+def fix_bootstrap_pubspec(lint_path: str) -> bool:
+    """Rewrite architecture_lint's tools/analyzer_plugin/pubspec.yaml so
+    its path dependency points to an absolute location.
+
+    Dart analyzer copies only tools/analyzer_plugin/ into
+    ~/.dartServer/.plugin_manager/<hash>/analyzer_plugin/ before running,
+    breaking any relative 'path: ../../' reference. Replace with the
+    absolute $LINT_PATH so resolution survives the copy.
+    """
+    bootstrap = Path(lint_path) / "tools" / "analyzer_plugin" / "pubspec.yaml"
+    if not bootstrap.is_file():
+        print(f"  Warning: {bootstrap} not found, skipping", file=sys.stderr)
+        return True  # non-fatal: plugin may not have bootstrap
+
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    data = yaml.load(bootstrap)
+
+    if data is None:
+        return True
+
+    deps = data.get("dependencies")
+    if not isinstance(deps, dict) or PACKAGE_NAME not in deps:
+        return True
+
+    current = deps[PACKAGE_NAME]
+    desired = {"path": lint_path}
+
+    if isinstance(current, dict) and current.get("path") == lint_path:
+        print(f"  {bootstrap} already uses absolute path, skipping")
+        return True
+
+    deps[PACKAGE_NAME] = desired
+
+    with open(bootstrap, "w") as f:
+        yaml.dump(data, f)
+
+    print(f"  Patched {bootstrap}")
+    return True
+
+
 # ─── Main ───
 
 
@@ -137,6 +181,7 @@ def main() -> None:
     ok = True
     ok = inject_pubspec(Path(args.pubspec), args.lint_path) and ok
     ok = inject_analysis_options(Path(args.analysis_options)) and ok
+    ok = fix_bootstrap_pubspec(args.lint_path) and ok
 
     if ok:
         print("Done.")
