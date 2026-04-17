@@ -85,6 +85,14 @@ repos:
         types: [file]
         files: \\.dart\$
 
+      - id: architecture-lint
+        name: architecture lint
+        entry: bash -c 'cd ${ENTRY} && dart run architecture_lint:lint lib'
+        language: system
+        pass_filenames: false
+        types: [file]
+        files: \\.dart\$
+
       - id: flutter-test
         name: flutter test (related only)
         entry: bash -c 'cd ${ENTRY} && tf=\$(git diff --cached --name-only --diff-filter=ACMR | grep "^${ENTRY}/.*\\.dart\$" | sed "s|^${ENTRY}/||" | while read f; do if [[ \$f == test/*_test.dart ]]; then echo \$f; elif [[ \$f == lib/* ]]; then t=test/\${f#lib/}; t=\${t%.dart}_test.dart; [ -f "\$t" ] && echo \$t; fi; done | sort -u) && if [ -n "\$tf" ]; then flutter test \$tf; else echo "No related tests found, skipping"; fi'

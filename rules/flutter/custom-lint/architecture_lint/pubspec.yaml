@@ -7,6 +7,9 @@ publish_to: "none"
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
+executables:
+  architecture_lint: lint
+
 dependencies:
   analyzer: ">=6.0.0 <13.0.0"
   analyzer_plugin: ">=0.13.0 <0.15.0"

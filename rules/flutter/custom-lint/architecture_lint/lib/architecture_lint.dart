@@ -3,6 +3,8 @@ library architecture_lint;
 export 'src/architecture_lint_plugin.dart';
 export 'src/classification.dart';
 export 'src/constants.dart';
+export 'src/dart_lint.dart';
+export 'src/runner.dart';
 export 'src/lints/e1_entities_import_lint.dart';
 export 'src/lints/e2_usecases_dependency_lint.dart';
 export 'src/lints/e3_bloc_dependency_lint.dart';
