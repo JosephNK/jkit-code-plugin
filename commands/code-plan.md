@@ -1,6 +1,6 @@
 # 계획 문서 생성 커맨드
 
-`ecc:plan` 스킬을 래핑하여 요구사항 정리 → 리스크 평가 → 단계별 구현 계획을 수립하고, 결과를 `docs/PLAN.md`로 저장합니다.
+`ecc:plan` 스킬을 래핑하여 요구사항 정리 → 리스크 평가 → 단계별 구현 계획을 수립하고, 결과를 `code-harness/PLAN.md`로 저장합니다.
 
 생성된 `PLAN.md`는 이후 `/code-tasks` 커맨드의 입력으로 사용됩니다.
 
@@ -9,13 +9,13 @@
 ```
 /code-plan <요구사항 또는 설명>
 /code-plan 로그인 화면에 2FA 추가
-/code-plan 로그인 화면에 2FA 추가 -o docs/PLAN.md
+/code-plan 로그인 화면에 2FA 추가 -o code-harness/PLAN.md
 ```
 
 ## 인자
 
 - `$ARGUMENTS` 본문: 계획을 수립할 요구사항/설명 (필수)
-- `-o <path>`: 출력 파일 경로 (선택, 기본값: `docs/PLAN.md`)
+- `-o <path>`: 출력 파일 경로 (선택, 기본값: `code-harness/PLAN.md`)
 
 ## 사전 조건
 
@@ -27,7 +27,7 @@
 
 ### Step 1: 인자 파싱 및 사전 조건 확인
 
-1. `$ARGUMENTS`에서 `-o <path>` 옵션을 분리하여 `OUTPUT`에 저장 (없으면 `docs/PLAN.md`)
+1. `$ARGUMENTS`에서 `-o <path>` 옵션을 분리하여 `OUTPUT`에 저장 (없으면 `code-harness/PLAN.md`)
 2. 나머지 본문을 요구사항 `DESCRIPTION`으로 취급 — 비어 있으면 에러 메시지 출력 후 종료
 3. `ecc:plan` 스킬 사용 가능 여부 확인 — 불가 시 "ecc 플러그인 설치 필요" 안내 후 종료
 

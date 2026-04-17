@@ -6,14 +6,14 @@
 
 ```
 /code-tasks <plan-file-path>
-/code-tasks docs/PLAN.md
-/code-tasks docs/PLAN.md -o docs/TASKS.md
+/code-tasks code-harness/PLAN.md
+/code-tasks code-harness/PLAN.md -o code-harness/TASKS.md
 ```
 
 ## 인자
 
 - `$ARGUMENTS` 첫 번째 값: 계획 문서 경로 (필수)
-- `-o <path>`: 출력 파일 경로 (선택, 기본값: `docs/TASKS.md`)
+- `-o <path>`: 출력 파일 경로 (선택, 기본값: `code-harness/TASKS.md`)
 - `-arch <path>`: 아키텍처 문서 경로 (선택, 기본값: `docs/ARCHITECTURE.md`)
 - `-conv <path>`: 컨벤션 문서 경로 (선택, 기본값: `docs/CONVENTIONS.md`)
 

@@ -6,15 +6,15 @@ Task 문서(TASKS.md)와 프로젝트 아키텍처/컨벤션을 분석하여, Ta
 
 ```
 /code-qa <tasks-file-path>
-/code-qa docs/TASKS.md
-/code-qa docs/TASKS.md -o docs/QA.md
-/code-qa docs/TASKS.md -arch docs/ARCHITECTURE.md -conv docs/CONVENTIONS.md
+/code-qa code-harness/TASKS.md
+/code-qa code-harness/TASKS.md -o code-harness/QA.md
+/code-qa code-harness/TASKS.md -arch docs/ARCHITECTURE.md -conv docs/CONVENTIONS.md
 ```
 
 ## 인자
 
 - `$ARGUMENTS` 첫 번째 값: Task 문서 경로 (필수)
-- `-o <path>`: 출력 파일 경로 (선택, 기본값: `docs/QA.md`)
+- `-o <path>`: 출력 파일 경로 (선택, 기본값: `code-harness/QA.md`)
 - `-arch <path>`: 아키텍처 문서 경로 (선택, 기본값: `docs/ARCHITECTURE.md`)
 - `-conv <path>`: 컨벤션 문서 경로 (선택, 기본값: `docs/CONVENTIONS.md`)
 
