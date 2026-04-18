@@ -51,11 +51,11 @@ void main() {{
 
       // FlutterError.onError ( to catch all unhandled-flutter-framework-errors )
       FlutterError.onError = (FlutterErrorDetails details) {{
-        Logging.e(':: Interceptor FlutterError onError: ${{details}}');
+        LeafLogging.e(':: Interceptor FlutterError onError: ${{details}}');
         FlutterError.dumpErrorToConsole(details);
       }};
       PlatformDispatcher.instance.onError = (error, stack) {{
-        Logging.e(':: Interceptor Platform Error: ${{error}}');
+        LeafLogging.e(':: Interceptor Platform Error: ${{error}}');
         return true;
       }};
 
@@ -74,7 +74,7 @@ void main() {{
     }},
     (error, stackTrace) {{
       // Zone ( to catch all unhandled-asynchronous-errors )
-      Logging.e(':: Interceptor Zone Error : ${{error}}, StackTrace : ${{stackTrace}}');
+      LeafLogging.e(':: Interceptor Zone Error : ${{error}}, StackTrace : ${{stackTrace}}');
     }},
   );
 }}
