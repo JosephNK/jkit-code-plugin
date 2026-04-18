@@ -1,6 +1,6 @@
 {
   "name": "jkit",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Personal development toolkit for Claude Code — scaffolding, conventions, and config generation",
   "author": {
     "name": "josephnk"
@@ -13,8 +13,8 @@
     "agents"
   ],
   "agents": [
-    "./agents/code-evaluator.md",                                                                                                                                                             
-    "./agents/code-generator.md" 
+    "./agents/code-evaluator.md",
+    "./agents/code-generator.md"
   ],
   "skills": [
     "./skills/"
