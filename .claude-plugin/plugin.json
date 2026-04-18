@@ -13,7 +13,8 @@
     "agents"
   ],
   "agents": [
-    "./agents/"
+    "./agents/code-evaluator.md",                                                                                                                                                             
+    "./agents/code-generator.md" 
   ],
   "skills": [
     "./skills/"
