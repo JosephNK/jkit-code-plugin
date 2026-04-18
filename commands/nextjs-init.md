@@ -36,7 +36,7 @@ Ask the user for the project name. Default: current directory name.
 
 Show the **conventions** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
-> Available conventions stacks: `mantine`, `design-system`, `tanstack-query`, `next-proxy`
+> Available conventions stacks: `mantine`, `design-system`, `tanstack-query`, `next-proxy`, `css-policy`
 
 ### 3. Ask ESLint stacks
 

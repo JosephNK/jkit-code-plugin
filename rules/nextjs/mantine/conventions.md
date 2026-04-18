@@ -1,7 +1,8 @@
 ## Mantine
 
-All UI components **MUST** use Mantine.
+All UI components **MUST** use Mantine (**version 9 or higher**).
 
+- Minimum version: `"@mantine/core": "^9.0.0"` (apply the same `^9.0.0` constraint to matching packages: `@mantine/hooks`, `@mantine/form`, `@mantine/notifications`, etc.)
 - **UI components** (buttons, inputs, text, layout, feedback, etc.) **MUST use Mantine** — semantic HTML (`<form>`, `<section>`, `<nav>`, etc.) is allowed as-is
 - Use Mantine docs to find the appropriate component for each HTML element
 - Theme customization: manage via `createTheme()` in `src/theme.ts`
@@ -12,8 +13,9 @@ All UI components **MUST** use Mantine.
 ### Styling Rules
 
 - Style customization priority: Mantine `style props` → `style` prop → CSS Modules (`.module.css`)
-- **NO utility CSS frameworks** (Tailwind, UnoCSS, etc.) — Mantine style props cover most cases
 - Light/dark: `defaultColorScheme="auto"` — Mantine handles color scheme switching; do NOT use manual dark mode CSS selectors or hardcode colors for a single scheme
+
+> For the ban on utility CSS frameworks, see the separate `css-policy` conventions module.
 
 ### Documentation Reference
 
