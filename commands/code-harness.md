@@ -151,11 +151,49 @@ code-harness/
 
 #### 상태 파일이 없는 경우 (첫 실행)
 
-$ARGUMENTS가 비어 있거나 부족하면 사용자에게 선택형으로 입력받는다.
+**선행 조건 확인** — 아래 규칙에 따라 판정하고, 충족하지 못하면 실행을 **중단**하고 안내 메시지만 출력한다:
 
-1. **task-source 선택** — `code-harness/` 에서 TASK 키워드 포함 `.md` 파일 탐색, 번호 목록 표시
-2. **eval-source 선택** — `code-harness/` 에서 QA, TEST, EVAL 키워드 포함 `.md` 파일 탐색
-3. **대상 ID 선택** — task-source를 읽어 Task 목록 표시 (범위/개별 선택)
+- **$ARGUMENTS에 명시적 task-source/eval-source 경로가 포함된 경우** (예: `/code-harness code-harness/TASKS.md code-harness/QA.md "Task 1"`):
+  - 지정된 두 파일이 **실제로 존재**하는지만 확인한다
+  - 존재하지 않으면 중단하고 안내한다 (경로 오타/미생성)
+  - 존재하면 `code-harness/` 기본 경로 탐색은 건너뛰되, **아래 "선행 조건 충족 이후" 흐름으로 이동**하여 대상 ID 선택 → state.json 생성 단계는 반드시 수행한다 (바로 Step 2로 건너뛰지 않는다)
+
+- **명시적 경로가 없는 경우** (기본 경로 탐색으로 진입):
+  - `code-harness/` 디렉토리에 **TASK 키워드 포함 `.md` 파일이 1개 이상** 존재
+  - `code-harness/` 디렉토리에 **QA/TEST/EVAL 키워드 포함 `.md` 파일이 1개 이상** 존재
+  - 둘 중 하나라도 0개면 중단
+
+안내 메시지 예시:
+
+```
+code-harness/TASKS.md 또는 QA.md가 없습니다.
+
+먼저 아래 순서로 스펙 문서를 작성하세요:
+  /code-plan "피처 설명"                     # code-harness/PLAN.md 생성
+  /code-tasks code-harness/PLAN.md            # PLAN.md → TASKS.md 생성
+  /code-qa code-harness/TASKS.md              # TASKS.md → QA.md 생성
+
+파일 생성 후 다시 /code-harness를 실행하세요.
+
+또는 다른 경로의 파일을 직접 지정:
+  /code-harness <path/to/TASKS.md> <path/to/QA.md> "Task 1"
+```
+
+> state.json도 생성하지 않고 즉시 종료한다 (중간 상태로 남지 않도록).
+
+> **PLAN/TASKS 교체 시 주의** — 기능 구현 완료 후 디자인 트랙을 추가하거나 새 PLAN으로 전환할 때는, `/code-harness` 실행 전 `code-harness/harness-state/`를 **수동으로 삭제**하세요. 이전 라운드의 `state.json`(currentTaskId/taskQueue/completedTasks)이 새 Task ID 세트와 충돌하여 오동작할 수 있습니다.
+
+---
+
+선행 조건을 충족한 경우, 아래 단계로 진행한다. **명시적 경로 케이스·기본 경로 케이스 모두** 이 흐름을 거쳐 state.json 초기화까지 수행한다. $ARGUMENTS가 비어 있거나 부족한 단계에서는 사용자에게 선택형으로 입력받는다.
+
+1. **task-source 결정**
+   - 명시적 경로가 있으면 그대로 사용
+   - 없으면 `code-harness/` 에서 TASK 키워드 포함 `.md` 파일 탐색 후 번호 목록 표시
+2. **eval-source 결정**
+   - 명시적 경로가 있으면 그대로 사용
+   - 없으면 `code-harness/` 에서 QA, TEST, EVAL 키워드 포함 `.md` 파일 탐색 후 번호 목록 표시
+3. **대상 ID 결정** — task-source를 읽어 Task 목록 표시 (범위/개별 선택). 인자로 대상 ID가 주어졌으면 그대로 사용. task-source에 Task 항목이 0개면 위 안내 메시지와 동일하게 실행을 중단한다
 4. **옵션** — max-rounds (기본 10)
 
 > 각 단계에서 반드시 사용자 응답을 기다린다. 사용자 입력 없이 자동으로 진행하지 않는다.
