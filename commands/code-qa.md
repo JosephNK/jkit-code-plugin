@@ -5,11 +5,11 @@ Task 문서(TASKS.md)와 프로젝트 아키텍처/컨벤션을 분석하여, Ta
 ## 사용법
 
 ```
-/code-qa <tasks-file-path>
-/code-qa code-harness/TASKS.md
-/code-qa code-harness/TASKS.md -o code-harness/QA.md
-/code-qa code-harness/TASKS.md -arch docs/ARCHITECTURE.md -conv docs/CONVENTIONS.md
-/code-qa code-harness/TASKS.md -plan code-harness/PLAN.md
+/jkit:code-qa <tasks-file-path>
+/jkit:code-qa code-harness/TASKS.md
+/jkit:code-qa code-harness/TASKS.md -o code-harness/QA.md
+/jkit:code-qa code-harness/TASKS.md -arch docs/ARCHITECTURE.md -conv docs/CONVENTIONS.md
+/jkit:code-qa code-harness/TASKS.md -plan code-harness/PLAN.md
 ```
 
 ## 인자
@@ -415,7 +415,7 @@ Step 8 검증을 모두 통과한 QA 문서를 출력 경로에 저장합니다.
 - 검증 항목이 가장 많은 Task (= 가장 중점적으로 QA해야 할 Task) 하이라이트
 - Step 8 검증 결과 요약 (전체 통과 / 수정된 항목)
 - 커밋은 하지 않음 — 사용자가 직접 커밋
-- **다음 단계 안내**: `/code-harness "Task 1"` 실행으로 Generator↔Evaluator 피드백 루프 시작 가능 (`--loop` 옵션으로 자동 반복 가능)
+- **다음 단계 안내**: `/jkit:code-harness "Task 1"` 실행으로 Generator↔Evaluator 피드백 루프 시작 가능 (`--loop` 옵션으로 자동 반복 가능)
 
 ## 주의사항
 

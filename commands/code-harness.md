@@ -8,7 +8,7 @@ argument-hint: '<대상 ID> [--loop] [--max-rounds N] [task-source] [eval-source
 
 > TASKS.md(task-source)와 QA.md(eval-source)를 입력받아 Task 단위 구현-검증을 실행한다.
 > Planner 없이 사용자가 직접 작성한 TASKS.md/QA.md를 정본으로 사용한다.
-> **1회 실행 = 1라운드**. `--loop` 옵션 또는 `/loop /code-harness`로 반복한다.
+> **1회 실행 = 1라운드**. `--loop` 옵션 또는 `/loop /jkit:code-harness`로 반복한다.
 
 ## Architecture
 
@@ -112,7 +112,7 @@ code-harness/
 | `대상 ID` | O | Task ID 또는 범위 (예: "Task 1", "Task 1~5") |
 | `task-source` | X | Task 정의 + Acceptance Criteria 파일 (기본: `code-harness/TASKS.md`) |
 | `eval-source` | X | 테스트 시나리오 + Definition of Done 파일 (기본: `code-harness/QA.md`) |
-| `--loop` | X | PASS 또는 maxRounds 도달까지 자동 반복 (`/loop /code-harness`와 동일) |
+| `--loop` | X | PASS 또는 maxRounds 도달까지 자동 반복 (`/loop /jkit:code-harness`와 동일) |
 | `--max-rounds N` | X | 루프 최대 라운드 수 (기본: 10) |
 
 ### 인자 파싱 규칙
@@ -128,17 +128,17 @@ code-harness/
 
 ```bash
 # 간소화 — 1회 실행
-/code-harness "Task 1"
+/jkit:code-harness "Task 1"
 
 # 간소화 — 자동 반복 (--loop 옵션)
-/code-harness "Task 1" --loop
-/code-harness "Task 1~5" --loop
+/jkit:code-harness "Task 1" --loop
+/jkit:code-harness "Task 1~5" --loop
 
 # 외부 루프 방식 (--loop과 동일한 효과)
-/loop /code-harness "Task 1"
+/loop /jkit:code-harness "Task 1"
 
 # 명시적 — 파일 경로를 직접 지정 (기존 호환)
-/code-harness code-harness/TASKS.md code-harness/QA.md "Task 1" --loop
+/jkit:code-harness code-harness/TASKS.md code-harness/QA.md "Task 1" --loop
 ```
 
 ---
@@ -153,7 +153,7 @@ code-harness/
 
 **선행 조건 확인** — 아래 규칙에 따라 판정하고, 충족하지 못하면 실행을 **중단**하고 안내 메시지만 출력한다:
 
-- **$ARGUMENTS에 명시적 task-source/eval-source 경로가 포함된 경우** (예: `/code-harness code-harness/TASKS.md code-harness/QA.md "Task 1"`):
+- **$ARGUMENTS에 명시적 task-source/eval-source 경로가 포함된 경우** (예: `/jkit:code-harness code-harness/TASKS.md code-harness/QA.md "Task 1"`):
   - 지정된 두 파일이 **실제로 존재**하는지만 확인한다
   - 존재하지 않으면 중단하고 안내한다 (경로 오타/미생성)
   - 존재하면 `code-harness/` 기본 경로 탐색은 건너뛰되, **아래 "선행 조건 충족 이후" 흐름으로 이동**하여 대상 ID 선택 → state.json 생성 단계는 반드시 수행한다 (바로 Step 2로 건너뛰지 않는다)
@@ -169,19 +169,19 @@ code-harness/
 code-harness/TASKS.md 또는 QA.md가 없습니다.
 
 먼저 아래 순서로 스펙 문서를 작성하세요:
-  /code-plan "피처 설명"                     # code-harness/PLAN.md 생성
-  /code-tasks code-harness/PLAN.md            # PLAN.md → TASKS.md 생성
-  /code-qa code-harness/TASKS.md              # TASKS.md → QA.md 생성
+  /jkit:code-plan "피처 설명"                     # code-harness/PLAN.md 생성
+  /jkit:code-tasks code-harness/PLAN.md            # PLAN.md → TASKS.md 생성
+  /jkit:code-qa code-harness/TASKS.md              # TASKS.md → QA.md 생성
 
-파일 생성 후 다시 /code-harness를 실행하세요.
+파일 생성 후 다시 /jkit:code-harness를 실행하세요.
 
 또는 다른 경로의 파일을 직접 지정:
-  /code-harness <path/to/TASKS.md> <path/to/QA.md> "Task 1"
+  /jkit:code-harness <path/to/TASKS.md> <path/to/QA.md> "Task 1"
 ```
 
 > state.json도 생성하지 않고 즉시 종료한다 (중간 상태로 남지 않도록).
 
-> **PLAN/TASKS 교체 시 주의** — 기능 구현 완료 후 디자인 트랙을 추가하거나 새 PLAN으로 전환할 때는, `/code-harness` 실행 전 `code-harness/harness-state/`를 **수동으로 삭제**하세요. 이전 라운드의 `state.json`(currentTaskId/taskQueue/completedTasks)이 새 Task ID 세트와 충돌하여 오동작할 수 있습니다.
+> **PLAN/TASKS 교체 시 주의** — 기능 구현 완료 후 디자인 트랙을 추가하거나 새 PLAN으로 전환할 때는, `/jkit:code-harness` 실행 전 `code-harness/harness-state/`를 **수동으로 삭제**하세요. 이전 라운드의 `state.json`(currentTaskId/taskQueue/completedTasks)이 새 Task ID 세트와 충돌하여 오동작할 수 있습니다.
 
 ---
 
@@ -425,7 +425,7 @@ Gate 1~3 중 하나가 FAIL이면:
 
 2. **변경사항은 롤백하지 않는다** — 코드가 남아있어야 다음 라운드 Generator가 피드백을 읽고 해당 에러만 수정할 수 있다
 3. state.json 업데이트: `round + 1`, `status: "fail"`, `lastFailedGate: "Gate N"`
-4. **이 라운드를 종료한다** — `--loop` 모드이면 ScheduleWakeup으로 다음 라운드를 예약한다 (prompt: `/code-harness`, delaySeconds: 60). `--loop`이 아니면 종료하고 다음 `/loop` 실행 시 새 컨텍스트로 재개
+4. **이 라운드를 종료한다** — `--loop` 모드이면 ScheduleWakeup으로 다음 라운드를 예약한다 (prompt: `/jkit:code-harness`, delaySeconds: 60). `--loop`이 아니면 종료하고 다음 `/loop` 실행 시 새 컨텍스트로 재개
 
 ### Step 5: Task 리포트 작성
 

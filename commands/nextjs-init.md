@@ -66,7 +66,32 @@ cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/gen-agents.sh nextjs -p . -n "<project-name>" --docs-dir docs
 ```
 
-### 6. Detect package manager & ensure package.json
+### 6. Ensure `src/app` layout
+
+jkit의 Next.js 컨벤션·ESLint·문서는 모두 **`src/app/`** 를 정본 위치로 가정합니다 (예: `src/app/**/_components`, `src/app/**/_providers` 등). 프로젝트가 루트에 `app/`만 가진 경우 규칙이 매칭되지 않으므로 구조를 일치시킵니다.
+
+```bash
+cd "$PROJECT_ROOT"
+
+if [ -d app ] && [ ! -d src/app ]; then
+  # 사용자에게 확인: "app/ 루트 디렉토리를 src/app/으로 이동할까요?" (default: yes)
+  # - yes: 아래 이동 실행
+  # - no:  경고 출력 후 중단 ("jkit 컨벤션은 src/app/을 가정합니다. 수동으로 이동 후 재실행하거나 이 init을 취소하세요")
+  mkdir -p src
+  git mv app src/app 2>/dev/null || mv app src/app
+  echo "Moved: app/ → src/app/"
+fi
+```
+
+**체크리스트 (이동 후 사용자가 수동 확인 필요한 항목)**
+- `tsconfig.json`의 `paths` 매핑에 `"@/*": ["./src/*"]` (또는 동등) 유지 확인
+- `next.config.js`/`next.config.mjs`의 `experimental.appDir` 같은 커스텀 설정 없음 확인 (Next.js 15+ 기본값으로 `src/app` 지원)
+- `import` 경로가 상대 경로(`../`)로 되어 있다면 이동 후 깨질 수 있음 — 주로 alias(`@/...`)만 썼으면 영향 없음
+- Git 이력: `git mv`로 이동되어 파일 이력 보존됨
+
+> `src/app/`와 `app/`이 둘 다 있거나 `src/app/`만 있으면 이 스텝은 건너뜁니다.
+
+### 7. Detect package manager & ensure package.json
 
 `gen-eslint.sh`는 사용자 프로젝트의 `package.json`에 devDependency를 주입하므로 파일이 반드시 존재해야 합니다. 또한 이후 Step 8의 install 명령을 프로젝트가 이미 쓰는 패키지 매니저에 맞춰야 합니다.
 
@@ -119,7 +144,7 @@ fi
 > `init`은 기본 필드(name/version/main 등)만 채운 최소 `package.json`을 생성합니다. 이후 스텝에서 `devDependencies`가 자동으로 추가됩니다.
 > 사용자가 생성을 거부하면 Step 7 이후를 중단하고 `package.json`을 수동 생성 후 재실행하라고 안내합니다.
 
-### 7. Run generator scripts
+### 8. Run generator scripts
 
 Run the following scripts from the plugin's `scripts/` directory.
 
@@ -147,7 +172,7 @@ $JKIT_DIR/scripts/typescript/gen-husky.sh nextjs -p .
 
 Skip `--with` if the user selected no stacks for that generator.
 
-### 8. Install ESLint rules dependency
+### 9. Install ESLint rules dependency
 
 `gen-eslint.sh`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
 
@@ -169,7 +194,7 @@ esac
 
 > 설치 후 `node_modules/@jkit/eslint-rules/`에 `rules/nextjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nextjs 규칙만 포함).
 
-### 9. Report
+### 10. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point

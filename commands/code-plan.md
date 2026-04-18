@@ -2,14 +2,14 @@
 
 `ecc:plan` 스킬을 래핑하여 요구사항 정리 → 리스크 평가 → 단계별 구현 계획을 수립하고, 결과를 `code-harness/PLAN.md`로 저장합니다.
 
-생성된 `PLAN.md`는 이후 `/code-tasks` 커맨드의 입력으로 사용됩니다.
+생성된 `PLAN.md`는 이후 `/jkit:code-tasks` 커맨드의 입력으로 사용됩니다.
 
 ## 사용법
 
 ```
-/code-plan <요구사항 또는 설명>
-/code-plan 로그인 화면에 2FA 추가
-/code-plan 로그인 화면에 2FA 추가 -o code-harness/PLAN.md
+/jkit:code-plan <요구사항 또는 설명>
+/jkit:code-plan 로그인 화면에 2FA 추가
+/jkit:code-plan 로그인 화면에 2FA 추가 -o code-harness/PLAN.md
 ```
 
 ## 인자
@@ -116,7 +116,7 @@ ecc:plan이 제시한 계획에 대해 사용자가 명시적으로 승인("yes"
 ### Step 5: 완료 보고
 
 - 저장된 파일 경로 출력
-- 다음 단계 안내: `/code-tasks {OUTPUT}` 실행으로 Task 문서 생성 가능
+- 다음 단계 안내: `/jkit:code-tasks {OUTPUT}` 실행으로 Task 문서 생성 가능
 
 ## 주의사항
 
@@ -125,4 +125,4 @@ ecc:plan이 제시한 계획에 대해 사용자가 명시적으로 승인("yes"
 - 기존 `OUTPUT` 파일이 있으면 덮어쓰기 전에 사용자에게 확인을 받습니다.
 - **디자인 도구 혼용 금지**: figma와 stitch를 동시에 정본으로 두지 않습니다. 예외적으로 Stitch로 초기 시안을 만든 후 Figma로 이관한 경우, 정본은 figma이며 Stitch 프롬프트는 `docs/stitch/history/`에 비정본 아카이브로만 보관합니다 (TASKS.md에서 참조하지 않음).
 - **기능 트랙 = no + 디자인 도구 = none 금지**: 아무 작업도 정의되지 않은 상태. 에러 출력 후 재작성 요청.
-- **PLAN/TASKS 교체 시 주의**: 기능 구현 완료 후 디자인 트랙을 추가하거나 새 PLAN으로 전환할 때는, `/code-harness` 실행 전 `code-harness/harness-state/`를 수동으로 삭제하세요. 이전 라운드의 `state.json`(currentTaskId/taskQueue/completedTasks)이 새 Task ID 세트와 충돌할 수 있습니다.
+- **PLAN/TASKS 교체 시 주의**: 기능 구현 완료 후 디자인 트랙을 추가하거나 새 PLAN으로 전환할 때는, `/jkit:code-harness` 실행 전 `code-harness/harness-state/`를 수동으로 삭제하세요. 이전 라운드의 `state.json`(currentTaskId/taskQueue/completedTasks)이 새 Task ID 세트와 충돌할 수 있습니다.
