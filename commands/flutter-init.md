@@ -99,10 +99,13 @@ git config --local --unset-all core.hooksPath || true
 poetry run pre-commit install
 ```
 
-### 8. Inject architecture lint plugin
+### 8. Inject architecture lint plugin (optional)
 
-Inject `architecture_lint` analyzer plugin into the Flutter entry project.
-This must run **after** `poetry install` (requires `ruamel-yaml`).
+Ask the user whether to inject `architecture_lint` analyzer plugin. Default: **no**.
+
+> `architecture_lint`는 레이어 의존성 규칙을 강제하는 커스텀 Dart analyzer plugin입니다. 프로젝트가 명확한 레이어 구조(clean architecture 등)를 따를 때 활성화를 권장합니다.
+
+If yes, inject the plugin into the Flutter entry project. This must run **after** `poetry install` (requires `ruamel-yaml`).
 
 ```bash
 cd "$PROJECT_ROOT"
@@ -114,6 +117,8 @@ After injection, run `dart pub get` in the entry directory to resolve the new de
 ```bash
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
+
+If no, skip this step entirely. The user can install it later by running this command manually, or add `architecture_lint` to `dev_dependencies` in `pubspec.yaml` themselves.
 
 ### 9. Report
 
@@ -131,4 +136,4 @@ Tell the user what was created:
 - `scripts/android-show-info-keystore.sh` — Keystore info wrapper
 - `scripts/android-signing-report.sh` — Signing report wrapper
 - `scripts/android-signing-verify-apk.sh` — APK verify wrapper
-- `architecture_lint` — IDE analyzer plugin injected into `pubspec.yaml` + `analysis_options.yaml`
+- `architecture_lint` (optional) — IDE analyzer plugin injected into `pubspec.yaml` + `analysis_options.yaml` (Step 8에서 yes 응답 시에만)
