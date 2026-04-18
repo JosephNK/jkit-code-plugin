@@ -6,9 +6,23 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E4: No external SDK (dio, http, drift, etc.) in domain layers.
+/// E4: 도메인 레이어에서 외부 인프라 SDK import 금지.
 ///
-/// Domain layers: entities/, ports/, usecases/, exceptions/.
+/// ## 이유
+/// 도메인 레이어는 네트워크/DB/저장소/Firebase 같은 외부 세계와 독립적으로
+/// 존재해야 한다. SDK가 도메인에 유입되면:
+///   - 단위 테스트가 어려워짐 (mock 대상이 무한정 늘어남)
+///   - 패키지 교체 시 도메인까지 수정해야 함
+///   - 플랫폼 종속성이 핵심 로직에 침투
+///
+/// ## 적용 대상 레이어
+/// entities/, ports/, usecases/, exceptions/ (domainLayers 상수)
+///
+/// ## 금지 패키지
+/// infraPackages 상수 참조 (dio, http, drift, sqflite, flutter_secure_storage,
+/// firebase_*, ...)
+/// 인프라 접근은 반드시 adapters/ 레이어에서만 수행하고, 도메인은 ports/ 인터페이스로만
+/// 접근한다.
 class E4DomainNoSdkLint extends DartLint {
   @override
   String get code => 'e4_domain_no_sdk';

@@ -1,7 +1,32 @@
+// =============================================================================
+// architecture_lint — 경로/레이어 분류 유틸
+// -----------------------------------------------------------------------------
+// 파일 경로를 받아 어떤 아키텍처 레이어에 속하는지, 어떤 feature에 속하는지
+// 판정한다. 모든 E/N/S 룰이 이 헬퍼를 통해 대상 파일을 필터링.
+//
+// 전제 프로젝트 구조:
+//   lib/
+//   └── features/<feature>/
+//       ├── domain/entities/
+//       ├── domain/ports/
+//       ├── domain/usecases/
+//       ├── domain/exceptions/
+//       ├── data/adapters/
+//       ├── presentation/
+//       │   ├── bloc/
+//       │   ├── pages/
+//       │   ├── views/
+//       │   └── widgets/
+//       └── ...
+// =============================================================================
+
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:path/path.dart' as p;
 
-/// Directory name to architectural layer mapping.
+/// 디렉토리 이름 → 논리 레이어 이름 매핑.
+///
+/// 여러 디렉토리가 같은 레이어로 집계될 수 있다 (예: pages/views/widgets → presentation).
+/// 경로에 해당 디렉토리 이름이 포함되어 있으면 매칭된다.
 const _layerMarkers = <String, String>{
   'entities': 'entities',
   'ports': 'ports',
@@ -14,7 +39,11 @@ const _layerMarkers = <String, String>{
   'widgets': 'presentation',
 };
 
-/// Classify a file's architectural layer from its path.
+/// 경로에서 레이어 이름을 추출.
+///
+/// Windows 경로(\) 도 정규화하여 POSIX 스타일로 비교한다.
+/// `_layerMarkers`에 매칭되지 않으면 `/common/services/` 를 검사하고,
+/// 그것도 없으면 `'other'`를 반환한다.
 String classifyLayer(String filePath) {
   final normalized = '/${filePath.replaceAll('\\', '/')}/';
 
@@ -31,7 +60,8 @@ String classifyLayer(String filePath) {
   return 'other';
 }
 
-/// Extract feature name from path like `features/<name>/...`.
+/// `features/<name>/...` 경로에서 feature 이름을 추출.
+/// features 세그먼트를 찾지 못하면 null (features 바깥 파일).
 String? extractFeature(String filePath) {
   final normalized = filePath.replaceAll('\\', '/');
   final parts = normalized.split('/');
@@ -44,7 +74,7 @@ String? extractFeature(String filePath) {
   return null;
 }
 
-/// Get the absolute file path from an AST node via its CompilationUnit.
+/// AST 노드에서 파일의 절대 경로를 얻는다. (CompilationUnit 루트에서 조회)
 String? getFilePath(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
@@ -53,7 +83,9 @@ String? getFilePath(AstNode node) {
   return null;
 }
 
-/// Get the current project's package name from a CompilationUnit.
+/// 현재 파일이 속한 프로젝트의 package 이름을 추출한다.
+/// pubspec.yaml의 `name:` 필드와 동일한 값이 반환된다.
+/// (E1/E4 룰에서 "내 프로젝트 imports는 허용" 판정에 사용)
 String? getProjectPackageName(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
@@ -71,7 +103,8 @@ String? getProjectPackageName(AstNode node) {
   return null;
 }
 
-/// Extract package name from an import URI like `package:dio/dio.dart`.
+/// `package:dio/dio.dart` 같은 URI에서 패키지 이름(`dio`)만 추출.
+/// package: 스킴이 아니면 null.
 String? extractImportPackageName(String importUri) {
   if (importUri.startsWith('package:')) {
     return importUri.substring(8).split('/').first;
@@ -79,15 +112,17 @@ String? extractImportPackageName(String importUri) {
   return null;
 }
 
-/// Check if an import is a Dart SDK import (`dart:core`, etc.).
+/// Dart SDK import 여부 (`dart:core`, `dart:async` 등).
+/// 대부분 룰에서 SDK imports는 항상 허용하므로 조기 반환에 사용.
 bool isDartImport(String importUri) {
   return importUri.startsWith('dart:');
 }
 
-/// Get the layer of an import that targets the same project.
+/// 프로젝트 내부를 가리키는 package import에서 대상 레이어를 판정.
 ///
-/// For `package:my_app/features/auth/domain/ports/auth_port.dart`,
-/// extracts the path after the package prefix and classifies the layer.
+/// 예: `package:my_app/features/auth/domain/ports/auth_port.dart`
+///     → `package:` prefix를 제거한 inner 경로에 classifyLayer 적용
+///     → `'ports'` 반환
 String? getImportLayerFromPackageUri(String importUri, String? packageName) {
   if (packageName == null) return null;
 
@@ -98,7 +133,7 @@ String? getImportLayerFromPackageUri(String importUri, String? packageName) {
   return classifyLayer(inner);
 }
 
-/// Get the feature of an import that targets the same project.
+/// 프로젝트 내부 package import가 속한 feature 이름 판정 (E6 룰에서 사용).
 String? getImportFeatureFromPackageUri(String importUri, String? packageName) {
   if (packageName == null) return null;
 
@@ -109,7 +144,8 @@ String? getImportFeatureFromPackageUri(String importUri, String? packageName) {
   return extractFeature(inner);
 }
 
-/// Resolve a relative import's layer based on the current file path.
+/// 상대 경로 import(`../foo/bar.dart`)의 대상 레이어를 해석.
+/// 현재 파일 디렉토리를 기준으로 정규화하여 classifyLayer 적용.
 String? resolveRelativeImportLayer(String importUri, String currentFilePath) {
   if (importUri.startsWith('package:') || importUri.startsWith('dart:')) {
     return null;
@@ -119,7 +155,8 @@ String? resolveRelativeImportLayer(String importUri, String currentFilePath) {
   return classifyLayer(resolved);
 }
 
-/// Resolve a relative import's feature based on the current file path.
+/// 상대 경로 import가 속한 feature 이름 판정.
+/// `..` 로 상위로 올라간 결과는 null로 반환 (feature 밖)
 String? resolveRelativeImportFeature(String importUri, String currentFilePath) {
   if (importUri.startsWith('package:') || importUri.startsWith('dart:')) {
     return null;
@@ -130,7 +167,7 @@ String? resolveRelativeImportFeature(String importUri, String currentFilePath) {
   return extractFeature(resolved);
 }
 
-/// Get the target layer of an import (handles both package and relative).
+/// import 대상 레이어 통합 조회 (상대 경로와 package 모두 처리).
 String? getImportTargetLayer(
   String importUri,
   String currentFilePath,
@@ -141,7 +178,7 @@ String? getImportTargetLayer(
   return getImportLayerFromPackageUri(importUri, packageName);
 }
 
-/// Get the target feature of an import (handles both package and relative).
+/// import 대상 feature 통합 조회 (상대 경로와 package 모두 처리).
 String? getImportTargetFeature(
   String importUri,
   String currentFilePath,
@@ -152,7 +189,8 @@ String? getImportTargetFeature(
   return getImportFeatureFromPackageUri(importUri, packageName);
 }
 
-/// Check if a resolved import path contains `/domain/`.
+/// import 대상 경로에 `/domain/` 세그먼트가 포함되어 있는지 확인.
+/// E6 룰에서 "presentation/bloc이 다른 feature의 domain 접근은 허용"을 판정할 때 사용.
 bool isImportFromDomain(
   String importUri,
   String currentFilePath,

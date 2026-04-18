@@ -1,3 +1,18 @@
+// =============================================================================
+// Rule: require-timestamptz
+// -----------------------------------------------------------------------------
+// TypeORM Date 컬럼에 `type: 'timestamptz'` 옵션 강제 (PostgreSQL).
+//
+// 이유:
+//   - 기본 timestamp(= timestamp without time zone)는 타임존 정보가 없어
+//     다중 지역 서비스에서 시간 비교/변환 오류 원인이 된다.
+//   - timestamptz는 DB에 UTC로 저장하고 세션 타임존에 맞춰 변환 — 안전한 기본값.
+//   - 한 번 마이그레이션으로 놓치면 이후 축적된 데이터 수정 비용이 크므로 컴파일타임에 차단.
+//
+// 검사 대상: TypeORM 날짜 데코레이터(@Column/@CreateDateColumn/
+//           @UpdateDateColumn/@DeleteDateColumn)가 붙은 Date 타입 필드.
+// =============================================================================
+
 const DATE_DECORATORS = new Set([
   'Column',
   'CreateDateColumn',
@@ -6,7 +21,7 @@ const DATE_DECORATORS = new Set([
 ]);
 
 /**
- * Check if a TypeAnnotation resolves to Date or Date | null.
+ * Date 또는 Date | null 타입인지 확인.
  */
 function isDateType(typeAnnotation) {
   if (!typeAnnotation) return false;

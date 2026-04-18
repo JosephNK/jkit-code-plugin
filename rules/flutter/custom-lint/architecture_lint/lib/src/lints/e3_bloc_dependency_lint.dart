@@ -6,10 +6,21 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E3: bloc/ may only import usecases/, entities/, exceptions/.
+/// E3: bloc/ 레이어의 의존 범위 제한.
 ///
-/// Forbidden internal targets: adapters/, ports/, common_services/.
-/// External packages: only bloc-related packages and codegen allowed.
+/// ## 이유
+/// Bloc은 UI 상태를 관리하는 얇은 계층이며, 데이터 접근은 UseCase에게 위임해야 한다.
+/// - adapters/ : 구체 구현 직접 호출 금지 (UseCase 경유)
+/// - ports/ : 인터페이스 직접 호출 금지 (UseCase 경유 — bloc이 비즈니스 로직을
+///           포함하게 되는 "anemic UseCase" 문제 방지)
+/// - common_services/ : 전역 서비스 직접 접근 금지 (UseCase로 감싸서 사용)
+///
+/// ## 허용 내부 레이어
+/// usecases/, entities/, exceptions/
+///
+/// ## 허용 외부 패키지
+/// blocAllowedPackages: flutter_bloc, bloc, equatable + codegen 어노테이션
+/// (그 외 외부 패키지는 이 룰에서 검사 안 함 — 일반 import 자유)
 class E3BlocDependencyLint extends DartLint {
   static const _forbidden = <String>{'adapters', 'ports', 'common_services'};
 

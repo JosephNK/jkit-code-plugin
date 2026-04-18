@@ -1,3 +1,20 @@
+// =============================================================================
+// JKit NestJS ESLint Base Rules
+// -----------------------------------------------------------------------------
+// NestJS + 헥사고날 아키텍처 공통 ESLint 베이스. 스택별 rules.mjs와 머지되어
+// 최종 config를 만든다.
+//
+// 아키텍처 원칙:
+//   - 헥사고날(Ports & Adapters) — model/port는 프레임워크/인프라 무의존 순수 TS
+//   - 단방향 의존 — 상위 레이어(controller/provider) → 하위(service → port → model)
+//   - DTO는 외부 경계에서만 사용, API 문서화(@ApiProperty)와 불변성(readonly) 강제
+//
+// 구성:
+//   1. Raw data (exports)  — 스택에서 확장/머지 가능한 원본 데이터
+//   2. Pre-built configs    — 즉시 spread 가능한 defineConfig 블록
+//   3. Builders              — 스택별 데이터를 받아 config를 생성하는 팩토리
+// =============================================================================
+
 import { defineConfig, globalIgnores } from 'eslint/config';
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
@@ -7,13 +24,25 @@ import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-// ─── Raw data (for project-level merging) ───
+// ─── Raw data (for project-level merging) ─────────────────────────────────────
 
+/**
+ * 상대 경로 parent import(../**) 금지 패턴.
+ * 모듈 간 이동/리팩토링 시 경로가 깨지는 것을 방지하고 @/* path alias 사용을 강제.
+ * buildLayerRestrictions에서 각 레이어의 no-restricted-imports에 주입된다.
+ */
 export const basePathAliasPattern = {
   group: ['../**'],
   message: 'Use @/* path alias instead of relative parent imports.',
 };
 
+/**
+ * "프레임워크" 패키지 목록 — 순수 레이어(model/, port/, exception/)에서 금지.
+ * 이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
+ * - @nestjs/*   : Nest DI/데코레이터
+ * - class-validator / class-transformer : DTO 검증 (boundary에서만 사용)
+ * - express     : HTTP 어댑터 (controller/provider 계층 관심사)
+ */
 export const baseFrameworkPackages = [
   '@nestjs/*',
   'class-validator',
@@ -22,36 +51,65 @@ export const baseFrameworkPackages = [
   'express/*',
 ];
 
+/**
+ * 아키텍처 경계 선언 — 각 레이어가 어떤 경로에 해당하는지 정의.
+ * 헥사고날 폴더 구조 (모듈당):
+ *   src/modules/<feature>/
+ *     ├── model/         — 엔티티/값 객체 (순수 TS, 최하위)
+ *     ├── port/          — 도메인 인터페이스 (Repository 등)
+ *     ├── service/       — UseCase, 비즈니스 로직 (Port 주입받음)
+ *     ├── controller/    — HTTP 어댑터
+ *     ├── provider/      — Port 구현체 (ORM/외부 SDK 호출)
+ *     ├── exception/     — 도메인 예외
+ *     └── dto/           — 입출력 경계 타입 (@ApiProperty 강제)
+ *
+ * 추가:
+ *   src/common/         — 프로젝트 전역 공용 (유틸, 상수, 공용 예외 기반)
+ *   src/infrastructure/ — 인프라 수평 관심사 (로거, DB 커넥션 등)
+ *   src/libs/           — 독립 라이브러리성 모듈 (자유도 높음)
+ */
 export const baseBoundaryElements = [
-  { type: 'model', pattern: ['src/modules/**/model/**'] },
-  { type: 'port', pattern: ['src/modules/**/port/**'] },
-  { type: 'service', pattern: ['src/modules/**/service/**'] },
-  { type: 'controller', pattern: ['src/modules/**/controller/**'] },
-  { type: 'provider', pattern: ['src/modules/**/provider/**'] },
-  { type: 'exception', pattern: ['src/modules/**/exception/**'] },
-  { type: 'dto', pattern: ['src/modules/**/dto/**'] },
-  { type: 'common', pattern: ['src/common/**'] },
-  { type: 'infrastructure', pattern: ['src/infrastructure/**'] },
-  { type: 'libs', pattern: ['src/libs/**'] },
+  { type: 'model', pattern: ['src/modules/**/model/**'] },              // 도메인 모델
+  { type: 'port', pattern: ['src/modules/**/port/**'] },                // 도메인 Port 인터페이스
+  { type: 'service', pattern: ['src/modules/**/service/**'] },          // UseCase
+  { type: 'controller', pattern: ['src/modules/**/controller/**'] },    // HTTP 컨트롤러
+  { type: 'provider', pattern: ['src/modules/**/provider/**'] },        // Port 구현체
+  { type: 'exception', pattern: ['src/modules/**/exception/**'] },      // 도메인 예외
+  { type: 'dto', pattern: ['src/modules/**/dto/**'] },                  // 요청/응답 DTO
+  { type: 'common', pattern: ['src/common/**'] },                       // 전역 공용
+  { type: 'infrastructure', pattern: ['src/infrastructure/**'] },       // 인프라 수평 관심사
+  { type: 'libs', pattern: ['src/libs/**'] },                           // 독립 라이브러리
 ];
 
+/**
+ * 레이어 간 의존성 방향 선언 (allow-list).
+ * 기본 disallow 정책 위에 아래 조합만 허용.
+ *
+ * 핵심 원칙:
+ *   - model/port는 프레임워크와 완전 격리된 순수 TS
+ *   - service는 controller/provider를 절대 모름 (헥사고날 역전)
+ *   - controller는 HTTP 경계에서 DTO/port를 조합 (service 직접 호출 금지 설계)
+ *   - provider는 Port 구현체로서 infrastructure 접근 가능
+ *   - libs는 독립 라이브러리로 자유도 허용
+ */
 export const baseBoundaryRules = [
-  // model — only model (pure TS, no external deps)
+  // model — 자기 자신만 (순수 TS, 외부 의존 0)
   {
     from: { type: 'model' },
     allow: { to: { type: 'model' } },
   },
-  // exception — base exceptions from common
+  // exception — common의 베이스 예외를 상속하여 정의
   {
     from: { type: 'exception' },
     allow: { to: { type: ['exception', 'common'] } },
   },
-  // port — model + common only
+  // port — 인터페이스 시그니처에 model과 공용 타입만 사용
   {
     from: { type: 'port' },
     allow: { to: { type: ['model', 'common'] } },
   },
-  // service — model, port, exception, common, infrastructure
+  // service — UseCase. port를 주입받아 도메인 로직 수행
+  // controller/provider/dto는 의도적으로 제외 (헥사고날 역방향 의존 방지)
   {
     from: { type: 'service' },
     allow: {
@@ -66,7 +124,8 @@ export const baseBoundaryRules = [
       },
     },
   },
-  // controller — port, dto, model (types), exception, common, libs
+  // controller — HTTP 경계. port/dto 조합으로 요청 처리
+  // service를 직접 import하지 않고 port를 통해 사용 (DI 컨테이너가 service 바인딩)
   {
     from: { type: 'controller' },
     allow: {
@@ -82,7 +141,7 @@ export const baseBoundaryRules = [
       },
     },
   },
-  // provider — port, model, common, infrastructure, provider (orm-entity cross-refs)
+  // provider — Port 구현체. ORM 엔티티 간 상호 참조로 provider→provider 허용
   {
     from: { type: 'provider' },
     allow: {
@@ -97,23 +156,23 @@ export const baseBoundaryRules = [
       },
     },
   },
-  // dto — model, common, dto (internal refs like PartialType)
+  // dto — 내부 composition용 dto→dto 허용 (PartialType, PickType 등)
   {
     from: { type: 'dto' },
     allow: { to: { type: ['model', 'common', 'dto'] } },
   },
-  // module (*.module.ts) — DI assembly, excluded via boundaries/ignore
-  // common — internal only
+  // (*.module.ts) — DI 조립 파일. boundaries/ignore에서 제외 처리됨
+  // common — 자기 자신만 (전역 공용은 최하위라 상향 의존 금지)
   {
     from: { type: 'common' },
     allow: { to: { type: 'common' } },
   },
-  // infrastructure — internal + common
+  // infrastructure — common만 참조 가능 (모듈 로직에 의존하면 안 됨)
   {
     from: { type: 'infrastructure' },
     allow: { to: { type: ['infrastructure', 'common'] } },
   },
-  // libs — can access anything (independent library modules)
+  // libs — 독립 라이브러리 모듈. 앱 전체를 조립할 수 있도록 모든 레이어 접근 허용
   {
     from: { type: 'libs' },
     allow: {
@@ -135,6 +194,14 @@ export const baseBoundaryRules = [
   },
 ];
 
+/**
+ * Boundary 검사에서 제외할 파일/디렉토리.
+ * - 테스트 파일 : 레이어 경계와 무관 (mock import 자유롭게 허용)
+ * - .module.ts : DI 조립 파일이라 모든 레이어를 import해야 함
+ * - main.ts, app.*.ts : 앱 부트스트랩
+ * - src/modules/health : 헬스체크 유틸 (인프라/컨트롤러 혼합 정상)
+ * - 모듈 내부 common 디렉토리 : 모듈 내 공용 (모든 하위 레이어에서 참조)
+ */
 export const baseBoundaryIgnores = [
   '**/*.spec.ts',
   '**/*.test.ts',
@@ -148,26 +215,40 @@ export const baseBoundaryIgnores = [
   '.jkit/**',
 ];
 
-// ─── Pre-built config (ESLint + TypeScript + Prettier + Import sorting) ───
+// ─── Pre-built config (ESLint + TypeScript + Prettier + Import sorting) ───────
+/**
+ * NestJS 프로젝트 공용 ESLint 베이스 config.
+ * 블록 순서 중요: 뒤의 config가 앞의 룰을 override한다.
+ *   1) ESLint 공식 recommended
+ *   2) typescript-eslint 타입 기반 recommended
+ *   3) Prettier (포맷 강제)
+ *   4) 환경 설정 (Node + Jest 글로벌)
+ *   5) simple-import-sort + unused-imports (import 정리)
+ *   6) 프로젝트 공통 스타일 룰
+ *   7) 테스트 파일 완화 (mock/stub 자유)
+ */
 export const baseConfig = defineConfig(
+  // [1~3] 공식 권장 설정 체인
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
+
+  // [4] 환경 설정 — Node.js + Jest 글로벌 활성화
   {
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest,
       },
-      sourceType: 'commonjs',
+      sourceType: 'commonjs',             // NestJS CLI 기본이 CommonJS
       parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        projectService: true,              // tsconfig 자동 매칭
+        tsconfigRootDir: import.meta.dirname, // 프로젝트에서 override 됨
       },
     },
   },
 
-  // Import sorting & unused imports
+  // [5] Import 정렬 + 미사용 import 자동 제거
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
@@ -179,6 +260,7 @@ export const baseConfig = defineConfig(
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
         'warn',
+        // _ prefix는 의도적 미사용 허용
         {
           vars: 'all',
           varsIgnorePattern: '^_',
@@ -189,29 +271,36 @@ export const baseConfig = defineConfig(
     },
   },
 
-  // Base rules
+  // [6] 프로젝트 공통 스타일 룰
   {
     rules: {
       'prefer-const': 'error',
+      // NestJS 데코레이터/런타임 리플렉션과 any 사용이 잦아 off
       '@typescript-eslint/no-explicit-any': 'off',
+      // Promise 반환 누락 감지 (warn) — fire-and-forget은 명시적 void 처리 권장
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unused-vars': 'off', // handled by unused-imports
+      // unused-imports 플러그인이 담당하므로 중복 방지
+      '@typescript-eslint/no-unused-vars': 'off',
+      // 타입 import는 `import type` 강제 (런타임 번들 축소)
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
+      // TODO/FIXME/HACK 추적 (warn, 차단하지 않음)
       'no-warning-comments': ['warn', { terms: ['TODO', 'FIXME', 'HACK'] }],
+      // 줄바꿈 LF/CRLF OS별 자동 매칭 (Windows 팀원 호환)
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
 
-  // Test file relaxations
+  // [7] 테스트 파일 완화
+  // 단위 테스트에서 mock/stub으로 타입 안전성을 의도적으로 깨뜨리는 패턴을 허용
   {
     files: ['**/*.spec.ts', 'test/**/*.ts'],
     rules: {
-      '@typescript-eslint/unbound-method': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/unbound-method': 'off',          // Jest spy 사용 시 빈번
+      '@typescript-eslint/no-require-imports': 'off',      // require() mock
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
@@ -220,7 +309,17 @@ export const baseConfig = defineConfig(
   },
 );
 
-// ─── Pre-built: Immutability rules (readonly on Entity and DTO fields) ───
+// ─── Pre-built: Immutability rules (readonly on Entity and DTO fields) ────────
+/**
+ * Entity와 DTO의 인스턴스 필드에 readonly 강제.
+ * 이유: 객체 불변성을 보장하여 예측 가능한 데이터 흐름과 방어적 복사 회피 효과.
+ *       conventions.md의 Immutability 섹션에 명시된 프로젝트 약속.
+ *
+ * Selector 해설:
+ *   PropertyDefinition:not([readonly=true]):not([static=true])
+ *   → readonly도 아니고 static도 아닌 인스턴스 필드를 찾아 에러 발생
+ *   static은 클래스 상수이므로 예외 (e.g., public static readonly TYPE = 'foo')
+ */
 export const baseImmutabilityRules = defineConfig({
   files: [
     'src/modules/**/model/**/*.entity.ts',
@@ -239,7 +338,12 @@ export const baseImmutabilityRules = defineConfig({
   },
 });
 
-// ─── Pre-built: File size limit ───
+// ─── Pre-built: File size limit ──────────────────────────────────────────────
+/**
+ * 파일당 800줄 제한 (warn).
+ * 800줄을 넘으면 단일 책임 원칙(SRP) 위반 가능성이 높고, 리뷰/테스트 난이도가 급증.
+ * 테스트 파일은 seed 데이터와 시나리오 나열로 길어지기 쉬워 제외.
+ */
 export const baseFileSizeRules = defineConfig({
   files: ['src/**/*.ts'],
   ignores: ['**/*.spec.ts'],
@@ -251,13 +355,36 @@ export const baseFileSizeRules = defineConfig({
   },
 });
 
-// ─── Pre-built: Global ignores ───
+// ─── Pre-built: Global ignores ────────────────────────────────────────────────
+/**
+ * ESLint가 아예 읽지 않을 경로.
+ * - eslint.config.mjs  : 자체 설정 파일 (자기 참조 방지)
+ * - eslint-rules/**    : jkit에서 주입한 룰 소스 (재-lint 불필요)
+ * - dist/, coverage/   : 빌드·테스트 산출물
+ * - .jkit/             : 툴체인 내부 작업 공간
+ */
 export const baseIgnores = globalIgnores(['eslint.config.mjs', 'eslint-rules/**', 'dist/**', 'coverage/**', '.jkit/**']);
 
-// ─── Builder: Hexagonal layer import restrictions ───
+// ─── Builder: Hexagonal layer import restrictions ────────────────────────────
+/**
+ * 헥사고날 아키텍처 레이어별 import 제한 생성기.
+ * 각 레이어 파일에 대해 금지 패턴을 적용한다. 스택별 framework/infra 패키지 목록을
+ * 머지해 주입받는다.
+ *
+ * 레이어별 제한 요약:
+ *   - model/      : 프레임워크 + 다른 레이어 전부 금지 (순수 TS)
+ *   - service/    : @nestjs/common의 Injectable/Inject, @nestjs/event-emitter의
+ *                   OnEvent만 허용. controller/provider 직접 import 금지
+ *   - port/       : 프레임워크 + 다른 레이어 금지 (인터페이스는 순수해야 함)
+ *   - exception/  : 프레임워크 금지 (도메인 예외는 HTTP 비의존)
+ *   - dto/        : path alias만 강제 (class-validator 등 사용 허용)
+ *   - controller/ : path alias만 강제 (NestJS 생태계 자유 사용)
+ *   - provider/   : path alias만 강제 (ORM/SDK 자유 사용 — 구현 계층이므로)
+ */
 export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pathAliasPattern = basePathAliasPattern) {
   return defineConfig(
-    // model/ — no frameworks, no other layers, @/ alias enforced
+    // ─── model/ : 순수 TS 유지 ──────────────────────────────────────────
+    // 프레임워크/외부 라이브러리 금지, 다른 레이어 import 금지
     {
       files: ['src/modules/**/model/**/*.ts'],
       rules: {
@@ -287,7 +414,9 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // service/ — only Injectable/Inject + OnEvent, @/ alias enforced
+    // ─── service/ : UseCase 레이어 ──────────────────────────────────────
+    // NestJS DI 관련 심볼만 예외적으로 허용. 나머지 @nestjs/* 는 금지
+    // (controller/HTTP 관심사가 service에 스며드는 것을 막기 위함)
     {
       files: ['src/modules/**/service/**/*.ts'],
       ignores: ['**/*.spec.ts'],
@@ -295,6 +424,7 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
         'no-restricted-imports': [
           'error',
           {
+            // `paths`는 특정 패키지에서 허용 심볼만 화이트리스트할 때 사용
             paths: [
               {
                 name: '@nestjs/common',
@@ -312,6 +442,7 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
             patterns: [
               pathAliasPattern,
               {
+                // @nestjs/* 전부 차단하되 위 paths의 두 패키지는 예외 (`!` prefix)
                 group: [
                   '@nestjs/*',
                   '!@nestjs/common',
@@ -320,6 +451,7 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
                 message:
                   'service/ must not import from @nestjs/* (except @nestjs/common and @nestjs/event-emitter).',
               },
+              // 인프라 SDK(GCP/Anthropic 등) 직접 사용 금지 — Port를 통해 추상화
               ...(infraPackages.length > 0
                 ? [{
                     group: infraPackages,
@@ -328,6 +460,7 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
                   }]
                 : []),
               {
+                // 역방향 의존 차단
                 group: ['**/controller/**', '**/provider/**'],
                 message:
                   'service/ must not import from controller/ or provider/.',
@@ -338,7 +471,8 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // port/ — no frameworks, no Express, @/ alias enforced
+    // ─── port/ : 인터페이스 ──────────────────────────────────────────────
+    // Express 등 HTTP 프레임워크 타입이 섞이면 포팅성이 깨지므로 금지
     {
       files: ['src/modules/**/port/**/*.ts'],
       rules: {
@@ -368,7 +502,8 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // exception/ — no frameworks, @/ alias enforced
+    // ─── exception/ : 도메인 예외 ────────────────────────────────────────
+    // HttpException 같은 Nest 타입에 의존하면 도메인 순수성이 깨진다
     {
       files: ['src/modules/**/exception/**/*.ts'],
       rules: {
@@ -387,7 +522,9 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // dto/ — @/ alias enforced
+    // ─── dto/ : 경계 타입 ───────────────────────────────────────────────
+    // class-validator/class-transformer 사용 허용 (DTO는 직렬화 관심사)
+    // 오직 path alias만 강제
     {
       files: ['src/modules/**/dto/**/*.ts'],
       rules: {
@@ -400,7 +537,8 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // controller/ — @/ alias enforced
+    // ─── controller/ : HTTP 어댑터 ──────────────────────────────────────
+    // NestJS 데코레이터/가드/파이프 자유 사용 — path alias만 강제
     {
       files: ['src/modules/**/controller/**/*.ts'],
       ignores: ['**/*.spec.ts'],
@@ -414,7 +552,8 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
       },
     },
 
-    // provider/ — @/ alias enforced
+    // ─── provider/ : Port 구현체 ────────────────────────────────────────
+    // TypeORM/외부 SDK 자유 사용 — 구현 계층이므로 인프라 접근 허용
     {
       files: ['src/modules/**/provider/**/*.ts'],
       ignores: ['**/*.spec.ts'],
@@ -430,7 +569,15 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
   );
 }
 
-// ─── Builder: Architecture boundaries ───
+// ─── Builder: Architecture boundaries ─────────────────────────────────────────
+/**
+ * 아키텍처 경계(boundaries) 룰 생성기.
+ * 활성화되는 룰:
+ *   - boundaries/no-unknown       : off — 외부 패키지 import는 자유 (NestJS 특성)
+ *   - boundaries/no-unknown-files : warn — 매칭 안 되는 파일은 경고만 (*.module.ts 등)
+ *   - boundaries/dependencies     : error — from → to 관계 allow-list 검사
+ *     (default: 'disallow' — allow에 없으면 전부 거부)
+ */
 export function buildArchitectureBoundaries(elements, rules, ignores = baseBoundaryIgnores) {
   return defineConfig({
     plugins: { boundaries },
