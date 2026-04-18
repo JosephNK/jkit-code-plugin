@@ -12,7 +12,9 @@
     "skills",
     "agents"
   ],
-  "agents": [],
+  "agents": [
+    "./agents/"
+  ],
   "skills": [
     "./skills/"
   ],

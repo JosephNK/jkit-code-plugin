@@ -37,6 +37,7 @@ model: opus
 1. **CLAUDE.md** 읽고, 참조된 문서 목록 확인
 2. **아키텍처 문서** — CLAUDE.md에 명시된 경로, 또는 `docs/`에서 ARCHITECTURE 키워드 포함 `.md`
 3. **코딩 규약 문서** — CLAUDE.md에 명시된 경로, 또는 `docs/`에서 CONVENTIONS 키워드 포함 `.md`
+4. **학습된 교훈 문서** — `docs/`에서 LEARNED 키워드 포함 `.md` 파일 탐색. 과거 Gate 1(codex:review 또는 ecc:{stack}-reviewer) FAIL에서 축적된 재발 방지 교훈을 구현 시 **우선 반영**한다. 파일이 없으면 건너뜀
 
 > 아키텍처/규약 문서와 현재 코드가 충돌하면 **현재 코드를 따르고** 리포트에 "구조 불일치" 경고를 기록한다.
 

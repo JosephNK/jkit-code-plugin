@@ -19,26 +19,33 @@ argument-hint: '<대상 ID> [--loop] [--max-rounds N] [task-source] [eval-source
   └────┬─────┘  └────┬─────┘
        │              │
        ▼              ▼
-  ┌────────────────────────────┐
-  │                            │
-  │  GENERATOR-EVALUATOR       │
-  │     FEEDBACK LOOP          │
-  │                            │
-  │  ┌───────────┐             │
-  │  │ GENERATOR │──build──┐   │
-  │  │code-generator agent │   │
-  │  └─────▲─────┘         │   │
-  │        │               │   │
-  │     feedback      Gate 1~3 │
-  │        │        (codex,    │
-  │  ┌─────┴─────┐  lint,     │
-  │  │ EVALUATOR │◀─build)─┘   │
-  │  │code-evaluator agent│    │
-  │  └───────────┘             │
-  │                            │
-  │  매 실행 = 1라운드         │
-  │  외부 /loop으로 반복       │
-  └────────────────────────────┘
+  ┌────────────────────────────────────────────┐
+  │                                            │
+  │   GENERATOR-EVALUATOR FEEDBACK LOOP        │
+  │                                            │
+  │   ┌───────────────────────┐                │
+  │   │ GENERATOR             │──build──┐      │
+  │   │ code-generator agent  │         │      │
+  │   └─────▲─────────────────┘         │      │
+  │         │                           ▼      │
+  │         │   ┌──────────────────────────┐   │
+  │         │   │ Gate 1: 코드 리뷰          │   │
+  │         │   │   codex review        OR │   │
+  │         │   │   ecc:{stack}-reviewer   │   │
+  │         │   └────────────┬─────────────┘   │
+  │         │                ▼                 │
+  │         │   ┌──────────────────────────┐   │
+  │         │   │ Gate 2: 린트 & 빌드        │   │
+  │         │   └────────────┬─────────────┘   │
+  │         │                ▼                 │
+  │      feedback ┌──────────────────────────┐ │
+  │         │   │ Gate 3: EVALUATOR         │  │
+  │         └───│ code-evaluator agent      │  │
+  │             └──────────────────────────┘   │
+  │                                            │
+  │   매 실행 = 1라운드                           │
+  │   외부 /loop으로 반복                         │
+  └────────────────────────────────────────────┘
 ```
 
 ## 상태 디렉토리
@@ -228,20 +235,43 @@ Step 2 완료 후 `status: "in-progress"`로 업데이트하고 Step 3으로 진
 - task-source, eval-source, Task ID를 전달
 - Generator는 `code-harness/harness-state/feedback/` 에서 이전 피드백을 읽고, 구현 결과를 `code-harness/harness-state/generator-state.md`에 쓴다
 
-#### 3-2. Gate 1: codex:review (메인이 직접 실행)
+#### 3-2. Gate 1: 코드 리뷰
 
-```
-codex review --uncommitted
-```
+state.json의 `codexAvailable`에 따라 분기한다:
 
-> state.json의 `codexAvailable`이 `false`이면 Gate 1을 SKIP하고 Gate 2로 진행한다.
+- **`codexAvailable: true`** — 메인이 직접 `codex review --uncommitted`를 실행한다
+- **`codexAvailable: false`** — `projectStack`에 매핑된 ecc 플러그인의 스택별 리뷰 에이전트를 소환한다 (task-source, eval-source, Task ID 전달). 매핑은 아래 표를 따른다. 매핑된 에이전트가 없거나 ecc 플러그인이 미설치면 Gate 1을 **SKIP**하고 Gate 2로 진행한다
 
-결과 판정:
+##### Fallback 리뷰 에이전트 매핑
+
+| projectStack | Fallback 에이전트 |
+|---|---|
+| Flutter/Dart | `ecc:flutter-reviewer` |
+| Node.js/TS/JS | `ecc:typescript-reviewer` |
+| Kotlin/Android | `ecc:kotlin-reviewer` |
+| Rust | `ecc:rust-reviewer` |
+| Go | `ecc:go-reviewer` |
+| Python | `ecc:python-reviewer` |
+| C#/.NET | `ecc:csharp-reviewer` |
+| Swift / 그 외 | (매핑 없음 → Gate 1 SKIP) |
+
+##### Fallback 에이전트 출력 해석
+
+ecc 리뷰 에이전트는 `Review Summary` 테이블과 `Verdict: Approve | Warning | Block` 형식으로 응답한다. 아래 규칙으로 codex 판정과 동일하게 정규화한다:
+
+- `Verdict: Approve` → **approve**
+- `Verdict: Warning` → `CRITICAL/HIGH`가 0건이면 **approve**(경고 부록), 아니면 **needs-attention**
+- `Verdict: Block` → **needs-attention**
+- 심각도 정규화: `CRITICAL → critical`, `HIGH → high`, `MEDIUM → medium`, `LOW → low` (소문자)
+
+어느 경로든 결과 판정은 동일하다:
 - **approve** → Gate 2로
 - **needs-attention (critical/high/medium)** → FAIL 처리 → Step 4로
 - **needs-attention (low만)** → `generator-state.md`에 경고 부록으로 기록하고 Gate 2로 진행 (Step 5 리포트의 Gate 1 섹션에 포함)
 
 > **Gate 완료 대기 필수**: 명령이 완전히 완료된 후에만 다음 Gate로 진행한다. 백그라운드로 전환된 명령은 완료 알림을 수신할 때까지 대기한다. 불완전한 중간 출력으로 판정하지 않는다.
+
+> **Gate 1 FAIL 시 LEARNED.md 축적 절차**: codex/ecc 리뷰어 경로 모두 Step 4에서 이슈 단위로 구조화(파일/심볼/토픽/심각도/Automatable/Before 스니펫)하여 저장하므로 Step 5 PASS 경로의 축적 절차와 호환된다. ecc 리뷰어 출력은 메인이 해석하여 동일 필드로 변환한다.
 
 #### 3-3. Gate 2: 린트 & 빌드 (메인이 직접 실행)
 
@@ -288,6 +318,59 @@ Gate 1~3 중 하나가 FAIL이면:
    - (에러 메시지 기반 구체적 수정 방향)
    ```
 
+   **Gate 1 FAIL 시 추가 작성 (LEARNED.md 축적 준비)**:
+
+   위 템플릿에 이어 `### 이슈 목록 (구조화)` 섹션을 추가하여 Gate 1 출력(codex review 또는 ecc:{stack}-reviewer 에이전트)을 이슈 단위로 분해한다. 이 섹션은 Step 5 PASS 경로에서 `docs/LEARNED.md` 엔트리 생성에 사용된다.
+
+   > ecc 리뷰어 출력은 카테고리별 섹션(Security/Quality/...)과 `Review Summary` 테이블로 오는데, 메인이 각 Finding 블록을 1이슈로 분해하고 파일·심볼·토픽·Automatable을 Before 스니펫과 함께 Step 4 템플릿에 채워 넣는다.
+
+   각 이슈 블록 템플릿:
+
+   ````markdown
+   #### Issue {N}
+   - **파일**: `{프로젝트 루트 기준 상대 경로}`
+   - **심볼**: `{이름}` ({class|function|method}, 줄 {start}-{end}) — 탐지 실패 시 `null`
+   - **토픽**: `{kebab-case-slug}` — 예: `usecase-direct-repository-dependency`
+   - **심각도**: `critical` | `high` | `medium` — `low`는 포함하지 않음
+   - **Automatable**: `likely` | `unlikely` | `no`
+   - **요약**: {Gate 1 피드백을 1-2문장으로 요약}
+   - **Before 스니펫**:
+     ```{language}
+     {함수/클래스 경계 heuristic으로 추출한 코드}
+     ```
+   ````
+
+   **이슈 분리 규칙**: codex 출력의 번호 매긴 항목(`1.`, `2.`) 또는 bullet 항목 1개 = 1 이슈. ecc 리뷰어 경로는 `[CRITICAL] ...`, `[HIGH] ...` 등 개별 Finding 블록 1개 = 1 이슈. 같은 파일·같은 심볼에 여러 지적이 한 묶음이면 하나의 이슈로 합친다.
+
+   **심볼/경계 탐지 heuristic**:
+   - 피드백이 지목한 `파일:줄`에서 시작
+   - **중괄호 기반 언어** (Dart/TS/JS/Java/Kotlin/C#/Go/Rust/Swift/C/C++):
+     - 위로 올라가며 가장 가까운 `class|interface|enum|function|def|fun` 선언을 찾아 `{`로 여는 줄을 시작점으로
+     - 시작점의 중괄호 깊이를 0으로 두고 아래로 이동, 깊이가 다시 0이 되는 닫는 `}`를 종료점으로
+   - **들여쓰기 기반 언어** (Python):
+     - 위로 올라가며 가장 가까운 `class|def` 선언을 시작점으로
+     - 그 줄의 들여쓰기 레벨을 기준으로, 아래로 이동 중 **같거나 더 작은** 들여쓰기를 만나는 직전 줄을 종료점으로
+   - 심볼을 탐지하지 못하거나 피드백이 파일:줄을 명시하지 않으면 `심볼: null`로 표기하고 해당 이슈는 LEARNED.md 축적 대상에서 제외한다 (Step 5에서 skip)
+
+   **심각도 매핑**:
+
+   | Gate 1 출력 표현 | LEARNED 심각도 |
+   |---|---|
+   | Critical / Blocker / CRITICAL | critical |
+   | High / Major / HIGH | high |
+   | Medium / Minor / MEDIUM | medium |
+   | Low / Info / LOW | (축적 제외) |
+
+   > ecc 리뷰어는 `CRITICAL/HIGH/MEDIUM/LOW` 대문자로 방출하므로 소문자로 정규화한 뒤 매핑한다.
+
+   **토픽 명명 규칙**: `{layer-or-context}-{violation}` 형식 소문자 kebab-case.
+   - 예: `usecase-direct-repository-dependency`, `domain-layer-framework-import`, `bare-catch-without-logging`, `service-without-dto-validation`
+
+   **Automatable 판정 가이드**:
+   - `likely`: 클래스/함수 구조 기반 AST 매칭으로 잡을 수 있는 패턴 (예: 특정 레이어의 금지 import, 특정 이름 규칙 위반)
+   - `unlikely`: 의미 분석·데이터 흐름이 필요한 패턴
+   - `no`: 린트 룰로 표현 불가 (주관적 네이밍, 문서화 부족 등)
+
    **Gate 3 실패 시** Evaluator가 이미 feedback 파일을 작성했으므로 파일 쓰기를 건너뛴다.
 
 2. **변경사항은 롤백하지 않는다** — 코드가 남아있어야 다음 라운드 Generator가 피드백을 읽고 해당 에러만 수정할 수 있다
@@ -310,7 +393,8 @@ Gate 1~3 중 하나가 FAIL이면:
 - [신규/수정] `파일경로` — 변경 내용 요약
 
 ## 검증 결과
-### Gate 1: codex:review (코드 품질)
+### Gate 1: 코드 리뷰 (codex:review 또는 ecc:{stack}-reviewer)
+- 리뷰어: codex | ecc:flutter-reviewer | ecc:typescript-reviewer | ... | SKIP
 - 판정: PASS / WARNING / FAIL / SKIP
 
 ### Gate 2: 린트 & 빌드
@@ -335,9 +419,62 @@ Gate 1~3 중 하나가 FAIL이면:
 #### PASS 리포트인 경우
 
 1. state.json 업데이트: `status: "finalizing-pass"`
-2. 커밋한다. 커밋 시 `code-harness/` 디렉토리는 제외한다. 커밋 규칙은 프로젝트의 `docs/GIT.md`를 참조한다.
+2. **LEARNED.md 축적** — Gate 1 FAIL 이력이 있으면 아래 "LEARNED.md 축적 절차"를 수행한다 (없으면 건너뜀)
+3. 커밋한다. 커밋 시 `code-harness/` 디렉토리는 제외한다 (`docs/LEARNED.md` 변경분은 커밋에 포함). 커밋 규칙은 프로젝트의 `docs/GIT.md`를 참조한다.
 
-> **finalizing-pass 재진입 시 멱등성 보장**: `git log --oneline -1`로 마지막 커밋이 현재 Task의 커밋인지 확인한다. 이미 커밋되었으면 커밋을 건너뛰고 상태 업데이트만 수행한다. 리포트 파일은 덮어쓰기(overwrite)로 작성하여 멱등성을 보장한다.
+> **finalizing-pass 재진입 시 멱등성 보장**: `git log --oneline -1`로 마지막 커밋이 현재 Task의 커밋인지 확인한다. 이미 커밋되었으면 커밋을 건너뛰고 상태 업데이트만 수행한다. 리포트 파일은 덮어쓰기(overwrite)로 작성하여 멱등성을 보장한다. LEARNED.md는 시그니처 기반 dedup으로 재진입 시에도 중복 append되지 않는다.
+
+##### LEARNED.md 축적 절차
+
+1. `code-harness/harness-state/feedback/feedback-*.md` 전체를 round 오름차순으로 스캔한다
+2. 각 파일의 `### 이슈 목록 (구조화)` 섹션에서 이슈 튜플을 수집한다. 섹션이 없는 feedback(Gate 2/3 FAIL)은 건너뛴다
+3. `심볼: null` 이슈는 축적 대상에서 제외한다
+4. `(파일, 심볼, 토픽)` 동일 튜플 중복 시 **최초 round 항목만** 유지한다 (dedup — 한 Task 내 반복 제거)
+5. 유효한 각 이슈에 대해:
+   - **After 스니펫 추출**: 현재 working tree에서 해당 파일을 읽고 같은 심볼명을 찾아 Step 4와 동일한 heuristic으로 경계 추출. 심볼을 찾지 못하면 이 이슈는 skip하고 Task 리포트의 "LEARNED.md 축적 보류" 섹션에 경고 기록
+   - **시그니처 계산** (macOS/Linux 공통 동작):
+     ```bash
+     echo -n "{stack}:{file}:{symbol}:{topic}" | tr '[:upper:]' '[:lower:]' | shasum -a 1 | cut -c1-6
+     ```
+   - **기존 엔트리 확인**: `docs/LEARNED.md`에서 `## [{시그니처}]`로 시작하는 줄 검색
+     - 있으면 해당 엔트리의 `**Last seen:**` 한 줄만 오늘 날짜 + 현재 Task/Round로 덮어쓴다 (Before/After/원문은 그대로 유지)
+     - 없으면 파일 하단에 신규 엔트리를 append한다
+6. `docs/LEARNED.md` 파일이 없으면 아래 헤더로 신규 생성한 뒤 엔트리를 append한다. `docs/` 디렉토리가 없으면 먼저 생성한다
+
+##### LEARNED.md 헤더 (최초 생성 시)
+
+```markdown
+# Learned Rules
+
+> Gate 1(codex:review 또는 ecc:{stack}-reviewer) FAIL 후 PASS된 교훈을 축적합니다.
+> Generator가 매 라운드 이 파일을 읽어 재발을 방지합니다.
+> `Automatable: likely` 항목은 `rules/{stack}/custom-lint/` 룰 후보입니다.
+
+---
+```
+
+##### LEARNED.md 엔트리 포맷
+
+```markdown
+## [{6자리 시그니처}] {topic-slug}
+**Stack:** {projectStack}
+**Severity:** {critical|high|medium}
+**Automatable:** {likely|unlikely|no}
+**First seen:** {YYYY-MM-DD} ({Task ID}, round {N})
+**Last seen:** {YYYY-MM-DD} ({Task ID}, round {N})
+**Symbol:** `{심볼명}` ({타입}) — `{파일 경로}`
+
+### Gate 1 원문 피드백
+> {요약 1-2문장}
+
+### Before
+(Step 4에서 저장된 FAIL 시점 스니펫 — 언어별 코드 펜스 포함)
+
+### After
+(PASS 시점 스니펫 — 현재 working tree에서 추출한 언어별 코드 펜스 포함)
+
+---
+```
 
 - **커밋 성공** → `status: "pass"`, `commitRetryCount: 0`으로 업데이트. 이후 **즉시 Task 전환 판단**: currentTaskId를 completedTasks에 추가하고 taskQueue에서 제거한다. taskQueue가 비어있으면 **같은 실행 내에서 Step 6으로 직행**한다 (ScheduleWakeup 없이). taskQueue에 다음 Task가 있으면 feedback 파일과 generator-state.md를 삭제하고, 다음 Task로 currentTaskId/round를 초기화한 뒤 종료 — `--loop`이면 ScheduleWakeup으로 다음 Task를 예약
 - **커밋 실패** (pre-commit 훅 등):
