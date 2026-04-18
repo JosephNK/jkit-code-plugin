@@ -25,7 +25,7 @@ argument-hint: '<대상 ID> [--loop] [--max-rounds N] [task-source] [eval-source
   │                                            │
   │   ┌───────────────────────┐                │
   │   │ GENERATOR             │──build──┐      │
-  │   │ code-generator agent  │         │      │
+  │   │ jkit:code-generator    │         │      │
   │   └─────▲─────────────────┘         │      │
   │         │                           ▼      │
   │         │   ┌──────────────────────────┐   │
@@ -42,7 +42,7 @@ argument-hint: '<대상 ID> [--loop] [--max-rounds N] [task-source] [eval-source
   │         │                ▼                 │
   │      feedback ┌──────────────────────────┐ │
   │         │   │ Gate 3: EVALUATOR         │  │
-  │         └───│ code-evaluator agent      │  │
+  │         └───│ jkit:code-evaluator        │  │
   │             └──────────────────────────┘   │
   │                                            │
   │   매 실행 = 1라운드                           │
@@ -276,7 +276,7 @@ Step 2 완료 후 `status: "in-progress"`로 업데이트하고 Step 3으로 진
 
 #### 3-1. Generator 단계
 
-**code-generator** 에이전트를 소환하여 Task를 구현한다.
+**jkit:code-generator** 에이전트(Agent 도구의 `subagent_type: "jkit:code-generator"`)를 소환하여 Task를 구현한다.
 
 - task-source, eval-source, Task ID를 전달
 - Generator는 `code-harness/harness-state/feedback/` 에서 이전 피드백을 읽고, 구현 결과를 `code-harness/harness-state/generator-state.md`에 쓴다
@@ -331,7 +331,7 @@ Step 2에서 감지한 린트/빌드 명령을 실행한다.
 
 #### 3-4. Gate 3: Evaluator 검증
 
-**code-evaluator** 에이전트를 소환하여 구현을 검증한다.
+**jkit:code-evaluator** 에이전트(Agent 도구의 `subagent_type: "jkit:code-evaluator"`)를 소환하여 구현을 검증한다.
 
 - task-source, eval-source, Task ID를 전달
 - Evaluator는 `code-harness/harness-state/generator-state.md`에서 Generator 결과를 읽고, 검증 결과를 `code-harness/harness-state/feedback/feedback-{round}.md`에 쓴다
