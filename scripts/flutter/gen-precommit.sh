@@ -97,7 +97,7 @@ repos:
 
       - id: architecture-lint
         name: architecture lint
-        entry: bash -c 'cd ${ENTRY} && dart run architecture_lint:lint'
+        entry: bash -c 'cd ${ENTRY} && dart run architecture_lint:lint "\$(pwd)"'
         language: system
         pass_filenames: false
         types: [file]
