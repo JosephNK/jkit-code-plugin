@@ -21,7 +21,7 @@ EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # ─── Parse arguments ───
 FRAMEWORK=""
@@ -192,33 +192,52 @@ mkdir -p "$OUTPUT_DIR"
 echo "$content" > "$OUTPUT_FILE"
 echo "Generated: $OUTPUT_FILE"
 
-# ─── Copy base and stack files to target project ───
-BASE_FILE="$RULES_DIR/base/eslint.base.mjs"
-if [ -f "$BASE_FILE" ]; then
-  mkdir -p "$OUTPUT_DIR/.jkit/rules/base"
-  cp "$BASE_FILE" "$OUTPUT_DIR/.jkit/rules/base/eslint.base.mjs"
-  echo "Copied: $OUTPUT_DIR/.jkit/rules/base/eslint.base.mjs"
+# ─── Patch user's package.json with git dependency ───
+# Resolve current plugin version from .claude-plugin/plugin.json
+PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
+if [ ! -f "$PLUGIN_JSON" ]; then
+  echo "Error: plugin.json not found at $PLUGIN_JSON" >&2
+  exit 1
 fi
 
-if [ -n "$STACKS" ]; then
-  IFS=',' read -ra COPY_LIST <<< "$STACKS"
-  for stack in "${COPY_LIST[@]}"; do
-    stack=$(echo "$stack" | xargs)
-    STACK_DIR="$RULES_DIR/$stack"
-    # Copy all .mjs files (excluding manifest) to .jkit/rules/<stack>/
-    copied=false
-    for mjs_file in "$STACK_DIR"/*.mjs; do
-      [ -f "$mjs_file" ] || continue
-      mkdir -p "$OUTPUT_DIR/.jkit/rules/$stack"
-      cp "$mjs_file" "$OUTPUT_DIR/.jkit/rules/$stack/"
-      echo "Copied: $OUTPUT_DIR/.jkit/rules/$stack/$(basename "$mjs_file")"
-      copied=true
-    done
-    if [ "$copied" = false ]; then
-      echo "Warning: No .mjs files found for stack '$stack'" >&2
-    fi
-  done
+PLUGIN_VERSION=$(python3 -c "import json,sys; print(json.load(open('$PLUGIN_JSON'))['version'])")
+GIT_REF="v$PLUGIN_VERSION"
+GIT_DEP="github:JosephNK/jkit-code-plugin#$GIT_REF"
+
+USER_PACKAGE_JSON="$OUTPUT_DIR/package.json"
+if [ ! -f "$USER_PACKAGE_JSON" ]; then
+  echo "Error: package.json not found at $USER_PACKAGE_JSON" >&2
+  echo "Hint: run 'npm init -y' in the project root first." >&2
+  exit 1
 fi
+
+python3 - "$USER_PACKAGE_JSON" "$GIT_DEP" <<'PY'
+import json, sys, pathlib
+
+pkg_path = pathlib.Path(sys.argv[1])
+git_dep = sys.argv[2]
+
+data = json.loads(pkg_path.read_text())
+dev = data.setdefault("devDependencies", {})
+
+old = dev.get("@jkit/eslint-rules")
+dev["@jkit/eslint-rules"] = git_dep
+
+# Sort devDependencies alphabetically to keep diffs minimal
+data["devDependencies"] = dict(sorted(dev.items()))
+
+pkg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+if old == git_dep:
+    print(f"  Unchanged: @jkit/eslint-rules ({git_dep})")
+elif old:
+    print(f"  Updated:   @jkit/eslint-rules {old} → {git_dep}")
+else:
+    print(f"  Added:     @jkit/eslint-rules → {git_dep}")
+PY
+
+echo ""
+echo "Next step: run 'npm install' in $OUTPUT_DIR"
 
 if [ -n "$STACKS" ]; then
   echo "Stacks: $STACKS"

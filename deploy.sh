@@ -147,10 +147,11 @@ echo ""
 echo "─── Release actions ───"
 echo "  1. Update .claude-plugin/plugin.json            → $NEW"
 echo "  2. Update .claude-plugin/marketplace.json       → $NEW"
-echo "  3. Update tools/analyzer_plugin/pubspec.yaml    → ref: $TAG"
-echo "  4. git commit -m \"chore: 버전 $NEW 범프\""
-echo "  5. git tag $TAG"
-echo "  6. git push origin $BRANCH --follow-tags"
+echo "  3. Update package.json                          → $NEW"
+echo "  4. Update tools/analyzer_plugin/pubspec.yaml    → ref: $TAG"
+echo "  5. git commit -m \"chore: 버전 $NEW 범프\""
+echo "  6. git tag $TAG"
+echo "  7. git push origin $BRANCH --follow-tags"
 echo ""
 
 if [ "$YES" != "true" ]; then
@@ -161,6 +162,7 @@ fi
 # ─── Update version files ───
 PLUGIN_JSON=".claude-plugin/plugin.json"
 MARKETPLACE_JSON=".claude-plugin/marketplace.json"
+ROOT_PACKAGE_JSON="package.json"
 BOOTSTRAP_PUBSPEC="rules/flutter/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml"
 
 python3 <<PY
@@ -168,8 +170,11 @@ import json, re, pathlib
 
 new = "$NEW"
 
-for path in ("$PLUGIN_JSON", "$MARKETPLACE_JSON"):
+for path in ("$PLUGIN_JSON", "$MARKETPLACE_JSON", "$ROOT_PACKAGE_JSON"):
     p = pathlib.Path(path)
+    if not p.exists():
+        print(f"  Skipped {path} (not found)")
+        continue
     data = json.loads(p.read_text())
     if "version" in data:
         data["version"] = new
@@ -192,6 +197,7 @@ PY
 
 # ─── Commit + tag + push ───
 git add "$PLUGIN_JSON" "$MARKETPLACE_JSON" "$BOOTSTRAP_PUBSPEC"
+[ -f "$ROOT_PACKAGE_JSON" ] && git add "$ROOT_PACKAGE_JSON"
 git commit -m "chore: 버전 ${NEW} 범프"
 git tag -a "$TAG" -m "Release $TAG"
 

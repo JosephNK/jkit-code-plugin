@@ -1,0 +1,18 @@
+{
+  "name": "@jkit/eslint-rules",
+  "version": "0.1.36",
+  "description": "ESLint rule sets shared by jkit-code-plugin",
+  "type": "module",
+  "exports": {
+    "./nextjs/*": "./rules/nextjs/*"
+  },
+  "files": [
+    "rules/nextjs"
+  ],
+  "license": "MIT",
+  "author": "josephnk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JosephNK/jkit-code-plugin.git"
+  }
+}

@@ -83,6 +83,7 @@ $JKIT_DIR/scripts/gen-architecture.sh nextjs -p docs
 $JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs --with <conventions-stacks>
 
 # 4. ESLint config
+# Prerequisite: package.json must exist. If missing, run `npm init -y` first.
 $JKIT_DIR/scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
 
 # 5. tsconfig.json patch
@@ -94,7 +95,24 @@ $JKIT_DIR/scripts/typescript/gen-husky.sh nextjs -p .
 
 Skip `--with` if the user selected no stacks for that generator.
 
-### 7. Report
+### 7. Install ESLint rules dependency
+
+`gen-eslint.sh`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
+
+```json
+"@jkit/eslint-rules": "github:JosephNK/jkit-code-plugin#v<current-version>"
+```
+
+의존성을 실제로 설치:
+
+```bash
+cd "$PROJECT_ROOT"
+npm install
+```
+
+> 설치 후 `node_modules/@jkit/eslint-rules/`에 `rules/nextjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nextjs 규칙만 포함).
+
+### 8. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point
@@ -102,6 +120,7 @@ Tell the user what was created:
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
 - `CONVENTIONS.md` — Conventions with selected stacks
-- `eslint.config.mjs` — ESLint config with selected stacks
+- `eslint.config.mjs` — ESLint config with selected stacks (imports `@jkit/eslint-rules/nextjs/*`)
+- `package.json` — devDependencies에 `@jkit/eslint-rules` git 의존성 추가
 - `tsconfig.json` — Patched with framework-specific settings
 - `.husky/` — Git hooks (pre-commit, commit-msg)
