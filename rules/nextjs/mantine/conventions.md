@@ -14,3 +14,8 @@ All UI components **MUST** use Mantine.
 - Style customization priority: Mantine `style props` → `style` prop → CSS Modules (`.module.css`)
 - **NO utility CSS frameworks** (Tailwind, UnoCSS, etc.) — Mantine style props cover most cases
 - Light/dark: `defaultColorScheme="auto"` — Mantine handles color scheme switching; do NOT use manual dark mode CSS selectors or hardcode colors for a single scheme
+
+### Documentation Reference
+
+- Always check latest docs via Context7 MCP before writing/reviewing Mantine code
+- Prefer Context7 docs over training data (training cutoff)

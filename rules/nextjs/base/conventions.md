@@ -172,5 +172,5 @@ return <ProductsContent dict={dict.Products} />;
 
 ## Documentation Reference
 
-- Always check latest docs via Context7 MCP before writing/reviewing Next.js / React / Mantine code
+- Always check latest docs via Context7 MCP before writing/reviewing Next.js / React
 - Prefer Context7 docs over training data (training cutoff)
