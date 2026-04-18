@@ -36,7 +36,7 @@ Ask the user for the project name. Default: current directory name.
 
 Show the **conventions** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
-> Available conventions stacks: `mantine`, `antd`, `design-system`, `tanstack-query`, `next-proxy`, `no-utility-css`
+> Available conventions stacks: `mantine`, `antd`, `design-system`, `tanstack-query`, `next-proxy`, `no-utility-css`, `no-inline-style-tokens`
 >
 > Note: `mantine` and `antd` are mutually exclusive in practice — enable the UI library stack your project actually uses.
 >
@@ -56,6 +56,7 @@ Show the **ESLint** stacks below and ask the user to select (comma-separated, `a
 7. `next-proxy`
 8. `theme`
 9. `no-utility-css`
+10. `no-inline-style-tokens`
 
 > Note: `mantine` and `antd` are mutually exclusive in practice — pick the UI library stack your project actually uses.
 
@@ -223,6 +224,6 @@ Tell the user what was created:
 - `CONVENTIONS.md` — Conventions with selected stacks (stylelint section auto-included)
 - `eslint.config.mjs` — ESLint config with selected stacks (imports `@jkit/eslint-rules/nextjs/*`)
 - `stylelint.config.mjs` — Stylelint config (extends `stylelint-config-standard` + jkit baseline rules)
-- `package.json` — devDependencies(`@jkit/eslint-rules`, `stylelint`, `stylelint-config-standard`) + `scripts.lint:css` + `lint-staged` CSS glob
+- `package.json` — devDependencies(`@jkit/eslint-rules`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`) + `scripts.lint:css` + `lint-staged` CSS glob
 - `tsconfig.json` — Patched with framework-specific settings
 - `.husky/` — Git hooks (pre-commit, commit-msg)
