@@ -2,7 +2,7 @@
 import {
   gcpFrameworkPackages,
   gcpInfraPackages,
-} from './.jkit/rules/gcp/eslint.rules.mjs';
+} from '@jkit/eslint-rules/nestjs/gcp/eslint.rules.mjs';
 --- framework ---
     ...gcpFrameworkPackages,
 --- infra ---

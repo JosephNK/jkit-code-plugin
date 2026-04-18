@@ -1,7 +1,7 @@
 --- import ---
 import {
   typeormFrameworkPackages,
-} from './.jkit/rules/typeorm/eslint.rules.mjs';
+} from '@jkit/eslint-rules/nestjs/typeorm/eslint.rules.mjs';
 --- framework ---
     ...typeormFrameworkPackages,
 --- infra ---

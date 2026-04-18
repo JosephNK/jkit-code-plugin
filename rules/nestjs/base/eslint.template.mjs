@@ -10,7 +10,7 @@ import {
   basePathAliasPattern,
   buildArchitectureBoundaries,
   buildLayerRestrictions,
-} from './.jkit/rules/base/eslint.base.mjs';
+} from '@jkit/eslint-rules/nestjs/base/eslint.base.mjs';
 // {{STACK_IMPORTS}}
 
 // ─── Merged framework packages (base + stacks) ───

@@ -4,10 +4,12 @@
   "description": "ESLint rule sets shared by jkit-code-plugin",
   "type": "module",
   "exports": {
-    "./nextjs/*": "./rules/nextjs/*"
+    "./nextjs/*": "./rules/nextjs/*",
+    "./nestjs/*": "./rules/nestjs/*"
   },
   "files": [
-    "rules/nextjs"
+    "rules/nextjs",
+    "rules/nestjs"
   ],
   "license": "MIT",
   "author": "josephnk",
