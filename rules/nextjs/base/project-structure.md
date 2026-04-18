@@ -37,3 +37,14 @@ src/
 │   │   └── services.ts           # Composition root (wires services with repos)
 │   │
 ```
+
+## Top-level directories (excluded from architecture boundaries)
+
+The following project-root directories are reserved for tooling and tests. They are pre-registered in `baseBoundaryIgnores` (see `eslint.base.mjs`) so `boundaries/no-unknown-files` does not flag them.
+
+```
+scripts/          # Build, deploy, codegen, and maintenance utilities
+e2e/              # Playwright E2E tests
+```
+
+If a project needs boundary enforcement inside these folders, override `baseBoundaryIgnores` in the project-level `eslint.config.mjs` rather than placing source code there.

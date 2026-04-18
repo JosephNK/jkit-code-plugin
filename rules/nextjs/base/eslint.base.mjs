@@ -150,6 +150,8 @@ export const baseBoundaryIgnores = [
   'types/**',
   'src/common/types/**',
   '.jkit/**',
+  'scripts/**',
+  'e2e/**',
 ];
 
 export const baseRestrictedSyntax = [
