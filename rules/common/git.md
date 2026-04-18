@@ -56,6 +56,37 @@ gh pr list
 gh pr view <number>
 ```
 
+## `.gitignore` Rules for `.claude/`
+
+**CRITICAL**: Never add blanket `.claude/` or `.claude` to `.gitignore`.
+
+The `.claude/` directory holds both team-shared and personal files:
+
+| Path | Tracked? | Purpose |
+|------|----------|---------|
+| `.claude/settings.json` | Yes | Team-wide Claude Code settings |
+| `.claude/commands/` | Yes | Team-shared slash commands |
+| `.claude/agents/` | Yes | Team-shared subagents |
+| `.claude/hooks/` | Yes | Team-shared hooks |
+| `.claude/settings.local.json` | No | Personal overrides |
+| `.claude/sessions/` | No | Local session state |
+| `.claude/todos/` | No | Local task cache |
+
+Correct `.gitignore` entries:
+
+```
+.claude/settings.local.json
+.claude/sessions/
+.claude/todos/
+```
+
+Forbidden entries (will break team sharing of commands/agents/hooks):
+
+```
+.claude/        # ❌ excludes team commands/agents
+.claude         # ❌ same issue
+```
+
 ## Common Commands
 
 ```bash

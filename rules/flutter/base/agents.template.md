@@ -1,5 +1,9 @@
 # {{PROJECT_NAME}}
 
+### Hard Rules
+
+- **Never add `.claude/` to `.gitignore`.** Only add specific personal paths like `.claude/settings.local.json`, `.claude/sessions/`, `.claude/todos/`. See [GIT.md]({{DOCS_DIR}}GIT.md#gitignore-rules-for-claude) for the complete list.
+
 ### Reference
 
 - [Architecture]({{DOCS_DIR}}ARCHITECTURE.md) — **MUST read when writing or modifying code.** Full architecture details with code examples
