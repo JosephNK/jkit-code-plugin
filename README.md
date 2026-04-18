@@ -97,6 +97,7 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 |---------|-------------|
 | `/jkit:flutter-update-dependencies` | pub.dev 패키지 최신 버전 업데이트 |
 | `/jkit:flutter-update-leaf-kit-ref` | flutter_leaf_kit git ref 일괄 업데이트 |
+| `/jkit:flutter-update-architecture-lint-ref` | architecture_lint git ref 일괄 업데이트 |
 | `/jkit:flutter-update-precommit` | .pre-commit-config.yaml 재생성 |
 
 ### Cross-Framework
