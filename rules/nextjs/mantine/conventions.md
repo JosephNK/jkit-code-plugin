@@ -15,7 +15,7 @@ All UI components **MUST** use Mantine (**version 9 or higher**).
 - Style customization priority: Mantine `style props` → `style` prop → CSS Modules (`.module.css`)
 - Light/dark: `defaultColorScheme="auto"` — Mantine handles color scheme switching; do NOT use manual dark mode CSS selectors or hardcode colors for a single scheme
 
-> For the ban on utility CSS frameworks, see the separate `css-policy` conventions module.
+> For the ban on utility CSS frameworks, see the separate `no-utility-css` conventions module.
 
 ### Next.js Config (Tree-shaking)
 

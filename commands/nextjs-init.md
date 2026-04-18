@@ -36,7 +36,11 @@ Ask the user for the project name. Default: current directory name.
 
 Show the **conventions** stacks below and ask the user to select (comma-separated, `all` for all stacks, or empty for base only).
 
-> Available conventions stacks: `mantine`, `design-system`, `tanstack-query`, `next-proxy`, `css-policy`
+> Available conventions stacks: `mantine`, `antd`, `design-system`, `tanstack-query`, `next-proxy`, `no-utility-css`
+>
+> Note: `mantine` and `antd` are mutually exclusive in practice — enable the UI library stack your project actually uses.
+>
+> Note: `stylelint` is **always auto-included** in the final `--with` list (no selection needed), because stylelint itself is always installed as CSS tooling infrastructure.
 
 ### 3. Ask ESLint stacks
 
@@ -44,12 +48,16 @@ Show the **ESLint** stacks below and ask the user to select (comma-separated, `a
 **IMPORTANT: ESLint stacks are NOT the same as conventions stacks. You MUST show ALL items from the list below — do NOT omit any.**
 
 1. `mantine`
-2. `mongodb`
-3. `nextauth`
-4. `email-template`
-5. `tanstack-query`
-6. `next-proxy`
-7. `theme`
+2. `antd`
+3. `mongodb`
+4. `nextauth`
+5. `email-template`
+6. `tanstack-query`
+7. `next-proxy`
+8. `theme`
+9. `no-utility-css`
+
+> Note: `mantine` and `antd` are mutually exclusive in practice — pick the UI library stack your project actually uses.
 
 ### 4. Ask tsconfig stacks
 
@@ -157,20 +165,31 @@ $JKIT_DIR/scripts/gen-git.sh -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.sh nextjs -p docs
 
-# 3. CONVENTIONS.md
-$JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs --with <conventions-stacks>
+# 3. CONVENTIONS.md — stylelint만 항상 prepend (auto-include)
+USER_CONV_STACKS="<conventions-stacks>"   # Step 2의 사용자 선택값
+if [ -n "$USER_CONV_STACKS" ]; then
+  CONV_STACKS="stylelint,$USER_CONV_STACKS"
+else
+  CONV_STACKS="stylelint"
+fi
+$JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs --with "$CONV_STACKS"
 
 # 4. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
 
-# 5. tsconfig.json patch
+# 5. Stylelint config (항상 실행, 스택 선택 없음)
+#    - stylelint.config.mjs 생성
+#    - package.json: devDeps + scripts.lint:css + lint-staged 자동 주입
+$JKIT_DIR/scripts/typescript/gen-stylelint.sh nextjs -p .
+
+# 6. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.sh nextjs -p .
 
-# 6. Husky hooks
+# 7. Husky hooks
 $JKIT_DIR/scripts/typescript/gen-husky.sh nextjs -p .
 ```
 
-Skip `--with` if the user selected no stacks for that generator.
+Skip `--with` if the user selected no stacks for that generator — conventions는 `stylelint` auto-include 때문에 절대 비지 않지만, ESLint는 사용자 선택이 없으면 `--with`를 생략한다.
 
 ### 9. Install ESLint rules dependency
 
@@ -201,8 +220,9 @@ Tell the user what was created:
 - `CLAUDE.md` → `AGENTS.md` symlink
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
-- `CONVENTIONS.md` — Conventions with selected stacks
+- `CONVENTIONS.md` — Conventions with selected stacks (stylelint section auto-included)
 - `eslint.config.mjs` — ESLint config with selected stacks (imports `@jkit/eslint-rules/nextjs/*`)
-- `package.json` — devDependencies에 `@jkit/eslint-rules` git 의존성 추가
+- `stylelint.config.mjs` — Stylelint config (extends `stylelint-config-standard` + jkit baseline rules)
+- `package.json` — devDependencies(`@jkit/eslint-rules`, `stylelint`, `stylelint-config-standard`) + `scripts.lint:css` + `lint-staged` CSS glob
 - `tsconfig.json` — Patched with framework-specific settings
 - `.husky/` — Git hooks (pre-commit, commit-msg)

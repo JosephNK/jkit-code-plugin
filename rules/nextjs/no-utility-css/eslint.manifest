@@ -1,0 +1,10 @@
+--- import ---
+import { noUtilityCssRestrictedPatterns } from '@jkit/eslint-rules/nextjs/no-utility-css/eslint.rules.mjs';
+--- restricted ---
+    ...noUtilityCssRestrictedPatterns,
+--- domain ---
+--- syntax ---
+--- elements ---
+--- rules ---
+--- patches ---
+--- ignores ---

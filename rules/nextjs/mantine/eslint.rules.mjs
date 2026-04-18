@@ -8,18 +8,16 @@
 
 // ─── Mantine: Restricted import patterns ──────────────────────────────────────
 /**
- * 스타일링 전략 단일화를 위해 다른 CSS 전략을 차단한다.
- * Mantine은 자체 style props + CSS Modules를 전제로 디자인되어 있어,
- * Tailwind나 Emotion을 혼용하면 번들 크기 증가 + 테마 토큰 이중화 문제가 발생.
+ * Mantine 한정 CSS-in-JS 차단.
+ * Mantine은 내부적으로 Emotion을 쓰지만 사용자 코드에서 직접 Emotion/styled-*
+ * 라이브러리를 쓰면 이중 설정(Emotion 캐시·테마 프로바이더가 둘)이 되어
+ * 스타일 계산 타이밍·테마 토큰 동기화에 문제가 생긴다.
+ *
+ * Utility CSS(Tailwind/UnoCSS/WindiCSS) 차단은 UI lib 무관한 전역 정책이므로
+ * `no-utility-css` 스택으로 이관되었다.
  */
 export const mantineRestrictedPatterns = [
   {
-    // Utility CSS 프레임워크 차단 — Mantine style props로 일관화
-    group: ['tailwindcss', 'tailwindcss/**', 'unocss', 'unocss/**', 'windicss', 'windicss/**'],
-    message: 'Utility CSS frameworks are not allowed. Use Mantine style props.',
-  },
-  {
-    // CSS-in-JS 라이브러리 차단 — Mantine은 Emotion 기반이지만 직접 사용은 금지 (이중 설정 방지)
     group: ['@emotion/*', 'styled-components', 'styled-jsx', 'styled-jsx/**'],
     message: 'CSS-in-JS libraries are not allowed. Use Mantine style props or CSS Modules.',
   },
