@@ -7,6 +7,9 @@ example/
 settings.local.json
 code-harness/harness-state/
 code-harness/reports/
+code-harness/PLAN.md
+code-harness/TASKS.md
+code-harness/QA.md
 
 # Dart
 .dart_tool/
