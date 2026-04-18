@@ -1,10 +1,10 @@
 ---
-name: flutter-setup
-description: Generates Flutter app initial configuration files. Use for requests like "Set up the app", "Flutter initial setup", "Create app.dart".
+name: flutter-app-scaffold
+description: Generates Flutter app initial configuration files. Use for requests like "Set up the app scaffold", "Flutter initial setup scaffold", "Create app.dart".
 argument-hint: "<AppName> [-entry <dir>] [package_name]"
 ---
 
-# Flutter Setup Skill
+# Flutter App Scaffold Skill
 
 Generates initial configuration files (app.dart, main.dart) for a Flutter project.
 
@@ -48,7 +48,7 @@ Generates initial configuration files (app.dart, main.dart) for a Flutter projec
 
 ## Generated Files
 
-When running `/flutter-setup Sample -entry app`:
+When running `/flutter-app-scaffold Sample -entry app`:
 ```
 app/
 ├── lib/
@@ -86,7 +86,7 @@ app/
 ## Usage Examples
 
 ```
-/flutter-setup Sample -entry app
+/flutter-app-scaffold Sample -entry app
 → Create app/lib/app.dart (SampleApp class, package: sample_app)
 → Create app/lib/main.dart
 → Create app/lib/router/router.dart
@@ -96,7 +96,7 @@ app/
 → Create app/assets/langs/ko-KR.json
 → Register pubspec.yaml assets
 
-/flutter-setup Sample
+/flutter-app-scaffold Sample
 → Create lib/app.dart (SampleApp class, package: sample_app)
 → Create lib/main.dart
 → Create lib/router/router.dart
