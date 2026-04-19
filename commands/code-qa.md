@@ -409,13 +409,53 @@ QA 문서를 저장하기 **전에** 아래 체크리스트를 순회합니다.
 - [ ] 디자인 도구 = none 인 경우, 디자인 검증 카테고리(4-6)가 어떤 Task에도 포함되지 않았는가?
 - [ ] QA 요약 테이블의 "디자인" 열이 디자인 도구 상태(포함/생략)에 맞게 구성되었는가?
 
-### Step 9: 저장
+### Step 9: 저장 및 Task 슬라이싱
+
+#### 9-1. QA 문서 저장
 
 Step 8 검증을 모두 통과한 QA 문서를 출력 경로에 저장합니다.
+
+#### 9-2. Task 단위 슬라이스 생성
+
+저장 직후 QA 문서를 Task 단위로 분할하여 슬라이스 파일을 생성합니다.
+이 슬라이스는 `/jkit:code-harness` 실행 시 Evaluator에 전달되어
+**QA.md 전체를 매 라운드 읽지 않도록** 토큰 사용량을 줄입니다.
+
+**슬라이스 출력 디렉토리** (입력 파일 경로 기반 규칙):
+
+```
+slice_dir = <dirname of OUTPUT> / <basename(OUTPUT) lowercase, .md 제거> /
+```
+
+- `code-harness/QA.md` → `code-harness/qa/`
+- `path/to/MyQA.md` → `path/to/myqa/`
+
+**실행**:
+
+```bash
+JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
+$JKIT_DIR/scripts/slice-tasks.sh <OUTPUT> <slice_dir>
+```
+
+스크립트가 자동으로 수행하는 작업:
+1. `### Task N` 헤더 기준으로 분할
+2. 각 슬라이스에 **공통 헤더**(개요·QA 요약 테이블 등)와 **공통 푸터**(회귀 테스트 매트릭스, 공통 검증 항목, 검증 우선순위 가이드) 포함
+3. 슬라이스 첫 두 줄에 출처 메타 주석 삽입
+4. 입력에 더 이상 존재하지 않는 Task 슬라이스 자동 제거
+
+**예시 출력**:
+```
+code-harness/qa/Task-1.md
+code-harness/qa/Task-2.md
+...
+```
+
+> 슬라이싱 실패 시 사용자에게 경고하되 QA 문서 저장 자체는 유지한다. harness 실행 시 슬라이스가 없으면 원본 QA 문서를 fallback으로 사용한다.
 
 ### Step 10: 완료 보고
 
 - 생성된 QA 문서 파일 경로 출력
+- 생성된 슬라이스 디렉토리 경로 + 슬라이스 개수 출력
 - Task 총 개수, 카테고리별 검증 항목 수 요약 출력
 - 검증 항목이 가장 많은 Task (= 가장 중점적으로 QA해야 할 Task) 하이라이트
 - Step 8 검증 결과 요약 (전체 통과 / 수정된 항목)

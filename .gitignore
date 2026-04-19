@@ -10,6 +10,12 @@ code-harness/reports/
 code-harness/PLAN.md
 code-harness/TASKS.md
 code-harness/QA.md
+code-harness/tasks/
+code-harness/qa/
+
+# Office docs (presentations, lock files)
+*.pptx
+.~lock.*#
 
 # Dart
 .dart_tool/
