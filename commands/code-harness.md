@@ -70,7 +70,7 @@ code-harness/
 >   "evalSlice": "code-harness/qa/Task-1.md"
 > }
 > ```
-> 슬라이스 fallback 발생 시에는 원본 경로(`taskSource`/`evalSource`)가 그대로 들어간다. Task 전환 시 `null`로 초기화된다.
+> 항상 슬라이스 파일 경로만 들어간다 (검증 실패 시 fallback 없이 즉시 중단 — Step 2.5-2 참조). Task 전환 시 `null`로 초기화된다.
 
 #### status 값 정의
 
@@ -104,7 +104,7 @@ code-harness/
 
 ### 범위 파싱
 
-`Task N~M` 형식에서 N과 M은 정수. `Task N`, `Task N+1`, ..., `Task M`으로 확장하여 taskQueue에 추가한다. task-source에 해당 Task ID가 없으면 에러를 표시하고 중단한다.
+`Task N~M` 형식에서 N과 M은 정수. `Task N`, `Task N+1`, ..., `Task M`으로 확장하여 taskQueue에 추가한다. 각 Task ID 존재 여부는 Bash로 `test -f "$task_slice_dir/Task-${n}.md"`로 확인한다 (**Read 도구 금지** — 슬라이스 파일 존재 여부만 검사). 하나라도 누락되면 `/jkit:code-tasks` 재실행을 안내하고 즉시 중단한다 (하네스는 슬라이스를 생성하지 않는다).
 
 ### 예시
 
@@ -165,7 +165,10 @@ code-harness/
 2. **eval-source 결정**
    - 명시적 경로가 있으면 그대로 사용
    - 없으면 `code-harness/` 에서 QA, TEST, EVAL 키워드 포함 `.md` 파일 탐색 후 번호 목록 표시
-3. **대상 ID 결정** — task-source를 읽어 Task 목록 표시 (범위/개별 선택). 인자로 대상 ID가 주어졌으면 그대로 사용. task-source에 Task 항목이 0개면 위 안내 메시지와 동일하게 실행을 중단한다
+3. **대상 ID 결정** — task-source의 슬라이스 디렉토리(`$task_slice_dir`, 도출 규칙은 Step 2.5 참조)에서 Task 목록을 추출한다 (**Read 도구 금지** — 슬라이스 파일명만 사용):
+   - **선행 조건 검사**: `ls "$task_slice_dir"/Task-*.md 2>/dev/null` 결과가 0건이면 슬라이스 미생성 상태로 판정. `/jkit:code-tasks "$task_source"`를 먼저 실행하라는 안내 후 **즉시 중단**한다 (하네스는 슬라이스를 생성하지 않는다 — Rule 14)
+   - 슬라이스가 존재하면 `ls "$task_slice_dir"/Task-*.md | xargs -n1 basename | sed 's/\.md$//'`로 Task ID 목록(`Task-1`, `Task-2`, …)을 사용자에게 표시
+   - 인자로 대상 ID가 주어졌으면 그대로 사용
 4. **옵션 파싱**:
    - `--max-rounds N` (기본 10)
    - `--once` → `loopMode = false` (기본 true)
@@ -235,32 +238,24 @@ slice_path = slice_dir / <currentTaskId 공백을 '-'로 치환>.md
 
 파일명 sanitize는 리포트 파일과 동일 규칙(공백 → `-`, `~` → `to`)을 따른다.
 
-#### 2.5-2. 슬라이스 stale 감지 및 재생성
+#### 2.5-2. 슬라이스 검증 (생성·갱신 금지)
 
-각 source에 대해 다음을 수행한다:
+하네스는 슬라이스를 생성하거나 재생성하지 않는다. 각 source에 대해 다음을 순서대로 검증하고, 어느 하나라도 실패하면 사용자에게 안내 후 **즉시 중단**한다.
 
-1. **슬라이스 파일 존재 확인**: `slice_path`가 없으면 → 재생성 트리거
-2. **SHA 비교**: 존재하면 source의 현재 SHA와 슬라이스 첫 줄 주석의 SHA를 비교
+1. **슬라이스 파일 존재 확인**: `slice_path`가 없으면 → 중단. task-source는 `/jkit:code-tasks "$task_source"`, eval-source는 `/jkit:code-qa "$eval_source"` 재실행을 안내
+2. **SHA 일치 확인**: source의 현재 SHA와 슬라이스 첫 줄 주석의 SHA를 비교
    ```bash
    current_sha=$(shasum -a 1 "$source" | awk '{print $1}' | cut -c1-12)
    slice_sha=$(head -1 "$slice_path" | sed -nE 's/.*@ sha ([a-f0-9]+) .*/\1/p')
-   [ "$current_sha" = "$slice_sha" ] || TRIGGER_RESLICE=1
+   [ "$current_sha" = "$slice_sha" ]
    ```
-   일치하지 않으면 → 재생성 트리거
-3. **재생성**: 트리거되면 slice-tasks.sh를 호출하여 **해당 source 전체를 재슬라이싱**한다 (개별 Task만이 아님 — 다른 Task 슬라이스도 최신화 필요)
-   ```bash
-   JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
-   $JKIT_DIR/scripts/slice-tasks.sh "$source" "$slice_dir"
-   ```
+   불일치 → source가 슬라이싱 이후 수정됨. 중단하고 위 슬라이싱 커맨드 재실행을 안내한다
 
-#### 2.5-3. 슬라이스 경로 확정 또는 Fallback
+> **재슬라이싱 책임 분리**: 슬라이싱은 `code-tasks` / `code-qa`의 단독 책임이다 (Rule 14). 하네스는 stale 자동 갱신도 수행하지 않는다 — source 변경이 의도된 것인지(새 Task 추가)는 사용자만 판단할 수 있고, 자동 재슬라이싱은 진행 중인 라운드 컨텍스트와 충돌할 수 있다.
 
-재슬라이싱 후에도 `slice_path`가 존재하지 않으면 (예: source 파싱 실패, Task ID 불일치):
+#### 2.5-3. 슬라이스 경로 확정
 
-- 경고를 `generator-state.md` 최상단에 기록: `슬라이스 없음 — 원본 source를 fallback으로 사용`
-- Step 3에서 Generator/Evaluator에 **원본 task-source/eval-source**를 전달 (기존 동작)
-
-슬라이스가 정상 생성되었으면 state.json에 경로를 저장 후 Step 3로 진행한다:
+검증을 모두 통과하면 state.json에 경로를 저장 후 Step 3로 진행한다 (fallback 없음 — 검증 실패는 전부 중단):
 
 ```json
 "currentSlices": {
@@ -679,4 +674,5 @@ PASS/FAIL/구조 불일치 등 Task 종료 지점에서 공통으로 수행:
 11. **범위 실행 시 FAIL Task 건너뜀** — maxRounds 초과 FAIL은 리포트 후 다음 Task로(전체 중단 X)
 12. **code-harness/ 보호** — `.gitignore` 단일 엔트리로 staging 제외, `git clean -e code-harness/`. 팀 공유 산출물은 `docs/LEARNED.md`·`docs/LEARNED-LINT.md` 둘
 13. **Task 전환 시 정리** — "Task 전환 정리 절차" 참조
-14. **Task 슬라이싱 우선 사용** — Generator/Evaluator에 `state.currentSlices`의 슬라이스 경로를 전달. source SHA 변경 시 Step 2.5가 재생성. 실패·미존재 시 원본 fallback + `generator-state.md`에 경고. 슬라이스 파일 자체는 `code-tasks`/`code-qa`가 생성 (harness는 stale 갱신만)
+14. **Task 슬라이싱은 선행 조건** — 슬라이스 파일은 `/jkit:code-tasks` (TASKS) / `/jkit:code-qa` (QA)가 단독 생성한다. 하네스는 슬라이스를 생성·재생성·갱신하지 않으며, Step 1·2.5에서 존재·SHA 일치만 검증한다. 미생성·SHA 불일치 시 즉시 중단하고 사용자에게 해당 슬라이싱 커맨드 재실행을 안내한다 (fallback 없음). Generator/Evaluator에는 `state.currentSlices`의 슬라이스 경로를 전달한다
+15. **task-source/eval-source 본문 Read 금지** — 하네스 메인은 어떤 단계에서도 TASKS.md/QA.md 본문을 Read 도구로 열지 않는다 (토큰 비용 회피). Task 목록 표시·존재 검증은 슬라이스 디렉토리(`$task_slice_dir`)의 `ls` / `test -f`로만 수행한다. 본문이 필요한 작업은 슬라이스 파일을 통해 Generator/Evaluator에 위임한다
