@@ -12,9 +12,12 @@
     "rules/nestjs"
   ],
   "license": "MIT",
-  "author": "josephnk",
+  "author": "JosephNK <nkw0608@gmail.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/JosephNK/jkit-code-plugin.git"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
   }
 }
