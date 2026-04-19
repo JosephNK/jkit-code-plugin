@@ -47,9 +47,7 @@ IMPORT_RE = re.compile(r'^\s*import\s+[\'"](.+?)[\'"]')
 BARE_CATCH_RE = re.compile(r"\bcatch\s*\(")
 TYPED_CATCH_RE = re.compile(r"\bon\s+\w+.*\bcatch\s*\(")
 LINE_COMMENT_RE = re.compile(r"//")
-CLASS_DECL_RE = re.compile(
-    r"^\s*(?:abstract\s+)?class\s+(\w+)"
-)
+CLASS_DECL_RE = re.compile(r"^\s*(?:abstract\s+)?class\s+(\w+)")
 
 MAX_FILE_LINES = 800
 
@@ -215,7 +213,7 @@ def find_bare_catches(file_path: Path) -> list[tuple[int, str]]:
 
         # Skip line comments
         comment_pos = LINE_COMMENT_RE.search(line)
-        code_part = line[:comment_pos.start()] if comment_pos else line
+        code_part = line[: comment_pos.start()] if comment_pos else line
 
         if BARE_CATCH_RE.search(code_part) and not TYPED_CATCH_RE.search(code_part):
             results.append((i, stripped))
@@ -349,7 +347,9 @@ def check_e3_bloc_dependency(
             return None
         forbidden = {"adapters", "ports", "common_services"}
         if target_layer in forbidden:
-            return f"bloc/ must not import from {target_layer}/ -- only usecases/ allowed"
+            return (
+                f"bloc/ must not import from {target_layer}/ -- only usecases/ allowed"
+            )
         return None
     # External package not in allowed list -- skip (not architecture rule)
     return None
@@ -383,7 +383,9 @@ def check_e5_ports_no_framework(
     if pkg == package_name:
         return None
     if pkg in FRAMEWORK_PACKAGES:
-        return f"ports/ must not import framework package '{pkg}' -- use domain types only"
+        return (
+            f"ports/ must not import framework package '{pkg}' -- use domain types only"
+        )
     return None
 
 
@@ -422,7 +424,9 @@ def check_e6_cross_feature(
         target_is_domain = resolve_import_layer(import_path, file_rel) or ""
         # Also check via package import
         if target_is_domain == "":
-            target_is_domain = get_import_layer_from_package(import_path, package_name) or ""
+            target_is_domain = (
+                get_import_layer_from_package(import_path, package_name) or ""
+            )
         # Allow if the import path contains /domain/ (usecases, entities, exceptions, ports)
         resolved_path = ""
         if not import_path.startswith("package:"):
@@ -431,7 +435,7 @@ def check_e6_cross_feature(
         else:
             pkg = extract_package(import_path)
             if pkg == package_name:
-                resolved_path = import_path[len(f"package:{package_name}/"):]
+                resolved_path = import_path[len(f"package:{package_name}/") :]
         if "/domain/" in f"/{resolved_path}/":
             return None
 

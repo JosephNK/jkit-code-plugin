@@ -16,7 +16,6 @@ Flutter 기본 템플릿이나 사용자 커스텀 설정을 보존합니다.
 import re
 import sys
 
-
 DEEP_LINK_INTENT_FILTER = """
             <!-- Scheme -->
             <intent-filter>
@@ -57,7 +56,7 @@ def patch_manifest(content: str) -> str:
         )
 
     # 3. android:label → @string/app_name
-    if '@string/app_name' not in content:
+    if "@string/app_name" not in content:
         content = re.sub(
             r'android:label="[^"]*"',
             'android:label="@string/app_name"',
@@ -69,8 +68,7 @@ def patch_manifest(content: str) -> str:
     if "requestLegacyExternalStorage" not in content:
         content = content.replace(
             'android:icon="@mipmap/ic_launcher">',
-            'android:icon="@mipmap/ic_launcher"\n'
-            f"        {APP_ATTRIBUTES}>",
+            'android:icon="@mipmap/ic_launcher"\n' f"        {APP_ATTRIBUTES}>",
         )
 
     # 5. launchMode → singleTask

@@ -8,35 +8,113 @@ snake_case, camelCase, PascalCase로 변환합니다.
 import re
 
 # Dart 예약어 (식별자로 직접 사용 불가)
-DART_RESERVED_WORDS: frozenset[str] = frozenset({
-    "abstract", "as", "assert", "async", "await", "break", "case", "catch",
-    "class", "const", "continue", "covariant", "default", "deferred", "do",
-    "dynamic", "else", "enum", "export", "extends", "extension", "external",
-    "factory", "false", "final", "finally", "for", "function", "get", "hide",
-    "if", "implements", "import", "in", "interface", "is", "late", "library",
-    "mixin", "new", "null", "on", "operator", "part", "required", "rethrow",
-    "return", "set", "show", "static", "super", "switch", "sync", "this",
-    "throw", "true", "try", "typedef", "var", "void", "while", "with", "yield",
-})
+DART_RESERVED_WORDS: frozenset[str] = frozenset(
+    {
+        "abstract",
+        "as",
+        "assert",
+        "async",
+        "await",
+        "break",
+        "case",
+        "catch",
+        "class",
+        "const",
+        "continue",
+        "covariant",
+        "default",
+        "deferred",
+        "do",
+        "dynamic",
+        "else",
+        "enum",
+        "export",
+        "extends",
+        "extension",
+        "external",
+        "factory",
+        "false",
+        "final",
+        "finally",
+        "for",
+        "function",
+        "get",
+        "hide",
+        "if",
+        "implements",
+        "import",
+        "in",
+        "interface",
+        "is",
+        "late",
+        "library",
+        "mixin",
+        "new",
+        "null",
+        "on",
+        "operator",
+        "part",
+        "required",
+        "rethrow",
+        "return",
+        "set",
+        "show",
+        "static",
+        "super",
+        "switch",
+        "sync",
+        "this",
+        "throw",
+        "true",
+        "try",
+        "typedef",
+        "var",
+        "void",
+        "while",
+        "with",
+        "yield",
+    }
+)
 
 # Dart 내장 타입 이름 (클래스명 충돌 방지)
-DART_BUILTIN_TYPES: frozenset[str] = frozenset({
-    "int", "double", "String", "bool", "List", "Map", "Set", "Object",
-    "Null", "Future", "Stream", "Iterable", "num", "dynamic", "void",
-    "Function", "Never", "Type", "Symbol", "Record",
-})
+DART_BUILTIN_TYPES: frozenset[str] = frozenset(
+    {
+        "int",
+        "double",
+        "String",
+        "bool",
+        "List",
+        "Map",
+        "Set",
+        "Object",
+        "Null",
+        "Future",
+        "Stream",
+        "Iterable",
+        "num",
+        "dynamic",
+        "void",
+        "Function",
+        "Never",
+        "Type",
+        "Symbol",
+        "Record",
+    }
+)
 
 # BuiltValue 예약 필드명 (Builder/Built 클래스의 내장 멤버와 충돌)
-BUILT_VALUE_RESERVED_FIELDS: frozenset[str] = frozenset({
-    "update",       # Builder.update()
-    "replace",      # Builder.replace()
-    "build",        # Builder.build()
-    "rebuild",      # Built.rebuild()
-    "toBuilder",    # Built.toBuilder()
-    "serializer",   # Built의 static serializer getter
-    "hashCode",     # Object.hashCode
-    "toString",     # Object.toString()
-})
+BUILT_VALUE_RESERVED_FIELDS: frozenset[str] = frozenset(
+    {
+        "update",  # Builder.update()
+        "replace",  # Builder.replace()
+        "build",  # Builder.build()
+        "rebuild",  # Built.rebuild()
+        "toBuilder",  # Built.toBuilder()
+        "serializer",  # Built의 static serializer getter
+        "hashCode",  # Object.hashCode
+        "toString",  # Object.toString()
+    }
+)
 
 
 def _split_words(name: str) -> list[str]:
@@ -248,7 +326,9 @@ def tag_to_service_filename(tag: str) -> str:
     return f"{to_snake_case(class_name)}.dart"
 
 
-def path_to_endpoint_name(path: str, method: str, operation_id: str | None = None) -> str:
+def path_to_endpoint_name(
+    path: str, method: str, operation_id: str | None = None
+) -> str:
     """API 경로를 엔드포인트 상수 이름으로 변환합니다.
 
     operation_id가 있으면 우선 사용하고, 없으면 경로 + 메서드로 생성합니다.

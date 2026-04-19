@@ -86,8 +86,7 @@ def main():
             file=sys.stderr,
         )
         print(
-            "Example: flutter_ios_info_plist_setup.py"
-            " app/ios/Runner/Info.plist",
+            "Example: flutter_ios_info_plist_setup.py" " app/ios/Runner/Info.plist",
             file=sys.stderr,
         )
         sys.exit(1)

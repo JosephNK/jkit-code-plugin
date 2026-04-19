@@ -169,7 +169,8 @@ def _extract_spec_from_swagger_ui(html: str, base_url: str) -> str | None:
 
     # 방법 2: swagger-ui-init.js에서 인라인 swaggerDoc 추출
     init_js_match = re.search(
-        r'src=["\']([^"\']*swagger-ui-init\.js)["\']', html,
+        r'src=["\']([^"\']*swagger-ui-init\.js)["\']',
+        html,
     )
     if init_js_match:
         init_js_path = init_js_match.group(1)
@@ -182,7 +183,9 @@ def _extract_spec_from_swagger_ui(html: str, base_url: str) -> str | None:
                 start = doc_match.start(1)
                 spec_json = _extract_balanced_json(js_content, start)
                 if spec_json:
-                    print(f"  Resolved Swagger UI → inline swaggerDoc from {init_js_url}")
+                    print(
+                        f"  Resolved Swagger UI → inline swaggerDoc from {init_js_url}"
+                    )
                     return spec_json
         except (urllib.error.URLError, ValueError):
             pass
@@ -227,7 +230,7 @@ def _extract_balanced_json(text: str, start: int) -> str | None:
         elif ch == "}":
             depth -= 1
             if depth == 0:
-                return text[start:i + 1]
+                return text[start : i + 1]
 
     return None
 
@@ -561,14 +564,16 @@ def _collect_inline_enums(
 
         used_names.add(enum_name)
 
-        enum_schemas.append(SchemaInfo(
-            name=enum_name,
-            dart_class_name=schema_to_enum_class(enum_name),
-            fields=(),
-            is_enum=True,
-            enum_values=values,
-            description=None,
-        ))
+        enum_schemas.append(
+            SchemaInfo(
+                name=enum_name,
+                dart_class_name=schema_to_enum_class(enum_name),
+                fields=(),
+                is_enum=True,
+                enum_values=values,
+                description=None,
+            )
+        )
 
         for schema_name, pname in usages:
             field_enum_map[(schema_name, pname)] = enum_name
@@ -620,26 +625,26 @@ def _parse_schema(
                 elif dart_type == "BuiltList<String>":
                     dart_type = f"BuiltList<{enum_class}>"
 
-        is_nullable = (
-            prop_name not in required_fields
-            or prop_schema.get("nullable", False)
+        is_nullable = prop_name not in required_fields or prop_schema.get(
+            "nullable", False
         )
         fixme = (
-            f"Object type detected for '{prop_name}'. "
-            "Replace with a specific type."
+            f"Object type detected for '{prop_name}'. " "Replace with a specific type."
             if "Object" in dart_type
             else None
         )
 
-        fields.append(FieldInfo(
-            name=prop_name,
-            dart_name=sanitize_field_name(to_camel_case(prop_name)),
-            dart_type=dart_type,
-            is_nullable=is_nullable,
-            is_enum=is_enum,
-            description=prop_schema.get("description"),
-            fixme=fixme,
-        ))
+        fields.append(
+            FieldInfo(
+                name=prop_name,
+                dart_name=sanitize_field_name(to_camel_case(prop_name)),
+                dart_type=dart_type,
+                is_nullable=is_nullable,
+                is_enum=is_enum,
+                description=prop_schema.get("description"),
+                fixme=fixme,
+            )
+        )
 
     return SchemaInfo(
         name=name,
@@ -675,8 +680,7 @@ def _parse_parameter(spec: dict, param: dict) -> FieldInfo:
     param_schema = param.get("schema", {})
     dart_type, is_enum = _resolve_dart_type(spec, param_schema)
     fixme = (
-        f"Object type detected for '{param['name']}'. "
-        "Replace with a specific type."
+        f"Object type detected for '{param['name']}'. " "Replace with a specific type."
         if "Object" in dart_type
         else None
     )
@@ -697,7 +701,9 @@ def _parse_parameter(spec: dict, param: dict) -> FieldInfo:
 # ──────────────────────────────────────────────
 
 
-def _extract_response_schema(spec: dict, responses: dict, status_range: str) -> str | None:
+def _extract_response_schema(
+    spec: dict, responses: dict, status_range: str
+) -> str | None:
     """응답에서 스키마 이름을 추출합니다.
 
     Args:
@@ -761,10 +767,12 @@ def _extract_error_schemas(spec: dict, responses: dict) -> list[ErrorSchemaInfo]
 
         if "$ref" in schema:
             schema_name = schema["$ref"].split("/")[-1]
-            error_schemas.append(ErrorSchemaInfo(
-                status_code=int(code_str),
-                schema_name=schema_name,
-            ))
+            error_schemas.append(
+                ErrorSchemaInfo(
+                    status_code=int(code_str),
+                    schema_name=schema_name,
+                )
+            )
 
     return error_schemas
 
@@ -834,15 +842,17 @@ def _extract_multipart_fields(
         else:
             dart_type = "String"
 
-        fields.append(MultipartFieldInfo(
-            name=prop_name,
-            dart_name=to_camel_case(prop_name),
-            dart_type=dart_type,
-            is_required=prop_name in required_fields,
-            is_file=is_file,
-            is_array=is_array,
-            description=prop_schema.get("description"),
-        ))
+        fields.append(
+            MultipartFieldInfo(
+                name=prop_name,
+                dart_name=to_camel_case(prop_name),
+                dart_type=dart_type,
+                is_required=prop_name in required_fields,
+                is_file=is_file,
+                is_array=is_array,
+                description=prop_schema.get("description"),
+            )
+        )
 
     return True, tuple(fields)
 
@@ -945,23 +955,26 @@ def _parse_endpoints(spec: dict) -> list[EndpointInfo]:
 
             # multipart/form-data fields
             is_multipart, multipart_fields = _extract_multipart_fields(
-                spec, operation,
+                spec,
+                operation,
             )
 
-            endpoints.append(EndpointInfo(
-                path=path,
-                method=method.upper(),
-                operation_id=operation.get("operationId"),
-                tag=tag,
-                summary=operation.get("summary"),
-                request_body_schema=request_body_schema,
-                response_schema=response_schema,
-                error_schemas=tuple(error_schemas),
-                path_params=path_params,
-                query_params=query_params,
-                is_multipart=is_multipart,
-                multipart_fields=multipart_fields,
-            ))
+            endpoints.append(
+                EndpointInfo(
+                    path=path,
+                    method=method.upper(),
+                    operation_id=operation.get("operationId"),
+                    tag=tag,
+                    summary=operation.get("summary"),
+                    request_body_schema=request_body_schema,
+                    response_schema=response_schema,
+                    error_schemas=tuple(error_schemas),
+                    path_params=path_params,
+                    query_params=query_params,
+                    is_multipart=is_multipart,
+                    multipart_fields=multipart_fields,
+                )
+            )
 
     return endpoints
 

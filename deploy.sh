@@ -48,22 +48,25 @@ YES="false"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    patch|minor|major)
-      BUMP="$1"; shift
-      ;;
-    --yes|-y)
-      YES="true"; shift
-      ;;
-    -h|--help)
-      usage
-      ;;
-    [0-9]*.[0-9]*.[0-9]*)
-      EXPLICIT_VERSION="$1"; shift
-      ;;
-    *)
-      echo "Unknown argument: $1" >&2
-      usage
-      ;;
+  patch | minor | major)
+    BUMP="$1"
+    shift
+    ;;
+  --yes | -y)
+    YES="true"
+    shift
+    ;;
+  -h | --help)
+    usage
+    ;;
+  [0-9]*.[0-9]*.[0-9]*)
+    EXPLICIT_VERSION="$1"
+    shift
+    ;;
+  *)
+    echo "Unknown argument: $1" >&2
+    usage
+    ;;
   esac
 done
 
@@ -93,9 +96,16 @@ if [ -n "$EXPLICIT_VERSION" ]; then
 else
   IFS='.' read -r MAJ MIN PAT <<<"$CURRENT"
   case "$BUMP" in
-    patch) PAT=$((PAT + 1)) ;;
-    minor) MIN=$((MIN + 1)); PAT=0 ;;
-    major) MAJ=$((MAJ + 1)); MIN=0; PAT=0 ;;
+  patch) PAT=$((PAT + 1)) ;;
+  minor)
+    MIN=$((MIN + 1))
+    PAT=0
+    ;;
+  major)
+    MAJ=$((MAJ + 1))
+    MIN=0
+    PAT=0
+    ;;
   esac
   NEW="${MAJ}.${MIN}.${PAT}"
 fi
@@ -156,7 +166,10 @@ echo ""
 
 if [ "$YES" != "true" ]; then
   read -r -p "Proceed with release? [y/N] " ans
-  [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
+  [[ "$ans" =~ ^[Yy]$ ]] || {
+    echo "Aborted."
+    exit 1
+  }
 fi
 
 # ─── Update version files ───

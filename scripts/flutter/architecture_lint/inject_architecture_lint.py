@@ -156,9 +156,7 @@ def main() -> None:
 
     ok = True
     ok = (
-        inject_pubspec(
-            Path(args.pubspec), args.git_url, args.git_path, args.git_ref
-        )
+        inject_pubspec(Path(args.pubspec), args.git_url, args.git_path, args.git_ref)
         and ok
     )
     ok = inject_analysis_options(Path(args.analysis_options)) and ok

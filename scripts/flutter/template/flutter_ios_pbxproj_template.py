@@ -319,7 +319,7 @@ def runner_config(
 
     swift_opt = ""
     if build_type == "Debug":
-        swift_opt = "\t\t\t\tSWIFT_OPTIMIZATION_LEVEL = \"-Onone\";\n"
+        swift_opt = '\t\t\t\tSWIFT_OPTIMIZATION_LEVEL = "-Onone";\n'
 
     return (
         f"\t\t{uuid} /* {name} */ = {{\n"
@@ -370,7 +370,7 @@ def tests_config(uuid: str, flavor: str, build_type: str) -> str:
         f"\t\t\t\tCURRENT_PROJECT_VERSION = 1;\n"
         f"\t\t\t\tGENERATE_INFOPLIST_FILE = YES;\n"
         f"\t\t\t\tMARKETING_VERSION = 1.0;\n"
-        f"\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = \"$(PRODUCT_BUNDLE_IDENTIFIER).RunnerTests\";\n"
+        f'\t\t\t\tPRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).RunnerTests";\n'
         f'\t\t\t\tPRODUCT_NAME = "$(TARGET_NAME)";\n'
         f"{swift_extra}"
         f"\t\t\t\tSWIFT_VERSION = 5.0;\n"
@@ -386,9 +386,7 @@ def tests_config(uuid: str, flavor: str, build_type: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def config_list(
-    uuid: str, target_name: str, target_type: str, context: str
-) -> str:
+def config_list(uuid: str, target_name: str, target_type: str, context: str) -> str:
     """XCConfigurationList 항목 생성"""
     lines = [
         f'\t\t{uuid} /* Build configuration list for {target_type} "{target_name}" */ = {{',
@@ -402,7 +400,7 @@ def config_list(
         for flavor_cfg in FLAVORS:
             flavor = flavor_cfg["name"]
             uid = FLAVOR_UUIDS[flavor][context][bt_lower]
-            lines.append(f'\t\t\t\t{uid} /* {build_type}-{flavor} */,')
+            lines.append(f"\t\t\t\t{uid} /* {build_type}-{flavor} */,")
 
     lines.extend(
         [
@@ -420,9 +418,7 @@ def config_list(
 # ---------------------------------------------------------------------------
 
 
-def generate_pbxproj(
-    app_name: str, package_name: str, existing_content: str
-) -> str:
+def generate_pbxproj(app_name: str, package_name: str, existing_content: str) -> str:
     """project.pbxproj 전체 생성"""
     scheme = app_name.lower()
     team_id = extract_team_id(existing_content)
@@ -458,9 +454,7 @@ def generate_pbxproj(
                 )
             )
             # RunnerTests target config
-            configs.append(
-                tests_config(uuids["tests"][bt_lower], flavor, build_type)
-            )
+            configs.append(tests_config(uuids["tests"][bt_lower], flavor, build_type))
 
     configs.append(END_BUILD_CONFIG)
 
@@ -476,9 +470,7 @@ def generate_pbxproj(
 
     # Footer
     footer = (
-        "\t};\n"
-        "\trootObject = 97C146E61CF9000F007C117D /* Project object */;\n"
-        "}\n"
+        "\t};\n" "\trootObject = 97C146E61CF9000F007C117D /* Project object */;\n" "}\n"
     )
 
     return header + "\n".join(configs) + "\n".join(config_lists) + "\n" + footer

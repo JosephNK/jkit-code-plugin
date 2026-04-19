@@ -133,13 +133,9 @@ def _collect_model_imports(
         for other in all_schemas:
             if other.dart_class_name == ref_type and other.name != schema.name:
                 if other.is_enum:
-                    imports.add(
-                        f"import '{schema_to_enum_filename(other.name)}';"
-                    )
+                    imports.add(f"import '{schema_to_enum_filename(other.name)}';")
                 else:
-                    imports.add(
-                        f"import '{schema_to_dart_filename(other.name)}';"
-                    )
+                    imports.add(f"import '{schema_to_dart_filename(other.name)}';")
 
     return sorted(imports)
 
@@ -193,11 +189,13 @@ def generate_enum(
     filepath = output_dir / "src" / "api" / api_name / "models" / "src" / filename
 
     enum_values = []
-    for val in (schema.enum_values or ()):
-        enum_values.append({
-            "wire_name": val,
-            "dart_name": sanitize_enum_value(val),
-        })
+    for val in schema.enum_values or ():
+        enum_values.append(
+            {
+                "wire_name": val,
+                "dart_name": sanitize_enum_value(val),
+            }
+        )
 
     class_name = schema.dart_class_name
     # EnumClass용 serializer name (lowerCamelCase)
@@ -240,13 +238,9 @@ def _collect_serializer_imports(
     imports: list[str] = []
     for schema in schemas:
         if schema.is_enum:
-            imports.append(
-                f"import '../{schema_to_enum_filename(schema.name)}';"
-            )
+            imports.append(f"import '../{schema_to_enum_filename(schema.name)}';")
         else:
-            imports.append(
-                f"import '../{schema_to_dart_filename(schema.name)}';"
-            )
+            imports.append(f"import '../{schema_to_dart_filename(schema.name)}';")
     return sorted(imports)
 
 
@@ -262,7 +256,16 @@ def generate_serializers(
     기존 파일이 있으면 모델 목록을 병합합니다.
     기존 클래스 중 모델 파일이 존재하지 않는 것은 제거합니다.
     """
-    filepath = output_dir / "src" / "api" / api_name / "models" / "src" / "serializers" / "serializers.dart"
+    filepath = (
+        output_dir
+        / "src"
+        / "api"
+        / api_name
+        / "models"
+        / "src"
+        / "serializers"
+        / "serializers.dart"
+    )
 
     sorted_classes = sorted(s.dart_class_name for s in schemas)
     model_imports = _collect_serializer_imports(schemas)
@@ -319,20 +322,24 @@ def _build_endpoint_data(
                         dart_type = pp.dart_type
                         dart_name = pp.dart_name
                         break
-                path_params.append({
-                    "dart_type": dart_type,
-                    "dart_name": dart_name,
-                })
+                path_params.append(
+                    {
+                        "dart_type": dart_type,
+                        "dart_name": dart_name,
+                    }
+                )
 
-        result.append({
-            "path": ep.path,
-            "method": ep.method,
-            "summary": ep.summary,
-            "constant_name": constant_name,
-            "is_dynamic": is_dynamic,
-            "path_params": path_params,
-            "dart_path_template": _build_dart_path_template(ep.path),
-        })
+        result.append(
+            {
+                "path": ep.path,
+                "method": ep.method,
+                "summary": ep.summary,
+                "constant_name": constant_name,
+                "is_dynamic": is_dynamic,
+                "path_params": path_params,
+                "dart_path_template": _build_dart_path_template(ep.path),
+            }
+        )
 
     return result
 
@@ -424,7 +431,9 @@ def _build_service_methods(
             param_args = ", ".join(
                 to_camel_case(p) for p in extract_path_params(ep.path)
             )
-            endpoint_call = f"{api_name_pascal}ApiEndpoints.{constant_name}({param_args})"
+            endpoint_call = (
+                f"{api_name_pascal}ApiEndpoints.{constant_name}({param_args})"
+            )
         else:
             endpoint_call = f"{api_name_pascal}ApiEndpoints.{constant_name}"
 
@@ -442,40 +451,44 @@ def _build_service_methods(
         error_parser_schemas = []
         if use_error_parser:
             for es in ep.error_schemas:
-                error_parser_schemas.append({
-                    "status_code": es.status_code,
-                    "serializer": f"{schema_to_dart_class(es.schema_name)}.serializer",
-                })
+                error_parser_schemas.append(
+                    {
+                        "status_code": es.status_code,
+                        "serializer": f"{schema_to_dart_class(es.schema_name)}.serializer",
+                    }
+                )
 
-        methods.append({
-            "name": method_name,
-            "http_method": ep.method.lower(),
-            "summary": ep.summary,
-            "response_type": response_type,
-            "error_type": error_type,
-            "endpoint_call": endpoint_call,
-            "path_params": list(ep.path_params),
-            "query_params": list(ep.query_params),
-            "request_body": request_body,
-            "request_body_type": request_body_type,
-            "request_body_name": request_body_name,
-            "request_body_serializer": request_body_serializer,
-            "error_parser_code": use_error_parser,
-            "error_schemas": error_parser_schemas,
-            "is_multipart": ep.is_multipart,
-            "multipart_fields": [
-                {
-                    "name": mf.name,
-                    "dart_name": mf.dart_name,
-                    "dart_type": mf.dart_type,
-                    "is_required": mf.is_required,
-                    "is_file": mf.is_file,
-                    "is_array": mf.is_array,
-                    "description": mf.description,
-                }
-                for mf in ep.multipart_fields
-            ],
-        })
+        methods.append(
+            {
+                "name": method_name,
+                "http_method": ep.method.lower(),
+                "summary": ep.summary,
+                "response_type": response_type,
+                "error_type": error_type,
+                "endpoint_call": endpoint_call,
+                "path_params": list(ep.path_params),
+                "query_params": list(ep.query_params),
+                "request_body": request_body,
+                "request_body_type": request_body_type,
+                "request_body_name": request_body_name,
+                "request_body_serializer": request_body_serializer,
+                "error_parser_code": use_error_parser,
+                "error_schemas": error_parser_schemas,
+                "is_multipart": ep.is_multipart,
+                "multipart_fields": [
+                    {
+                        "name": mf.name,
+                        "dart_name": mf.dart_name,
+                        "dart_type": mf.dart_type,
+                        "is_required": mf.is_required,
+                        "is_file": mf.is_file,
+                        "is_array": mf.is_array,
+                        "description": mf.description,
+                    }
+                    for mf in ep.multipart_fields
+                ],
+            }
+        )
 
     return methods
 
@@ -549,7 +562,10 @@ def generate_services(
         filepath = api_dir / filename
 
         methods = _build_service_methods(
-            parsed.endpoints, tag, api_name, parsed.schemas,
+            parsed.endpoints,
+            tag,
+            api_name,
+            parsed.schemas,
         )
 
         if not methods:
@@ -660,10 +676,12 @@ def generate_network(
     for name in api_names:
         pascal = to_pascal_case(name)
         client_class = f"{pascal}Api"
-        apis.append({
-            "name_pascal": pascal,
-            "client_class": client_class,
-        })
+        apis.append(
+            {
+                "name_pascal": pascal,
+                "client_class": client_class,
+            }
+        )
         api_imports.append(f"import 'api/{name}/{name}_api.dart';")
 
     template = env.get_template("network.dart.j2")
@@ -689,13 +707,9 @@ def generate_models_index(
     exports: list[str] = []
     for schema in sorted(parsed.schemas, key=lambda s: s.name):
         if schema.is_enum:
-            exports.append(
-                f"export 'src/{schema_to_enum_filename(schema.name)}';"
-            )
+            exports.append(f"export 'src/{schema_to_enum_filename(schema.name)}';")
         else:
-            exports.append(
-                f"export 'src/{schema_to_dart_filename(schema.name)}';"
-            )
+            exports.append(f"export 'src/{schema_to_dart_filename(schema.name)}';")
     exports.append("export 'src/serializers/serializers.dart';")
 
     template = env.get_template("index.dart.j2")
@@ -726,9 +740,7 @@ def generate_services_index(
         for tag in parsed.tags:
             tag_endpoints = [ep for ep in parsed.endpoints if ep.tag == tag]
             if tag_endpoints:
-                exports.append(
-                    f"export 'src/{tag_to_service_filename(tag)}';"
-                )
+                exports.append(f"export 'src/{tag_to_service_filename(tag)}';")
 
     template = env.get_template("index.dart.j2")
     content = template.render(exports=sorted(set(exports)))
@@ -815,7 +827,9 @@ def generate(
     # 1. Parse spec
     print("Step 1: Parsing OpenAPI spec...")
     parsed = parse_openapi(spec_path, api_name, specs_dir)
-    print(f"  Found {len(parsed.schemas)} schemas, {len(parsed.endpoints)} endpoints, {len(parsed.tags)} tags")
+    print(
+        f"  Found {len(parsed.schemas)} schemas, {len(parsed.endpoints)} endpoints, {len(parsed.tags)} tags"
+    )
 
     # 2. Clean existing generated directory
     api_dir = output_dir / "src" / "api" / api_name
@@ -830,13 +844,17 @@ def generate(
     print("\nStep 3: Generating models...")
     model_files: list[Path] = []
     for schema in parsed.schemas:
-        path = generate_model(env, schema, parsed.schemas, api_name, output_dir, dry_run)
+        path = generate_model(
+            env, schema, parsed.schemas, api_name, output_dir, dry_run
+        )
         if path:
             model_files.append(path)
 
     # 5. Generate serializers
     print("\nStep 4: Generating serializers...")
-    serializers_file = generate_serializers(env, parsed.schemas, api_name, output_dir, dry_run)
+    serializers_file = generate_serializers(
+        env, parsed.schemas, api_name, output_dir, dry_run
+    )
 
     # 6. Generate endpoints
     print("\nStep 5: Generating endpoints...")
@@ -852,8 +870,12 @@ def generate(
 
     # 9. Generate index files
     print("\nStep 8: Generating index files...")
-    models_index_file = generate_models_index(env, parsed, api_name, output_dir, dry_run)
-    services_index_file = generate_services_index(env, parsed, api_name, output_dir, dry_run)
+    models_index_file = generate_models_index(
+        env, parsed, api_name, output_dir, dry_run
+    )
+    services_index_file = generate_services_index(
+        env, parsed, api_name, output_dir, dry_run
+    )
 
     # 10. Generate network + barrel
     print("\nStep 9: Generating network & barrel...")
@@ -863,10 +885,14 @@ def generate(
     all_api_names.sort()
 
     network_file = generate_network(env, all_api_names, output_dir, dry_run)
-    barrel_file = generate_barrel(env, parsed, all_api_names, package_name, output_dir, dry_run)
+    barrel_file = generate_barrel(
+        env, parsed, all_api_names, package_name, output_dir, dry_run
+    )
 
     # Summary
-    total = len(model_files) + 1 + 1 + len(service_files) + 1 + 2 + 1 + 1  # models + serializers + endpoints + services + api_client + indexes + network + barrel
+    total = (
+        len(model_files) + 1 + 1 + len(service_files) + 1 + 2 + 1 + 1
+    )  # models + serializers + endpoints + services + api_client + indexes + network + barrel
     action = "would generate" if dry_run else "generated"
     print(f"\nDone! {total} files {action}.")
 

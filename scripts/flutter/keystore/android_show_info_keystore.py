@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def parse_args() -> argparse.Namespace:
     """CLI 인자를 파싱합니다."""
     parser = argparse.ArgumentParser(description="Keystore 정보 조회")

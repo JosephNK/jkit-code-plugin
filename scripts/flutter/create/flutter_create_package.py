@@ -22,16 +22,73 @@ from ruamel.yaml import YAML
 
 PACKAGE_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
-DART_RESERVED_WORDS = frozenset({
-    "abstract", "as", "assert", "async", "await", "break", "case", "catch",
-    "class", "const", "continue", "covariant", "default", "deferred", "do",
-    "dynamic", "else", "enum", "export", "extends", "extension", "external",
-    "factory", "false", "final", "finally", "for", "function", "get", "hide",
-    "if", "implements", "import", "in", "interface", "is", "late", "library",
-    "mixin", "new", "null", "on", "operator", "part", "required", "rethrow",
-    "return", "set", "show", "static", "super", "switch", "sync", "this",
-    "throw", "true", "try", "typedef", "var", "void", "while", "with", "yield",
-})
+DART_RESERVED_WORDS = frozenset(
+    {
+        "abstract",
+        "as",
+        "assert",
+        "async",
+        "await",
+        "break",
+        "case",
+        "catch",
+        "class",
+        "const",
+        "continue",
+        "covariant",
+        "default",
+        "deferred",
+        "do",
+        "dynamic",
+        "else",
+        "enum",
+        "export",
+        "extends",
+        "extension",
+        "external",
+        "factory",
+        "false",
+        "final",
+        "finally",
+        "for",
+        "function",
+        "get",
+        "hide",
+        "if",
+        "implements",
+        "import",
+        "in",
+        "interface",
+        "is",
+        "late",
+        "library",
+        "mixin",
+        "new",
+        "null",
+        "on",
+        "operator",
+        "part",
+        "required",
+        "rethrow",
+        "return",
+        "set",
+        "show",
+        "static",
+        "super",
+        "switch",
+        "sync",
+        "this",
+        "throw",
+        "true",
+        "try",
+        "typedef",
+        "var",
+        "void",
+        "while",
+        "with",
+        "yield",
+    }
+)
 
 
 # ──────────────────────────────────────────────
@@ -378,7 +435,10 @@ def add_to_root_workspace(
 
     last_idx = _find_last_workspace_entry(content)
     if last_idx == -1:
-        print("❌ 루트 pubspec.yaml에서 workspace 블록을 찾을 수 없습니다.", file=sys.stderr)
+        print(
+            "❌ 루트 pubspec.yaml에서 workspace 블록을 찾을 수 없습니다.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     lines = content.split("\n")
