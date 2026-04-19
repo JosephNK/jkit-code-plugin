@@ -29,30 +29,39 @@ OUTPUT_DIR=""
 STACKS=""
 
 # First positional arg is framework
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    --with)
-      STACKS="${2:?--with requires a stack list}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  --with)
+    STACKS="${2:?--with requires a stack list}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
 TEMPLATE="$RULES_DIR/base/eslint.template.mjs"
@@ -91,10 +100,11 @@ INFRA=""
 CUSTOM=""
 
 if [ -n "$STACKS" ]; then
-  IFS=',' read -ra STACK_LIST <<< "$STACKS"
-  IFS=$'\n' STACK_LIST=($(sort <<< "${STACK_LIST[*]}")); unset IFS
+  IFS=',' read -ra STACK_LIST <<<"$STACKS"
+  IFS=$'\n' STACK_LIST=($(sort <<<"${STACK_LIST[*]}"))
+  unset IFS
   for stack in "${STACK_LIST[@]}"; do
-    stack=$(echo "$stack" | xargs)  # trim whitespace
+    stack=$(echo "$stack" | xargs) # trim whitespace
     MANIFEST="$RULES_DIR/$stack/eslint.manifest"
 
     if [ ! -f "$MANIFEST" ]; then
@@ -151,7 +161,7 @@ replace_marker() {
   if [ -n "$value" ]; then
     local tmpfile
     tmpfile=$(mktemp)
-    echo -n "$value" > "$tmpfile"
+    echo -n "$value" >"$tmpfile"
     local result=""
     while IFS= read -r line; do
       if [[ "$line" == *"$marker"* ]]; then
@@ -159,7 +169,7 @@ replace_marker() {
       else
         result+="$line"$'\n'
       fi
-    done <<< "$content"
+    done <<<"$content"
     content="$result"
     rm -f "$tmpfile"
   else
@@ -167,7 +177,7 @@ replace_marker() {
     local result=""
     while IFS= read -r line; do
       [[ "$line" == *"$marker"* ]] || result+="$line"$'\n'
-    done <<< "$content"
+    done <<<"$content"
     content="$result"
   fi
 }
@@ -189,7 +199,7 @@ while [[ "$content" == *$'\n'$'\n' ]]; do
   content="${content%$'\n'}"
 done
 mkdir -p "$OUTPUT_DIR"
-echo "$content" > "$OUTPUT_FILE"
+echo "$content" >"$OUTPUT_FILE"
 echo "Generated: $OUTPUT_FILE"
 
 # ─── Patch user's package.json with git dependency ───

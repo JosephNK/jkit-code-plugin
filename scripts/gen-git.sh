@@ -27,21 +27,24 @@ OUTPUT_DIR=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 # ─── Guardrail: cwd must be a git repo root ───
 jkit::ensure_git_repo "."

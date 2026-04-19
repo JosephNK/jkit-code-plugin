@@ -40,43 +40,55 @@ DESCRIPTION="Flutter project scripts"
 AUTHOR=""
 
 # First positional arg is framework
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    -n)
-      NAME="${2:?-n requires a name}"
-      shift 2
-      ;;
-    -entry)
-      ENTRY="${2:?-entry requires a directory}"
-      shift 2
-      ;;
-    -d)
-      DESCRIPTION="${2:?-d requires a description}"
-      shift 2
-      ;;
-    -a)
-      AUTHOR="${2:?-a requires an author}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  -n)
+    NAME="${2:?-n requires a name}"
+    shift 2
+    ;;
+  -entry)
+    ENTRY="${2:?-entry requires a directory}"
+    shift 2
+    ;;
+  -d)
+    DESCRIPTION="${2:?-d requires a description}"
+    shift 2
+    ;;
+  -a)
+    AUTHOR="${2:?-a requires an author}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
-[ -z "$NAME" ] && { echo "Error: -n <name> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
+[ -z "$NAME" ] && {
+  echo "Error: -n <name> is required" >&2
+  usage
+}
 
 # ─── Guardrail: -p must be a Flutter project root ───
 jkit::ensure_flutter_root "$OUTPUT_DIR" "$ENTRY"
@@ -94,7 +106,7 @@ fi
 # ─── Generate pyproject.toml ───
 DEST="$OUTPUT_DIR/pyproject.toml"
 
-cat > "$DEST" <<TOML
+cat >"$DEST" <<TOML
 [tool.poetry]
 name = "$NAME"
 version = "0.1.0"

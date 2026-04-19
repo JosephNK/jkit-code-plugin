@@ -32,30 +32,39 @@ FRAMEWORK=""
 OUTPUT_DIR=""
 STACKS=""
 
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    --with)
-      STACKS="${2:?--with requires a stack list}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  --with)
+    STACKS="${2:?--with requires a stack list}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 # ─── Guardrail: cwd must be a git repo root ───
 jkit::ensure_git_repo "."
@@ -78,7 +87,7 @@ OUTPUT_FILE="$OUTPUT_DIR/CONVENTIONS.md"
 cp "$BASE_CONV" "$OUTPUT_FILE"
 
 if [ -n "$STACKS" ]; then
-  IFS=',' read -ra STACK_LIST <<< "$STACKS"
+  IFS=',' read -ra STACK_LIST <<<"$STACKS"
   for stack in "${STACK_LIST[@]}"; do
     stack=$(echo "$stack" | xargs)
     STACK_CONV="$RULES_DIR/$stack/conventions.md"
@@ -88,8 +97,8 @@ if [ -n "$STACKS" ]; then
       continue
     fi
 
-    printf '\n' >> "$OUTPUT_FILE"
-    cat "$STACK_CONV" >> "$OUTPUT_FILE"
+    printf '\n' >>"$OUTPUT_FILE"
+    cat "$STACK_CONV" >>"$OUTPUT_FILE"
   done
 fi
 

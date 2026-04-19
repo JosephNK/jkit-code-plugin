@@ -36,34 +36,43 @@ OUTPUT_DIR=""
 PROJECT_NAME=""
 DOCS_DIR=""
 
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    -n)
-      PROJECT_NAME="${2:?-n requires a project name}"
-      shift 2
-      ;;
-    --docs-dir)
-      DOCS_DIR="${2:?--docs-dir requires a directory}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  -n)
+    PROJECT_NAME="${2:?-n requires a project name}"
+    shift 2
+    ;;
+  --docs-dir)
+    DOCS_DIR="${2:?--docs-dir requires a directory}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 # ─── Guardrail: -p must be a project root (git repo) ───
 # AGENTS.md/CLAUDE.md symlink live at the project root. Refuse to write them
@@ -95,7 +104,7 @@ mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/AGENTS.md"
 
 # Replace placeholders in template
-sed -e "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" -e "s|{{DOCS_DIR}}|$DOCS_DIR|g" "$TEMPLATE" > "$OUTPUT_FILE"
+sed -e "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" -e "s|{{DOCS_DIR}}|$DOCS_DIR|g" "$TEMPLATE" >"$OUTPUT_FILE"
 
 # Create CLAUDE.md symlink
 SYMLINK="$OUTPUT_DIR/CLAUDE.md"

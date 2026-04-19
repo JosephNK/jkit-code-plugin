@@ -43,39 +43,51 @@ PROJECT_DIR=""
 ENTRY="app"
 REF=""
 
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      PROJECT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    -entry)
-      ENTRY="${2:?-entry requires a directory}"
-      shift 2
-      ;;
-    --ref)
-      REF="${2:?--ref requires a value}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    PROJECT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  -entry)
+    ENTRY="${2:?-entry requires a directory}"
+    shift 2
+    ;;
+  --ref)
+    REF="${2:?--ref requires a value}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$PROJECT_DIR" ] && { echo "Error: -p <project-dir> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$PROJECT_DIR" ] && {
+  echo "Error: -p <project-dir> is required" >&2
+  usage
+}
 
 # ─── Resolve ref from plugin.json if not provided ───
 if [ -z "$REF" ]; then
   PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
-  [ ! -f "$PLUGIN_JSON" ] && { echo "Error: $PLUGIN_JSON not found" >&2; exit 1; }
+  [ ! -f "$PLUGIN_JSON" ] && {
+    echo "Error: $PLUGIN_JSON not found" >&2
+    exit 1
+  }
   VERSION=$(python3 -c "import json,sys; print(json.load(open('$PLUGIN_JSON'))['version'])")
   REF="v${VERSION}"
 fi

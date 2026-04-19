@@ -31,30 +31,39 @@ FRAMEWORK=""
 OUTPUT_DIR=""
 WITH_STACKS=""
 
-[ $# -ge 1 ] && [[ "$1" != -* ]] && { FRAMEWORK="$1"; shift; }
+[ $# -ge 1 ] && [[ "$1" != -* ]] && {
+  FRAMEWORK="$1"
+  shift
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    --with)
-      WITH_STACKS="${2:?--with requires a stack list}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  --with)
+    WITH_STACKS="${2:?--with requires a stack list}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$FRAMEWORK" ] && { echo "Error: framework is required" >&2; usage; }
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$FRAMEWORK" ] && {
+  echo "Error: framework is required" >&2
+  usage
+}
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 PATCH_FILE="$PLUGIN_ROOT/rules/$FRAMEWORK/base/tsconfig.patch.json"
 TSCONFIG="$OUTPUT_DIR/tsconfig.json"
@@ -74,7 +83,7 @@ fi
 PATCH_FILES=("$PATCH_FILE")
 
 if [ -n "$WITH_STACKS" ]; then
-  IFS=',' read -ra STACKS <<< "$WITH_STACKS"
+  IFS=',' read -ra STACKS <<<"$WITH_STACKS"
   for STACK in "${STACKS[@]}"; do
     STACK_PATCH="$PLUGIN_ROOT/rules/$FRAMEWORK/$STACK/tsconfig.patch.json"
     if [ -f "$STACK_PATCH" ]; then

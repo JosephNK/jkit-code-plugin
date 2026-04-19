@@ -30,25 +30,28 @@ ENTRY="app"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p)
-      OUTPUT_DIR="${2:?-p requires a directory}"
-      shift 2
-      ;;
-    -entry)
-      ENTRY="${2:?-entry requires a directory}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      usage
-      ;;
+  -p)
+    OUTPUT_DIR="${2:?-p requires a directory}"
+    shift 2
+    ;;
+  -entry)
+    ENTRY="${2:?-entry requires a directory}"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
-[ -z "$OUTPUT_DIR" ] && { echo "Error: -p <output-dir> is required" >&2; usage; }
+[ -z "$OUTPUT_DIR" ] && {
+  echo "Error: -p <output-dir> is required" >&2
+  usage
+}
 
 # ─── Guardrail: -p must be a Flutter project root ───
 jkit::ensure_flutter_root "$OUTPUT_DIR" "$ENTRY"
@@ -68,7 +71,7 @@ if [ -z "$PLUGIN_ROOT" ]; then
 fi'
 
 # ─── Generate flutter-build-deploy.sh ───
-cat > "$SCRIPTS_DIR/flutter-build-deploy.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/flutter-build-deploy.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
@@ -79,7 +82,7 @@ chmod +x "$SCRIPTS_DIR/flutter-build-deploy.sh"
 echo "Generated: $SCRIPTS_DIR/flutter-build-deploy.sh"
 
 # ─── Generate update-dependencies.sh ───
-cat > "$SCRIPTS_DIR/update-dependencies.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/update-dependencies.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
@@ -90,7 +93,7 @@ chmod +x "$SCRIPTS_DIR/update-dependencies.sh"
 echo "Generated: $SCRIPTS_DIR/update-dependencies.sh"
 
 # ─── Generate update-leaf-kit-ref.sh ───
-cat > "$SCRIPTS_DIR/update-leaf-kit-ref.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/update-leaf-kit-ref.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
@@ -101,7 +104,7 @@ chmod +x "$SCRIPTS_DIR/update-leaf-kit-ref.sh"
 echo "Generated: $SCRIPTS_DIR/update-leaf-kit-ref.sh"
 
 # ─── Generate android-show-info-keystore.sh ───
-cat > "$SCRIPTS_DIR/android-show-info-keystore.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/android-show-info-keystore.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
@@ -112,7 +115,7 @@ chmod +x "$SCRIPTS_DIR/android-show-info-keystore.sh"
 echo "Generated: $SCRIPTS_DIR/android-show-info-keystore.sh"
 
 # ─── Generate android-signing-report.sh ───
-cat > "$SCRIPTS_DIR/android-signing-report.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/android-signing-report.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
@@ -123,7 +126,7 @@ chmod +x "$SCRIPTS_DIR/android-signing-report.sh"
 echo "Generated: $SCRIPTS_DIR/android-signing-report.sh"
 
 # ─── Generate android-signing-verify-apk.sh ───
-cat > "$SCRIPTS_DIR/android-signing-verify-apk.sh" <<SCRIPT
+cat >"$SCRIPTS_DIR/android-signing-verify-apk.sh" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 PROJECT_DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"

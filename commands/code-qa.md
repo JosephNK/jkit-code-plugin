@@ -434,14 +434,18 @@ slice_dir = <dirname of OUTPUT> / <basename(OUTPUT) lowercase, .md 제거> /
 
 ```bash
 JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
-$JKIT_DIR/scripts/slice-tasks.sh <OUTPUT> <slice_dir>
+$JKIT_DIR/scripts/slice-tasks.sh --mode full <OUTPUT> <slice_dir>
 ```
 
 스크립트가 자동으로 수행하는 작업:
 1. `### Task N` 헤더 기준으로 분할
-2. 각 슬라이스에 **공통 헤더**(개요·QA 요약 테이블 등)와 **공통 푸터**(회귀 테스트 매트릭스, 공통 검증 항목, 검증 우선순위 가이드) 포함
-3. 슬라이스 첫 두 줄에 출처 메타 주석 삽입
-4. 입력에 더 이상 존재하지 않는 Task 슬라이스 자동 제거
+2. QA 문서는 **full 모드**로 슬라이스 생성
+   - 공통 헤더(개요·QA 요약 테이블 등)
+   - 해당 Task QA 체크리스트
+   - 공통 푸터(회귀 테스트 매트릭스, 공통 검증 항목, 검증 우선순위 가이드)
+3. footer 영역의 `### Task N ...` 추가 주의 블록은 full 모드 특성상 모든 QA 슬라이스에 포함
+4. 슬라이스 첫 두 줄에 출처 메타 주석 삽입
+5. 입력에 더 이상 존재하지 않는 Task 슬라이스 자동 제거
 
 **예시 출력**:
 ```
