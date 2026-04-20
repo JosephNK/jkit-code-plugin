@@ -273,7 +273,6 @@ function write_compact(out, tid, overview, tech, arch, conv, task_list, risks, t
   printf "<!-- task-id: %s -->\n", tid > out
   printf "<!-- slice-mode: compact -->\n\n" > out
   printf "%s\n\n", h1_from_preamble(preamble_buf) > out
-  printf "> Compact slice: 공통 문맥은 현재 Task 실행에 필요한 범위로 축약되었습니다. 전체 문맥이 필요하면 원본 `%s`를 확인합니다.\n\n", INPUT > out
   printf "%s", overview > out
   printf "%s", tech > out
   printf "%s", arch > out
