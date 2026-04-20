@@ -7,6 +7,7 @@ __pycache__/
 example/
 settings.local.json
 code-harness/
+docs/
 
 # Office docs (presentations, lock files)
 *.pptx
