@@ -21,12 +21,14 @@ src/
 │   ├── pipes/             # Validation Pipes
 │   └── dtos/              # Shared DTOs
 │
-└── infrastructure/        # Infrastructure modules (DI-compatible)
-    ├── database/          # Database configuration
-    ├── email/             # Email delivery
-    ├── i18n/              # Internationalization
-    ├── logger/            # Logging
-    └── transaction/       # Transaction management
+├── infrastructure/        # Infrastructure modules (DI-compatible)
+│   ├── database/          # Database configuration
+│   ├── email/             # Email delivery
+│   ├── i18n/              # Internationalization
+│   ├── logger/            # Logging
+│   └── transaction/       # Transaction management
+│
+└── libs/                  # Standalone library-like modules (self-contained, high autonomy)
 ```
 
 File naming (`*.port.ts`, `*.service.ts`, `*.adapter.ts`) distinguishes roles.
