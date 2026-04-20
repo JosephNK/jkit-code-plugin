@@ -77,17 +77,100 @@ export const baseBoundaryElements = [
   { type: 'api-hook', pattern: ['src/lib/api/hooks'] },                          // React Query 훅 등
   { type: 'api-helper', mode: 'full', pattern: ['src/lib/api/*.ts'] },           // src/lib/api 루트 유틸
   // Shared lib — src/lib 루트의 공용 유틸
-  { type: 'lib-shared', mode: 'full', pattern: ['src/lib/*.ts'] },
+  { type: 'lib-shared', mode: 'full', pattern: ['src/lib/*.ts'] },               // src/lib 루트 공용 유틸
   // UI layer
   { type: 'shared-ui', pattern: ['src/components'] },                            // 전역 재사용 컴포넌트
-  { type: 'page-component', pattern: ['src/app/**/_components'] },               // 페이지 전용 컴포넌트
-  { type: 'page-provider', pattern: ['src/app/**/_providers'] },                 // 페이지 전용 Provider
+  { type: 'page-component', pattern: ['src/app/\\[locale\\]/**/_components'] }, // 페이지 전용 컴포넌트 ([locale] 아래)
+  { type: 'page-provider', pattern: ['src/app/\\[locale\\]/**/_providers'] },   // 페이지 전용 Provider ([locale] 아래)
   // Common — 전역 공용 리소스
-  { type: 'dictionary', mode: 'full', pattern: ['src/common/dictionaries/*', 'src/app/*/dictionaries.ts'] }, // i18n
+  { type: 'dictionary', mode: 'full', pattern: ['src/common/dictionaries/*', 'src/app/\\[locale\\]/dictionaries.ts'] }, // i18n
   { type: 'shared-type', pattern: ['src/common/types'] },                        // 전역 타입
+  // Route Handler — Next.js App Router HTTP 엔드포인트 (GET/POST 등 export)
+  { type: 'route-handler', mode: 'full', pattern: ['src/app/**/route.ts'] },     // API 진입점 (얇은 HTTP 어댑터)
   // Page (catch-all) — 위 패턴에 매칭 안 된 src/app 전부
-  { type: 'page', pattern: ['src/app'] },
+  { type: 'page', pattern: ['src/app'] },                                        // 최상위 페이지 catch-all
 ];
+
+/**
+ * 표시 전용 구조 주석 — ESLint 런타임에는 참조되지 않는다 (lint 규칙 영향 없음).
+ * baseBoundaryElements의 glob 패턴만으로는 드러나지 않는 Next.js App Router
+ * 관례(layout.tsx/page.tsx/route group/nested dynamic)를 자동 생성 문서에
+ * 시각화 목적으로 보강한다. gen-lint-reference.mjs가 parentPath 위치에서
+ * boundary tree의 glob 자식을 숨기고 이 override 트리를 대신 렌더한다.
+ *
+ * 스키마: { [parentPath]: { override: StructureNode[] } }
+ *   StructureNode: { name, note?, placeholder?, children? }
+ *     - name         : 세그먼트/파일명 (예: '[locale]', 'layout.tsx', '_components')
+ *     - note         : 트리 오른쪽 '# ' 주석 (선택)
+ *     - placeholder  : true면 실제 이름이 가변임을 표시 (예: '[feature]' → user/product 등)
+ *     - children     : 하위 노드
+ */
+export const baseStructureAnnotations = {
+  'src/app': {
+    override: [
+      {
+        name: '[locale]',
+        note: 'Locale dynamic segment (lint 강제 — 리터럴 폴더명)',
+        children: [
+          { name: 'layout.tsx', note: 'Root layout (Server Component)' },
+          { name: 'page.tsx', note: 'Home page (Server Component)' },
+          { name: 'loading.tsx', note: 'Suspense fallback UI (선택)' },
+          { name: 'error.tsx', note: "Error boundary ('use client' 필수)" },
+          { name: 'not-found.tsx', note: '404 페이지 (선택)' },
+          { name: '_components', note: "Page-colocated Client Components ('use client')" },
+          { name: '_providers', note: "Page-colocated Providers ('use client')" },
+          { name: 'dictionaries.ts', note: 'i18n dictionary loader' },
+          {
+            name: '(group)',
+            placeholder: true,
+            note: 'Route group — URL에 미포함. 실제 이름: (protected), (auth) 등. 하위는 [feature] 패턴과 동일',
+          },
+          {
+            name: '[feature]',
+            placeholder: true,
+            note: '실제 이름 가변: user, product, dashboard 등',
+            children: [
+              { name: 'page.tsx' },
+              { name: '_components', note: '이 레벨에도 가능 (glob `**` 매칭)' },
+              {
+                name: '[id]',
+                placeholder: true,
+                note: 'Dynamic route param (선택)',
+                children: [{ name: 'page.tsx' }],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'api',
+        note: 'Route Handlers — HTTP API 엔드포인트 (Next.js가 호스팅, [locale] 밖)',
+        children: [
+          {
+            name: '[resource]',
+            placeholder: true,
+            note: '실제 이름 가변: auth, projects, admin, user 등',
+            children: [
+              { name: 'route.ts', note: 'HTTP 핸들러 (GET/POST/PUT/DELETE export)' },
+              {
+                name: '[id]',
+                placeholder: true,
+                note: 'Dynamic param (예: projects/[id])',
+                children: [{ name: 'route.ts' }],
+              },
+              {
+                name: '[...slug]',
+                placeholder: true,
+                note: 'Catch-all 세그먼트 (예: auth/[...nextauth])',
+                children: [{ name: 'route.ts' }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
 
 /**
  * 레이어 간 의존성 방향 선언 (allow-list).
@@ -182,6 +265,18 @@ export const baseBoundaryRules = [
   },
   // 전역 타입: i18n 키 타입 조회를 위해 dictionary 참조 허용
   { from: { type: 'shared-type' }, allow: [{ to: { type: 'dictionary' } }] },
+  {
+    // Route Handler (HTTP 진입점): 얇은 어댑터 — 도메인 서비스/헬퍼 호출에 집중.
+    // UI 레이어(shared-ui/page-component) import 금지 (서버 코드 경계 위반).
+    from: { type: 'route-handler' },
+    allow: [
+      { to: { type: 'domain-model' } },
+      { to: { type: 'domain-error' } },
+      { to: { type: 'domain-service' } },
+      { to: { type: 'api-helper' } },
+      { to: { type: 'shared-type' } },
+    ],
+  },
   {
     // Page (최상위 컨슈머): 페이지 조립에 필요한 거의 모든 레이어 사용 가능
     // (단, domain-service/repository/api-hook 직접 호출 금지 — 컴포넌트/헬퍼를 거쳐야 함)

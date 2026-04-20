@@ -18,6 +18,7 @@
     "url": "https://github.com/JosephNK/jkit-code-plugin.git"
   },
   "devDependencies": {
+    "acorn": "^8.16.0",
     "prettier": "^3.8.3"
   }
 }
