@@ -180,6 +180,12 @@ def main() -> int:
     else:
         action = "변경 예정" if args.dry_run else "업데이트 완료"
         print(f"{updated}개 파일 {action}")
+        if not args.dry_run:
+            print()
+            print(
+                "Next step: 의존성 재설치가 필요하면 "
+                "'npm install' (또는 'pnpm install' / 'yarn install')을 실행하세요."
+            )
 
     return 0
 
