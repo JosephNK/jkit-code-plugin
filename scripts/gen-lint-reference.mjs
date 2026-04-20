@@ -451,6 +451,26 @@ function renderStructure({ jsdocMap, elements, inlineComments, annotations, stac
 }
 
 /**
+ * boundary rule의 allow를 항상 `[{to:{type:string}}]` 배열로 정규화.
+ * eslint-plugin-boundaries 문법상 두 가지 형태를 모두 허용하기 때문:
+ *   - 객체: `allow: { to: { type: 'model' } }`
+ *   - 배열: `allow: [ { to: { type: 'model' } } ]`
+ * 또한 `to.type`이 문자열/배열 모두 가능하므로 각 타입을 개별 엔트리로 펼친다.
+ */
+function normalizeAllows(rule) {
+  if (!rule.allow) return [];
+  const raw = Array.isArray(rule.allow) ? rule.allow : [rule.allow];
+  const out = [];
+  for (const entry of raw) {
+    const toType = entry?.to?.type;
+    if (!toType) continue;
+    const types = Array.isArray(toType) ? toType : [toType];
+    for (const t of types) out.push({ to: { type: t } });
+  }
+  return out;
+}
+
+/**
  * Mermaid 다이어그램 렌더.
  * - 자기 참조 엣지는 제거 (매트릭스에 이미 표현됨, 시각 노이즈 방지)
  * - prefix-* 패턴으로 subgraph 자동 클러스터링 (domain-*, api-*, page-* 등)
@@ -463,7 +483,7 @@ function renderMermaid(rules) {
     const from = r.from?.type;
     if (!from) continue;
     nodes.add(from);
-    for (const a of r.allow || []) {
+    for (const a of normalizeAllows(r)) {
       const to = a.to?.type;
       if (!to) continue;
       nodes.add(to);
@@ -512,7 +532,7 @@ function renderMatrix(rules) {
   lines.push('| --- | --- |');
   for (const r of rules) {
     const from = r.from?.type || '—';
-    const allows = (r.allow || []).map((a) => `\`${a.to?.type ?? '?'}\``);
+    const allows = normalizeAllows(r).map((a) => `\`${a.to.type}\``);
     lines.push(`| \`${from}\` | ${allows.length ? allows.join(', ') : '_(없음)_'} |`);
   }
   return lines.join('\n');
