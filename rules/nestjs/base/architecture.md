@@ -1,7 +1,8 @@
 # Architecture
 
-> 이 문서: 헥사고날 개념 + 레이어별 코드 패턴 (WHY / HOW).
-> 레이어 경로 매핑: `@jkit/eslint-rules/nestjs/base/lint-rules-structure-reference.md`
+> 이 문서: 헥사고날 **원리 · Data Flow · Dependency Direction** 개념 해설.
+> 레이어별 책임·포함·네이밍·대표 코드 형태: `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md` ("레이어 글로서리")
+> 레이어 경로 매핑 (폴더 트리): `@jkit/eslint-rules/nestjs/base/lint-rules-structure-reference.md`
 > 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md`
 
 Hexagonal Architecture (Ports and Adapters) + NestJS 모듈 구조.
@@ -65,134 +66,14 @@ Controller -> Inbound Port (interface) <- Service -> Outbound Port (interface) <
 
 ## Layer Details
 
-### model — Entity, Value Object, Pure Functions
-
-프레임워크 import 엄격히 금지. 프로젝트에서 가장 안정적인 레이어.
-
-```typescript
-// model/order.entity.ts
-export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-
-export interface Order {
-  readonly id: string;
-  readonly items: ReadonlyArray<OrderItem>;
-  readonly status: OrderStatus;
-  readonly totalAmount: number;
-}
-```
-
-```typescript
-// model/order.functions.ts
-// 순수 함수. 외부 의존성 없음.
-export function calculateTotal(items: ReadonlyArray<OrderItem>): number {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
-```
-
-### port — Port Interfaces
-
-inbound-port 와 outbound-port 를 한 폴더에 배치, 네이밍으로 구분.
-
-```typescript
-// port/create-order.port.ts
-// inbound-port: service 를 향한 계약 (Service 가 구현)
-export interface CreateOrderPort {
-  execute(input: CreateOrderInput): Promise<Order>;
-}
-
-// port/order-repository.port.ts
-// outbound-port: 외부 세계를 향한 계약 (Provider 가 구현)
-export interface OrderRepositoryPort {
-  save(order: Order): Promise<Order>;
-  findById(id: string): Promise<Order | null>;
-}
-
-// port/port-tokens.ts
-export const CREATE_ORDER_PORT = Symbol('CreateOrderPort');
-export const ORDER_REPOSITORY_PORT = Symbol('OrderRepositoryPort');
-```
-
-### service — Inbound-Port Implementation
-
-Port 를 조합하여 비즈니스 흐름을 orchestrate.
-
-```typescript
-// service/create-order.service.ts
-@Injectable()
-export class CreateOrderService implements CreateOrderPort {
-  constructor(
-    @Inject(ORDER_REPOSITORY_PORT)
-    private readonly orderRepository: OrderRepositoryPort,
-  ) {}
-
-  async execute(input: CreateOrderInput): Promise<Order> {
-    const totalAmount = calculateTotal(input.items);
-    const order: Order = {
-      id: generateId(),
-      items: input.items,
-      status: 'pending',
-      totalAmount,
-    };
-    return this.orderRepository.save(order);
-  }
-}
-```
-
-### controller — Inbound Adapter
-
-HTTP 요청 수신 후 service 에 위임.
-
-```typescript
-// controller/order.controller.ts
-@Controller('orders')
-export class OrderController {
-  constructor(
-    @Inject(CREATE_ORDER_PORT)
-    private readonly createOrder: CreateOrderPort,
-  ) {}
-
-  @Post()
-  async create(@Body() dto: CreateOrderDto): Promise<Order> {
-    return this.createOrder.execute(dto);
-  }
-}
-```
-
-### provider — Outbound Adapter
-
-Port interface 를 구현하여 실제 외부 서비스와 통신.
-
-```typescript
-// provider/order-repository.adapter.ts
-@Injectable()
-export class OrderRepositoryAdapter implements OrderRepositoryPort {
-  constructor(private readonly dataSource: DataSource) {}
-
-  async save(order: Order): Promise<Order> {
-    // 실제 DB 구현
-  }
-
-  async findById(id: string): Promise<Order | null> {
-    // 실제 DB 구현
-  }
-}
-```
-
-### exception — Domain-Specific Exceptions
-
-```typescript
-// exception/order-not-found.error.ts
-export class OrderNotFoundError extends Error {
-  constructor(id: string) {
-    super(`Order not found: ${id}`);
-    this.name = 'OrderNotFoundError';
-  }
-}
-```
+> 각 레이어의 역할·포함 파일 종류·네이밍 관례·대표 코드 형태는
+> `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md`의 **"레이어 글로서리 (Layer Glossary)"** 섹션을 참고.
+> 이 문서는 개념/흐름에 집중하고, 실제 레이어별 세부는 단일 소스에서 관리한다.
 
 ### module — DI Assembly
 
-NestJS module 이 Port 를 구현체와 연결.
+> NestJS `@Module`은 lint boundary 대상이 아니며 (모든 레이어를 조립하는 특수 파일)
+> 위 글로서리에도 포함되지 않는다. 조립 규약만 참고용으로 남긴다.
 
 ```typescript
 // order.module.ts
