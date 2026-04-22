@@ -6,20 +6,14 @@
 
 ## 개요
 
-아키텍처 경계 선언 — 각 레이어가 어떤 경로에 해당하는지 정의.
+아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
 
-헥사고날 폴더 구조 (모듈당):
-  - `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
-    (model / port / service / controller / provider / exception / dto)
-  - `<group>` 은 선택 — 단층 모듈이면 생략
-  - `<domain>.module.ts` 는 DI 조립 파일 (lint 무시 대상)
+폴더 구조: `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
+(model/port/service/controller/provider/exception/dto). `<group>`은 선택,
+`<domain>.module.ts`는 DI 조립 파일(lint 무시).
+전역 수평 관심사: `src/common/` · `src/infrastructure/` · `src/libs/`.
 
-전역 수평 관심사 (no-unknown-files가 허용 하위 폴더 외 경로를 거부):
-  - `src/common/` — authentication, exceptions, interfaces, middlewares, pipes, dtos
-  - `src/infrastructure/` — database, i18n, logger, transaction
-  - `src/libs/` — 독립 라이브러리성 모듈 (catch-all)
-
-상세 구조/레이어 설명은 아래 "프로젝트 구조" 트리와 "레이어별 경로 매핑" 표 참고.
+레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
 
 ## 프로젝트 구조
 

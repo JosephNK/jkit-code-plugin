@@ -40,11 +40,8 @@ export const basePathAliasPattern = {
 };
 
 /**
- * "프레임워크" 패키지 목록 — 순수 레이어(model/, port/, exception/)에서 금지.
+ * 순수 레이어(model/port/exception)에서 import 금지되는 프레임워크 패키지.
  * 이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
- * - @nestjs/*   : Nest DI/데코레이터
- * - class-validator / class-transformer : DTO 검증 (boundary에서만 사용)
- * - express     : HTTP 어댑터 (controller/provider 계층 관심사)
  */
 export const baseFrameworkPackages = [
   "@nestjs/*",
@@ -55,20 +52,14 @@ export const baseFrameworkPackages = [
 ];
 
 /**
- * 아키텍처 경계 선언 — 각 레이어가 어떤 경로에 해당하는지 정의.
+ * 아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
  *
- * 헥사고날 폴더 구조 (모듈당):
- *   - `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
- *     (model / port / service / controller / provider / exception / dto)
- *   - `<group>` 은 선택 — 단층 모듈이면 생략
- *   - `<domain>.module.ts` 는 DI 조립 파일 (lint 무시 대상)
+ * 폴더 구조: `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
+ * (model/port/service/controller/provider/exception/dto). `<group>`은 선택,
+ * `<domain>.module.ts`는 DI 조립 파일(lint 무시).
+ * 전역 수평 관심사: `src/common/` · `src/infrastructure/` · `src/libs/`.
  *
- * 전역 수평 관심사 (no-unknown-files가 허용 하위 폴더 외 경로를 거부):
- *   - `src/common/` — authentication, exceptions, interfaces, middlewares, pipes, dtos
- *   - `src/infrastructure/` — database, i18n, logger, transaction
- *   - `src/libs/` — 독립 라이브러리성 모듈 (catch-all)
- *
- * 상세 구조/레이어 설명은 아래 "프로젝트 구조" 트리와 "레이어별 경로 매핑" 표 참고.
+ * 레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
  */
 export const baseBoundaryElements = [
   { type: "model", pattern: ["src/modules/**/model/**"] }, // 도메인 모델
@@ -103,11 +94,9 @@ export const baseBoundaryElements = [
 ];
 
 /**
- * 표시 전용 구조 주석 — ESLint 런타임에는 참조되지 않는다 (lint 규칙 영향 없음).
- * baseBoundaryElements의 glob 패턴만으로는 드러나지 않는 하위 폴더 용도를 자동
- * 생성 문서(lint-rules-structure-reference.md)에 시각화한다. common/infrastructure
- * 처럼 같은 boundary type 안에서 역할별로 하위 폴더가 나뉠 때 각 폴더의 의도를
- * 명확히 한다.
+ * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조). baseBoundaryElements의
+ * glob만으로는 드러나지 않는 하위 폴더 의도를 lint-rules-structure-reference.md
+ * 트리에 추가한다.
  *
  * 스키마: { [parentPath]: { override: StructureNode[] } }
  *   StructureNode: { name, note?, placeholder?, children? }
@@ -401,15 +390,8 @@ export const baseLayerSemantics = {
 };
 
 /**
- * 레이어 간 의존성 방향 선언 (allow-list).
- * 기본 disallow 정책 위에 아래 조합만 허용.
- *
- * 핵심 원칙:
- *   - model/port는 프레임워크와 완전 격리된 순수 TS
- *   - service는 controller/provider를 절대 모름 (헥사고날 역전)
- *   - controller는 HTTP 경계에서 DTO/port를 조합 (service 직접 호출 금지 설계)
- *   - provider는 Port 구현체로서 infrastructure 접근 가능
- *   - libs는 독립 라이브러리로 자유도 허용
+ * 레이어 간 import 관계 (allow-list). 기본 disallow 정책 위에 아래 조합만 허용.
+ * 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
  */
 export const baseBoundaryRules = [
   // model — 자기 자신만 (순수 TS, 외부 의존 0)
@@ -611,14 +593,8 @@ export const baseConfig = defineConfig(
 
 // ─── Pre-built: Immutability rules (readonly on Entity and DTO fields) ────────
 /**
- * Entity와 DTO의 인스턴스 필드에 readonly 강제.
- * 이유: 객체 불변성을 보장하여 예측 가능한 데이터 흐름과 방어적 복사 회피 효과.
- *       conventions.md의 Immutability 섹션에 명시된 프로젝트 약속.
- *
- * Selector 해설:
- *   PropertyDefinition:not([readonly=true]):not([static=true])
- *   → readonly도 아니고 static도 아닌 인스턴스 필드를 찾아 에러 발생
- *   static은 클래스 상수이므로 예외 (e.g., public static readonly TYPE = 'foo')
+ * Entity·DTO 인스턴스 필드에 readonly 강제 (instance field만; static은 예외).
+ * 객체 불변성으로 예측 가능한 데이터 흐름 보장 (conventions.md: Immutability).
  */
 export const baseImmutabilityRules = defineConfig({
   files: [
@@ -656,16 +632,9 @@ export const baseFileSizeRules = defineConfig({
 
 // ─── Pre-built: Circular dependency detection ────────────────────────────────
 /**
- * import/no-cycle — 레이어 간·모듈 간 순환 의존성 감지.
- *
- * warn으로 시작: 기존 코드에서 cycle이 누적되어 있을 수 있어 error로 승격 전
- * 실제 프로젝트 운영 데이터를 본 뒤 전환 판단. forwardRef 정당 케이스(circular
- * module DI)는 일반적으로 type-only import로 회피되므로 대부분 자동 통과.
- *
- * 옵션:
- *   maxDepth: 10       — 성능/정확도 균형 (Infinity는 느림)
- *   ignoreExternal     — node_modules 체크 생략
- *   allowUnsafeDynamicCyclicDependency: false — 런타임 cycle은 여전히 잡음
+ * import/no-cycle — 레이어 간·모듈 간 순환 의존성 감지 (warn).
+ * 기존 코드에 cycle이 누적되어 있을 수 있어 warn으로 시작; 운영 데이터 본 뒤 error로 승격 판단.
+ * 옵션: maxDepth 10 (성능 균형), ignoreExternal (node_modules 제외).
  */
 export const baseCycleRules = defineConfig({
   files: ["src/**/*.ts"],

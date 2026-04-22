@@ -255,15 +255,8 @@ export class CreateOrderRequestDto {
 
 ## 의존성 규칙 (Dependency Rules)
 
-레이어 간 의존성 방향 선언 (allow-list).
-기본 disallow 정책 위에 아래 조합만 허용.
-
-핵심 원칙:
-  - model/port는 프레임워크와 완전 격리된 순수 TS
-  - service는 controller/provider를 절대 모름 (헥사고날 역전)
-  - controller는 HTTP 경계에서 DTO/port를 조합 (service 직접 호출 금지 설계)
-  - provider는 Port 구현체로서 infrastructure 접근 가능
-  - libs는 독립 라이브러리로 자유도 허용
+레이어 간 import 관계 (allow-list). 기본 disallow 정책 위에 아래 조합만 허용.
+각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
 
 ### 의존성 다이어그램
 
@@ -328,11 +321,8 @@ graph LR
 
 ## Framework 금지 패키지 (순수 레이어 차단)
 
-"프레임워크" 패키지 목록 — 순수 레이어(model/, port/, exception/)에서 금지.
+순수 레이어(model/port/exception)에서 import 금지되는 프레임워크 패키지.
 이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
-- @nestjs/*   : Nest DI/데코레이터
-- class-validator / class-transformer : DTO 검증 (boundary에서만 사용)
-- express     : HTTP 어댑터 (controller/provider 계층 관심사)
 
 - `@nestjs/*`
 - `class-validator`
