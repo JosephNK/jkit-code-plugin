@@ -23,10 +23,8 @@ import jkitLocalPlugin from './custom-rules/index.mjs';
 // ─── Raw data (for project-level merging) ─────────────────────────────────────
 
 /**
- * 전역 no-restricted-imports 패턴.
- * - 깊은 상대경로(`../../**`)를 금지하여 폴더 구조 리팩토링 시 import가 깨지는 것을
- *   방지하고, `@/*` path alias 사용을 강제한다.
- * - 스택별 rules.mjs에서 패턴을 추가로 머지할 수 있도록 export.
+ * 전역 no-restricted-imports 패턴. 깊은 상대경로(`../../**`) 금지로 폴더 구조
+ * 리팩토링 시 import 파손 방지 + `@/*` path alias 사용 강제.
  */
 export const baseRestrictedPatterns = [
   {
@@ -62,18 +60,11 @@ export const baseDomainBannedPackages = [
 ];
 
 /**
- * 아키텍처 경계 선언 — 각 type이 어떤 경로에 해당하는지 정의.
+ * 아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
  * eslint-plugin-boundaries가 이 맵을 사용하여 파일별 레이어를 판별한다.
+ * `mode: 'full'`은 단일 파일 경로 정확 매칭 (폴더 아님).
  *
- * 레이어 개요 (Clean Architecture 스타일):
- *   - Domain:   순수 비즈니스 로직 (models/errors/ports/services) — 최하위 의존 대상
- *   - API:      외부 통신 어댑터 (client/endpoint/dto/mapper/repository/hook)
- *   - Lib:      도메인/API 어디에도 속하지 않는 공용 유틸
- *   - UI:       재사용 컴포넌트(shared-ui) + 페이지 전용 컴포넌트/프로바이더
- *   - Common:   i18n 사전, 공용 타입
- *   - Page:     Next.js App Router 페이지 (최상위, 모든 레이어 소비 가능)
- *
- * `mode: 'full'` — 단일 파일 경로를 정확히 매칭 (폴더 아님)
+ * 레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
  */
 export const baseBoundaryElements = [
   // Domain layer — 프레임워크 비의존 순수 TS
@@ -109,18 +100,13 @@ export const baseBoundaryElements = [
 ];
 
 /**
- * 표시 전용 구조 주석 — ESLint 런타임에는 참조되지 않는다 (lint 규칙 영향 없음).
- * baseBoundaryElements의 glob 패턴만으로는 드러나지 않는 Next.js App Router
- * 관례(layout.tsx/page.tsx/route group/nested dynamic)를 자동 생성 문서에
- * 시각화 목적으로 보강한다. gen-lint-reference.mjs가 parentPath 위치에서
- * boundary tree의 glob 자식을 숨기고 이 override 트리를 대신 렌더한다.
+ * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조). baseBoundaryElements의 glob만으로는
+ * 드러나지 않는 Next.js App Router 관례(layout.tsx/page.tsx/route group/nested dynamic)를
+ * lint-rules-structure-reference.md에 보강한다. parentPath 위치에서 boundary tree의
+ * glob 자식을 숨기고 이 override 트리로 대체한다.
  *
  * 스키마: { [parentPath]: { override: StructureNode[] } }
- *   StructureNode: { name, note?, placeholder?, children? }
- *     - name         : 세그먼트/파일명 (예: '[locale]', 'layout.tsx', '_components')
- *     - note         : 트리 오른쪽 '# ' 주석 (선택)
- *     - placeholder  : true면 실제 이름이 가변임을 표시 (예: '[feature]' → user/product 등)
- *     - children     : 하위 노드
+ *   StructureNode: { name, note?, placeholder? (가변 세그먼트 표시), children? }
  */
 export const baseStructureAnnotations = {
   'src/app': {
@@ -520,13 +506,8 @@ export const baseLayerSemantics = {
 };
 
 /**
- * 레이어 간 의존성 방향 선언 (allow-list).
- * 기본 `disallow` 정책 위에 `allow`된 조합만 import를 허용한다.
- * 핵심 원칙:
- *   - 도메인은 외부 레이어를 모른다 (단방향: UI/API → Domain)
- *   - API 원시 계층(client/endpoint/dto)은 어떤 레이어도 import 하지 않는다
- *   - UI는 도메인 모델만 참조하고 도메인 서비스 호출은 hook을 통해서만
- *   - Page는 최상위 컨슈머 (UI + dictionary 등 조합)
+ * 레이어 간 import 관계 (allow-list). 기본 disallow 정책 위에 아래 조합만 허용.
+ * 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
  */
 export const baseBoundaryRules = [
   // Domain: 자기 자신 및 하위 순수 레이어만 참조
@@ -780,14 +761,9 @@ export const baseConfig = defineConfig([
 
 // ─── Pre-built: Server Component rules ────────────────────────────────────────
 /**
- * Next.js App Router에서 `src/app/**`은 기본적으로 Server Component.
- * Server Component에서는 React Hook(`useXxx`)을 호출할 수 없으므로 런타임 에러가 난다.
- * 런타임 전에 잡기 위해 AST selector로 Hook 호출을 금지한다.
- * 예외: `_components/`, `_providers/` 는 "use client"를 가정하므로 검사 제외.
- *
- * Selector 설명:
- *   - `CallExpression[callee.name=/^use[A-Z]/]`      → useFoo()  (직접 호출)
- *   - `CallExpression[callee.property.name=/^use[A-Z]/]` → obj.useFoo() (멤버 호출)
+ * Server Component(`src/app/**`)에서 React Hook 호출 금지 — 런타임 에러 사전 차단.
+ * `_components/`·`_providers/`는 'use client' 가정으로 검사 제외.
+ * Selector: `useFoo()` (직접 호출) + `obj.useFoo()` (멤버 호출) 둘 다 catch.
  */
 export const baseServerComponentRules = defineConfig([
   {
@@ -811,18 +787,13 @@ export const baseServerComponentRules = defineConfig([
 
 // ─── Pre-built: Custom rules (conventions.md enforcement) ────────────────────
 /**
- * conventions.md에서 표준 ESLint 룰로 표현이 불가능한 프로젝트 고유 규칙을
- * custom rule로 제공한다.
+ * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙.
  *
- * 활성 룰:
- *   - local/no-inline-style-tokens : JSX 인라인 `style={{...}}` 토큰 하드코딩 차단
- *                                    (stylelint가 커버 못 하는 .tsx 공백 메움)
+ * 활성: local/no-inline-style-tokens — JSX 인라인 `style={{...}}` 토큰 하드코딩 차단
+ * (stylelint가 커버 못 하는 .tsx 공백 메움).
  *
- * 비활성(보존) 룰:
- *   - local/no-tailwindcss-css     : Tailwind CSS import 전역 차단
- *                                    (현재 미사용. custom-rules/index.mjs 에서도
- *                                     plugin 등록 자체가 주석 처리되어 있음.
- *                                     활성화 시 양쪽 주석을 함께 해제)
+ * 비활성(보존): local/no-tailwindcss-css — Tailwind import 전역 차단. custom-rules/index.mjs
+ * 에서도 plugin 등록이 주석 처리됨. 활성화 시 양쪽 주석을 함께 해제.
  */
 export const baseCustomRules = defineConfig(
   {

@@ -375,13 +375,8 @@ export async function GET(
 
 ## 의존성 규칙 (Dependency Rules)
 
-레이어 간 의존성 방향 선언 (allow-list).
-기본 `disallow` 정책 위에 `allow`된 조합만 import를 허용한다.
-핵심 원칙:
-  - 도메인은 외부 레이어를 모른다 (단방향: UI/API → Domain)
-  - API 원시 계층(client/endpoint/dto)은 어떤 레이어도 import 하지 않는다
-  - UI는 도메인 모델만 참조하고 도메인 서비스 호출은 hook을 통해서만
-  - Page는 최상위 컨슈머 (UI + dictionary 등 조합)
+레이어 간 import 관계 (allow-list). 기본 disallow 정책 위에 아래 조합만 허용.
+각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
 
 ### 의존성 다이어그램
 
@@ -479,10 +474,8 @@ graph LR
 
 ## Restricted Patterns (Import 금지 패턴)
 
-전역 no-restricted-imports 패턴.
-- 깊은 상대경로(`../../**`)를 금지하여 폴더 구조 리팩토링 시 import가 깨지는 것을
-  방지하고, `@/*` path alias 사용을 강제한다.
-- 스택별 rules.mjs에서 패턴을 추가로 머지할 수 있도록 export.
+전역 no-restricted-imports 패턴. 깊은 상대경로(`../../**`) 금지로 폴더 구조
+리팩토링 시 import 파손 방지 + `@/*` path alias 사용 강제.
 
 | 패턴 | 메시지 |
 | --- | --- |

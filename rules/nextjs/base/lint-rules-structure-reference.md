@@ -6,18 +6,11 @@
 
 ## 개요
 
-아키텍처 경계 선언 — 각 type이 어떤 경로에 해당하는지 정의.
+아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
 eslint-plugin-boundaries가 이 맵을 사용하여 파일별 레이어를 판별한다.
+`mode: 'full'`은 단일 파일 경로 정확 매칭 (폴더 아님).
 
-레이어 개요 (Clean Architecture 스타일):
-  - Domain:   순수 비즈니스 로직 (models/errors/ports/services) — 최하위 의존 대상
-  - API:      외부 통신 어댑터 (client/endpoint/dto/mapper/repository/hook)
-  - Lib:      도메인/API 어디에도 속하지 않는 공용 유틸
-  - UI:       재사용 컴포넌트(shared-ui) + 페이지 전용 컴포넌트/프로바이더
-  - Common:   i18n 사전, 공용 타입
-  - Page:     Next.js App Router 페이지 (최상위, 모든 레이어 소비 가능)
-
-`mode: 'full'` — 단일 파일 경로를 정확히 매칭 (폴더 아님)
+레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
 
 ## 프로젝트 구조
 
