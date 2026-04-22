@@ -519,14 +519,7 @@ React/Next.js 타입·런타임에 직접 의존하면 안 된다.
 
 ## Rule Overrides (룰 오버라이드)
 
-프로젝트 공용 ESLint 베이스 config.
-블록 순서 중요: 뒤의 config가 앞의 config를 override한다.
-  1) Next.js 공식 config (core-web-vitals + typescript)
-  2) typescript-eslint 타입 기반 룰
-  3) Prettier (포맷 관련 룰 비활성화 — 포맷은 Prettier 전담)
-  4) SonarJS (코드 스멜/복잡도)
-  5) simple-import-sort + unused-imports (import 정리)
-  6) 프로젝트 공통 스타일 룰
+프로젝트 공용 ESLint 룰 오버라이드 중 코드 작성에 영향이 있는 것만 (severity: error/warn).
 
 | 룰 | Severity | 옵션 |
 | --- | --- | --- |
@@ -541,20 +534,6 @@ React/Next.js 타입·런타임에 직접 의존하면 안 된다.
 | `no-console` | `warn` | `{"allow":["warn","error"]}` |
 | `sonarjs/no-nested-conditional` | `warn` | — |
 | `unused-imports/no-unused-vars` | `warn` | `{"vars":"all","varsIgnorePattern":"^_","args":"after-used","argsIgnorePattern":"^_"}` |
-| `@typescript-eslint/no-base-to-string` | `off` | — |
-| `@typescript-eslint/no-floating-promises` | `off` | — |
-| `@typescript-eslint/no-misused-promises` | `off` | — |
-| `@typescript-eslint/no-redundant-type-constituents` | `off` | — |
-| `@typescript-eslint/no-unsafe-argument` | `off` | — |
-| `@typescript-eslint/no-unsafe-assignment` | `off` | — |
-| `@typescript-eslint/no-unsafe-call` | `off` | — |
-| `@typescript-eslint/no-unsafe-member-access` | `off` | — |
-| `@typescript-eslint/no-unsafe-return` | `off` | — |
-| `@typescript-eslint/no-unused-vars` | `off` | — |
-| `@typescript-eslint/require-await` | `off` | — |
-| `@typescript-eslint/restrict-template-expressions` | `off` | — |
-| `@typescript-eslint/unbound-method` | `off` | — |
-| `sonarjs/todo-tag` | `off` | — |
 
 ## Ignored Paths (무시 경로)
 

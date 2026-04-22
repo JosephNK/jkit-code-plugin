@@ -714,7 +714,12 @@ function renderRuleOverrides(blocks) {
     return { severity: '(동적)', options: v };
   };
 
-  const rows = keys.map((k) => ({ rule: k, ...parseEntry(merged[k]) }));
+  // `off`는 LLM 코드 작성에 무관한 정보 (무관심 영역) — 렌더 제외.
+  // error/warn만 남겨 "준수해야 할 / 피해야 할" 룰 목록으로 정제.
+  const rows = keys
+    .map((k) => ({ rule: k, ...parseEntry(merged[k]) }))
+    .filter((row) => row.severity !== 'off');
+  if (rows.length === 0) return '';
   rows.sort((a, b) => {
     const ra = severityRank[a.severity] ?? 99;
     const rb = severityRank[b.severity] ?? 99;
@@ -898,10 +903,8 @@ function renderReference({
     const body = [];
     body.push('## Rule Overrides (룰 오버라이드)');
     body.push('');
-    if (jsdocMap.config) {
-      body.push(jsdocMap.config);
-      body.push('');
-    }
+    body.push('프로젝트 공용 ESLint 룰 오버라이드 중 코드 작성에 영향이 있는 것만 (severity: error/warn).');
+    body.push('');
     body.push(overrideTable);
     sections.push(body.join('\n'));
   }
@@ -1046,10 +1049,18 @@ function main() {
   }
   ignoredPaths = Array.from(new Set(ignoredPaths));
 
+  // baseConfig는 두 가지 호출 형태 모두 지원:
+  //   1) `defineConfig([...blocks])`   — 단일 배열 인자 (nextjs)
+  //   2) `defineConfig(a, b, c, ...)`  — spread 인자 (nestjs)
+  // 두 경우 모두 CallExpression.arguments를 순회해 각 인자에서 rules 블록을 수집한다.
   let ruleOverrides = [];
   if (configDecl) {
-    const arrNode = getCallArgArray(configDecl);
-    if (arrNode) ruleOverrides = findRuleOverrideBlocks(arrNode, localConsts);
+    const init = configDecl.init;
+    if (init?.type === 'CallExpression') {
+      for (const arg of init.arguments) {
+        ruleOverrides = ruleOverrides.concat(findRuleOverrideBlocks(arg, localConsts));
+      }
+    }
   }
 
   const outDir = args.outDir ? path.resolve(args.outDir) : path.dirname(inputPath);

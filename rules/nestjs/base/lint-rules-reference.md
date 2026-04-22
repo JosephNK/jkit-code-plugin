@@ -330,6 +330,22 @@ graph LR
 - `express`
 - `express/*`
 
+## Rule Overrides (룰 오버라이드)
+
+프로젝트 공용 ESLint 룰 오버라이드 중 코드 작성에 영향이 있는 것만 (severity: error/warn).
+
+| 룰 | Severity | 옵션 |
+| --- | --- | --- |
+| `@typescript-eslint/consistent-type-imports` | `error` | `{"prefer":"type-imports","fixStyle":"inline-type-imports"}` |
+| `prefer-const` | `error` | — |
+| `prettier/prettier` | `error` | `{"endOfLine":"auto"}` |
+| `simple-import-sort/exports` | `error` | — |
+| `simple-import-sort/imports` | `error` | — |
+| `unused-imports/no-unused-imports` | `error` | — |
+| `@typescript-eslint/no-floating-promises` | `warn` | — |
+| `no-warning-comments` | `warn` | `{"terms":["TODO","FIXME","HACK"]}` |
+| `unused-imports/no-unused-vars` | `warn` | `{"vars":"all","varsIgnorePattern":"^_","args":"after-used","argsIgnorePattern":"^_"}` |
+
 ## Ignored Paths (무시 경로)
 
 Boundary 검사에서 제외할 파일/디렉토리.
