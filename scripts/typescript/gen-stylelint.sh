@@ -62,7 +62,7 @@ done
 }
 
 RULES_DIR="$PLUGIN_ROOT/rules/$FRAMEWORK"
-TEMPLATE="$RULES_DIR/stylelint/stylelint.template.mjs"
+TEMPLATE="$RULES_DIR/base/stylelint.template.mjs"
 
 if [ ! -f "$TEMPLATE" ]; then
   echo "Error: Stylelint template not found: $TEMPLATE" >&2
@@ -119,7 +119,7 @@ def set_dep(name, version, label=None):
 # 최신 stylelint 16.x (Node 18+) — stylelint-config-standard 36.x이 16 호환
 set_dep("stylelint", "^16.0.0")
 set_dep("stylelint-config-standard", "^36.0.0")
-# 토큰 하드코딩 차단용 (stylelint.base.mjs의 scale-unlimited/declaration-strict-value)
+# 토큰 하드코딩 차단용 (stylelint.rules.mjs의 scale-unlimited/declaration-strict-value)
 set_dep("stylelint-declaration-strict-value", "^1.10.0")
 # @jkit/eslint-rules는 gen-eslint.sh가 먼저 넣어두지만 idempotent 보장 차원에서 동기화
 set_dep("@jkit/eslint-rules", git_dep)
