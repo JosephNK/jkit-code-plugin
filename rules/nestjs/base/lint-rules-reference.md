@@ -343,6 +343,7 @@ graph LR
 | `simple-import-sort/imports` | `error` | — |
 | `unused-imports/no-unused-imports` | `error` | — |
 | `@typescript-eslint/no-floating-promises` | `warn` | — |
+| `@typescript-eslint/no-unsafe-argument` | `warn` | — |
 | `no-warning-comments` | `warn` | `{"terms":["TODO","FIXME","HACK"]}` |
 | `unused-imports/no-unused-vars` | `warn` | `{"vars":"all","varsIgnorePattern":"^_","args":"after-used","argsIgnorePattern":"^_"}` |
 

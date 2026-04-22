@@ -255,23 +255,48 @@ function mapInlineTypeCommentsOnArray(arrayNode, comments) {
 }
 
 /**
+ * 특정 ObjectExpression이 `files:` 속성을 가지는지 검사 — 파일 스코프 블록 판별.
+ * file-scoped override는 production 코드 전반에 적용되는 룰 테이블에 포함하면
+ * 의도하지 않게 base 설정을 가리므로 메인 테이블 집계에서 제외한다.
+ */
+function hasFilesProperty(objExpr) {
+  if (!objExpr || objExpr.type !== 'ObjectExpression') return false;
+  return objExpr.properties.some(
+    (p) =>
+      p.type === 'Property' &&
+      !p.computed &&
+      ((p.key.type === 'Identifier' && p.key.name === 'files') ||
+        (p.key.type === 'Literal' && p.key.value === 'files')),
+  );
+}
+
+/**
  * 임의 AST 서브트리를 내려가며 `rules: { ... }` 꼴 ObjectExpression 값을 수집해
- * 각각 nodeToValue로 변환 가능한 것만 담아 반환.
+ * unscoped/scoped 두 버킷으로 분리 반환.
+ *
+ * - unscoped: 파일 제한 없이 모든 파일에 적용되는 rules 블록
+ * - scoped  : `files: [...]`로 범위가 지정된 rules 블록 (테스트/특정 경로 override 등)
+ *
+ * 둘로 나누는 이유: scoped override가 unscoped base를 가리지 않도록 렌더 시
+ * unscoped가 scoped를 덮어쓰게 합치기 위함. scoped-only 룰은 여전히 포함된다.
  */
 function findRuleOverrideBlocks(node, localConsts) {
-  const out = [];
-  const visit = (n) => {
+  const unscoped = [];
+  const scoped = [];
+  const visit = (n, parentBlock) => {
     if (!n || typeof n !== 'object') return;
     if (Array.isArray(n)) {
-      for (const x of n) visit(x);
+      for (const x of n) visit(x, parentBlock);
       return;
     }
+    const nextParent = n.type === 'ObjectExpression' ? n : parentBlock;
     if (n.type === 'Property' && !n.computed) {
       const keyName =
         n.key.type === 'Identifier' ? n.key.name : n.key.type === 'Literal' ? n.key.value : null;
       if (keyName === 'rules' && n.value.type === 'ObjectExpression') {
+        const target = hasFilesProperty(parentBlock) ? scoped : unscoped;
         try {
-          out.push(nodeToValue(n.value, localConsts));
+          target.push(nodeToValue(n.value, localConsts));
         } catch {
           // 일부 값이 미지원 노드(MetaProperty 등)일 수 있음 — 해당 블록만 누락 처리
           const partial = {};
@@ -293,17 +318,17 @@ function findRuleOverrideBlocks(node, localConsts) {
               anySuccess = true;
             }
           }
-          if (anySuccess) out.push(partial);
+          if (anySuccess) target.push(partial);
         }
       }
     }
     for (const key of Object.keys(n)) {
       if (key === 'loc' || key === 'start' || key === 'end') continue;
-      visit(n[key]);
+      visit(n[key], nextParent);
     }
   };
-  visit(node);
-  return out;
+  visit(node, null);
+  return { unscoped, scoped };
 }
 
 /**
@@ -697,9 +722,16 @@ function renderLayerGlossary(elements, layerSemantics) {
  * - 문자열 값: severity만 존재, options 없음
  * - 배열 값: [severity, ...options]
  */
-function renderRuleOverrides(blocks) {
+function renderRuleOverrides(collected) {
+  // 입력 shape: { unscoped: [...], scoped: [...] }
+  // scoped를 먼저 적용하고 unscoped로 덮어써서 "unscoped 우선" 의미론 구현.
+  // - 양쪽에 같은 룰이 있으면 unscoped 값 (프로덕션 전반 정책)
+  // - scoped에만 있는 룰은 그대로 포함 (예: 특정 파일군 전용 강화)
   const merged = {};
-  for (const b of blocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
+  const unscopedBlocks = collected?.unscoped || [];
+  const scopedBlocks = collected?.scoped || [];
+  for (const b of scopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
+  for (const b of unscopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
   const keys = Object.keys(merged);
   if (keys.length === 0) return '';
 
@@ -898,7 +930,7 @@ function renderReference({
     sections.push(body.join('\n'));
   }
 
-  const overrideTable = renderRuleOverrides(ruleOverrides || []);
+  const overrideTable = renderRuleOverrides(ruleOverrides);
   if (overrideTable) {
     const body = [];
     body.push('## Rule Overrides (룰 오버라이드)');
@@ -1053,12 +1085,14 @@ function main() {
   //   1) `defineConfig([...blocks])`   — 단일 배열 인자 (nextjs)
   //   2) `defineConfig(a, b, c, ...)`  — spread 인자 (nestjs)
   // 두 경우 모두 CallExpression.arguments를 순회해 각 인자에서 rules 블록을 수집한다.
-  let ruleOverrides = [];
+  const ruleOverrides = { unscoped: [], scoped: [] };
   if (configDecl) {
     const init = configDecl.init;
     if (init?.type === 'CallExpression') {
       for (const arg of init.arguments) {
-        ruleOverrides = ruleOverrides.concat(findRuleOverrideBlocks(arg, localConsts));
+        const { unscoped, scoped } = findRuleOverrideBlocks(arg, localConsts);
+        ruleOverrides.unscoped.push(...unscoped);
+        ruleOverrides.scoped.push(...scoped);
       }
     }
   }
@@ -1120,7 +1154,7 @@ function main() {
     domainBannedPackages.length ||
     frameworkPackages.length ||
     infraPackages.length ||
-    ruleOverrides.length ||
+    ruleOverrides.unscoped.length + ruleOverrides.scoped.length ||
     ignoredPaths.length;
 
   if (hasAnySection) {
