@@ -141,6 +141,24 @@ function nodeToValue(node, localConsts) {
       if (localConsts && localConsts.has(node.name)) return localConsts.get(node.name);
       throw new Error(`Unresolved identifier: ${node.name}`);
     }
+    case 'CallExpression': {
+      // `[literal, literal, ...].join(separator)` 만 지원 — baseLayerSemantics.example 용
+      if (
+        node.callee.type === 'MemberExpression' &&
+        !node.callee.computed &&
+        node.callee.property.type === 'Identifier' &&
+        node.callee.property.name === 'join'
+      ) {
+        const target = nodeToValue(node.callee.object, localConsts);
+        if (!Array.isArray(target)) {
+          throw new Error('join() target is not an array');
+        }
+        const arg = node.arguments[0];
+        const sep = arg != null ? nodeToValue(arg, localConsts) : ',';
+        return target.join(sep);
+      }
+      throw new Error(`Unsupported CallExpression`);
+    }
     default:
       throw new Error(`Unsupported node type: ${node.type}`);
   }
@@ -617,6 +635,62 @@ function renderBulletList(items) {
 }
 
 /**
+ * 레이어 글로서리 렌더. baseBoundaryElements 순서로 각 타입의 semantics를 섹션화한다.
+ * semantics가 없는 레이어는 건너뛴다 (부분 정의 가능).
+ *
+ * 각 레이어 섹션 구조:
+ *   ### `<type>`
+ *   **Role** — ...
+ *   **Contains** — bullet list
+ *   **Forbids** — bullet list
+ *   **Scope** — ...         (선택)
+ *   (code block)            (선택, example 있을 때)
+ */
+function renderLayerGlossary(elements, layerSemantics) {
+  if (!layerSemantics || typeof layerSemantics !== 'object') return '';
+  const order = Array.isArray(elements) && elements.length > 0
+    ? elements.map((e) => e?.type).filter(Boolean)
+    : Object.keys(layerSemantics);
+
+  const blocks = [];
+  for (const type of order) {
+    const s = layerSemantics[type];
+    if (!s) continue;
+    const lines = [];
+    lines.push(`### \`${type}\``);
+    lines.push('');
+    if (s.role) {
+      lines.push(`**Role** — ${s.role}`);
+      lines.push('');
+    }
+    if (Array.isArray(s.contains) && s.contains.length) {
+      lines.push('**Contains**');
+      lines.push('');
+      for (const c of s.contains) lines.push(`- ${c}`);
+      lines.push('');
+    }
+    if (Array.isArray(s.forbids) && s.forbids.length) {
+      lines.push('**Forbids**');
+      lines.push('');
+      for (const f of s.forbids) lines.push(`- ${f}`);
+      lines.push('');
+    }
+    if (s.scope) {
+      lines.push(`**Scope** — ${s.scope}`);
+      lines.push('');
+    }
+    if (s.example) {
+      lines.push('```ts');
+      lines.push(s.example);
+      lines.push('```');
+      lines.push('');
+    }
+    blocks.push(lines.join('\n').replace(/\n+$/, ''));
+  }
+  return blocks.join('\n\n');
+}
+
+/**
  * Rule Overrides 테이블 렌더.
  * - severity / options 2컬럼으로 분리
  * - severity 우선순위 (error → warn → off → 기타) 그룹 정렬, 내부 알파벳
@@ -690,6 +764,8 @@ function renderBoundaryAllowPatches(patches) {
 
 function renderReference({
   jsdocMap,
+  boundaryElements,
+  layerSemantics,
   boundaryRules,
   boundaryAllowPatches,
   restrictedPatterns,
@@ -711,6 +787,19 @@ function renderReference({
   out.push('');
 
   const sections = [];
+
+  const glossary = renderLayerGlossary(boundaryElements, layerSemantics);
+  if (glossary) {
+    const body = [];
+    body.push('## 레이어 글로서리 (Layer Glossary)');
+    body.push('');
+    if (jsdocMap.layerSemantics) {
+      body.push(jsdocMap.layerSemantics);
+      body.push('');
+    }
+    body.push(glossary);
+    sections.push(body.join('\n'));
+  }
 
   if (boundaryRules?.length) {
     const body = [];
@@ -901,6 +990,7 @@ function main() {
   const resolved = {
     boundaryElements: findExportBySuffix(exportsMap, 'BoundaryElements'),
     structureAnnotations: findExportBySuffix(exportsMap, 'StructureAnnotations'),
+    layerSemantics: findExportBySuffix(exportsMap, 'LayerSemantics'),
     boundaryRules: findExportBySuffix(exportsMap, 'BoundaryRules'),
     boundaryAllowPatches: findExportBySuffix(exportsMap, 'BoundaryAllowPatches'),
     restrictedPatterns: findExportBySuffix(exportsMap, 'RestrictedPatterns'),
@@ -916,6 +1006,7 @@ function main() {
 
   const elementsDecl = resolved.boundaryElements?.declarator;
   const annotationsDecl = resolved.structureAnnotations?.declarator;
+  const layerSemanticsDecl = resolved.layerSemantics?.declarator;
   const rulesDecl = resolved.boundaryRules?.declarator;
   const allowPatchesDecl = resolved.boundaryAllowPatches?.declarator;
   const patternsDecl = resolved.restrictedPatterns?.declarator;
@@ -930,6 +1021,7 @@ function main() {
   const elements = elementsDecl ? tryValue(elementsDecl, localConsts) || [] : [];
   const inlineComments = elementsDecl ? mapInlineTypeCommentsOnArray(elementsDecl.init, comments) : {};
   const annotations = annotationsDecl ? tryValue(annotationsDecl, localConsts) || {} : {};
+  const layerSemantics = layerSemanticsDecl ? tryValue(layerSemanticsDecl, localConsts) || {} : {};
   const boundaryRules = rulesDecl ? tryValue(rulesDecl, localConsts) || [] : [];
   const boundaryAllowPatches = allowPatchesDecl ? tryValue(allowPatchesDecl, localConsts) || [] : [];
   const restrictedPatterns = patternsDecl ? tryValue(patternsDecl, localConsts) || [] : [];
@@ -992,6 +1084,8 @@ function main() {
 
   const referenceContent = renderReference({
     jsdocMap,
+    boundaryElements: elements,
+    layerSemantics,
     boundaryRules,
     boundaryAllowPatches,
     restrictedPatterns,
@@ -1007,6 +1101,7 @@ function main() {
 
   // 섹션이 하나도 없으면 헤더만 남는 빈 문서. 그럴 땐 쓰지 않음.
   const hasAnySection =
+    Object.keys(layerSemantics).length ||
     boundaryRules.length ||
     boundaryAllowPatches.length ||
     restrictedPatterns.length ||
