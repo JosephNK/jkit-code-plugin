@@ -7,7 +7,7 @@
 
 ## Layer Rules
 
-> 아래 두 문서는 `eslint.base.mjs`에서 자동 생성되며 `@jkit/eslint-rules` 패키지에 포함됨.
+> 아래 두 문서는 `eslint.rules.mjs`에서 자동 생성되며 `@jkit/eslint-rules` 패키지에 포함됨.
 > - 레이어별 경로: `@jkit/eslint-rules/nextjs/base/lint-rules-structure-reference.md`
 > - Import 허용 매트릭스: `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md` "Allow 매트릭스"
 

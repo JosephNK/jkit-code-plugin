@@ -1,6 +1,6 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
 <!-- Generator: scripts/gen-lint-reference.mjs -->
-<!-- Source: rules/nestjs/base/eslint.base.mjs -->
+<!-- Source: rules/nestjs/base/eslint.rules.mjs -->
 
 # Lint Rules Reference (nestjs/base)
 
