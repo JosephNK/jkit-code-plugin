@@ -1,7 +1,8 @@
-# Lint Rules Reference (nextjs/base)
+<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
+<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Source: rules/nextjs/base/eslint.base.mjs -->
 
-> 이 문서는 `rules/nextjs/base/eslint.base.mjs` 에서 자동 생성됩니다.
-> **수동 편집 금지** — 변경은 `.mjs` 에서 하고 `node scripts/gen-lint-reference.mjs`를 다시 실행하세요.
+# Lint Rules Reference (nextjs/base)
 
 ## 의존성 규칙 (Dependency Rules)
 
@@ -11,7 +12,7 @@
   - 도메인은 외부 레이어를 모른다 (단방향: UI/API → Domain)
   - API 원시 계층(client/endpoint/dto)은 어떤 레이어도 import 하지 않는다
   - UI는 도메인 모델만 참조하고 도메인 서비스 호출은 hook을 통해서만
-  - Page는 최상위 컨슈머 (UI + api-helper + dictionary 등 조합)
+  - Page는 최상위 컨슈머 (UI + dictionary 등 조합)
 
 ### 의존성 다이어그램
 
@@ -30,7 +31,6 @@ graph LR
     api_mapper["api-mapper"]
     api_repository["api-repository"]
     api_hook["api-hook"]
-    api_helper["api-helper"]
   end
   subgraph g_shared [shared]
     shared_ui["shared-ui"]
@@ -57,11 +57,6 @@ graph LR
   api_repository --> domain_error
   api_repository --> domain_model
   api_hook --> domain_service
-  api_helper --> domain_model
-  api_helper --> domain_error
-  api_helper --> domain_port
-  api_helper --> domain_service
-  api_helper --> api_repository
   shared_ui --> domain_model
   shared_ui --> shared_type
   page_component --> api_hook
@@ -75,14 +70,12 @@ graph LR
   route_handler --> domain_model
   route_handler --> domain_error
   route_handler --> domain_service
-  route_handler --> api_helper
   route_handler --> shared_type
   page --> page_component
   page --> page_provider
   page --> shared_ui
   page --> dictionary
   page --> shared_type
-  page --> api_helper
 ```
 
 ### Allow 매트릭스
@@ -99,15 +92,14 @@ graph LR
 | `api-mapper` | `domain-model`, `api-dto` |
 | `api-repository` | `api-client`, `api-endpoint`, `api-mapper`, `domain-port`, `domain-error`, `domain-model` |
 | `api-hook` | `domain-service` |
-| `api-helper` | `domain-model`, `domain-error`, `domain-port`, `domain-service`, `api-repository`, `api-helper` |
 | `lib-shared` | _(없음)_ |
 | `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
 | `page-component` | `api-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
 | `page-provider` | `lib-shared` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `shared-type` | `dictionary` |
-| `route-handler` | `domain-model`, `domain-error`, `domain-service`, `api-helper`, `shared-type` |
-| `page` | `page-component`, `page-provider`, `shared-ui`, `dictionary`, `shared-type`, `api-helper`, `page` |
+| `route-handler` | `domain-model`, `domain-error`, `domain-service`, `shared-type` |
+| `page` | `page-component`, `page-provider`, `shared-ui`, `dictionary`, `shared-type`, `page` |
 
 ## Restricted Patterns (Import 금지 패턴)
 

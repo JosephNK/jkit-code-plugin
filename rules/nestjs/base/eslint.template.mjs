@@ -20,6 +20,8 @@ import {
   baseBoundaryIgnores,
   baseBoundaryRules,
   baseConfig,
+  baseCustomRules,
+  baseCycleRules,
   baseFileSizeRules,
   baseFrameworkPackages,
   baseIgnores,
@@ -84,12 +86,19 @@ const eslintConfig = [
   // [6] 파일 크기 제한 (800 라인)
   ...baseFileSizeRules,
 
+  // [7] 프로젝트 공용 custom 룰 (conventions.md 강제)
+  //     @ApiProperty 필수, DTO 네이밍/유니온 제약, mapDomainException, timestamptz 등
+  ...baseCustomRules,
+
+  // [7-1] 순환 의존성 감지 (warn — 실제 프로젝트 검증 후 error 승격 권장)
+  ...baseCycleRules,
+
 // {{CUSTOM_CONFIG}}
 
   // ─── Project-specific rules below ───
   // 프로젝트 개별 override는 이 아래에 추가한다.
 
-  // [7] 전역 ignore (빌드 산출물 등) — 맨 마지막에 위치
+  // [8] 전역 ignore (빌드 산출물 등) — 맨 마지막에 위치
   baseIgnores,
 ];
 

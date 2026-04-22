@@ -1,7 +1,8 @@
-# Lint Rules Reference (nestjs/base)
+<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
+<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Source: rules/nestjs/base/eslint.base.mjs -->
 
-> 이 문서는 `rules/nestjs/base/eslint.base.mjs` 에서 자동 생성됩니다.
-> **수동 편집 금지** — 변경은 `.mjs` 에서 하고 `node scripts/gen-lint-reference.mjs`를 다시 실행하세요.
+# Lint Rules Reference (nestjs/base)
 
 ## 의존성 규칙 (Dependency Rules)
 

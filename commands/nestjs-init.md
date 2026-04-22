@@ -46,7 +46,6 @@ Show the **ESLint** stacks below and ask the user to select (comma-separated, `a
 1. `typeorm`
 2. `gcp`
 3. `anthropic-ai`
-4. `custom-lint`
 
 ### 4. Ask tsconfig stacks
 
@@ -168,6 +167,8 @@ esac
 
 > 설치 후 `node_modules/@jkit/eslint-rules/`에 `rules/nestjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nestjs 규칙만 포함).
 
+> **peerDependencies**: `@jkit/eslint-rules`는 `eslint-plugin-import`를 peer로 요구합니다 (순환 의존성 감지용). 프로젝트에 없으면 `npm install -D eslint-plugin-import`로 추가 설치. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
+
 ### 9. Report
 
 Tell the user what was created:
@@ -179,4 +180,4 @@ Tell the user what was created:
 - `eslint.config.mjs` — ESLint config with selected stacks (imports `@jkit/eslint-rules/nestjs/*`)
 - `package.json` — devDependencies에 `@jkit/eslint-rules` git 의존성 추가
 - `tsconfig.json` — Patched with framework-specific settings
-- `.husky/` — Git hooks (pre-commit, commit-msg)
+- `.husky/` — Git hooks (pre-commit runs `lint-staged` + `jkit-check-i18n`, commit-msg)

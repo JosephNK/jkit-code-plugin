@@ -19,10 +19,13 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import boundaries from 'eslint-plugin-boundaries';
+import importPlugin from 'eslint-plugin-import';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+import jkitLocalPlugin from './custom-rules/index.mjs';
 
 // ─── Raw data (for project-level merging) ─────────────────────────────────────
 
@@ -53,20 +56,19 @@ export const baseFrameworkPackages = [
 
 /**
  * 아키텍처 경계 선언 — 각 레이어가 어떤 경로에 해당하는지 정의.
- * 헥사고날 폴더 구조 (모듈당):
- *   src/modules/<feature>/
- *     ├── model/         — 엔티티/값 객체 (순수 TS, 최하위)
- *     ├── port/          — 도메인 인터페이스 (Repository 등)
- *     ├── service/       — UseCase, 비즈니스 로직 (Port 주입받음)
- *     ├── controller/    — HTTP 어댑터
- *     ├── provider/      — Port 구현체 (ORM/외부 SDK 호출)
- *     ├── exception/     — 도메인 예외
- *     └── dto/           — 입출력 경계 타입 (@ApiProperty 강제)
  *
- * 추가:
- *   src/common/         — 프로젝트 전역 공용 (유틸, 상수, 공용 예외 기반)
- *   src/infrastructure/ — 인프라 수평 관심사 (로거, DB 커넥션 등)
- *   src/libs/           — 독립 라이브러리성 모듈 (자유도 높음)
+ * 헥사고날 폴더 구조 (모듈당):
+ *   - `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
+ *     (model / port / service / controller / provider / exception / dto)
+ *   - `<group>` 은 선택 — 단층 모듈이면 생략
+ *   - `<domain>.module.ts` 는 DI 조립 파일 (lint 무시 대상)
+ *
+ * 전역 수평 관심사 (no-unknown-files가 허용 하위 폴더 외 경로를 거부):
+ *   - `src/common/` — authentication, exceptions, interfaces, middlewares, pipes, dtos
+ *   - `src/infrastructure/` — database, i18n, logger, transaction
+ *   - `src/libs/` — 독립 라이브러리성 모듈 (catch-all)
+ *
+ * 상세 구조/레이어 설명은 아래 "프로젝트 구조" 트리와 "레이어별 경로 매핑" 표 참고.
  */
 export const baseBoundaryElements = [
   { type: 'model', pattern: ['src/modules/**/model/**'] },              // 도메인 모델
@@ -76,10 +78,90 @@ export const baseBoundaryElements = [
   { type: 'provider', pattern: ['src/modules/**/provider/**'] },        // Port 구현체
   { type: 'exception', pattern: ['src/modules/**/exception/**'] },      // 도메인 예외
   { type: 'dto', pattern: ['src/modules/**/dto/**'] },                  // 요청/응답 DTO
-  { type: 'common', pattern: ['src/common/**'] },                       // 전역 공용
-  { type: 'infrastructure', pattern: ['src/infrastructure/**'] },       // 인프라 수평 관심사
+  // common/infrastructure는 허용 하위 폴더만 명시 — no-unknown-files가 그 외 경로를 거부
+  {
+    type: 'common',
+    pattern: [
+      'src/common/authentication/**',
+      'src/common/exceptions/**',
+      'src/common/interfaces/**',
+      'src/common/middlewares/**',
+      'src/common/pipes/**',
+      'src/common/dtos/**',
+    ],
+  }, // 전역 공용 (허용 하위 폴더만)
+  {
+    type: 'infrastructure',
+    pattern: [
+      'src/infrastructure/database/**',
+      'src/infrastructure/i18n/**',
+      'src/infrastructure/logger/**',
+      'src/infrastructure/transaction/**',
+    ],
+  }, // 인프라 수평 관심사 (허용 하위 폴더만)
   { type: 'libs', pattern: ['src/libs/**'] },                           // 독립 라이브러리
 ];
+
+/**
+ * 표시 전용 구조 주석 — ESLint 런타임에는 참조되지 않는다 (lint 규칙 영향 없음).
+ * baseBoundaryElements의 glob 패턴만으로는 드러나지 않는 하위 폴더 용도를 자동
+ * 생성 문서(lint-rules-structure-reference.md)에 시각화한다. common/infrastructure
+ * 처럼 같은 boundary type 안에서 역할별로 하위 폴더가 나뉠 때 각 폴더의 의도를
+ * 명확히 한다.
+ *
+ * 스키마: { [parentPath]: { override: StructureNode[] } }
+ *   StructureNode: { name, note?, placeholder?, children? }
+ */
+export const baseStructureAnnotations = {
+  'src/modules': {
+    override: [
+      {
+        name: '<group>',
+        placeholder: true,
+        note: '(선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능',
+        children: [
+          {
+            name: '<domain>',
+            placeholder: true,
+            note: 'Domain module — 실제 이름 가변 (예: profile, order)',
+            children: [
+              { name: 'model', note: 'Entity, Value Object, pure domain functions' },
+              { name: 'port', note: 'All Port interfaces (inbound + outbound)' },
+              { name: 'service', note: 'Inbound-port implementation (business logic)' },
+              { name: 'controller', note: 'Driving Adapter (HTTP)' },
+              { name: 'provider', note: 'Outbound Adapter (DB, external services)' },
+              { name: 'dto', note: 'Input/output DTOs' },
+              { name: 'exception', note: 'Domain-specific exceptions' },
+              {
+                name: '<domain>.module.ts',
+                placeholder: true,
+                note: 'NestJS module (DI assembly) — lint ignored via **/*.module.ts',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  'src/common': {
+    override: [
+      { name: 'authentication', note: 'Guards, auth-related' },
+      { name: 'exceptions', note: 'Exception Filters, domain exception base' },
+      { name: 'interfaces', note: 'Shared interfaces' },
+      { name: 'middlewares', note: 'Global middlewares' },
+      { name: 'pipes', note: 'Validation Pipes' },
+      { name: 'dtos', note: 'Shared DTOs' },
+    ],
+  },
+  'src/infrastructure': {
+    override: [
+      { name: 'database', note: 'Database configuration' },
+      { name: 'i18n', note: 'Internationalization' },
+      { name: 'logger', note: 'Logging' },
+      { name: 'transaction', note: 'Transaction management' },
+    ],
+  },
+};
 
 /**
  * 레이어 간 의존성 방향 선언 (allow-list).
@@ -355,6 +437,109 @@ export const baseFileSizeRules = defineConfig({
   },
 });
 
+// ─── Pre-built: Circular dependency detection ────────────────────────────────
+/**
+ * import/no-cycle — 레이어 간·모듈 간 순환 의존성 감지.
+ *
+ * warn으로 시작: 기존 코드에서 cycle이 누적되어 있을 수 있어 error로 승격 전
+ * 실제 프로젝트 운영 데이터를 본 뒤 전환 판단. forwardRef 정당 케이스(circular
+ * module DI)는 일반적으로 type-only import로 회피되므로 대부분 자동 통과.
+ *
+ * 옵션:
+ *   maxDepth: 10       — 성능/정확도 균형 (Infinity는 느림)
+ *   ignoreExternal     — node_modules 체크 생략
+ *   allowUnsafeDynamicCyclicDependency: false — 런타임 cycle은 여전히 잡음
+ */
+export const baseCycleRules = defineConfig({
+  files: ['src/**/*.ts'],
+  ignores: ['**/*.spec.ts', '**/*.test.ts'],
+  plugins: { import: importPlugin },
+  rules: {
+    'import/no-cycle': [
+      'warn',
+      { maxDepth: 10, ignoreExternal: true },
+    ],
+  },
+});
+
+// ─── Pre-built: Custom rules (conventions.md enforcement) ────────────────────
+/**
+ * conventions.md에서 표준 ESLint 룰로 표현이 불가능한 프로젝트 고유 규칙을
+ * custom rule로 제공한다. 기존 opt-in 스택(custom-lint)을 base로 병합한 결과.
+ *
+ * 포함 룰:
+ *   - local/require-api-property          : DTO 필드에 @ApiProperty 강제
+ *   - local/dto-union-type-restriction    : T | undefined / class union 금지
+ *   - local/dto-naming-convention         : bare *ResponseDto, *DataDto 금지
+ *   - local/require-timestamptz           : ORM entity Date 컬럼에 timestamptz 강제
+ *   - local/require-map-domain-exception  : controller catch에서 mapDomainException 호출 강제
+ */
+export const baseCustomRules = defineConfig(
+  {
+    plugins: { local: jkitLocalPlugin },
+  },
+
+  // DTO: @ApiProperty required + union type restriction + oneOf 금지
+  //      + T|null / Date|null 필드 ↔ decorator 옵션 정합
+  {
+    files: ['src/modules/**/dto/**/*.dto.ts'],
+    rules: {
+      'local/require-api-property': 'error',
+      'local/dto-union-type-restriction': 'error',
+      'local/no-dto-oneof': 'error',
+      'local/dto-nullable-match': 'error',
+    },
+  },
+
+  // DTO naming: *ResponseDto → *DataResponseDto / *ItemDto
+  //             + file-class pair (*.response.dto.ts ↔ *DataResponseDto,
+  //                                *-item.dto.ts ↔ *ItemDto)
+  {
+    files: ['src/modules/**/dto/**/*.dto.ts'],
+    rules: {
+      'local/dto-naming-convention': 'error',
+    },
+  },
+
+  // ORM Entity: Date columns must use timestamptz
+  {
+    files: ['src/modules/**/provider/**/*.orm-entity.ts'],
+    rules: {
+      'local/require-timestamptz': 'error',
+    },
+  },
+
+  // Controller: catch blocks must use mapDomainException()
+  {
+    files: ['src/modules/**/controller/**/*.controller.ts'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'local/require-map-domain-exception': 'error',
+    },
+  },
+
+  // Layer filename suffix enforcement (model/ 제외)
+  {
+    files: ['src/modules/**/*.ts'],
+    ignores: ['**/*.spec.ts', '**/*.test.ts', '**/*.module.ts'],
+    rules: {
+      'local/enforce-file-suffix': 'error',
+    },
+  },
+
+  // Controller/Service: entity 직접 return 금지 (명시적 return type 한정)
+  {
+    files: [
+      'src/modules/**/controller/**/*.controller.ts',
+      'src/modules/**/service/**/*.service.ts',
+    ],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'local/no-entity-return': 'error',
+    },
+  },
+);
+
 // ─── Pre-built: Global ignores ────────────────────────────────────────────────
 /**
  * ESLint가 아예 읽지 않을 경로.
@@ -497,6 +682,16 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
                   'port/ must not import from service/, controller/, provider/, or dto/.',
               },
             ],
+          },
+        ],
+        // Express.Multer.File 같은 global namespace 참조 차단
+        // (import이 아닌 전역 타입이라 no-restricted-imports로는 못 잡음)
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: 'TSQualifiedName[left.name="Express"]',
+            message:
+              'port/ must not reference Express global namespace types (e.g., Express.Multer.File). Convert to a domain type (ImageInput, FileBlob, etc.).',
           },
         ],
       },

@@ -32,9 +32,7 @@ src/
 │   │   ├── types.ts              # DTO types (never use directly in components)
 │   │   ├── mappers/              # DTO <> Domain Model conversion
 │   │   ├── repositories/         # Port implementations (data access only)
-│   │   ├── hooks/                # TanStack Query hooks
-│   │   ├── response.ts           # API response helpers
-│   │   └── services.ts           # Composition root (wires services with repos)
+│   │   └── hooks/                # TanStack Query hooks
 │   │
 ```
 

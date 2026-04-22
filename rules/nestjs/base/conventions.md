@@ -1,72 +1,47 @@
 # Conventions
 
-## Dependency Rules
+> 레이어 경로 매핑: `@jkit/eslint-rules/nestjs/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md`
 
-1. **model/ imports nothing** (no frameworks, no external libraries)
-2. **service/ depends on model/ and port/ for business logic** (no direct references to controller/ or provider/; framework DI decorators like `@Injectable` and `@Inject` are allowed)
-3. **provider/ implements outbound-port from port/**
-4. **controller/ accesses service/ through inbound-port from port/**
-5. **Module wires Port ↔ implementation via DI**
-6. No importing framework/infra packages in `model/`, `port/`, `exception/` (`@Injectable` and `@Inject` only in `service/`)
-7. No framework types like `Express.Multer.File` in `port/` — convert to domain types (`ImageInput`)
-8. No business logic in controller/ (delegate to service)
-9. No circular dependencies between layers
+## Layer Rules
+
+1. **provider/ 는 port/ 의 outbound-port 를 구현**
+2. **Module 이 DI 로 Port ↔ 구현체를 연결**
+3. controller/ 에 비즈니스 로직 금지 (service 로 위임)
 
 ## Code Style
 
-- **Immutability**: Use `readonly` on all Entity and DTO fields
-- **Validation**: Validate inputs with Zod/class-validator in controller/
-- **Naming**: File suffixes indicate role:
-  - **Core**: `*.entity.ts`, `*.port.ts`, `*.service.ts`, `*.adapter.ts`, `*.controller.ts`, `*.dto.ts`, `*.error.ts`
-  - **Model helpers**: `*.prompt.ts` (AI prompt builder), `*.types.ts` (type definitions), `*.constants.ts` (constants/enums), no suffix for pure domain functions (e.g., `spelling-grader.ts`, `cost-calculator.ts`)
-  - **Port**: `port-tokens.ts` (DI Symbol tokens)
-  - **Service**: `*.listener.ts` (event listener)
-  - **Request DTO**: `*.request.dto.ts` (inbound request DTO, alias for `create-*.dto.ts`)
-- **File size**: 400 lines recommended max, 800 lines hard limit
+- **Validation**: controller/ 에서 Zod / class-validator 로 검증
+- **Naming (model/ only)**: `model/` 만 suffix 없음 허용 (순수 도메인 함수, 예: `cost-calculator.ts`). 허용 suffix: `*.prompt.ts` (AI prompt), `*.types.ts` (타입), `*.constants.ts` (상수 / enum).
+- **File Size**: 파일당 최대 400줄 권장
 
 ## Error Handling
 
-- **service/ uses only domain errors (`exception/`)**. Do not throw HTTP exceptions directly.
-- **controller/ converts domain exceptions to HTTP exceptions** using `mapDomainException()` from `common/exceptions/exception-mapper.ts` in catch blocks.
-- **Exception creation checklist**: When adding a new domain exception (`exception/`):
-  1. Create the error class in `exception/`
-  2. Register the error code in all i18n translation files (`src/infrastructure/i18n/locales/<lang>/error.json`)
-  3. Use the error code (e.g., `ORDER_NOT_FOUND`) as key with the localized message as value
+- **New Domain Exception**: `exception/` 에 `*.error.ts` 생성.
+  에러 코드 (예: `ORDER_NOT_FOUND`) 는 `src/infrastructure/i18n/locales/<lang>/error.json` 모든 로케일에 key=코드, value=localized message 로 등록.
+  → `npx jkit-check-i18n` 로 검증.
 
-## Response DTO Patterns
-
-Never return entities directly — always transform through a ResponseDto.
-
-### API Documentation (Swagger)
-
-All API endpoints are documented via Swagger decorators. Swagger UI is available at `/api-docs`.
+## Response DTO Pattern
 
 ### DTO Structure
 
 ```
 src/modules/{domain}/dto/
-├── create-{domain}.dto.ts       # Create request
-├── update-{domain}.dto.ts       # Update request (using PartialType)
-├── {domain}-query.dto.ts        # Query parameters
-├── {domain}-data.response.dto.ts  # *DataResponseDto — data 직속 DTO
-└── {domain}-item.dto.ts           # *ItemDto — 배열 요소 / 하위 객체 / 보조 DTO
+├── create-{domain}.dto.ts            # 생성 요청
+├── update-{domain}.dto.ts            # 수정 요청 (PartialType 사용)
+├── {domain}-query.dto.ts             # 쿼리 파라미터
+├── {domain}-data.response.dto.ts     # 응답의 data 직속 DTO
+└── {domain}-item.dto.ts              # 배열 요소 / 중첩 객체 / 보조 DTO
 ```
 
 ### Naming Convention
 
-The `ApiSuccessResponse` decorator wraps all responses in `{ success, data }`. DTO class names use suffixes that reflect their role in this structure.
+`ApiSuccessResponse` 가 모든 응답을 `{ success, data }` 로 래핑. DTO 이름은 이 envelope 기준으로 정한다.
 
-| Role | Suffix | Example |
-|---|---|---|
-| Direct child of `data` | `*DataResponseDto` | `OrderListDataResponseDto`, `OrderCreateDataResponseDto` |
-| Array element / nested object | `*ItemDto` | `OrderItemDto`, `ProductItemDto` |
-
-- **`*DataResponseDto`**: Top-level DTO mapped directly to the `data` field of a success response. Prefix with the action (`List`, `Create`, `Detail`, etc.). Omit the action prefix when no disambiguation is needed.
-- **`*ItemDto`**: DTO for individual elements in `*DataResponseDto.items` or any array field inside a `*DataResponseDto`.
-- **Do not use bare `*ResponseDto`**: DTOs used under `data` must be named `*DataResponseDto`, not `*ResponseDto`.
+- **`*DataResponseDto`**: `data` 필드 최상위 타입. 도메인 내 액션 충돌 시 `List` / `Create` / `Detail` prefix 추가, 그 외 생략.
+- **`*ItemDto`**: `*DataResponseDto` 안의 배열 요소 또는 중첩 객체.
 
 ```typescript
-// List response example
 // GET /orders → { success: true, data: OrderListDataResponseDto }
 class OrderListDataResponseDto {
   readonly items: readonly OrderItemDto[];
@@ -74,7 +49,6 @@ class OrderListDataResponseDto {
   readonly total?: number;
 }
 
-// Single response example
 // POST /orders → { success: true, data: OrderCreateDataResponseDto }
 class OrderCreateDataResponseDto {
   readonly id: string;
@@ -84,30 +58,20 @@ class OrderCreateDataResponseDto {
 
 ### Core Principles
 
-- **Entity encapsulation**: Separate DB schema from API response exposure
-- **Explicit types**: Apply `@ApiProperty` or `@ApiPropertyOptional` to all fields
-- **Example values**: Improve documentation readability with `example` property
-- **Union type rules**: DTO field union types follow these rules:
-  - **Primitive + null allowed**: `T | null` is allowed when `@ApiProperty({ nullable: true })` is specified
-    - `string | null` → `@ApiProperty({ nullable: true })`
-    - `number | null` → `@ApiProperty({ nullable: true })`
-    - `boolean | null` → `@ApiProperty({ nullable: true })`
-  - **`Date | null` allowed**: When `type: String, format: 'date-time', nullable: true` is specified
-    - `Date | null` → `@ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })`
-  - **No class unions**: Do not use unions of multiple class types like `UserDto | GuestDto`. Consolidate into a shared DTO or separate fields.
-  - **No `oneOf`**: Not supported for client code generation in other languages due to lack of dynamic type support.
-  - **No `T | undefined`**: Use `@ApiPropertyOptional()` with optional property (`?`) instead.
+- **Entity Encapsulation**: DB 스키마와 API 응답 노출을 분리
+- **Example Values**: `@ApiProperty` 에 `example` 지정
+- **Union Type Rules**: `T | null` (원시 / `Date`) 허용. 데코레이터 옵션 정합 (`nullable: true`, `Date` 는 추가로 `type: String, format: 'date-time'`) 은 `local/dto-nullable-match` 가 강제. `T | undefined`, class union, `oneOf` 는 별도 룰로 금지.
 
-## Test Strategy
+## Testing Strategy
 
-- **Model tests**: Pure function unit tests
-- **Service tests**: Mock outbound-ports. Verify business logic without external dependencies
-- **Provider tests**: Mock actual external services to verify adapter behavior
-- **Controller tests**: Mock inbound-ports. Verify HTTP request/response handling
-- **E2E tests**: Assemble full modules and test via HTTP requests
+- **Model Test**: 순수 함수 단위 테스트
+- **Service Test**: outbound-port 를 mock. 외부 의존 없이 비즈니스 로직 검증
+- **Provider Test**: 실제 외부 서비스를 mock 하여 adapter 동작 검증
+- **Controller Test**: inbound-port 를 mock. HTTP 요청 / 응답 처리 검증
+- **E2E Test**: 전체 모듈을 조립하여 HTTP 요청으로 검증
 
 ```typescript
-// Service unit test example
+// Service 단위 테스트 예시
 describe('CreateOrderService', () => {
   it('should create an order with calculated total', async () => {
     const mockRepo: OrderRepositoryPort = {

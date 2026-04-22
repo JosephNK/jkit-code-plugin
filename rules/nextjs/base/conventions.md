@@ -5,6 +5,18 @@
 - Path alias: `@/*` → `src/`
 - Functional components + TypeScript
 
+## Layer Rules
+
+> 아래 두 문서는 `eslint.base.mjs`에서 자동 생성되며 `@jkit/eslint-rules` 패키지에 포함됨.
+> - 레이어별 경로: `@jkit/eslint-rules/nextjs/base/lint-rules-structure-reference.md`
+> - Import 허용 매트릭스: `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md` "Allow 매트릭스"
+
+- Domain Port defines Repository contract interfaces
+- Domain Model sits at the bottom of the dependency graph, keeping business logic framework-independent
+- When switching REST → GraphQL, only Repository implementations need to change
+- For simple CRUD, Service may pass through to Port directly (avoid unnecessary wrapping)
+- **API DTO must come from Swagger/OpenAPI codegen** — do not hand-write DTO types
+
 ## Component Reuse
 
 - **UI patterns repeated 2+ times MUST be extracted into a shared component** (`src/components/ui/`)
@@ -15,11 +27,7 @@
 
 - **Code duplication MUST stay below 5%** (enforced by `jscpd` with `.jscpd.json` threshold)
 - Run `npm run lint:cpd` to check duplication rate
-- **Shared infrastructure MUST be imported, not re-implemented:**
-  - Client service helpers (`ApiCallError`, `callApi`, `FetchFn`, DTO mappers) → `src/lib/domain/services/client-helpers.ts`
-  - API response DTO serializers (`toProjectDto`, `toBuildDto`) → `src/lib/api/response.ts`
-  - Auth guard dev bypass → `getDevBypassUser()` in `src/lib/api/guards.ts`
-- When adding a new client service, import from `client-helpers.ts` instead of copying boilerplate
+- **Shared infrastructure MUST be extracted into a named file and imported, not re-implemented** — when two sites need the same helper (error wrapper, DTO serializer, guard, etc.), extract it to a single module under the appropriate layer (`api-mapper`, `api-repository`, or a project-level type) rather than copy-pasting.
 
 ## Navigation
 
@@ -39,48 +47,21 @@ import Link from 'next/link';
 <Card component={Link} href={`/${locale}/projects/${id}`}>...</Card>
 ```
 
-## Layer Rules
-
-- Domain Port (`src/lib/domain/ports/`) defines Repository contract interfaces
-- Domain Model sits at the bottom of the dependency graph, keeping business logic framework-independent
-- When switching REST → GraphQL, only Repository implementations need to change
-- For simple CRUD, Service may pass through to Port directly (avoid unnecessary wrapping)
-
-| Layer          | Path                        | Allowed Imports                                                     | Forbidden Imports           |
-| -------------- | --------------------------- | ------------------------------------------------------------------- | --------------------------- |
-| Domain Model   | `src/lib/domain/models/`    | Pure TS only                                                        | All external packages       |
-| Domain Error   | `src/lib/domain/errors/`    | Pure TS only                                                        | All external packages       |
-| Domain Port    | `src/lib/domain/ports/`     | domain/models (Pure TS only)                                        | All external packages       |
-| API DTO        | `src/lib/api/types.ts`      | Swagger/OpenAPI generated only                                      | Manual type definitions     |
-| Service        | `src/lib/domain/services/`  | domain/models, domain/ports, domain/errors                          | api/\*                      |
-| Mapper         | `src/lib/api/mappers/`      | domain/models, api/types                                            | —                           |
-| Repository     | `src/lib/api/repositories/` | api/client, api/endpoints, api/mappers, domain/ports, domain/errors | —                           |
-| API Helper     | `src/lib/api/*.ts`          | domain/\*, api/repositories, api/helpers, email-templates, auth     | page, hooks                 |
-| Email Template | `src/lib/email-templates/`  | dictionaries, shared-types                                          | domain/\*, api/\*           |
-| Hook           | `src/lib/api/hooks/`        | domain/services                                                     | api/types, api/repositories |
-| Shared UI      | `src/components/`           | domain/models                                                       | Hooks, api/\*               |
-| \_components   | `src/app/**/_components/`   | Hooks, shared UI, domain/models                                     | api/\*, dictionary access   |
-| \_providers    | `src/app/**/_providers/`    | lib-shared only                                                     | api/\*, domain/\*           |
-| Page           | `src/app/[locale]/`         | \_components, \_providers, shared UI, dictionaries                  | Hooks, direct api/\* calls  |
-
 ## Page + Colocated Components Pattern
 
 ### Page (Server Component)
 
-- Location: `src/app/[locale]/**/page.tsx`
 - Role: Dictionary loading, server-side data fetching, passes data to Client Components
 - `async/await` allowed, no Hooks
 
 ### Client Component (`_components/`)
 
-- Location: `src/app/[locale]/**/_components/`
 - Role: Interactivity, Hooks, loading/error state, rendering
 - Must declare `'use client'`
 - Push `'use client'` boundary as deep (leaf-level) as possible
 
 ### Shared UI (`components/ui/`)
 
-- Location: `src/components/ui/`
 - Role: Shared primitives (icons, common UI elements) used across pages
 
 ```tsx
@@ -116,17 +97,8 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 
 ## Server Component / Client Component Boundary
 
-```
-Server Component (default)             Client Component ('use client')
-─────────────────────────              ────────────────────────────────
-src/app/[locale]/**/page.tsx           src/app/[locale]/**/_components/*.tsx
-src/app/[locale]/layout.tsx            src/app/[locale]/**/_providers/*.tsx
-src/app/[locale]/loading.tsx           src/lib/api/hooks/*.ts
-src/app/[locale]/error.tsx
-```
-
-- Components are Server Components by default in App Router
-- Files using Hooks (useState, TanStack Query, etc.) must declare `'use client'`
+- Components are Server Components by default in App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`)
+- Files using Hooks (useState, TanStack Query, etc.) must declare `'use client'` — typically `_components/`, `_providers/`, `src/lib/api/hooks/`
 - Push `'use client'` boundary as deep (leaf-level) as possible
 - `src/lib/domain/`, `src/lib/api/types.ts`, `src/lib/api/mappers/` can be used in both server and client (pure TS)
 
@@ -142,10 +114,10 @@ src/app/[locale]/error.tsx
 - Converts HTTP/database errors to domain errors (e.g., 404 → `NotFoundError`, duplicate key → `DuplicateError`)
 - Propagates network errors upward for retry mechanism
 
-### API Route Layer
+### API Route Layer (Route Handler)
 
-- Uses `handleApiError()` from `src/lib/api/response.ts` to catch domain errors and return appropriate HTTP status codes
-- `AppError` instances are mapped to `{ code, message, statusCode }`
+- Catch domain errors and return appropriate HTTP status codes
+- Map domain error instances to `{ code, message, statusCode }` response shape
 - Unknown errors produce a generic 500 response without exposing internal details
 
 ### Client Component Layer (`_components/`)

@@ -47,7 +47,7 @@ Add to your project's `.claude/settings.json` so teammates get the plugin automa
 |-----------|-------------|-------------------|
 | **Flutter** | `/jkit:flutter-init` | bloc, freezed, go-router, leaf-kit, easy-localization |
 | **Next.js** | `/jkit:nextjs-init` | mantine, design-system, tanstack-query, next-proxy |
-| **NestJS** | `/jkit:nestjs-init` | typeorm, gcp, anthropic-ai, custom-lint |
+| **NestJS** | `/jkit:nestjs-init` | typeorm, gcp, anthropic-ai |
 
 Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등 프로젝트 설정 파일을 자동 생성합니다.
 
@@ -146,3 +146,31 @@ rules/<framework>/<stack-name>/
 ├── eslint.rules.mjs        # ESLint rule export (TypeScript만)
 └── tsconfig.patch.json     # TSConfig 패치 (필요 시)
 ```
+
+## ESLint 메시지 포매터 (Next.js / NestJS)
+
+`boundaries/no-unknown-files`, `boundaries/no-unknown` 등 일부 룰의 기본 에러 메시지를
+프로젝트 컨텍스트에 맞는 가이드 문구(대응 순서, 참조 문서 링크)로 재작성한 뒤
+ESLint 기본 `stylish` formatter로 렌더링합니다. 그 외 룰 메시지는 원본 그대로 통과합니다.
+
+프로젝트 `package.json` lint 스크립트에 `--format` 지정:
+
+**Next.js**
+```json
+{
+  "scripts": {
+    "lint": "eslint --format @jkit/eslint-rules/nextjs/base/eslint.formatter.mjs ."
+  }
+}
+```
+
+**NestJS**
+```json
+{
+  "scripts": {
+    "lint": "eslint --format @jkit/eslint-rules/nestjs/base/eslint.formatter.mjs ."
+  }
+}
+```
+
+메시지를 추가/변경하려면 해당 포매터 파일의 `MESSAGE_OVERRIDES` 맵에 룰 ID를 키로 추가합니다.

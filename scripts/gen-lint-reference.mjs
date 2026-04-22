@@ -408,12 +408,11 @@ function renderPathTree(root, inlineComments) {
 
 function renderStructure({ jsdocMap, elements, inlineComments, annotations, stackLabel, inputRelPath }) {
   const lines = [];
-  lines.push(`# Lint Rules — Structure Reference (${stackLabel})`);
+  lines.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
+  lines.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  lines.push(`<!-- Source: ${inputRelPath} (baseBoundaryElements, baseStructureAnnotations) -->`);
   lines.push('');
-  lines.push(`> 이 문서는 \`${inputRelPath}\` 의 \`baseBoundaryElements\` 및 \`baseStructureAnnotations\` 에서 자동 생성됩니다.`);
-  lines.push(
-    '> **수동 편집 금지** — 변경은 `.mjs` 에서 하고 `node scripts/gen-lint-reference.mjs`를 다시 실행하세요.',
-  );
+  lines.push(`# Lint Rules — Structure Reference (${stackLabel})`);
   lines.push('');
 
   if (jsdocMap.baseBoundaryElements) {
@@ -619,12 +618,11 @@ function renderReference({
   inputRelPath,
 }) {
   const out = [];
-  out.push(`# Lint Rules Reference (${stackLabel})`);
+  out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
+  out.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  out.push(`<!-- Source: ${inputRelPath} -->`);
   out.push('');
-  out.push(`> 이 문서는 \`${inputRelPath}\` 에서 자동 생성됩니다.`);
-  out.push(
-    '> **수동 편집 금지** — 변경은 `.mjs` 에서 하고 `node scripts/gen-lint-reference.mjs`를 다시 실행하세요.',
-  );
+  out.push(`# Lint Rules Reference (${stackLabel})`);
   out.push('');
 
   const sections = [];

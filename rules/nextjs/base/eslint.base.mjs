@@ -54,7 +54,7 @@ export const baseDomainBannedPackages = [
  *
  * 레이어 개요 (Clean Architecture 스타일):
  *   - Domain:   순수 비즈니스 로직 (models/errors/ports/services) — 최하위 의존 대상
- *   - API:      외부 통신 어댑터 (client/endpoint/dto/mapper/repository/hook/helper)
+ *   - API:      외부 통신 어댑터 (client/endpoint/dto/mapper/repository/hook)
  *   - Lib:      도메인/API 어디에도 속하지 않는 공용 유틸
  *   - UI:       재사용 컴포넌트(shared-ui) + 페이지 전용 컴포넌트/프로바이더
  *   - Common:   i18n 사전, 공용 타입
@@ -75,7 +75,6 @@ export const baseBoundaryElements = [
   { type: 'api-mapper', pattern: ['src/lib/api/mappers'] },                      // DTO ↔ Domain 변환
   { type: 'api-repository', pattern: ['src/lib/api/repositories'] },             // Port 구현체
   { type: 'api-hook', pattern: ['src/lib/api/hooks'] },                          // React Query 훅 등
-  { type: 'api-helper', mode: 'full', pattern: ['src/lib/api/*.ts'] },           // src/lib/api 루트 유틸
   // Shared lib — src/lib 루트의 공용 유틸
   { type: 'lib-shared', mode: 'full', pattern: ['src/lib/*.ts'] },               // src/lib 루트 공용 유틸
   // UI layer
@@ -179,7 +178,7 @@ export const baseStructureAnnotations = {
  *   - 도메인은 외부 레이어를 모른다 (단방향: UI/API → Domain)
  *   - API 원시 계층(client/endpoint/dto)은 어떤 레이어도 import 하지 않는다
  *   - UI는 도메인 모델만 참조하고 도메인 서비스 호출은 hook을 통해서만
- *   - Page는 최상위 컨슈머 (UI + api-helper + dictionary 등 조합)
+ *   - Page는 최상위 컨슈머 (UI + dictionary 등 조합)
  */
 export const baseBoundaryRules = [
   // Domain: 자기 자신 및 하위 순수 레이어만 참조
@@ -218,18 +217,6 @@ export const baseBoundaryRules = [
   },
   // Hook: UI에 제공되는 데이터 페칭 훅. UseCase(domain-service)만 호출 (Repository 직접 호출 금지)
   { from: { type: 'api-hook' }, allow: [{ to: { type: 'domain-service' } }] },
-  {
-    // api-helper: src/lib/api 루트 유틸. domain/repository 조합 가능 (조립 허브)
-    from: { type: 'api-helper' },
-    allow: [
-      { to: { type: 'domain-model' } },
-      { to: { type: 'domain-error' } },
-      { to: { type: 'domain-port' } },
-      { to: { type: 'domain-service' } },
-      { to: { type: 'api-repository' } },
-      { to: { type: 'api-helper' } },
-    ],
-  },
   // lib-shared: src/lib 루트 공용 유틸. 내부 의존 0개 (순수 유틸만)
   { from: { type: 'lib-shared' }, allow: [] },
   {
@@ -266,20 +253,19 @@ export const baseBoundaryRules = [
   // 전역 타입: i18n 키 타입 조회를 위해 dictionary 참조 허용
   { from: { type: 'shared-type' }, allow: [{ to: { type: 'dictionary' } }] },
   {
-    // Route Handler (HTTP 진입점): 얇은 어댑터 — 도메인 서비스/헬퍼 호출에 집중.
+    // Route Handler (HTTP 진입점): 얇은 어댑터 — 도메인 서비스 호출에 집중.
     // UI 레이어(shared-ui/page-component) import 금지 (서버 코드 경계 위반).
     from: { type: 'route-handler' },
     allow: [
       { to: { type: 'domain-model' } },
       { to: { type: 'domain-error' } },
       { to: { type: 'domain-service' } },
-      { to: { type: 'api-helper' } },
       { to: { type: 'shared-type' } },
     ],
   },
   {
     // Page (최상위 컨슈머): 페이지 조립에 필요한 거의 모든 레이어 사용 가능
-    // (단, domain-service/repository/api-hook 직접 호출 금지 — 컴포넌트/헬퍼를 거쳐야 함)
+    // (단, domain-service/repository/api-hook 직접 호출 금지 — 컴포넌트를 거쳐야 함)
     from: { type: 'page' },
     allow: [
       { to: { type: 'page-component' } },
@@ -287,7 +273,6 @@ export const baseBoundaryRules = [
       { to: { type: 'shared-ui' } },
       { to: { type: 'dictionary' } },
       { to: { type: 'shared-type' } },
-      { to: { type: 'api-helper' } },
       { to: { type: 'page' } },
     ],
   },

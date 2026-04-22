@@ -1,51 +1,55 @@
 # Architecture
 
-Hexagonal Architecture (Ports and Adapters) + NestJS modular structure.
-Domain logic is pure TypeScript with no framework dependencies.
-Core principle: **Business logic knows nothing about external infrastructure.**
+> 이 문서: 헥사고날 개념 + 레이어별 코드 패턴 (WHY / HOW).
+> 레이어 경로 매핑: `@jkit/eslint-rules/nestjs/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md`
 
-## Layer Diagram 
+Hexagonal Architecture (Ports and Adapters) + NestJS 모듈 구조.
+도메인 로직은 프레임워크 의존성 없는 순수 TypeScript.
+핵심 원칙: **비즈니스 로직은 외부 인프라를 모른다.**
+
+## Layer Diagram
 
 ```
-[inbound-adapter]  controller/   Request entry point (REST, GraphQL, gRPC, CLI...)
+[inbound-adapter]  controller/   요청 진입점 (REST, GraphQL, gRPC, CLI...)
         |
-[inbound-port]     port/         Interface toward service logic
+[inbound-port]     port/         service 로직을 향한 인터페이스
         |
-[service]          service/      Inbound-port implementation (core business logic)
+[service]          service/      inbound-port 구현 (핵심 비즈니스 로직)
         |
-[outbound-port]    port/         Interface toward external world
+[outbound-port]    port/         외부 세계를 향한 인터페이스
         |
-[outbound-adapter] provider/     Outbound-port implementation (DB, AI, search engine...)
+[outbound-adapter] provider/     outbound-port 구현 (DB, AI, search engine...)
 ```
 
 ## Data Flow
 
-### Request (call direction)
+### Request (호출 방향)
 
 ```
 Client (HTTP Request)
     |
-Controller          Receives request, validates DTO
+Controller          요청 수신, DTO 검증
     |
-Inbound Port        Interface toward service
+Inbound Port        service 를 향한 인터페이스
     |
-Service             Composes business logic (pure TS, depends only on Ports)
+Service             비즈니스 로직 조합 (순수 TS, Port 만 의존)
     |
-Outbound Port       Interface toward external world
+Outbound Port       외부 세계를 향한 인터페이스
     |
-Provider            Actual DB/API call
+Provider            실제 DB / API 호출
 ```
 
-### Response (return direction)
+### Response (반환 방향)
 
 ```
-Provider            Raw data from DB/external service
+Provider            DB / 외부 서비스의 raw 데이터
     |
-Domain Model        Pure TS entity (readonly immutable object)
+Domain Model        순수 TS 엔티티 (readonly immutable)
     |
-Service             Applies business logic, returns Domain Model
+Service             비즈니스 로직 적용, Domain Model 반환
     |
-Controller          Maps to response DTO
+Controller          response DTO 로 매핑
     |
 Client (HTTP Response)
 ```
@@ -56,14 +60,14 @@ Client (HTTP Response)
 Controller -> Inbound Port (interface) <- Service -> Outbound Port (interface) <- Provider
                                             |                                       |
                                        Domain Model  <-  <-  <-  <-  <-  <-  <-  <-
-                                                   (all layers depend on this)
+                                                   (모든 레이어가 이것에 의존)
 ```
 
 ## Layer Details
 
 ### model — Entity, Value Object, Pure Functions
 
-Framework imports strictly prohibited. The most stable layer in the project.
+프레임워크 import 엄격히 금지. 프로젝트에서 가장 안정적인 레이어.
 
 ```typescript
 // model/order.entity.ts
@@ -79,7 +83,7 @@ export interface Order {
 
 ```typescript
 // model/order.functions.ts
-// Pure function. No external dependencies.
+// 순수 함수. 외부 의존성 없음.
 export function calculateTotal(items: ReadonlyArray<OrderItem>): number {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
@@ -87,17 +91,17 @@ export function calculateTotal(items: ReadonlyArray<OrderItem>): number {
 
 ### port — Port Interfaces
 
-Inbound-port and outbound-port are co-located in one folder, distinguished by naming.
+inbound-port 와 outbound-port 를 한 폴더에 배치, 네이밍으로 구분.
 
 ```typescript
 // port/create-order.port.ts
-// inbound-port: contract toward service logic (implemented by Service)
+// inbound-port: service 를 향한 계약 (Service 가 구현)
 export interface CreateOrderPort {
   execute(input: CreateOrderInput): Promise<Order>;
 }
 
 // port/order-repository.port.ts
-// outbound-port: contract toward external world (implemented by Provider)
+// outbound-port: 외부 세계를 향한 계약 (Provider 가 구현)
 export interface OrderRepositoryPort {
   save(order: Order): Promise<Order>;
   findById(id: string): Promise<Order | null>;
@@ -110,7 +114,7 @@ export const ORDER_REPOSITORY_PORT = Symbol('OrderRepositoryPort');
 
 ### service — Inbound-Port Implementation
 
-Composes Ports to orchestrate business flows.
+Port 를 조합하여 비즈니스 흐름을 orchestrate.
 
 ```typescript
 // service/create-order.service.ts
@@ -136,7 +140,7 @@ export class CreateOrderService implements CreateOrderPort {
 
 ### controller — Inbound Adapter
 
-Receives HTTP requests and delegates to services.
+HTTP 요청 수신 후 service 에 위임.
 
 ```typescript
 // controller/order.controller.ts
@@ -156,7 +160,7 @@ export class OrderController {
 
 ### provider — Outbound Adapter
 
-Implements Port interfaces to communicate with actual external services.
+Port interface 를 구현하여 실제 외부 서비스와 통신.
 
 ```typescript
 // provider/order-repository.adapter.ts
@@ -165,11 +169,11 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
   constructor(private readonly dataSource: DataSource) {}
 
   async save(order: Order): Promise<Order> {
-    // Actual DB implementation
+    // 실제 DB 구현
   }
 
   async findById(id: string): Promise<Order | null> {
-    // Actual DB implementation
+    // 실제 DB 구현
   }
 }
 ```
@@ -188,7 +192,7 @@ export class OrderNotFoundError extends Error {
 
 ### module — DI Assembly
 
-NestJS module wires Ports to their implementations.
+NestJS module 이 Port 를 구현체와 연결.
 
 ```typescript
 // order.module.ts

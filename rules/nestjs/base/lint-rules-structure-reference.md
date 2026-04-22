@@ -1,25 +1,25 @@
-# Lint Rules — Structure Reference (nestjs/base)
+<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
+<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Source: rules/nestjs/base/eslint.base.mjs (baseBoundaryElements, baseStructureAnnotations) -->
 
-> 이 문서는 `rules/nestjs/base/eslint.base.mjs` 의 `baseBoundaryElements` 및 `baseStructureAnnotations` 에서 자동 생성됩니다.
-> **수동 편집 금지** — 변경은 `.mjs` 에서 하고 `node scripts/gen-lint-reference.mjs`를 다시 실행하세요.
+# Lint Rules — Structure Reference (nestjs/base)
 
 ## 개요
 
 아키텍처 경계 선언 — 각 레이어가 어떤 경로에 해당하는지 정의.
-헥사고날 폴더 구조 (모듈당):
-  src/modules/<feature>/
-    ├── model/         — 엔티티/값 객체 (순수 TS, 최하위)
-    ├── port/          — 도메인 인터페이스 (Repository 등)
-    ├── service/       — UseCase, 비즈니스 로직 (Port 주입받음)
-    ├── controller/    — HTTP 어댑터
-    ├── provider/      — Port 구현체 (ORM/외부 SDK 호출)
-    ├── exception/     — 도메인 예외
-    └── dto/           — 입출력 경계 타입 (@ApiProperty 강제)
 
-추가:
-  src/common/         — 프로젝트 전역 공용 (유틸, 상수, 공용 예외 기반)
-  src/infrastructure/ — 인프라 수평 관심사 (로거, DB 커넥션 등)
-  src/libs/           — 독립 라이브러리성 모듈 (자유도 높음)
+헥사고날 폴더 구조 (모듈당):
+  - `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
+    (model / port / service / controller / provider / exception / dto)
+  - `<group>` 은 선택 — 단층 모듈이면 생략
+  - `<domain>.module.ts` 는 DI 조립 파일 (lint 무시 대상)
+
+전역 수평 관심사 (no-unknown-files가 허용 하위 폴더 외 경로를 거부):
+  - `src/common/` — authentication, exceptions, interfaces, middlewares, pipes, dtos
+  - `src/infrastructure/` — database, i18n, logger, transaction
+  - `src/libs/` — 독립 라이브러리성 모듈 (catch-all)
+
+상세 구조/레이어 설명은 아래 "프로젝트 구조" 트리와 "레이어별 경로 매핑" 표 참고.
 
 ## 프로젝트 구조
 
@@ -28,27 +28,30 @@
 ```
 └── src/
     ├── modules/
-    │   └── **
-    │       ├── model/
-    │       │   └── **       # model — 도메인 모델
-    │       ├── port/
-    │       │   └── **       # port — 도메인 Port 인터페이스
-    │       ├── service/
-    │       │   └── **       # service — UseCase
-    │       ├── controller/
-    │       │   └── **       # controller — HTTP 컨트롤러
-    │       ├── provider/
-    │       │   └── **       # provider — Port 구현체
-    │       ├── exception/
-    │       │   └── **       # exception — 도메인 예외
-    │       └── dto/
-    │           └── **       # dto — 요청/응답 DTO
+    │   └── <group>/                    # (선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능
+    │       └── <domain>/               # Domain module — 실제 이름 가변 (예: profile, order)
+    │           ├── model/              # Entity, Value Object, pure domain functions
+    │           ├── port/               # All Port interfaces (inbound + outbound)
+    │           ├── service/            # Inbound-port implementation (business logic)
+    │           ├── controller/         # Driving Adapter (HTTP)
+    │           ├── provider/           # Outbound Adapter (DB, external services)
+    │           ├── dto/                # Input/output DTOs
+    │           ├── exception/          # Domain-specific exceptions
+    │           └── <domain>.module.ts  # NestJS module (DI assembly) — lint ignored via **/*.module.ts
     ├── common/
-    │   └── **               # common — 전역 공용
+    │   ├── authentication/             # Guards, auth-related
+    │   ├── exceptions/                 # Exception Filters, domain exception base
+    │   ├── interfaces/                 # Shared interfaces
+    │   ├── middlewares/                # Global middlewares
+    │   ├── pipes/                      # Validation Pipes
+    │   └── dtos/                       # Shared DTOs
     ├── infrastructure/
-    │   └── **               # infrastructure — 인프라 수평 관심사
+    │   ├── database/                   # Database configuration
+    │   ├── i18n/                       # Internationalization
+    │   ├── logger/                     # Logging
+    │   └── transaction/                # Transaction management
     └── libs/
-        └── **               # libs — 독립 라이브러리
+        └── **                          # libs — 독립 라이브러리
 ```
 
 ## 레이어별 경로 매핑
@@ -62,6 +65,6 @@
 | `provider` | `src/modules/**/provider/**` | — | Port 구현체 |
 | `exception` | `src/modules/**/exception/**` | — | 도메인 예외 |
 | `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
-| `common` | `src/common/**` | — | 전역 공용 |
-| `infrastructure` | `src/infrastructure/**` | — | 인프라 수평 관심사 |
+| `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/dtos/**` | — | 전역 공용 (허용 하위 폴더만) |
+| `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/transaction/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
 | `libs` | `src/libs/**` | — | 독립 라이브러리 |

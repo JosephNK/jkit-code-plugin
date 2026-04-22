@@ -7,9 +7,13 @@
     "./nextjs/*": "./rules/nextjs/*",
     "./nestjs/*": "./rules/nestjs/*"
   },
+  "bin": {
+    "jkit-check-i18n": "./scripts/check-i18n.mjs"
+  },
   "files": [
     "rules/nextjs",
-    "rules/nestjs"
+    "rules/nestjs",
+    "scripts/check-i18n.mjs"
   ],
   "license": "MIT",
   "author": "JosephNK <nkw0608@gmail.com>",
@@ -20,5 +24,8 @@
   "devDependencies": {
     "acorn": "^8.16.0",
     "prettier": "^3.8.3"
+  },
+  "peerDependencies": {
+    "eslint-plugin-import": "^2.31.0"
   }
 }
