@@ -77,22 +77,42 @@ function printHelp() {
 
 /**
  * AST 리터럴 노드를 순수 JS 값으로 변환.
- * 지원: Literal, TemplateLiteral(expression 없음), ArrayExpression,
- *      ObjectExpression, UnaryExpression(-literal).
+ * 지원:
+ *   - Literal, TemplateLiteral, ArrayExpression, ObjectExpression
+ *   - UnaryExpression (`-literal`)
+ *   - BinaryExpression `+` (문자열/숫자 concat)
+ *   - Identifier — localConsts 에서 해결 시
+ *   - TemplateLiteral with expressions — 각 식이 Identifier로 resolve되면 concat
  * 그 외는 Error throw.
+ *
+ * @param {object} node
+ * @param {Map<string, any>} [localConsts] — 로컬 최상위 `const NAME = <리터럴>` 맵
  */
-function nodeToValue(node) {
+function nodeToValue(node, localConsts) {
   if (!node) return undefined;
   switch (node.type) {
     case 'Literal':
       return node.value;
-    case 'TemplateLiteral':
+    case 'TemplateLiteral': {
       if (node.expressions.length === 0) {
         return node.quasis.map((q) => q.value.cooked).join('');
       }
-      throw new Error('TemplateLiteral with expressions not supported');
+      // expression이 있으면 각각 nodeToValue로 해결한 후 quasi와 interleave
+      const parts = [];
+      for (let i = 0; i < node.quasis.length; i++) {
+        parts.push(node.quasis[i].value.cooked);
+        if (i < node.expressions.length) {
+          const v = nodeToValue(node.expressions[i], localConsts);
+          if (typeof v !== 'string' && typeof v !== 'number') {
+            throw new Error('TemplateLiteral expression did not resolve to a primitive');
+          }
+          parts.push(String(v));
+        }
+      }
+      return parts.join('');
+    }
     case 'ArrayExpression':
-      return node.elements.map((el) => (el ? nodeToValue(el) : null));
+      return node.elements.map((el) => (el ? nodeToValue(el, localConsts) : null));
     case 'ObjectExpression': {
       const obj = {};
       for (const prop of node.properties) {
@@ -100,7 +120,7 @@ function nodeToValue(node) {
           throw new Error(`Unsupported property kind: ${prop.type}`);
         }
         const key = prop.key.type === 'Identifier' ? prop.key.name : prop.key.value;
-        obj[key] = nodeToValue(prop.value);
+        obj[key] = nodeToValue(prop.value, localConsts);
       }
       return obj;
     }
@@ -109,9 +129,41 @@ function nodeToValue(node) {
         return -node.argument.value;
       }
       throw new Error(`Unsupported UnaryExpression: ${node.operator}`);
+    case 'BinaryExpression': {
+      if (node.operator !== '+') {
+        throw new Error(`Unsupported BinaryExpression operator: ${node.operator}`);
+      }
+      const l = nodeToValue(node.left, localConsts);
+      const r = nodeToValue(node.right, localConsts);
+      return l + r;
+    }
+    case 'Identifier': {
+      if (localConsts && localConsts.has(node.name)) return localConsts.get(node.name);
+      throw new Error(`Unresolved identifier: ${node.name}`);
+    }
     default:
       throw new Error(`Unsupported node type: ${node.type}`);
   }
+}
+
+/**
+ * 최상위 `const NAME = <expression>` 중 nodeToValue로 즉시 해결 가능한 것만 수집.
+ * (export되지 않은 local const; TOKEN_KEYS 같은 템플릿 치환용 상수 지원)
+ */
+function collectTopLevelConsts(program) {
+  const out = new Map();
+  for (const stmt of program.body) {
+    if (stmt.type !== 'VariableDeclaration' || stmt.kind !== 'const') continue;
+    for (const d of stmt.declarations) {
+      if (d.id.type !== 'Identifier' || !d.init) continue;
+      try {
+        out.set(d.id.name, nodeToValue(d.init, out));
+      } catch {
+        // 해결 불가한 const는 skip (e.g. 함수 호출, 런타임 표현식)
+      }
+    }
+  }
+  return out;
 }
 
 /**
@@ -188,7 +240,7 @@ function mapInlineTypeCommentsOnArray(arrayNode, comments) {
  * 임의 AST 서브트리를 내려가며 `rules: { ... }` 꼴 ObjectExpression 값을 수집해
  * 각각 nodeToValue로 변환 가능한 것만 담아 반환.
  */
-function findRuleOverrideBlocks(node) {
+function findRuleOverrideBlocks(node, localConsts) {
   const out = [];
   const visit = (n) => {
     if (!n || typeof n !== 'object') return;
@@ -201,7 +253,7 @@ function findRuleOverrideBlocks(node) {
         n.key.type === 'Identifier' ? n.key.name : n.key.type === 'Literal' ? n.key.value : null;
       if (keyName === 'rules' && n.value.type === 'ObjectExpression') {
         try {
-          out.push(nodeToValue(n.value));
+          out.push(nodeToValue(n.value, localConsts));
         } catch {
           // 일부 값이 미지원 노드(MetaProperty 등)일 수 있음 — 해당 블록만 누락 처리
           const partial = {};
@@ -216,7 +268,7 @@ function findRuleOverrideBlocks(node) {
                   : null;
             if (k == null) continue;
             try {
-              partial[k] = nodeToValue(prop.value);
+              partial[k] = nodeToValue(prop.value, localConsts);
               anySuccess = true;
             } catch {
               partial[k] = '(동적 값)';
@@ -406,19 +458,20 @@ function renderPathTree(root, inlineComments) {
   return lines.join('\n');
 }
 
-function renderStructure({ jsdocMap, elements, inlineComments, annotations, stackLabel, inputRelPath }) {
+function renderStructure({ jsdocMap, elements, inlineComments, annotations, stackLabel, inputRelPath, elementsExportName, annotationsExportName }) {
   const lines = [];
+  const sourceExports = [elementsExportName, annotationsExportName].filter(Boolean).join(', ');
   lines.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
   lines.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
-  lines.push(`<!-- Source: ${inputRelPath} (baseBoundaryElements, baseStructureAnnotations) -->`);
+  lines.push(`<!-- Source: ${inputRelPath}${sourceExports ? ` (${sourceExports})` : ''} -->`);
   lines.push('');
   lines.push(`# Lint Rules — Structure Reference (${stackLabel})`);
   lines.push('');
 
-  if (jsdocMap.baseBoundaryElements) {
+  if (jsdocMap.boundaryElements) {
     lines.push('## 개요');
     lines.push('');
-    lines.push(jsdocMap.baseBoundaryElements);
+    lines.push(jsdocMap.boundaryElements);
     lines.push('');
   }
 
@@ -606,12 +659,44 @@ function renderRuleOverrides(blocks) {
   return lines.join('\n');
 }
 
+/**
+ * Boundary Allow Patches 렌더.
+ * 스택이 base 규칙에 추가 허용을 주입할 때 사용 (예: mongodb → api-repository → db).
+ * 각 엔트리 형태: { from: 'type', allow: { to: { type: 'X' } } } 또는 배열.
+ */
+function renderBoundaryAllowPatches(patches) {
+  const rows = new Map(); // from → Set<allowType>
+  for (const p of patches) {
+    const from = p?.from;
+    if (!from) continue;
+    const allows = Array.isArray(p.allow) ? p.allow : [p.allow];
+    for (const entry of allows) {
+      const toType = entry?.to?.type;
+      if (!toType) continue;
+      const types = Array.isArray(toType) ? toType : [toType];
+      if (!rows.has(from)) rows.set(from, new Set());
+      for (const t of types) rows.get(from).add(t);
+    }
+  }
+  const lines = [];
+  lines.push('| From | 추가 허용 (To) |');
+  lines.push('| --- | --- |');
+  for (const [from, toSet] of rows) {
+    const tos = [...toSet].map((t) => `\`${t}\``).join(', ');
+    lines.push(`| \`${from}\` | ${tos} |`);
+  }
+  return lines.join('\n');
+}
+
 function renderReference({
   jsdocMap,
   boundaryRules,
+  boundaryAllowPatches,
   restrictedPatterns,
   restrictedSyntax,
   domainBannedPackages,
+  frameworkPackages,
+  infraPackages,
   ruleOverrides,
   ignoredPaths,
   stackLabel,
@@ -631,8 +716,8 @@ function renderReference({
     const body = [];
     body.push('## 의존성 규칙 (Dependency Rules)');
     body.push('');
-    if (jsdocMap.baseBoundaryRules) {
-      body.push(jsdocMap.baseBoundaryRules);
+    if (jsdocMap.boundaryRules) {
+      body.push(jsdocMap.boundaryRules);
       body.push('');
     }
     body.push('### 의존성 다이어그램');
@@ -645,12 +730,24 @@ function renderReference({
     sections.push(body.join('\n'));
   }
 
+  if (boundaryAllowPatches?.length) {
+    const body = [];
+    body.push('## Boundary Allow Patches (base 규칙 추가 허용)');
+    body.push('');
+    if (jsdocMap.boundaryAllowPatches) {
+      body.push(jsdocMap.boundaryAllowPatches);
+      body.push('');
+    }
+    body.push(renderBoundaryAllowPatches(boundaryAllowPatches));
+    sections.push(body.join('\n'));
+  }
+
   if (restrictedPatterns?.length) {
     const body = [];
     body.push('## Restricted Patterns (Import 금지 패턴)');
     body.push('');
-    if (jsdocMap.baseRestrictedPatterns) {
-      body.push(jsdocMap.baseRestrictedPatterns);
+    if (jsdocMap.restrictedPatterns) {
+      body.push(jsdocMap.restrictedPatterns);
       body.push('');
     }
     body.push(renderPatterns(restrictedPatterns));
@@ -661,8 +758,8 @@ function renderReference({
     const body = [];
     body.push('## Restricted Syntax (AST 금지 구문)');
     body.push('');
-    if (jsdocMap.baseRestrictedSyntax) {
-      body.push(jsdocMap.baseRestrictedSyntax);
+    if (jsdocMap.restrictedSyntax) {
+      body.push(jsdocMap.restrictedSyntax);
       body.push('');
     }
     body.push(renderSyntax(restrictedSyntax));
@@ -673,8 +770,8 @@ function renderReference({
     const body = [];
     body.push('## Domain Purity (도메인 순수성)');
     body.push('');
-    if (jsdocMap.baseDomainBannedPackages) {
-      body.push(jsdocMap.baseDomainBannedPackages);
+    if (jsdocMap.domainBannedPackages) {
+      body.push(jsdocMap.domainBannedPackages);
       body.push('');
     }
     body.push('### 도메인 레이어 금지 패키지');
@@ -683,13 +780,37 @@ function renderReference({
     sections.push(body.join('\n'));
   }
 
+  if (frameworkPackages?.length) {
+    const body = [];
+    body.push('## Framework 금지 패키지 (순수 레이어 차단)');
+    body.push('');
+    if (jsdocMap.frameworkPackages) {
+      body.push(jsdocMap.frameworkPackages);
+      body.push('');
+    }
+    body.push(renderBulletList(frameworkPackages));
+    sections.push(body.join('\n'));
+  }
+
+  if (infraPackages?.length) {
+    const body = [];
+    body.push('## Infra 금지 패키지 (service 레이어 차단)');
+    body.push('');
+    if (jsdocMap.infraPackages) {
+      body.push(jsdocMap.infraPackages);
+      body.push('');
+    }
+    body.push(renderBulletList(infraPackages));
+    sections.push(body.join('\n'));
+  }
+
   const overrideTable = renderRuleOverrides(ruleOverrides || []);
   if (overrideTable) {
     const body = [];
     body.push('## Rule Overrides (룰 오버라이드)');
     body.push('');
-    if (jsdocMap.baseConfig) {
-      body.push(jsdocMap.baseConfig);
+    if (jsdocMap.config) {
+      body.push(jsdocMap.config);
       body.push('');
     }
     body.push(overrideTable);
@@ -700,8 +821,8 @@ function renderReference({
     const body = [];
     body.push('## Ignored Paths (무시 경로)');
     body.push('');
-    if (jsdocMap.baseBoundaryIgnores || jsdocMap.baseIgnores) {
-      body.push(jsdocMap.baseBoundaryIgnores || jsdocMap.baseIgnores);
+    if (jsdocMap.boundaryIgnores || jsdocMap.ignores) {
+      body.push(jsdocMap.boundaryIgnores || jsdocMap.ignores);
       body.push('');
     }
     body.push('### 무시 패턴 목록');
@@ -717,12 +838,42 @@ function renderReference({
 
 // ─── 메인 ───────────────────────────────────────────────────────────────────
 
-function tryValue(declarator) {
+function tryValue(declarator, localConsts) {
   try {
-    return nodeToValue(declarator.init);
+    return nodeToValue(declarator.init, localConsts);
   } catch {
     return null;
   }
+}
+
+/**
+ * suffix(PascalCase)로 끝나는 top-level export를 찾는다.
+ * - `base<Suffix>` 를 우선 (base 파일 legacy 호환), 없으면 `<prefix><Suffix>` 중 첫 매치.
+ * - 매칭 대상 export 이름 규칙: 첫 글자 소문자 + 이후 PascalCase (e.g. `gcpFrameworkPackages`).
+ */
+function findExportBySuffix(exportsMap, suffix) {
+  const baseKey = `base${suffix}`;
+  if (exportsMap.has(baseKey)) return { name: baseKey, ...exportsMap.get(baseKey) };
+  const pattern = new RegExp(`^[a-z][A-Za-z0-9]*${suffix}$`);
+  for (const [name, info] of exportsMap) {
+    if (pattern.test(name) && name !== suffix) return { name, ...info };
+  }
+  return null;
+}
+
+/**
+ * export 이름에서 suffix를 제외한 prefix를 추출 후, suffix 기준 key로 JSDoc 재매핑.
+ * 예: { baseBoundaryRules: '...' } / { gcpFrameworkPackages: '...' }
+ *  → { boundaryRules: '...', frameworkPackages: '...' }
+ */
+function normalizeJsdocBySuffix(rawJsdocMap, resolved) {
+  const out = {};
+  for (const [suffixKey, found] of Object.entries(resolved)) {
+    if (!found) continue;
+    const doc = rawJsdocMap[found.name];
+    if (doc) out[suffixKey] = doc;
+  }
+  return out;
 }
 
 function main() {
@@ -743,35 +894,59 @@ function main() {
   });
 
   const exportsMap = collectTopLevelExports(program);
-  const jsdocMap = buildJSDocMap(source, exportsMap, comments);
+  const rawJsdocMap = buildJSDocMap(source, exportsMap, comments);
+  const localConsts = collectTopLevelConsts(program);
 
-  const elementsDecl = exportsMap.get('baseBoundaryElements')?.declarator;
-  const annotationsDecl = exportsMap.get('baseStructureAnnotations')?.declarator;
-  const rulesDecl = exportsMap.get('baseBoundaryRules')?.declarator;
-  const patternsDecl = exportsMap.get('baseRestrictedPatterns')?.declarator;
-  const syntaxDecl = exportsMap.get('baseRestrictedSyntax')?.declarator;
-  const bannedDecl = exportsMap.get('baseDomainBannedPackages')?.declarator;
-  const boundaryIgnoresDecl = exportsMap.get('baseBoundaryIgnores')?.declarator;
-  const baseIgnoresDecl = exportsMap.get('baseIgnores')?.declarator;
-  const baseConfigDecl = exportsMap.get('baseConfig')?.declarator;
+  // suffix → 발견된 export 정보 (없으면 null)
+  const resolved = {
+    boundaryElements: findExportBySuffix(exportsMap, 'BoundaryElements'),
+    structureAnnotations: findExportBySuffix(exportsMap, 'StructureAnnotations'),
+    boundaryRules: findExportBySuffix(exportsMap, 'BoundaryRules'),
+    boundaryAllowPatches: findExportBySuffix(exportsMap, 'BoundaryAllowPatches'),
+    restrictedPatterns: findExportBySuffix(exportsMap, 'RestrictedPatterns'),
+    restrictedSyntax: findExportBySuffix(exportsMap, 'RestrictedSyntax'),
+    domainBannedPackages: findExportBySuffix(exportsMap, 'DomainBannedPackages'),
+    frameworkPackages: findExportBySuffix(exportsMap, 'FrameworkPackages'),
+    infraPackages: findExportBySuffix(exportsMap, 'InfraPackages'),
+    boundaryIgnores: findExportBySuffix(exportsMap, 'BoundaryIgnores'),
+    ignores: findExportBySuffix(exportsMap, 'Ignores'),
+    config: findExportBySuffix(exportsMap, 'Config'),
+  };
+  const jsdocMap = normalizeJsdocBySuffix(rawJsdocMap, resolved);
 
-  const elements = elementsDecl ? tryValue(elementsDecl) || [] : [];
+  const elementsDecl = resolved.boundaryElements?.declarator;
+  const annotationsDecl = resolved.structureAnnotations?.declarator;
+  const rulesDecl = resolved.boundaryRules?.declarator;
+  const allowPatchesDecl = resolved.boundaryAllowPatches?.declarator;
+  const patternsDecl = resolved.restrictedPatterns?.declarator;
+  const syntaxDecl = resolved.restrictedSyntax?.declarator;
+  const bannedDecl = resolved.domainBannedPackages?.declarator;
+  const frameworkDecl = resolved.frameworkPackages?.declarator;
+  const infraDecl = resolved.infraPackages?.declarator;
+  const boundaryIgnoresDecl = resolved.boundaryIgnores?.declarator;
+  const ignoresDecl = resolved.ignores?.declarator;
+  const configDecl = resolved.config?.declarator;
+
+  const elements = elementsDecl ? tryValue(elementsDecl, localConsts) || [] : [];
   const inlineComments = elementsDecl ? mapInlineTypeCommentsOnArray(elementsDecl.init, comments) : {};
-  const annotations = annotationsDecl ? tryValue(annotationsDecl) || {} : {};
-  const boundaryRules = rulesDecl ? tryValue(rulesDecl) || [] : [];
-  const restrictedPatterns = patternsDecl ? tryValue(patternsDecl) || [] : [];
-  const restrictedSyntax = syntaxDecl ? tryValue(syntaxDecl) || [] : [];
-  const domainBannedPackages = bannedDecl ? tryValue(bannedDecl) || [] : [];
+  const annotations = annotationsDecl ? tryValue(annotationsDecl, localConsts) || {} : {};
+  const boundaryRules = rulesDecl ? tryValue(rulesDecl, localConsts) || [] : [];
+  const boundaryAllowPatches = allowPatchesDecl ? tryValue(allowPatchesDecl, localConsts) || [] : [];
+  const restrictedPatterns = patternsDecl ? tryValue(patternsDecl, localConsts) || [] : [];
+  const restrictedSyntax = syntaxDecl ? tryValue(syntaxDecl, localConsts) || [] : [];
+  const domainBannedPackages = bannedDecl ? tryValue(bannedDecl, localConsts) || [] : [];
+  const frameworkPackages = frameworkDecl ? tryValue(frameworkDecl, localConsts) || [] : [];
+  const infraPackages = infraDecl ? tryValue(infraDecl, localConsts) || [] : [];
 
   let ignoredPaths = [];
   if (boundaryIgnoresDecl) {
-    ignoredPaths = ignoredPaths.concat(tryValue(boundaryIgnoresDecl) || []);
+    ignoredPaths = ignoredPaths.concat(tryValue(boundaryIgnoresDecl, localConsts) || []);
   }
-  if (baseIgnoresDecl) {
-    const arrNode = getCallArgArray(baseIgnoresDecl);
+  if (ignoresDecl) {
+    const arrNode = getCallArgArray(ignoresDecl);
     if (arrNode) {
       try {
-        ignoredPaths = ignoredPaths.concat(nodeToValue(arrNode));
+        ignoredPaths = ignoredPaths.concat(nodeToValue(arrNode, localConsts));
       } catch {
         // skip
       }
@@ -780,9 +955,9 @@ function main() {
   ignoredPaths = Array.from(new Set(ignoredPaths));
 
   let ruleOverrides = [];
-  if (baseConfigDecl) {
-    const arrNode = getCallArgArray(baseConfigDecl);
-    if (arrNode) ruleOverrides = findRuleOverrideBlocks(arrNode);
+  if (configDecl) {
+    const arrNode = getCallArgArray(configDecl);
+    if (arrNode) ruleOverrides = findRuleOverrideBlocks(arrNode, localConsts);
   }
 
   const outDir = args.outDir ? path.resolve(args.outDir) : path.dirname(inputPath);
@@ -802,24 +977,54 @@ function main() {
   if (elements.length) {
     writes.push({
       path: path.join(outDir, 'lint-rules-structure-reference.md'),
-      content: renderStructure({ jsdocMap, elements, inlineComments, annotations, stackLabel, inputRelPath }),
+      content: renderStructure({
+        jsdocMap,
+        elements,
+        inlineComments,
+        annotations,
+        stackLabel,
+        inputRelPath,
+        elementsExportName: resolved.boundaryElements?.name,
+        annotationsExportName: resolved.structureAnnotations?.name,
+      }),
     });
   }
 
-  writes.push({
-    path: path.join(outDir, 'lint-rules-reference.md'),
-    content: renderReference({
-      jsdocMap,
-      boundaryRules,
-      restrictedPatterns,
-      restrictedSyntax,
-      domainBannedPackages,
-      ruleOverrides,
-      ignoredPaths,
-      stackLabel,
-      inputRelPath,
-    }),
+  const referenceContent = renderReference({
+    jsdocMap,
+    boundaryRules,
+    boundaryAllowPatches,
+    restrictedPatterns,
+    restrictedSyntax,
+    domainBannedPackages,
+    frameworkPackages,
+    infraPackages,
+    ruleOverrides,
+    ignoredPaths,
+    stackLabel,
+    inputRelPath,
   });
+
+  // 섹션이 하나도 없으면 헤더만 남는 빈 문서. 그럴 땐 쓰지 않음.
+  const hasAnySection =
+    boundaryRules.length ||
+    boundaryAllowPatches.length ||
+    restrictedPatterns.length ||
+    restrictedSyntax.length ||
+    domainBannedPackages.length ||
+    frameworkPackages.length ||
+    infraPackages.length ||
+    ruleOverrides.length ||
+    ignoredPaths.length;
+
+  if (hasAnySection) {
+    writes.push({
+      path: path.join(outDir, 'lint-rules-reference.md'),
+      content: referenceContent,
+    });
+  } else {
+    console.warn(`[skip] ${inputRelPath}: 렌더할 섹션이 없어 lint-rules-reference.md를 생성하지 않습니다.`);
+  }
 
   if (args.check) {
     let drift = false;

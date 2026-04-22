@@ -77,6 +77,20 @@ graph LR
 | `infrastructure` | `infrastructure`, `common` |
 | `libs` | `model`, `port`, `service`, `controller`, `provider`, `exception`, `dto`, `common`, `infrastructure`, `libs` |
 
+## Framework 금지 패키지 (순수 레이어 차단)
+
+"프레임워크" 패키지 목록 — 순수 레이어(model/, port/, exception/)에서 금지.
+이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
+- @nestjs/*   : Nest DI/데코레이터
+- class-validator / class-transformer : DTO 검증 (boundary에서만 사용)
+- express     : HTTP 어댑터 (controller/provider 계층 관심사)
+
+- `@nestjs/*`
+- `class-validator`
+- `class-transformer`
+- `express`
+- `express/*`
+
 ## Ignored Paths (무시 경로)
 
 Boundary 검사에서 제외할 파일/디렉토리.
