@@ -11,9 +11,6 @@ Mantine은 내부적으로 Emotion을 쓰지만 사용자 코드에서 직접 Em
 라이브러리를 쓰면 이중 설정(Emotion 캐시·테마 프로바이더가 둘)이 되어
 스타일 계산 타이밍·테마 토큰 동기화에 문제가 생긴다.
 
-Utility CSS(Tailwind/UnoCSS/WindiCSS) 차단은 UI lib 무관한 전역 정책이므로
-`no-utility-css` 스택으로 이관되었다.
-
 | 패턴 | 메시지 |
 | --- | --- |
 | `@emotion/*`, `styled-components`, `styled-jsx`, `styled-jsx/**` | CSS-in-JS libraries are not allowed. Use Mantine style props or CSS Modules. |

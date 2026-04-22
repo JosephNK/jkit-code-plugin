@@ -46,7 +46,7 @@ Add to your project's `.claude/settings.json` so teammates get the plugin automa
 | Framework | Init Command | Convention Stacks |
 |-----------|-------------|-------------------|
 | **Flutter** | `/jkit:flutter-init` | bloc, freezed, go-router, leaf-kit, easy-localization |
-| **Next.js** | `/jkit:nextjs-init` | mantine, design-system, tanstack-query, next-proxy |
+| **Next.js** | `/jkit:nextjs-init` | mantine, tanstack-query, next-proxy |
 | **NestJS** | `/jkit:nestjs-init` | typeorm, gcp, anthropic-ai |
 
 Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등 프로젝트 설정 파일을 자동 생성합니다.

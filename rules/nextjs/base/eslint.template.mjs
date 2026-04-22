@@ -21,6 +21,7 @@ import {
   baseBoundaryIgnores,
   baseBoundaryRules,
   baseConfig,
+  baseCustomRules,
   baseDomainBannedPackages,
   baseIgnores,
   baseRestrictedPatterns,
@@ -124,10 +125,14 @@ const eslintConfig = [
     ],
   ),
 
+  // [8] 프로젝트 공용 custom 룰 (conventions.md 강제)
+  //     JSX 인라인 토큰 하드코딩 차단, Tailwind CSS import 차단
+  ...baseCustomRules,
+
   // ─── Project-specific rules below ───
   // 프로젝트 개별 override는 이 아래에 추가한다.
 
-  // [8] 전역 ignore (빌드 산출물 등) — 맨 마지막에 위치
+  // [9] 전역 ignore (빌드 산출물 등) — 맨 마지막에 위치
   baseIgnores,
 ];
 

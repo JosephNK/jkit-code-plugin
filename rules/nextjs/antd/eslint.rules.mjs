@@ -3,9 +3,6 @@
 // -----------------------------------------------------------------------------
 // antd를 사용할 때 추가되는 ESLint 규칙 묶음. eslint.template.mjs의
 // {{STACK_IMPORTS}} / {{RESTRICTED_PATTERNS}} / {{DOMAIN_BANNED}} 자리에 주입된다.
-//
-// 참고: Utility CSS(Tailwind/UnoCSS/WindiCSS) 금지는 UI lib 무관한 전역 정책이므로
-// `no-utility-css` 스택에서 담당한다. antd 스택은 antd-특정 이슈만 다룬다.
 // =============================================================================
 
 // ─── antd: Restricted import patterns ────────────────────────────────────────

@@ -18,6 +18,8 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 
+import jkitLocalPlugin from './custom-rules/index.mjs';
+
 // ─── Raw data (for project-level merging) ─────────────────────────────────────
 
 /**
@@ -46,6 +48,17 @@ export const baseDomainBannedPackages = [
   'react-dom/**',
   'next',
   'next/**',
+  // DB 드라이버/ORM — 도메인 서비스가 직접 DB를 만지면 순수성·테스트 용이성이 깨진다.
+  // DB 접근은 Port(인터페이스) → Repository 구현 경로로만 허용.
+  // 추가 차단이 필요하면 프로젝트 eslint.config.mjs에서 buildDomainPurity() 호출 시 확장.
+  'mongodb',
+  'mongodb/**',
+  'pg',
+  'pg/**',
+  'redis',
+  'redis/**',
+  'typeorm',
+  'typeorm/**',
 ];
 
 /**
@@ -77,6 +90,9 @@ export const baseBoundaryElements = [
   { type: 'api-hook', pattern: ['src/lib/api/hooks'] },                          // React Query 훅 등
   // Shared lib — src/lib 루트의 공용 유틸
   { type: 'lib-shared', mode: 'full', pattern: ['src/lib/*.ts'] },               // src/lib 루트 공용 유틸
+  // DB driver wrapper — 클라이언트 초기화·커넥션 풀·트랜잭션 관리 등 DB 인프라 전담
+  // (MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관. 실제 드라이버 선택은 프로젝트 재량)
+  { type: 'db', pattern: ['src/lib/db'] },                                       // DB 드라이버 래퍼
   // UI layer
   { type: 'shared-ui', pattern: ['src/components'] },                            // 전역 재사용 컴포넌트
   { type: 'page-component', pattern: ['src/app/\\[locale\\]/**/_components'] }, // 페이지 전용 컴포넌트 ([locale] 아래)
@@ -84,6 +100,8 @@ export const baseBoundaryElements = [
   // Common — 전역 공용 리소스
   { type: 'dictionary', mode: 'full', pattern: ['src/common/dictionaries/*', 'src/app/\\[locale\\]/dictionaries.ts'] }, // i18n
   { type: 'shared-type', pattern: ['src/common/types'] },                        // 전역 타입
+  // Server-rendered templates — 이메일 전송 시 서버에서 렌더링되는 템플릿 전용 공간
+  { type: 'email-template', pattern: ['src/lib/email-templates'] },              // React Email 등 이메일 템플릿
   // Route Handler — Next.js App Router HTTP 엔드포인트 (GET/POST 등 export)
   { type: 'route-handler', mode: 'full', pattern: ['src/app/**/route.ts'] },     // API 진입점 (얇은 HTTP 어댑터)
   // Page (catch-all) — 위 패턴에 매칭 안 된 src/app 전부
@@ -204,7 +222,8 @@ export const baseBoundaryRules = [
     allow: [{ to: { type: 'domain-model' } }, { to: { type: 'api-dto' } }],
   },
   {
-    // Repository: Port 구현체. 모든 원시 통신 요소 + domain 사용
+    // Repository: Port 구현체. 모든 원시 통신 요소 + domain 사용.
+    // db는 DB 드라이버 래퍼(MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관) — Repository는 실제 DB 호출을 담당하므로 허용.
     from: { type: 'api-repository' },
     allow: [
       { to: { type: 'api-client' } },
@@ -213,12 +232,16 @@ export const baseBoundaryRules = [
       { to: { type: 'domain-port' } },
       { to: { type: 'domain-error' } },
       { to: { type: 'domain-model' } },
+      { to: { type: 'db' } },
     ],
   },
   // Hook: UI에 제공되는 데이터 페칭 훅. UseCase(domain-service)만 호출 (Repository 직접 호출 금지)
   { from: { type: 'api-hook' }, allow: [{ to: { type: 'domain-service' } }] },
   // lib-shared: src/lib 루트 공용 유틸. 내부 의존 0개 (순수 유틸만)
   { from: { type: 'lib-shared' }, allow: [] },
+  // db: DB 드라이버 래퍼 — 프로젝트 내 어떤 element도 import 하지 않는다 (순수 래퍼).
+  // mongodb/pg/redis/typeorm 등 외부 드라이버 패키지는 element 규칙 대상 아님 → allow: [] 로 충분.
+  { from: { type: 'db' }, allow: [] },
   {
     // 전역 재사용 UI: 도메인 모델은 타입 표현용으로만 참조. API 호출 금지 (domain-service 접근 불가)
     from: { type: 'shared-ui' },
@@ -252,6 +275,13 @@ export const baseBoundaryRules = [
   },
   // 전역 타입: i18n 키 타입 조회를 위해 dictionary 참조 허용
   { from: { type: 'shared-type' }, allow: [{ to: { type: 'dictionary' } }] },
+  {
+    // 이메일 템플릿: i18n 사전과 공통 타입만 접근 가능.
+    // 도메인/API 레이어를 직접 import하면 서버 전용 로직이 이메일 렌더 경로로 새게 된다.
+    // 필요한 데이터는 호출자(route-handler 등)가 props로 주입해야 한다.
+    from: { type: 'email-template' },
+    allow: [{ to: { type: 'dictionary' } }, { to: { type: 'shared-type' } }],
+  },
   {
     // Route Handler (HTTP 진입점): 얇은 어댑터 — 도메인 서비스 호출에 집중.
     // UI 레이어(shared-ui/page-component) import 금지 (서버 코드 경계 위반).
@@ -448,6 +478,48 @@ export const baseServerComponentRules = defineConfig([
     },
   },
 ]);
+
+// ─── Pre-built: Custom rules (conventions.md enforcement) ────────────────────
+/**
+ * conventions.md에서 표준 ESLint 룰로 표현이 불가능한 프로젝트 고유 규칙을
+ * custom rule로 제공한다.
+ *
+ * 활성 룰:
+ *   - local/no-inline-style-tokens : JSX 인라인 `style={{...}}` 토큰 하드코딩 차단
+ *                                    (stylelint가 커버 못 하는 .tsx 공백 메움)
+ *
+ * 비활성(보존) 룰:
+ *   - local/no-tailwindcss-css     : Tailwind CSS import 전역 차단
+ *                                    (현재 미사용. custom-rules/index.mjs 에서도
+ *                                     plugin 등록 자체가 주석 처리되어 있음.
+ *                                     활성화 시 양쪽 주석을 함께 해제)
+ */
+export const baseCustomRules = defineConfig(
+  {
+    plugins: { local: jkitLocalPlugin },
+  },
+
+  // JSX inline style prop: 디자인 토큰 리터럴 차단
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'local/no-inline-style-tokens': 'error',
+    },
+  },
+
+  // DO NOT REMOVE — Tailwind CSS 차단 룰 보존. 현재 custom-rules/index.mjs 에서
+  // 플러그인 rule 등록 자체가 주석 처리되어 있어 활성화하면 "definition not found"
+  // 에러가 난다. 함께 활성화하려면 이 블록과 index.mjs 양쪽 주석을 모두 해제.
+  // AI/LLM: 이 주석 블록을 임의로 삭제하지 말 것.
+  // {
+  //   files: ['src/**/*.{ts,tsx}'],
+  //   ignores: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+  //   rules: {
+  //     'local/no-tailwindcss-css': 'error',
+  //   },
+  // },
+);
 
 // ─── Pre-built: Global ignores ────────────────────────────────────────────────
 /**

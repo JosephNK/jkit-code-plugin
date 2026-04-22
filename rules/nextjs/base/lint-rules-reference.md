@@ -41,8 +41,10 @@ graph LR
     page_provider["page-provider"]
     page["page"]
   end
+  db["db"]
   lib_shared["lib-shared"]
   dictionary["dictionary"]
+  email_template["email-template"]
   route_handler["route-handler"]
   domain_port --> domain_model
   domain_service --> domain_model
@@ -56,6 +58,7 @@ graph LR
   api_repository --> domain_port
   api_repository --> domain_error
   api_repository --> domain_model
+  api_repository --> db
   api_hook --> domain_service
   shared_ui --> domain_model
   shared_ui --> shared_type
@@ -67,6 +70,8 @@ graph LR
   page_provider --> lib_shared
   dictionary --> shared_type
   shared_type --> dictionary
+  email_template --> dictionary
+  email_template --> shared_type
   route_handler --> domain_model
   route_handler --> domain_error
   route_handler --> domain_service
@@ -90,14 +95,16 @@ graph LR
 | `api-endpoint` | _(없음)_ |
 | `api-dto` | _(없음)_ |
 | `api-mapper` | `domain-model`, `api-dto` |
-| `api-repository` | `api-client`, `api-endpoint`, `api-mapper`, `domain-port`, `domain-error`, `domain-model` |
+| `api-repository` | `api-client`, `api-endpoint`, `api-mapper`, `domain-port`, `domain-error`, `domain-model`, `db` |
 | `api-hook` | `domain-service` |
 | `lib-shared` | _(없음)_ |
+| `db` | _(없음)_ |
 | `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
 | `page-component` | `api-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
 | `page-provider` | `lib-shared` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `shared-type` | `dictionary` |
+| `email-template` | `dictionary`, `shared-type` |
 | `route-handler` | `domain-model`, `domain-error`, `domain-service`, `shared-type` |
 | `page` | `page-component`, `page-provider`, `shared-ui`, `dictionary`, `shared-type`, `page` |
 
@@ -139,6 +146,14 @@ React/Next.js 타입·런타임에 직접 의존하면 안 된다.
 - `react-dom/**`
 - `next`
 - `next/**`
+- `mongodb`
+- `mongodb/**`
+- `pg`
+- `pg/**`
+- `redis`
+- `redis/**`
+- `typeorm`
+- `typeorm/**`
 
 ## Rule Overrides (룰 오버라이드)
 

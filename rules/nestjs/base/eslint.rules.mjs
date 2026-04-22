@@ -15,17 +15,17 @@
 //   3. Builders              — 스택별 데이터를 받아 config를 생성하는 팩토리
 // =============================================================================
 
-import { defineConfig, globalIgnores } from 'eslint/config';
-import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import boundaries from 'eslint-plugin-boundaries';
-import importPlugin from 'eslint-plugin-import';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import unusedImports from 'eslint-plugin-unused-imports';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from "eslint/config";
+import eslint from "@eslint/js";
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import boundaries from "eslint-plugin-boundaries";
+import importPlugin from "eslint-plugin-import";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import unusedImports from "eslint-plugin-unused-imports";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
-import jkitLocalPlugin from './custom-rules/index.mjs';
+import jkitLocalPlugin from "./custom-rules/index.mjs";
 
 // ─── Raw data (for project-level merging) ─────────────────────────────────────
 
@@ -35,8 +35,8 @@ import jkitLocalPlugin from './custom-rules/index.mjs';
  * buildLayerRestrictions에서 각 레이어의 no-restricted-imports에 주입된다.
  */
 export const basePathAliasPattern = {
-  group: ['../**'],
-  message: 'Use @/* path alias instead of relative parent imports.',
+  group: ["../**"],
+  message: "Use @/* path alias instead of relative parent imports.",
 };
 
 /**
@@ -47,11 +47,11 @@ export const basePathAliasPattern = {
  * - express     : HTTP 어댑터 (controller/provider 계층 관심사)
  */
 export const baseFrameworkPackages = [
-  '@nestjs/*',
-  'class-validator',
-  'class-transformer',
-  'express',
-  'express/*',
+  "@nestjs/*",
+  "class-validator",
+  "class-transformer",
+  "express",
+  "express/*",
 ];
 
 /**
@@ -71,35 +71,35 @@ export const baseFrameworkPackages = [
  * 상세 구조/레이어 설명은 아래 "프로젝트 구조" 트리와 "레이어별 경로 매핑" 표 참고.
  */
 export const baseBoundaryElements = [
-  { type: 'model', pattern: ['src/modules/**/model/**'] },              // 도메인 모델
-  { type: 'port', pattern: ['src/modules/**/port/**'] },                // 도메인 Port 인터페이스
-  { type: 'service', pattern: ['src/modules/**/service/**'] },          // UseCase
-  { type: 'controller', pattern: ['src/modules/**/controller/**'] },    // HTTP 컨트롤러
-  { type: 'provider', pattern: ['src/modules/**/provider/**'] },        // Port 구현체
-  { type: 'exception', pattern: ['src/modules/**/exception/**'] },      // 도메인 예외
-  { type: 'dto', pattern: ['src/modules/**/dto/**'] },                  // 요청/응답 DTO
+  { type: "model", pattern: ["src/modules/**/model/**"] }, // 도메인 모델
+  { type: "port", pattern: ["src/modules/**/port/**"] }, // 도메인 Port 인터페이스
+  { type: "service", pattern: ["src/modules/**/service/**"] }, // UseCase
+  { type: "controller", pattern: ["src/modules/**/controller/**"] }, // HTTP 컨트롤러
+  { type: "provider", pattern: ["src/modules/**/provider/**"] }, // Port 구현체
+  { type: "exception", pattern: ["src/modules/**/exception/**"] }, // 도메인 예외
+  { type: "dto", pattern: ["src/modules/**/dto/**"] }, // 요청/응답 DTO
   // common/infrastructure는 허용 하위 폴더만 명시 — no-unknown-files가 그 외 경로를 거부
   {
-    type: 'common',
+    type: "common",
     pattern: [
-      'src/common/authentication/**',
-      'src/common/exceptions/**',
-      'src/common/interfaces/**',
-      'src/common/middlewares/**',
-      'src/common/pipes/**',
-      'src/common/dtos/**',
+      "src/common/authentication/**",
+      "src/common/exceptions/**",
+      "src/common/interfaces/**",
+      "src/common/middlewares/**",
+      "src/common/pipes/**",
+      "src/common/dtos/**",
     ],
   }, // 전역 공용 (허용 하위 폴더만)
   {
-    type: 'infrastructure',
+    type: "infrastructure",
     pattern: [
-      'src/infrastructure/database/**',
-      'src/infrastructure/i18n/**',
-      'src/infrastructure/logger/**',
-      'src/infrastructure/transaction/**',
+      "src/infrastructure/database/**",
+      "src/infrastructure/i18n/**",
+      "src/infrastructure/logger/**",
+      "src/infrastructure/transaction/**",
     ],
   }, // 인프라 수평 관심사 (허용 하위 폴더만)
-  { type: 'libs', pattern: ['src/libs/**'] },                           // 독립 라이브러리
+  { type: "libs", pattern: ["src/libs/**"] }, // 독립 라이브러리
 ];
 
 /**
@@ -113,29 +113,41 @@ export const baseBoundaryElements = [
  *   StructureNode: { name, note?, placeholder?, children? }
  */
 export const baseStructureAnnotations = {
-  'src/modules': {
+  "src/modules": {
     override: [
       {
-        name: '<group>',
+        name: "<group>",
         placeholder: true,
-        note: '(선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능',
+        note: "(선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능",
         children: [
           {
-            name: '<domain>',
+            name: "<domain>",
             placeholder: true,
-            note: 'Domain module — 실제 이름 가변 (예: profile, order)',
+            note: "Domain module — 실제 이름 가변 (예: profile, order)",
             children: [
-              { name: 'model', note: 'Entity, Value Object, pure domain functions' },
-              { name: 'port', note: 'All Port interfaces (inbound + outbound)' },
-              { name: 'service', note: 'Inbound-port implementation (business logic)' },
-              { name: 'controller', note: 'Driving Adapter (HTTP)' },
-              { name: 'provider', note: 'Outbound Adapter (DB, external services)' },
-              { name: 'dto', note: 'Input/output DTOs' },
-              { name: 'exception', note: 'Domain-specific exceptions' },
               {
-                name: '<domain>.module.ts',
+                name: "model",
+                note: "Entity, Value Object, pure domain functions",
+              },
+              {
+                name: "port",
+                note: "All Port interfaces (inbound + outbound)",
+              },
+              {
+                name: "service",
+                note: "Inbound-port implementation (business logic)",
+              },
+              { name: "controller", note: "Driving Adapter (HTTP)" },
+              {
+                name: "provider",
+                note: "Outbound Adapter (DB, external services)",
+              },
+              { name: "dto", note: "Input/output DTOs" },
+              { name: "exception", note: "Domain-specific exceptions" },
+              {
+                name: "<domain>.module.ts",
                 placeholder: true,
-                note: 'NestJS module (DI assembly) — lint ignored via **/*.module.ts',
+                note: "NestJS module (DI assembly) — lint ignored via **/*.module.ts",
               },
             ],
           },
@@ -143,22 +155,22 @@ export const baseStructureAnnotations = {
       },
     ],
   },
-  'src/common': {
+  "src/common": {
     override: [
-      { name: 'authentication', note: 'Guards, auth-related' },
-      { name: 'exceptions', note: 'Exception Filters, domain exception base' },
-      { name: 'interfaces', note: 'Shared interfaces' },
-      { name: 'middlewares', note: 'Global middlewares' },
-      { name: 'pipes', note: 'Validation Pipes' },
-      { name: 'dtos', note: 'Shared DTOs' },
+      { name: "authentication", note: "Guards, auth-related" },
+      { name: "exceptions", note: "Exception Filters, domain exception base" },
+      { name: "interfaces", note: "Shared interfaces" },
+      { name: "middlewares", note: "Global middlewares" },
+      { name: "pipes", note: "Validation Pipes" },
+      { name: "dtos", note: "Shared DTOs" },
     ],
   },
-  'src/infrastructure': {
+  "src/infrastructure": {
     override: [
-      { name: 'database', note: 'Database configuration' },
-      { name: 'i18n', note: 'Internationalization' },
-      { name: 'logger', note: 'Logging' },
-      { name: 'transaction', note: 'Transaction management' },
+      { name: "database", note: "Database configuration" },
+      { name: "i18n", note: "Internationalization" },
+      { name: "logger", note: "Logging" },
+      { name: "transaction", note: "Transaction management" },
     ],
   },
 };
@@ -177,99 +189,80 @@ export const baseStructureAnnotations = {
 export const baseBoundaryRules = [
   // model — 자기 자신만 (순수 TS, 외부 의존 0)
   {
-    from: { type: 'model' },
-    allow: { to: { type: 'model' } },
+    from: { type: "model" },
+    allow: { to: { type: "model" } },
   },
   // exception — common의 베이스 예외를 상속하여 정의
   {
-    from: { type: 'exception' },
-    allow: { to: { type: ['exception', 'common'] } },
+    from: { type: "exception" },
+    allow: { to: { type: ["exception", "common"] } },
   },
   // port — 인터페이스 시그니처에 model과 공용 타입만 사용
   {
-    from: { type: 'port' },
-    allow: { to: { type: ['model', 'common'] } },
+    from: { type: "port" },
+    allow: { to: { type: ["model", "common"] } },
   },
   // service — UseCase. port를 주입받아 도메인 로직 수행
   // controller/provider/dto는 의도적으로 제외 (헥사고날 역방향 의존 방지)
   {
-    from: { type: 'service' },
+    from: { type: "service" },
     allow: {
       to: {
-        type: [
-          'model',
-          'port',
-          'exception',
-          'common',
-          'infrastructure',
-        ],
+        type: ["model", "port", "exception", "common", "infrastructure"],
       },
     },
   },
   // controller — HTTP 경계. port/dto 조합으로 요청 처리
   // service를 직접 import하지 않고 port를 통해 사용 (DI 컨테이너가 service 바인딩)
   {
-    from: { type: 'controller' },
+    from: { type: "controller" },
     allow: {
       to: {
-        type: [
-          'port',
-          'dto',
-          'model',
-          'exception',
-          'common',
-          'libs',
-        ],
+        type: ["port", "dto", "model", "exception", "common", "libs"],
       },
     },
   },
   // provider — Port 구현체. ORM 엔티티 간 상호 참조로 provider→provider 허용
   {
-    from: { type: 'provider' },
+    from: { type: "provider" },
     allow: {
       to: {
-        type: [
-          'port',
-          'model',
-          'common',
-          'infrastructure',
-          'provider',
-        ],
+        type: ["port", "model", "common", "infrastructure", "provider"],
       },
     },
   },
   // dto — 내부 composition용 dto→dto 허용 (PartialType, PickType 등)
   {
-    from: { type: 'dto' },
-    allow: { to: { type: ['model', 'common', 'dto'] } },
+    from: { type: "dto" },
+    allow: { to: { type: ["model", "common", "dto"] } },
   },
   // (*.module.ts) — DI 조립 파일. boundaries/ignore에서 제외 처리됨
   // common — 자기 자신만 (전역 공용은 최하위라 상향 의존 금지)
   {
-    from: { type: 'common' },
-    allow: { to: { type: 'common' } },
+    from: { type: "common" },
+    allow: { to: { type: "common" } },
   },
   // infrastructure — common만 참조 가능 (모듈 로직에 의존하면 안 됨)
   {
-    from: { type: 'infrastructure' },
-    allow: { to: { type: ['infrastructure', 'common'] } },
+    from: { type: "infrastructure" },
+    allow: { to: { type: ["infrastructure", "common"] } },
   },
   // libs — 독립 라이브러리 모듈. 앱 전체를 조립할 수 있도록 모든 레이어 접근 허용
   {
-    from: { type: 'libs' },
+    from: { type: "libs" },
     allow: {
       to: {
         type: [
-          'model',
-          'port',
-          'service',
-          'controller',
-          'provider',
-          'exception',
-          'dto',
-          'common',
-          'infrastructure',
-          'libs',
+          "model",
+          "port",
+          "service",
+          "controller",
+          "provider",
+          "exception",
+          "dto",
+          "common",
+          "infrastructure",
+          "libs",
         ],
       },
     },
@@ -285,16 +278,16 @@ export const baseBoundaryRules = [
  * - 모듈 내부 common 디렉토리 : 모듈 내 공용 (모든 하위 레이어에서 참조)
  */
 export const baseBoundaryIgnores = [
-  '**/*.spec.ts',
-  '**/*.test.ts',
-  '**/*.module.ts',
-  'src/main.ts',
-  'src/app.*.ts',
-  'src/test/**',
-  'src/modules/health/**',
-  'src/modules/**/common/**',
-  'test/**',
-  '.jkit/**',
+  "**/*.spec.ts",
+  "**/*.test.ts",
+  "**/*.module.ts",
+  "src/main.ts",
+  "src/app.*.ts",
+  "src/test/**",
+  "src/modules/health/**",
+  "src/modules/**/common/**",
+  "test/**",
+  ".jkit/**",
 ];
 
 // ─── Pre-built config (ESLint + TypeScript + Prettier + Import sorting) ───────
@@ -322,9 +315,9 @@ export const baseConfig = defineConfig(
         ...globals.node,
         ...globals.jest,
       },
-      sourceType: 'commonjs',             // NestJS CLI 기본이 CommonJS
+      sourceType: "commonjs", // NestJS CLI 기본이 CommonJS
       parserOptions: {
-        projectService: true,              // tsconfig 자동 매칭
+        projectService: true, // tsconfig 자동 매칭
         tsconfigRootDir: import.meta.dirname, // 프로젝트에서 override 됨
       },
     },
@@ -333,21 +326,21 @@ export const baseConfig = defineConfig(
   // [5] Import 정렬 + 미사용 import 자동 제거
   {
     plugins: {
-      'simple-import-sort': simpleImportSort,
-      'unused-imports': unusedImports,
+      "simple-import-sort": simpleImportSort,
+      "unused-imports": unusedImports,
     },
     rules: {
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
-      'unused-imports/no-unused-imports': 'error',
-      'unused-imports/no-unused-vars': [
-        'warn',
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
         // _ prefix는 의도적 미사용 허용
         {
-          vars: 'all',
-          varsIgnorePattern: '^_',
-          args: 'after-used',
-          argsIgnorePattern: '^_',
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
         },
       ],
     },
@@ -356,37 +349,37 @@ export const baseConfig = defineConfig(
   // [6] 프로젝트 공통 스타일 룰
   {
     rules: {
-      'prefer-const': 'error',
+      "prefer-const": "error",
       // NestJS 데코레이터/런타임 리플렉션과 any 사용이 잦아 off
-      '@typescript-eslint/no-explicit-any': 'off',
+      "@typescript-eslint/no-explicit-any": "off",
       // Promise 반환 누락 감지 (warn) — fire-and-forget은 명시적 void 처리 권장
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
+      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-unsafe-argument": "warn",
       // unused-imports 플러그인이 담당하므로 중복 방지
-      '@typescript-eslint/no-unused-vars': 'off',
+      "@typescript-eslint/no-unused-vars": "off",
       // 타입 import는 `import type` 강제 (런타임 번들 축소)
-      '@typescript-eslint/consistent-type-imports': [
-        'error',
-        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       // TODO/FIXME/HACK 추적 (warn, 차단하지 않음)
-      'no-warning-comments': ['warn', { terms: ['TODO', 'FIXME', 'HACK'] }],
+      "no-warning-comments": ["warn", { terms: ["TODO", "FIXME", "HACK"] }],
       // 줄바꿈 LF/CRLF OS별 자동 매칭 (Windows 팀원 호환)
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
 
   // [7] 테스트 파일 완화
   // 단위 테스트에서 mock/stub으로 타입 안전성을 의도적으로 깨뜨리는 패턴을 허용
   {
-    files: ['**/*.spec.ts', 'test/**/*.ts'],
+    files: ["**/*.spec.ts", "test/**/*.ts"],
     rules: {
-      '@typescript-eslint/unbound-method': 'off',          // Jest spy 사용 시 빈번
-      '@typescript-eslint/no-require-imports': 'off',      // require() mock
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
+      "@typescript-eslint/unbound-method": "off", // Jest spy 사용 시 빈번
+      "@typescript-eslint/no-require-imports": "off", // require() mock
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
 );
@@ -404,17 +397,16 @@ export const baseConfig = defineConfig(
  */
 export const baseImmutabilityRules = defineConfig({
   files: [
-    'src/modules/**/model/**/*.entity.ts',
-    'src/modules/**/dto/**/*.dto.ts',
+    "src/modules/**/model/**/*.entity.ts",
+    "src/modules/**/dto/**/*.dto.ts",
   ],
   rules: {
-    'no-restricted-syntax': [
-      'error',
+    "no-restricted-syntax": [
+      "error",
       {
-        selector:
-          'PropertyDefinition:not([readonly=true]):not([static=true])',
+        selector: "PropertyDefinition:not([readonly=true]):not([static=true])",
         message:
-          'Entity and DTO fields must use readonly. (conventions.md: Immutability)',
+          "Entity and DTO fields must use readonly. (conventions.md: Immutability)",
       },
     ],
   },
@@ -427,11 +419,11 @@ export const baseImmutabilityRules = defineConfig({
  * 테스트 파일은 seed 데이터와 시나리오 나열로 길어지기 쉬워 제외.
  */
 export const baseFileSizeRules = defineConfig({
-  files: ['src/**/*.ts'],
-  ignores: ['**/*.spec.ts'],
+  files: ["src/**/*.ts"],
+  ignores: ["**/*.spec.ts"],
   rules: {
-    'max-lines': [
-      'warn',
+    "max-lines": [
+      "warn",
       { max: 800, skipBlankLines: true, skipComments: true },
     ],
   },
@@ -451,14 +443,11 @@ export const baseFileSizeRules = defineConfig({
  *   allowUnsafeDynamicCyclicDependency: false — 런타임 cycle은 여전히 잡음
  */
 export const baseCycleRules = defineConfig({
-  files: ['src/**/*.ts'],
-  ignores: ['**/*.spec.ts', '**/*.test.ts'],
+  files: ["src/**/*.ts"],
+  ignores: ["**/*.spec.ts", "**/*.test.ts"],
   plugins: { import: importPlugin },
   rules: {
-    'import/no-cycle': [
-      'warn',
-      { maxDepth: 10, ignoreExternal: true },
-    ],
+    "import/no-cycle": ["warn", { maxDepth: 10, ignoreExternal: true }],
   },
 });
 
@@ -482,12 +471,12 @@ export const baseCustomRules = defineConfig(
   // DTO: @ApiProperty required + union type restriction + oneOf 금지
   //      + T|null / Date|null 필드 ↔ decorator 옵션 정합
   {
-    files: ['src/modules/**/dto/**/*.dto.ts'],
+    files: ["src/modules/**/dto/**/*.dto.ts"],
     rules: {
-      'local/require-api-property': 'error',
-      'local/dto-union-type-restriction': 'error',
-      'local/no-dto-oneof': 'error',
-      'local/dto-nullable-match': 'error',
+      "local/require-api-property": "error",
+      "local/dto-union-type-restriction": "error",
+      "local/no-dto-oneof": "error",
+      "local/dto-nullable-match": "error",
     },
   },
 
@@ -495,47 +484,47 @@ export const baseCustomRules = defineConfig(
   //             + file-class pair (*.response.dto.ts ↔ *DataResponseDto,
   //                                *-item.dto.ts ↔ *ItemDto)
   {
-    files: ['src/modules/**/dto/**/*.dto.ts'],
+    files: ["src/modules/**/dto/**/*.dto.ts"],
     rules: {
-      'local/dto-naming-convention': 'error',
+      "local/dto-naming-convention": "error",
     },
   },
 
   // ORM Entity: Date columns must use timestamptz
   {
-    files: ['src/modules/**/provider/**/*.orm-entity.ts'],
+    files: ["src/modules/**/provider/**/*.orm-entity.ts"],
     rules: {
-      'local/require-timestamptz': 'error',
+      "local/require-timestamptz": "error",
     },
   },
 
   // Controller: catch blocks must use mapDomainException()
   {
-    files: ['src/modules/**/controller/**/*.controller.ts'],
-    ignores: ['**/*.spec.ts'],
+    files: ["src/modules/**/controller/**/*.controller.ts"],
+    ignores: ["**/*.spec.ts"],
     rules: {
-      'local/require-map-domain-exception': 'error',
+      "local/require-map-domain-exception": "error",
     },
   },
 
   // Layer filename suffix enforcement (model/ 제외)
   {
-    files: ['src/modules/**/*.ts'],
-    ignores: ['**/*.spec.ts', '**/*.test.ts', '**/*.module.ts'],
+    files: ["src/modules/**/*.ts"],
+    ignores: ["**/*.spec.ts", "**/*.test.ts", "**/*.module.ts"],
     rules: {
-      'local/enforce-file-suffix': 'error',
+      "local/enforce-file-suffix": "error",
     },
   },
 
   // Controller/Service: entity 직접 return 금지 (명시적 return type 한정)
   {
     files: [
-      'src/modules/**/controller/**/*.controller.ts',
-      'src/modules/**/service/**/*.service.ts',
+      "src/modules/**/controller/**/*.controller.ts",
+      "src/modules/**/service/**/*.service.ts",
     ],
-    ignores: ['**/*.spec.ts'],
+    ignores: ["**/*.spec.ts"],
     rules: {
-      'local/no-entity-return': 'error',
+      "local/no-entity-return": "error",
     },
   },
 );
@@ -548,7 +537,13 @@ export const baseCustomRules = defineConfig(
  * - dist/, coverage/   : 빌드·테스트 산출물
  * - .jkit/             : 툴체인 내부 작업 공간
  */
-export const baseIgnores = globalIgnores(['eslint.config.mjs', 'eslint-rules/**', 'dist/**', 'coverage/**', '.jkit/**']);
+export const baseIgnores = globalIgnores([
+  "eslint.config.mjs",
+  "eslint-rules/**",
+  "dist/**",
+  "coverage/**",
+  ".jkit/**",
+]);
 
 // ─── Builder: Hexagonal layer import restrictions ────────────────────────────
 /**
@@ -566,32 +561,36 @@ export const baseIgnores = globalIgnores(['eslint.config.mjs', 'eslint-rules/**'
  *   - controller/ : path alias만 강제 (NestJS 생태계 자유 사용)
  *   - provider/   : path alias만 강제 (ORM/SDK 자유 사용 — 구현 계층이므로)
  */
-export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pathAliasPattern = basePathAliasPattern) {
+export function buildLayerRestrictions(
+  frameworkPackages,
+  infraPackages = [],
+  pathAliasPattern = basePathAliasPattern,
+) {
   return defineConfig(
     // ─── model/ : 순수 TS 유지 ──────────────────────────────────────────
     // 프레임워크/외부 라이브러리 금지, 다른 레이어 import 금지
     {
-      files: ['src/modules/**/model/**/*.ts'],
+      files: ["src/modules/**/model/**/*.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [
               pathAliasPattern,
               {
                 group: frameworkPackages,
                 message:
-                  'model/ must not import frameworks or external libraries.',
+                  "model/ must not import frameworks or external libraries.",
               },
               {
                 group: [
-                  '**/service/**',
-                  '**/controller/**',
-                  '**/provider/**',
-                  '**/dto/**',
+                  "**/service/**",
+                  "**/controller/**",
+                  "**/provider/**",
+                  "**/dto/**",
                 ],
                 message:
-                  'model/ must not import from other layers (service, controller, provider, dto).',
+                  "model/ must not import from other layers (service, controller, provider, dto).",
               },
             ],
           },
@@ -603,25 +602,25 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // NestJS DI 관련 심볼만 예외적으로 허용. 나머지 @nestjs/* 는 금지
     // (controller/HTTP 관심사가 service에 스며드는 것을 막기 위함)
     {
-      files: ['src/modules/**/service/**/*.ts'],
-      ignores: ['**/*.spec.ts'],
+      files: ["src/modules/**/service/**/*.ts"],
+      ignores: ["**/*.spec.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             // `paths`는 특정 패키지에서 허용 심볼만 화이트리스트할 때 사용
             paths: [
               {
-                name: '@nestjs/common',
-                allowImportNames: ['Injectable', 'Inject'],
+                name: "@nestjs/common",
+                allowImportNames: ["Injectable", "Inject"],
                 message:
-                  'service/ may only import Injectable and Inject from @nestjs/common.',
+                  "service/ may only import Injectable and Inject from @nestjs/common.",
               },
               {
-                name: '@nestjs/event-emitter',
-                allowImportNames: ['OnEvent'],
+                name: "@nestjs/event-emitter",
+                allowImportNames: ["OnEvent"],
                 message:
-                  'service/ may only import OnEvent from @nestjs/event-emitter.',
+                  "service/ may only import OnEvent from @nestjs/event-emitter.",
               },
             ],
             patterns: [
@@ -629,26 +628,28 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
               {
                 // @nestjs/* 전부 차단하되 위 paths의 두 패키지는 예외 (`!` prefix)
                 group: [
-                  '@nestjs/*',
-                  '!@nestjs/common',
-                  '!@nestjs/event-emitter',
+                  "@nestjs/*",
+                  "!@nestjs/common",
+                  "!@nestjs/event-emitter",
                 ],
                 message:
-                  'service/ must not import from @nestjs/* (except @nestjs/common and @nestjs/event-emitter).',
+                  "service/ must not import from @nestjs/* (except @nestjs/common and @nestjs/event-emitter).",
               },
               // 인프라 SDK(GCP/Anthropic 등) 직접 사용 금지 — Port를 통해 추상화
               ...(infraPackages.length > 0
-                ? [{
-                    group: infraPackages,
-                    message:
-                      'service/ must not import infrastructure SDKs directly.',
-                  }]
+                ? [
+                    {
+                      group: infraPackages,
+                      message:
+                        "service/ must not import infrastructure SDKs directly.",
+                    },
+                  ]
                 : []),
               {
                 // 역방향 의존 차단
-                group: ['**/controller/**', '**/provider/**'],
+                group: ["**/controller/**", "**/provider/**"],
                 message:
-                  'service/ must not import from controller/ or provider/.',
+                  "service/ must not import from controller/ or provider/.",
               },
             ],
           },
@@ -659,39 +660,39 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // ─── port/ : 인터페이스 ──────────────────────────────────────────────
     // Express 등 HTTP 프레임워크 타입이 섞이면 포팅성이 깨지므로 금지
     {
-      files: ['src/modules/**/port/**/*.ts'],
+      files: ["src/modules/**/port/**/*.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [
               pathAliasPattern,
               {
                 group: frameworkPackages,
                 message:
-                  'port/ must not import frameworks — use domain types instead.',
+                  "port/ must not import frameworks — use domain types instead.",
               },
               {
                 group: [
-                  '**/service/**',
-                  '**/controller/**',
-                  '**/provider/**',
-                  '**/dto/**',
+                  "**/service/**",
+                  "**/controller/**",
+                  "**/provider/**",
+                  "**/dto/**",
                 ],
                 message:
-                  'port/ must not import from service/, controller/, provider/, or dto/.',
+                  "port/ must not import from service/, controller/, provider/, or dto/.",
               },
             ],
           },
         ],
         // Express.Multer.File 같은 global namespace 참조 차단
         // (import이 아닌 전역 타입이라 no-restricted-imports로는 못 잡음)
-        'no-restricted-syntax': [
-          'error',
+        "no-restricted-syntax": [
+          "error",
           {
             selector: 'TSQualifiedName[left.name="Express"]',
             message:
-              'port/ must not reference Express global namespace types (e.g., Express.Multer.File). Convert to a domain type (ImageInput, FileBlob, etc.).',
+              "port/ must not reference Express global namespace types (e.g., Express.Multer.File). Convert to a domain type (ImageInput, FileBlob, etc.).",
           },
         ],
       },
@@ -700,16 +701,16 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // ─── exception/ : 도메인 예외 ────────────────────────────────────────
     // HttpException 같은 Nest 타입에 의존하면 도메인 순수성이 깨진다
     {
-      files: ['src/modules/**/exception/**/*.ts'],
+      files: ["src/modules/**/exception/**/*.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [
               pathAliasPattern,
               {
-                group: ['@nestjs/*', ...infraPackages],
-                message: 'exception/ must not import frameworks.',
+                group: ["@nestjs/*", ...infraPackages],
+                message: "exception/ must not import frameworks.",
               },
             ],
           },
@@ -721,10 +722,10 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // class-validator/class-transformer 사용 허용 (DTO는 직렬화 관심사)
     // 오직 path alias만 강제
     {
-      files: ['src/modules/**/dto/**/*.ts'],
+      files: ["src/modules/**/dto/**/*.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [pathAliasPattern],
           },
@@ -735,11 +736,11 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // ─── controller/ : HTTP 어댑터 ──────────────────────────────────────
     // NestJS 데코레이터/가드/파이프 자유 사용 — path alias만 강제
     {
-      files: ['src/modules/**/controller/**/*.ts'],
-      ignores: ['**/*.spec.ts'],
+      files: ["src/modules/**/controller/**/*.ts"],
+      ignores: ["**/*.spec.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [pathAliasPattern],
           },
@@ -750,11 +751,11 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
     // ─── provider/ : Port 구현체 ────────────────────────────────────────
     // TypeORM/외부 SDK 자유 사용 — 구현 계층이므로 인프라 접근 허용
     {
-      files: ['src/modules/**/provider/**/*.ts'],
-      ignores: ['**/*.spec.ts'],
+      files: ["src/modules/**/provider/**/*.ts"],
+      ignores: ["**/*.spec.ts"],
       rules: {
-        'no-restricted-imports': [
-          'error',
+        "no-restricted-imports": [
+          "error",
           {
             patterns: [pathAliasPattern],
           },
@@ -773,20 +774,24 @@ export function buildLayerRestrictions(frameworkPackages, infraPackages = [], pa
  *   - boundaries/dependencies     : error — from → to 관계 allow-list 검사
  *     (default: 'disallow' — allow에 없으면 전부 거부)
  */
-export function buildArchitectureBoundaries(elements, rules, ignores = baseBoundaryIgnores) {
+export function buildArchitectureBoundaries(
+  elements,
+  rules,
+  ignores = baseBoundaryIgnores,
+) {
   return defineConfig({
     plugins: { boundaries },
     settings: {
-      'boundaries/elements': elements,
-      'boundaries/ignore': ignores,
+      "boundaries/elements": elements,
+      "boundaries/ignore": ignores,
     },
     rules: {
-      'boundaries/no-unknown': 'off',
-      'boundaries/no-unknown-files': 'warn',
-      'boundaries/dependencies': [
-        'error',
+      "boundaries/no-unknown": "error",
+      "boundaries/no-unknown-files": "error",
+      "boundaries/dependencies": [
+        "error",
         {
-          default: 'disallow',
+          default: "disallow",
           rules,
         },
       ],

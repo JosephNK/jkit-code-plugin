@@ -1,15 +1,14 @@
 # Conventions
 
+> 레이어 경로 매핑: `@jkit/eslint-rules/nextjs/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md`
+
 ## General Rules
 
 - Path alias: `@/*` → `src/`
 - Functional components + TypeScript
 
 ## Layer Rules
-
-> 아래 두 문서는 `eslint.rules.mjs`에서 자동 생성되며 `@jkit/eslint-rules` 패키지에 포함됨.
-> - 레이어별 경로: `@jkit/eslint-rules/nextjs/base/lint-rules-structure-reference.md`
-> - Import 허용 매트릭스: `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md` "Allow 매트릭스"
 
 - Domain Port defines Repository contract interfaces
 - Domain Model sits at the bottom of the dependency graph, keeping business logic framework-independent
@@ -141,8 +140,3 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 const dict = await getDictionary(locale);
 return <ProductsContent dict={dict.Products} />;
 ```
-
-## Documentation Reference
-
-- Always check latest docs via Context7 MCP before writing/reviewing Next.js / React
-- Prefer Context7 docs over training data (training cutoff)

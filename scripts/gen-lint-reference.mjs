@@ -661,7 +661,7 @@ function renderRuleOverrides(blocks) {
 
 /**
  * Boundary Allow Patches 렌더.
- * 스택이 base 규칙에 추가 허용을 주입할 때 사용 (예: mongodb → api-repository → db).
+ * 스택이 base 규칙에 추가 허용을 주입할 때 사용 (예: api-repository → new-type).
  * 각 엔트리 형태: { from: 'type', allow: { to: { type: 'X' } } } 또는 배열.
  */
 function renderBoundaryAllowPatches(patches) {

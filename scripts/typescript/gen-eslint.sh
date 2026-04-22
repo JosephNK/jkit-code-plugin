@@ -11,10 +11,10 @@ Arguments:
 
 Options:
   -p <dir>       Output directory (required)
-  --with <list>  Comma-separated stacks (e.g. mantine,mongodb,nextauth)
+  --with <list>  Comma-separated stacks (e.g. mantine,nextauth,tanstack-query)
 
 Examples:
-  ./scripts/gen-eslint.sh nextjs -p ./my-project --with mantine,mongodb,nextauth
+  ./scripts/gen-eslint.sh nextjs -p ./my-project --with mantine,nextauth,tanstack-query
   ./scripts/gen-eslint.sh nextjs -p ./my-project
 EOF
   exit 1
