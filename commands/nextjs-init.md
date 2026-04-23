@@ -65,7 +65,7 @@ This step is optional because the user may need to customize these files.
 If yes:
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/gen-agents.sh nextjs -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.mjs nextjs -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Ensure `src/app` layout
@@ -95,7 +95,7 @@ fi
 
 ### 7. Detect package manager & ensure package.json
 
-`gen-eslint.sh`는 사용자 프로젝트의 `package.json`에 devDependency를 주입하므로 파일이 반드시 존재해야 합니다. 또한 이후 Step 8의 install 명령을 프로젝트가 이미 쓰는 패키지 매니저에 맞춰야 합니다.
+`gen-eslint.mjs`는 사용자 프로젝트의 `package.json`에 devDependency를 주입하므로 파일이 반드시 존재해야 합니다. 또한 이후 Step 8의 install 명령을 프로젝트가 이미 쓰는 패키지 매니저에 맞춰야 합니다.
 
 #### 6-1. Detect
 
@@ -154,39 +154,39 @@ Run the following scripts from the plugin's `scripts/` directory.
 cd "$PROJECT_ROOT"
 
 # 1. GIT.md
-$JKIT_DIR/scripts/gen-git.sh -p docs
+$JKIT_DIR/scripts/gen-git.mjs -p docs
 
 # 2. ARCHITECTURE.md
-$JKIT_DIR/scripts/gen-architecture.sh nextjs -p docs
+$JKIT_DIR/scripts/gen-architecture.mjs nextjs -p docs
 
 # 3. CONVENTIONS.md — 사용자 선택 스택만 사용 (base에는 stylelint 섹션 없음)
 USER_CONV_STACKS="<conventions-stacks>"   # Step 2의 사용자 선택값
 if [ -n "$USER_CONV_STACKS" ]; then
-  $JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs --with "$USER_CONV_STACKS"
+  $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --with "$USER_CONV_STACKS"
 else
-  $JKIT_DIR/scripts/gen-conventions.sh nextjs -p docs
+  $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs
 fi
 
 # 4. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
-$JKIT_DIR/scripts/typescript/gen-eslint.sh nextjs -p . --with <eslint-stacks>
+$JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 
 # 5. Stylelint config (항상 실행, 스택 선택 없음)
 #    - stylelint.config.mjs 생성
 #    - package.json: devDeps + scripts.lint:css + lint-staged 자동 주입
-$JKIT_DIR/scripts/typescript/gen-stylelint.sh nextjs -p .
+$JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 
 # 6. tsconfig.json patch
-$JKIT_DIR/scripts/typescript/gen-tsconfig.sh nextjs -p .
+$JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
 
 # 7. Husky hooks
-$JKIT_DIR/scripts/typescript/gen-husky.sh nextjs -p .
+$JKIT_DIR/scripts/typescript/gen-husky.mjs nextjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
 
 ### 9. Install ESLint rules dependency
 
-`gen-eslint.sh`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
+`gen-eslint.mjs`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
 
 ```json
 "@jkit/eslint-rules": "github:JosephNK/jkit-code-plugin#v<current-version>"

@@ -56,7 +56,7 @@ This step is optional because the user may need to customize these files.
 If yes:
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/gen-agents.sh flutter -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.mjs flutter -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Run generator scripts
@@ -67,26 +67,26 @@ Run the following scripts from the plugin's `scripts/` directory.
 cd "$PROJECT_ROOT"
 
 # 1. GIT.md
-$JKIT_DIR/scripts/gen-git.sh -p docs
+$JKIT_DIR/scripts/gen-git.mjs -p docs
 
 # 2. ARCHITECTURE.md
-$JKIT_DIR/scripts/gen-architecture.sh flutter -p docs
+$JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 
 # 3. CONVENTIONS.md
-$JKIT_DIR/scripts/gen-conventions.sh flutter -p docs --with <conventions-stacks>
+$JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks>
 
 # 4. .pre-commit-config.yaml
-$JKIT_DIR/scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-precommit.mjs flutter -p . -entry <entry-dir>
 
 # 5. pyproject.toml
-$JKIT_DIR/scripts/flutter/gen-pyproject.sh flutter -p . -entry <entry-dir> -n "<project-name>" -d "<description>" -a "<author>"
+$JKIT_DIR/scripts/flutter/gen-pyproject.mjs flutter -p . -entry <entry-dir> -n "<project-name>" -d "<description>" -a "<author>"
 
 # 6. Utility scripts
-$JKIT_DIR/scripts/flutter/gen-scripts.sh -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-scripts.mjs -p . -entry <entry-dir>
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
-Skip `-d` and `-a` in gen-pyproject.sh if the user did not provide them.
+Skip `-d` and `-a` in gen-pyproject.mjs if the user did not provide them.
 
 ### 7. Install dependencies
 
@@ -109,7 +109,7 @@ If yes, inject the plugin into the Flutter entry project. This must run **after*
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.sh flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir>
 ```
 
 After injection, run `dart pub get` in the entry directory to resolve the new dependency:

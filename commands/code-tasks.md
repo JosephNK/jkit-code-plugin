@@ -421,11 +421,11 @@ slice_dir = <dirname of OUTPUT> / <basename(OUTPUT) lowercase, .md 제거> /
 
 **실행**:
 
-실행 전에 `slice-tasks.sh`의 존재 여부와 실행 권한을 확인합니다. 스크립트가 없거나 실행할 수 없으면 경고를 출력하고 Task 문서 저장은 유지합니다.
+실행 전에 `slice-tasks.mjs`의 존재 여부와 실행 권한을 확인합니다. 스크립트가 없거나 실행할 수 없으면 경고를 출력하고 Task 문서 저장은 유지합니다.
 
 ```bash
 JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
-$JKIT_DIR/scripts/slice-tasks.sh --mode compact <OUTPUT> <slice_dir>
+$JKIT_DIR/scripts/slice-tasks.mjs --mode compact <OUTPUT> <slice_dir>
 ```
 
 스크립트가 자동으로 수행하는 작업:

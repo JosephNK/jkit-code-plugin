@@ -2,7 +2,7 @@
 // JKit NestJS ESLint Config Template
 // -----------------------------------------------------------------------------
 // 프로젝트 초기화(`/jkit:nestjs-init`) 시 `eslint.config.mjs`로 복사되는 템플릿.
-// `{{PLACEHOLDER}}` 마커는 gen-eslint.sh가 선택된 스택(TypeORM, GCP, Anthropic 등)
+// `{{PLACEHOLDER}}` 마커는 gen-eslint.mjs가 선택된 스택(TypeORM, GCP, Anthropic 등)
 // 의 rules.mjs에서 export된 값으로 치환한다.
 //
 // 플레이스홀더:

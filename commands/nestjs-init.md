@@ -61,12 +61,12 @@ This step is optional because the user may need to customize these files.
 If yes:
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/gen-agents.sh nestjs -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.mjs nestjs -p . -n "<project-name>" --docs-dir docs
 ```
 
 ### 6. Detect package manager & ensure package.json
 
-`gen-eslint.sh`는 사용자 프로젝트의 `package.json`에 devDependency를 주입하므로 파일이 반드시 존재해야 합니다. 또한 이후 Step 8의 install 명령을 프로젝트가 이미 쓰는 패키지 매니저에 맞춰야 합니다.
+`gen-eslint.mjs`는 사용자 프로젝트의 `package.json`에 devDependency를 주입하므로 파일이 반드시 존재해야 합니다. 또한 이후 Step 8의 install 명령을 프로젝트가 이미 쓰는 패키지 매니저에 맞춰야 합니다.
 
 #### 6-1. Detect
 
@@ -125,29 +125,29 @@ Run the following scripts from the plugin's `scripts/` directory.
 cd "$PROJECT_ROOT"
 
 # 1. GIT.md
-$JKIT_DIR/scripts/gen-git.sh -p docs
+$JKIT_DIR/scripts/gen-git.mjs -p docs
 
 # 2. ARCHITECTURE.md
-$JKIT_DIR/scripts/gen-architecture.sh nestjs -p docs
+$JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 
 # 3. CONVENTIONS.md
-$JKIT_DIR/scripts/gen-conventions.sh nestjs -p docs --with <conventions-stacks>
+$JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 
 # 4. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
-$JKIT_DIR/scripts/typescript/gen-eslint.sh nestjs -p . --with <eslint-stacks>
+$JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
 # 5. tsconfig.json patch
-$JKIT_DIR/scripts/typescript/gen-tsconfig.sh nestjs -p . --with <tsconfig-stacks>
+$JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with <tsconfig-stacks>
 
 # 6. Husky hooks
-$JKIT_DIR/scripts/typescript/gen-husky.sh nestjs -p .
+$JKIT_DIR/scripts/typescript/gen-husky.mjs nestjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
 
 ### 8. Install ESLint rules dependency
 
-`gen-eslint.sh`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
+`gen-eslint.mjs`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
 
 ```json
 "@jkit/eslint-rules": "github:JosephNK/jkit-code-plugin#v<current-version>"

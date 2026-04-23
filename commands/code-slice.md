@@ -51,7 +51,7 @@ slice_dir = <dirname(input)> / <basename(input) lowercase, .md 제거> /
 
 ### Step 2: 슬라이싱 실행
 
-각 입력 파일에 대해 출력 디렉토리를 위 규칙으로 계산한 뒤 `slice-tasks.sh` 호출:
+각 입력 파일에 대해 출력 디렉토리를 위 규칙으로 계산한 뒤 `slice-tasks.mjs` 호출:
 
 ```bash
 JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
@@ -62,11 +62,11 @@ for input in <입력 파일 목록>; do
   base=$(basename "$input" .md | tr '[:upper:]' '[:lower:]')
   out_dir="$dir/$base/"
   echo ">> Slicing $input -> $out_dir"
-  "$JKIT_DIR/scripts/slice-tasks.sh" --mode "$mode" "$input" "$out_dir" || echo "  ⚠ failed: $input"
+  "$JKIT_DIR/scripts/slice-tasks.mjs" --mode "$mode" "$input" "$out_dir" || echo "  ⚠ failed: $input"
 done
 ```
 
-`slice-tasks.sh`는 파싱한 `--mode`로 실행됩니다.
+`slice-tasks.mjs`는 파싱한 `--mode`로 실행됩니다.
 
 - compact mode — 최소 공통 문맥 + 해당 Task 상세 + 적용 컨벤션/관련 리스크 중심
 - full mode — 기존 방식대로 공통 헤더 + 해당 Task + 공통 푸터 포함
@@ -114,7 +114,7 @@ done
 
 ## 주의
 
-- 입력 마크다운에 **`### Task N`** (h3) 헤더가 1개 이상 있어야 한다. 없으면 슬라이싱이 실패한다 (slice-tasks.sh가 에러로 종료)
+- 입력 마크다운에 **`### Task N`** (h3) 헤더가 1개 이상 있어야 한다. 없으면 슬라이싱이 실패한다 (slice-tasks.mjs가 에러로 종료)
 - 슬라이스 파일 첫 두 줄에 출처 SHA·타임스탬프 메타 주석이 자동 삽입되며, harness가 이를 stale 감지에 사용한다
 - compact 슬라이스에는 `<!-- slice-mode: compact -->` 메타 주석이 추가된다
 - 입력에서 사라진 Task ID에 해당하는 슬라이스 파일은 자동 제거된다 (예: TASKS.md에서 Task 3 삭제 시 `tasks/Task-3.md` 자동 삭제)

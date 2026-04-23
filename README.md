@@ -113,20 +113,20 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 
 ```bash
 # Agents, Git, Architecture, Conventions
-./scripts/gen-agents.sh <framework> -p /path/to/project -n "Project Name"
-./scripts/gen-git.sh -p /path/to/project
-./scripts/gen-architecture.sh <framework> -p /path/to/project
-./scripts/gen-conventions.sh <framework> -p /path/to/project --with stack1,stack2
+./scripts/gen-agents.mjs <framework> -p /path/to/project -n "Project Name"
+./scripts/gen-git.mjs -p /path/to/project
+./scripts/gen-architecture.mjs <framework> -p /path/to/project
+./scripts/gen-conventions.mjs <framework> -p /path/to/project --with stack1,stack2
 
 # TypeScript (Next.js / NestJS)
-./scripts/typescript/gen-eslint.sh <framework> -p /path/to/project --with stack1,stack2
-./scripts/typescript/gen-tsconfig.sh <framework> -p /path/to/project --with stack1
-./scripts/typescript/gen-husky.sh -p /path/to/project
+./scripts/typescript/gen-eslint.mjs <framework> -p /path/to/project --with stack1,stack2
+./scripts/typescript/gen-tsconfig.mjs <framework> -p /path/to/project --with stack1
+./scripts/typescript/gen-husky.mjs <framework> -p /path/to/project
 
 # Flutter
-./scripts/flutter/gen-precommit.sh -p /path/to/project
-./scripts/flutter/gen-pyproject.sh -p /path/to/project
-./scripts/flutter/gen-scripts.sh -p /path/to/project
+./scripts/flutter/gen-precommit.mjs -p /path/to/project
+./scripts/flutter/gen-pyproject.mjs -p /path/to/project
+./scripts/flutter/gen-scripts.mjs -p /path/to/project
 ```
 
 ## Convention System
@@ -135,7 +135,7 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 
 1. `rules/<framework>/base/conventions.md` — 프레임워크 공통 규칙
 2. `rules/<framework>/<stack>/conventions.md` — 스택별 추가 규칙
-3. `gen-conventions.sh`가 선택된 스택을 순서대로 concat → 최종 CONVENTIONS.md 생성
+3. `gen-conventions.mjs`가 선택된 스택을 순서대로 concat → 최종 CONVENTIONS.md 생성
 
 ### 새 스택 추가
 

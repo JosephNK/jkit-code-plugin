@@ -313,11 +313,11 @@ slice_dir = <dirname of OUTPUT> / <basename(OUTPUT) lowercase, .md 제거> /
 
 **실행**:
 
-실행 전에 `slice-phases.sh`의 존재 여부와 실행 권한을 확인합니다. 스크립트가 없거나 실행할 수 없으면 경고 후 PHASES.md 저장은 유지.
+실행 전에 `slice-phases.mjs`의 존재 여부와 실행 권한을 확인합니다. 스크립트가 없거나 실행할 수 없으면 경고 후 PHASES.md 저장은 유지.
 
 ```bash
 JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
-$JKIT_DIR/scripts/slice-phases.sh --mode compact <OUTPUT> <slice_dir>
+$JKIT_DIR/scripts/slice-phases.mjs --mode compact <OUTPUT> <slice_dir>
 ```
 
 스크립트 수행 내용:

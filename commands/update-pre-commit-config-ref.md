@@ -23,7 +23,7 @@ Ask the user for the Flutter entry directory. Default: `app`.
 ### 2. Run generator script
 
 ```bash
-$JKIT_DIR/scripts/flutter/gen-precommit.sh flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-precommit.mjs flutter -p . -entry <entry-dir>
 ```
 
 ### 3. Reinstall hooks
