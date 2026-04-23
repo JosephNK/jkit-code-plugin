@@ -179,7 +179,7 @@ $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
 
 # 7. Husky hooks
-$JKIT_DIR/scripts/typescript/gen-husky.mjs nextjs -p .
+$JKIT_DIR/scripts/gen-husky.mjs nextjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.

@@ -57,7 +57,7 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 
 | Command | Description |
 |---------|-------------|
-| `/jkit:flutter-init` | 프로젝트 초기화 (conventions, pre-commit, pyproject 등) |
+| `/jkit:flutter-init` | 프로젝트 초기화 (conventions, husky hooks, commitlint, pyproject 등) |
 | `/jkit:flutter-app-scaffold` | app.dart, main.dart, router, 다국어 리소스 생성 |
 | `/jkit:flutter-android-setup` | build.gradle.kts, AndroidManifest, proguard 설정 |
 | `/jkit:flutter-ios-setup` | pbxproj (4 flavor × 3 build type), xcscheme, Info.plist 설정 |
@@ -98,7 +98,6 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 | `/jkit:flutter-update-dependencies` | pub.dev 패키지 최신 버전 업데이트 |
 | `/jkit:flutter-update-leaf-kit-ref` | flutter_leaf_kit git ref 일괄 업데이트 |
 | `/jkit:flutter-update-architecture-lint-ref` | architecture_lint git ref 일괄 업데이트 |
-| `/jkit:flutter-update-precommit` | .pre-commit-config.yaml 재생성 |
 
 ### Cross-Framework
 
@@ -118,13 +117,14 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 ./scripts/gen-architecture.mjs <framework> -p /path/to/project
 ./scripts/gen-conventions.mjs <framework> -p /path/to/project --with stack1,stack2
 
+# Husky hooks (all frameworks)
+./scripts/gen-husky.mjs <framework> -p /path/to/project [-entry <dir>]
+
 # TypeScript (Next.js / NestJS)
 ./scripts/typescript/gen-eslint.mjs <framework> -p /path/to/project --with stack1,stack2
 ./scripts/typescript/gen-tsconfig.mjs <framework> -p /path/to/project --with stack1
-./scripts/typescript/gen-husky.mjs <framework> -p /path/to/project
 
 # Flutter
-./scripts/flutter/gen-precommit.mjs -p /path/to/project
 ./scripts/flutter/gen-pyproject.mjs -p /path/to/project
 ./scripts/flutter/gen-scripts.mjs -p /path/to/project
 ```

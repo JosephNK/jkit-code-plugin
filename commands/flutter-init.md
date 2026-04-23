@@ -18,7 +18,7 @@ All script paths below use `$JKIT_DIR` as the base directory.
 
 ## Pin project root
 
-**IMPORTANT**: Capture the project root **before** running any step, and `cd` into it at the start of every step that executes scripts or `poetry run` commands. cwd drift (e.g., a prior `cd app/` that was not reverted) is the most common cause of wrong-directory bugs (overwriting `app/AGENTS.md`, pre-commit hooks baking wrong config paths, etc.).
+**IMPORTANT**: Capture the project root **before** running any step, and `cd` into it at the start of every step that executes scripts. cwd drift (e.g., a prior `cd app/` that was not reverted) is the most common cause of wrong-directory bugs (overwriting `app/AGENTS.md`, husky hooks baking wrong config paths, etc.).
 
 ```bash
 PROJECT_ROOT="$(pwd)"   # run this from the intended project root
@@ -38,7 +38,7 @@ Show the **conventions** stacks below and ask the user to select (comma-separate
 
 > Available conventions stacks: `bloc`, `freezed`, `go-router`, `leaf-kit`, `easy-localization`
 
-### 3. Ask pre-commit entry directory
+### 3. Ask Flutter entry directory
 
 Ask the user for the Flutter entry directory. Default: `app`.
 
@@ -75,8 +75,8 @@ $JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 # 3. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks>
 
-# 4. .pre-commit-config.yaml
-$JKIT_DIR/scripts/flutter/gen-precommit.mjs flutter -p . -entry <entry-dir>
+# 4. Husky hooks (.husky/pre-commit에 <entry-dir>이 인라인 치환됨, .husky/commit-msg)
+$JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
 
 # 5. pyproject.toml
 $JKIT_DIR/scripts/flutter/gen-pyproject.mjs flutter -p . -entry <entry-dir> -n "<project-name>" -d "<description>" -a "<author>"
@@ -90,13 +90,12 @@ Skip `-d` and `-a` in gen-pyproject.mjs if the user did not provide them.
 
 ### 7. Install dependencies
 
-**IMPORTANT**: Always `cd "$PROJECT_ROOT"` before `poetry run pre-commit install`. If cwd is wrong, the generated `.git/hooks/pre-commit` bakes in a wrong relative `--config` path and every subsequent commit fails with "No .pre-commit-config.yaml found".
+Run `poetry install` so `pyproject.toml`의 스크립트/태스크 런너가 준비되도록 합니다. husky 훅은 downstream의 `package.json` + `npm install` 흐름에서 활성화되므로 여기서는 건드리지 않습니다.
 
 ```bash
 cd "$PROJECT_ROOT"
 poetry install
 git config --local --unset-all core.hooksPath || true
-poetry run pre-commit install
 ```
 
 ### 8. Inject architecture lint plugin (optional)
@@ -105,7 +104,7 @@ Ask the user whether to inject `architecture_lint` analyzer plugin. Default: **n
 
 > `architecture_lint`는 레이어 의존성 규칙을 강제하는 커스텀 Dart analyzer plugin입니다. 프로젝트가 명확한 레이어 구조(clean architecture 등)를 따를 때 활성화를 권장합니다.
 
-If yes, inject the plugin into the Flutter entry project. This must run **after** `poetry install` (requires `ruamel-yaml`).
+If yes, inject the plugin into the Flutter entry project.
 
 ```bash
 cd "$PROJECT_ROOT"
@@ -128,7 +127,8 @@ Tell the user what was created:
 - `GIT.md` — Git & GitHub guide
 - `ARCHITECTURE.md` — Architecture details
 - `CONVENTIONS.md` — Conventions with selected stacks
-- `.pre-commit-config.yaml` — Pre-commit hooks (dart format, flutter analyze, flutter test)
+- `.husky/pre-commit` — husky pre-commit hook (dart format, flutter analyze, architecture_lint, flutter test related; entry 디렉토리가 파일에 베이킹됨)
+- `.husky/commit-msg` — husky commit-msg hook (`commitlint --edit $1`)
 - `pyproject.toml` — Poetry config for project scripts
 - `scripts/flutter-build-deploy.sh` — Flutter build wrapper
 - `scripts/update-dependencies.sh` — Dependencies update wrapper

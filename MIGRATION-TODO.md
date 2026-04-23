@@ -27,9 +27,10 @@
 
 ## 2. Shell 스크립트 — 플러그인 소유 (1개)
 
-- [ ] `hooks/block-dangerous-commands.sh`
-  - ⚠️ `hooks/hooks.json`에서 참조되지 않음 (hooks.json은 command 인라인)
-  - **obsolete 여부 먼저 확인 필요** → 삭제 vs `.mjs` 변환 결정
+- [ ] `hooks/block-dangerous-commands.sh` — **보류**
+  - `hooks/hooks.json`에서 참조되지 않음 (hooks.json은 command 인라인)
+  - 이 파일에만 있는 rm -rf 차단 룰은 현재 hooks.json에 이식되지 않음
+  - 처리 방침 후속 결정
 
 ---
 
@@ -40,16 +41,12 @@
   - `.mjs` → `node scripts/flutter/<path>.mjs`
   - `.py`  → `poetry run python scripts/flutter/<path>.py`
   - WRAPPERS 항목 `python` → `script`로 리네임
-- [ ] **`scripts/flutter/gen-pyproject.mjs`**
-  - ⚠️ 당장 제거 불가: downstream Flutter 프로젝트의 pre-commit 훅이 `poetry run pre-commit install`에 의존
-  - `template/*.py` 12개도 아직 남아있음 → 이전 완료 후에도 pyproject 유지 여부 재판단
-- [ ] **`example/hello_flutter/scripts/*.sh`** (6개)
-  - `flutter-build-deploy.sh`, `update-dependencies.sh`, `update-leaf-kit-ref.sh`, `android-show-info-keystore.sh`, `android-signing-report.sh`, `android-signing-verify-apk.sh`
-  - `gen-scripts.mjs` 출력물 → 재생성 시 자동 갱신
-- [ ] **`commands/*.md`** 일괄 스윕
-  - `.py` 경로 언급
-  - `poetry run` 명령어
-  - `scripts/flutter/<path>.py` → `<path>.mjs`
+- [x] **`scripts/flutter/gen-pyproject.mjs`** — 유지 (프로젝트 스크립트용 Poetry 태스크 러너로만 사용; pre-commit이 husky로 이전되어 `poetry run pre-commit install` 의존은 사라짐)
+- [x] **`example/hello_flutter/scripts/*.sh`** (6개) ✅ 모두 `.mjs`를 가리키도록 갱신됨 (`gen-scripts.mjs`로 재생성)
+- [x] **`commands/*.md`** 스윕 ✅ 완료
+  - 플러그인 `.py` 경로 언급 없음
+  - `flutter-init.md` Step 7에서 `poetry run pre-commit install` 제거 (husky 전환에 따라)
+  - `code-harness.md`의 Python 항목은 범용 빌드 체크리스트 (의도된 참조)
 
 ---
 
@@ -64,12 +61,46 @@
 
 ## 작업 우선순위
 
-1. **shell 정리**: `block-dangerous-commands.sh` 사용 여부 확인 → 제거 or 변환
+1. **shell 정리**: `block-dangerous-commands.sh` — **보류** (후속 결정)
 2. ~~**독립 Python 템플릿**: `template/*.py` 12개~~ ✅ 완료 (`.mjs`로 포팅 + SKILL.md 4종 참조 갱신)
-3. **의존성 있는 Python**: `keystore/`, `setup/`, `create/`, `build/`, `dependencies/`, `architecture_lint/`
+3. ~~**의존성 있는 Python**: `keystore/`, `setup/`, `create/`, `build/`, `dependencies/`, `architecture_lint/`~~ ✅ 완료
 4. ~~**openapi 패키지**~~ ✅ 완료 (5-phase 분할: update_pubspec → dart_name_utils → openapi_parser → generate_api + 9 .j2 (nunjucks) → _run + __init__ + .py 정리)
 5. ~~**`rules/flutter/custom-lint/architecture-lint.py`**~~ ✅ 완료
-6. **연동 수정**: `gen-scripts.mjs` 수정 → example 재생성 → `commands/*.md` 스윕 → `gen-pyproject.mjs` 정리
+6. ~~**연동 수정**: `gen-scripts.mjs` → example 재생성 → `commands/*.md` 스윕 → `gen-pyproject.mjs` 정리~~ ✅ 완료
+
+**플러그인 `.py` 파일 포팅 전체 완료** (잔여: `block-dangerous-commands.sh` 처리 방침 결정만 남음).
+
+---
+
+## 5. husky 이전 (pre-commit 프레임워크 → husky)
+
+2026-04-23 착수. 기존 `gen-precommit.mjs`가 생성하던 `.pre-commit-config.yaml`의 4개 로컬 훅을 husky `.husky/pre-commit` 인라인 bash로 이식. pre-commit 공통 훅(trailing-whitespace/EOF/check-yaml)은 드롭. lint-staged/자체 bin 래퍼는 도입하지 않음(룰이 모두 프로젝트 전체 대상이라 불필요).
+
+### 완료
+
+- [x] **`scripts/typescript/gen-husky.mjs` → `scripts/gen-husky.mjs` 이동** (flutter·nestjs·nextjs 공용이므로 typescript 하위가 아닌 공용 위치로). `-entry <dir>` 옵션 추가 → `{{ENTRY}}` 치환
+- [x] **`rules/flutter/base/husky/pre-commit`** 4개 bash 룰 이식 (`{{ENTRY}}` placeholder)
+- [x] **`rules/flutter/base/husky/commit-msg`** (사용자 seed 유지, `commitlint --edit $1`). commitlint 설정은 nestjs/nextjs 패턴과 일관되게 downstream 책임으로 둠 (플러그인이 `commitlint.config.mjs` 템플릿을 제공하지 않음).
+- [x] **삭제**: `scripts/flutter/gen-precommit.mjs`
+- [x] **참조 갱신**: `commands/flutter-init.md` (Step 4 husky hooks + Step 7 `poetry run pre-commit install` 제거 + Step 9 Report 갱신), `commands/nestjs-init.md`, `commands/nextjs-init.md`, `README.md`
+
+### 매핑 결과
+
+| 기존 pre-commit 훅 | 이식 방식 |
+|---|---|
+| `trailing-whitespace` / `end-of-file-fixer` / `check-yaml` | **드롭** (필요 시 추후 prettier 등으로 복원 가능) |
+| `dart-format` | `echo "$staged_dart" \| xargs dart format --set-exit-if-changed` (husky 인라인) |
+| `flutter-analyze` | `(cd {{ENTRY}} && flutter analyze --fatal-infos)` (husky 인라인) |
+| `architecture-lint` | `(cd {{ENTRY}} && dart run architecture_lint:lint "$(pwd)")` (IDE plugin과 동일 Dart 패키지) |
+| `flutter-test` (related) | 기존 bash one-liner 그대로 husky 인라인 |
+| `conventional-pre-commit` (commit-msg) | `npx --no -- commitlint --edit $1` (commitlint 설정은 downstream 책임) |
+
+- [x] **`commands/update-pre-commit-config-ref.md` 삭제** — 호출하던 `gen-precommit.mjs`가 사라진 데다, nestjs/nextjs에 동등 command 없음(일관성 부재), husky는 install 단계가 없어 재생성은 `scripts/gen-husky.mjs` 한 줄이면 충분. `README.md`의 `/jkit:flutter-update-precommit` 엔트리도 함께 제거.
+
+### 후속 검토 필요 (이번 세션 범위 밖)
+
+- [ ] **`pyproject.toml` / `poetry.lock` / `gen-pyproject.mjs` 제거 가능성** — pre-commit 의존 제거로 Poetry의 유일한 잔여 목적은 프로젝트 스크립트 태스크 러너. downstream이 husky+npm 체인으로 정착되면 Poetry 완전 드롭 검토 가능.
+- [ ] **downstream 설치 체인 설계** — Flutter 프로젝트에 `package.json` + husky/@commitlint devDeps 추가 방법. `example/hello_flutter` 검증은 사용자 지시로 이번 범위 밖.
 
 ---
 
@@ -80,4 +111,4 @@
 - **보안**: `execSync`/`exec` 금지 → `execFileSync` / `spawnSync`의 argv 배열 형태만 사용 (shell 미경유)
 - 스크립트 상대 경로: `fileURLToPath(import.meta.url)` + `path.dirname(...)`
 - JSON 파일 편집: `JSON.stringify(data, null, 2) + '\n'` (trailing newline 유지)
-- HELP 문자열, `parseArgs()`, `usage(code)` 컨벤션은 `scripts/typescript/gen-husky.mjs` 참조
+- HELP 문자열, `parseArgs()`, `usage(code)` 컨벤션은 `scripts/gen-husky.mjs` 참조

@@ -140,7 +140,7 @@ $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with <tsconfig-stacks>
 
 # 6. Husky hooks
-$JKIT_DIR/scripts/typescript/gen-husky.mjs nestjs -p .
+$JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
 ```
 
 Skip `--with` if the user selected no stacks for that generator.

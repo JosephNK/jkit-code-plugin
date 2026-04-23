@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -e
+
+# Only run when .dart files are staged.
+staged_dart=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.dart$' || true)
+if [ -z "$staged_dart" ]; then
+  exit 0
+fi
+
+# dart format (fail if any staged .dart file would be reformatted)
+echo "$staged_dart" | xargs dart format --set-exit-if-changed
+
+# flutter analyze
+(cd {{ENTRY}} && flutter analyze --fatal-infos)
+
+# architecture-lint
+(cd {{ENTRY}} && dart run architecture_lint:lint "$(pwd)")
+
+# flutter test (related only)
+(cd {{ENTRY}} && tf=$(git diff --cached --name-only --diff-filter=ACMR | grep "^{{ENTRY}}/.*\.dart$" | sed "s|^{{ENTRY}}/||" | while read f; do if [[ $f == test/*_test.dart ]]; then echo "$f"; elif [[ $f == lib/* ]]; then t="test/${f#lib/}"; t="${t%.dart}_test.dart"; [ -f "$t" ] && echo "$t"; fi; done | sort -u); if [ -n "$tf" ]; then flutter test $tf; else echo "No related tests found, skipping"; fi)
