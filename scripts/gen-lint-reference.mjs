@@ -628,7 +628,7 @@ function renderMatrix(rules) {
   for (const r of rules) {
     const from = r.from?.type || '—';
     const allows = normalizeAllows(r).map((a) => `\`${a.to.type}\``);
-    lines.push(`| \`${from}\` | ${allows.length ? allows.join(', ') : '_(없음)_'} |`);
+    lines.push(`| \`${from}\` | ${allows.length ? allows.join(', ') : '_(no layer imports)_'} |`);
   }
   return lines.join('\n');
 }

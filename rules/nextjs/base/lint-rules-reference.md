@@ -388,14 +388,14 @@ export async function GET(
 | `domain-error` | `domain-error` |
 | `domain-port` | `domain-model` |
 | `domain-service` | `domain-model`, `domain-port`, `domain-error`, `domain-service` |
-| `api-client` | _(없음)_ |
-| `api-endpoint` | _(없음)_ |
-| `api-dto` | _(없음)_ |
+| `api-client` | _(no layer imports)_ |
+| `api-endpoint` | _(no layer imports)_ |
+| `api-dto` | _(no layer imports)_ |
 | `api-mapper` | `domain-model`, `api-dto` |
 | `api-repository` | `api-client`, `api-endpoint`, `api-mapper`, `domain-port`, `domain-error`, `domain-model`, `db` |
 | `api-hook` | `domain-service` |
-| `lib-shared` | _(없음)_ |
-| `db` | _(없음)_ |
+| `lib-shared` | _(no layer imports)_ |
+| `db` | _(no layer imports)_ |
 | `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
 | `page-component` | `api-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
 | `page-provider` | `lib-shared` |
