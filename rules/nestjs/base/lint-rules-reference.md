@@ -258,51 +258,7 @@ export class CreateOrderRequestDto {
 레이어 간 import 관계 (allow-list). 기본 disallow 정책 위에 아래 조합만 허용.
 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
 
-### 의존성 다이어그램
-
-```mermaid
-graph LR
-  model["model"]
-  exception["exception"]
-  common["common"]
-  port["port"]
-  service["service"]
-  infrastructure["infrastructure"]
-  controller["controller"]
-  dto["dto"]
-  libs["libs"]
-  provider["provider"]
-  exception --> common
-  port --> model
-  port --> common
-  service --> model
-  service --> port
-  service --> exception
-  service --> common
-  service --> infrastructure
-  controller --> port
-  controller --> dto
-  controller --> model
-  controller --> exception
-  controller --> common
-  controller --> libs
-  provider --> port
-  provider --> model
-  provider --> common
-  provider --> infrastructure
-  dto --> model
-  dto --> common
-  infrastructure --> common
-  libs --> model
-  libs --> port
-  libs --> service
-  libs --> controller
-  libs --> provider
-  libs --> exception
-  libs --> dto
-  libs --> common
-  libs --> infrastructure
-```
+시각화된 의존성 그래프는 `lint-rules-diagram.md` 참조.
 
 ### Allow 매트릭스
 

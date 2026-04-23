@@ -851,6 +851,26 @@ function renderBoundaryAllowPatches(patches) {
   return lines.join('\n');
 }
 
+/**
+ * `lint-rules-diagram.md` — Mermaid 기반 의존성 그래프 전용 문서.
+ * 사람 독자용 시각화 (LLM/텍스트 조회는 lint-rules-reference.md의 Allow 매트릭스 사용).
+ */
+function renderDiagram({ boundaryRules, stackLabel, inputRelPath }) {
+  const out = [];
+  out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
+  out.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  out.push(`<!-- Source: ${inputRelPath} (baseBoundaryRules) -->`);
+  out.push('');
+  out.push(`# Lint Rules — Dependency Diagram (${stackLabel})`);
+  out.push('');
+  out.push('> 레이어 간 의존성 시각화 (`baseBoundaryRules` allow-list 기반).');
+  out.push('> 텍스트 조회 / Allow 매트릭스 / 레이어별 상세: `lint-rules-reference.md` 참조.');
+  out.push('');
+  out.push(renderMermaid(boundaryRules));
+  out.push('');
+  return out.join('\n');
+}
+
 function renderReference({
   jsdocMap,
   boundaryElements,
@@ -898,9 +918,7 @@ function renderReference({
       body.push(jsdocMap.boundaryRules);
       body.push('');
     }
-    body.push('### 의존성 다이어그램');
-    body.push('');
-    body.push(renderMermaid(boundaryRules));
+    body.push('시각화된 의존성 그래프는 `lint-rules-diagram.md` 참조.');
     body.push('');
     body.push('### Allow 매트릭스');
     body.push('');
@@ -1216,6 +1234,15 @@ function main() {
     });
   } else {
     console.warn(`[skip] ${inputRelPath}: 렌더할 섹션이 없어 lint-rules-reference.md를 생성하지 않습니다.`);
+  }
+
+  // Mermaid 의존성 그래프는 별도 파일로 분리 — 사람 독자용 시각화 전용.
+  // boundaryRules가 있을 때만 생성 (allow-list 데이터가 있어야 그래프 의미가 있음).
+  if (boundaryRules.length) {
+    writes.push({
+      path: path.join(outDir, 'lint-rules-diagram.md'),
+      content: renderDiagram({ boundaryRules, stackLabel, inputRelPath }),
+    });
   }
 
   if (args.check) {
