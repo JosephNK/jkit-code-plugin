@@ -25,26 +25,22 @@ Automatically configures Android build settings for a Flutter project.
 2. **Determine package name**: If package name is omitted
    - If `{entry}/android/app/build.gradle.kts` exists, extract the `namespace` value
    - If the file doesn't exist, prompt the user for the package name
-3. **Install dependencies** (once):
+3. **Generate build.gradle.kts** (full replacement): Generate template code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
-   ```
-4. **Generate build.gradle.kts** (full replacement): Generate template code with the following command
-   ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_android_build_gradle_template.py <AppName> <package_name>
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-android-build-gradle-template.mjs <AppName> <package_name>
    ```
    Save the output to `{entry}/android/app/build.gradle.kts`
-5. **Patch AndroidManifest.xml** (modify existing file): Generate patched code with the following command
+4. **Patch AndroidManifest.xml** (modify existing file): Generate patched code with the following command
    ```bash
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-android-manifest-setup.mjs {entry}/android/app/src/main/AndroidManifest.xml
    ```
    Save the output to `{entry}/android/app/src/main/AndroidManifest.xml`
-6. **Generate proguard-rules.pro** (only if not exists): If the file doesn't exist, generate with the following command
+5. **Generate proguard-rules.pro** (only if not exists): If the file doesn't exist, generate with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_android_proguard_template.py
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-android-proguard-template.mjs
    ```
    Save the output to `{entry}/android/app/proguard-rules.pro`
-7. **Verify results**: Display the list of created/modified files to the user
+6. **Verify results**: Display the list of created/modified files to the user
 
 ## Target Files
 

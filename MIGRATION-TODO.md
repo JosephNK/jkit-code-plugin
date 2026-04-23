@@ -18,7 +18,7 @@
 | `keystore/` | 0 | ~~`android_show_info_keystore.py`~~ ✅ (android-show-info-keystore.mjs), ~~`android_signing_report_keystore.py`~~ ✅ (android-signing-report-keystore.mjs), ~~`android_signing_verify_apk.py`~~ ✅ (android-signing-verify-apk.mjs) |
 | `openapi/` | 0 | ~~`__init__.py`~~ ✅, ~~`_run.py`~~ ✅ (generate-api.mjs가 CLI 역할 흡수), ~~`dart_name_utils.py`~~ ✅ (dart-name-utils.mjs), ~~`generate_api.py`~~ ✅ (generate-api.mjs), ~~`openapi_parser.py`~~ ✅ (openapi-parser.mjs), ~~`update_pubspec.py`~~ ✅ (update-pubspec.mjs) |
 | `setup/` | 0 | ~~`flutter_android_manifest_setup.py`~~ ✅ (flutter-android-manifest-setup.mjs), ~~`flutter_assets_lang_setup.py`~~ ✅ (flutter-assets-lang-setup.mjs), ~~`flutter_ios_info_plist_setup.py`~~ ✅ (flutter-ios-info-plist-setup.mjs), ~~`flutter_route_setup.py`~~ ✅ (flutter-route-setup.mjs) |
-| `template/` | 12 | `flutter_app_template.py`, `flutter_app_bar_template.py`, `flutter_bloc_template.py`, `flutter_body_view_template.py`, `flutter_di_template.py`, `flutter_main_template.py`, `flutter_route_template.py`, `flutter_screen_template.py`, `flutter_android_build_gradle_template.py`, `flutter_android_proguard_template.py`, `flutter_ios_pbxproj_template.py`, `flutter_ios_xcscheme_template.py` |
+| `template/` | 0 | ~~`flutter_app_template.py`~~ ✅, ~~`flutter_app_bar_template.py`~~ ✅, ~~`flutter_bloc_template.py`~~ ✅, ~~`flutter_body_view_template.py`~~ ✅, ~~`flutter_di_template.py`~~ ✅, ~~`flutter_main_template.py`~~ ✅, ~~`flutter_route_template.py`~~ ✅, ~~`flutter_screen_template.py`~~ ✅, ~~`flutter_android_build_gradle_template.py`~~ ✅, ~~`flutter_android_proguard_template.py`~~ ✅, ~~`flutter_ios_pbxproj_template.py`~~ ✅, ~~`flutter_ios_xcscheme_template.py`~~ ✅ (모두 `.mjs`로 포팅, byte-parity 검증 완료) |
 
 ### `rules/flutter/custom-lint/` (0개)
 - [x] ~~`architecture-lint.py`~~ ✅ (architecture-lint.mjs) — hexagonal architecture linter (Dart 소스 import 규칙 검사)
@@ -65,7 +65,7 @@
 ## 작업 우선순위
 
 1. **shell 정리**: `block-dangerous-commands.sh` 사용 여부 확인 → 제거 or 변환
-2. **독립 Python 템플릿**: `template/*.py` 12개 (대부분 텍스트 생성기, 의존성 없음)
+2. ~~**독립 Python 템플릿**: `template/*.py` 12개~~ ✅ 완료 (`.mjs`로 포팅 + SKILL.md 4종 참조 갱신)
 3. **의존성 있는 Python**: `keystore/`, `setup/`, `create/`, `build/`, `dependencies/`, `architecture_lint/`
 4. ~~**openapi 패키지**~~ ✅ 완료 (5-phase 분할: update_pubspec → dart_name_utils → openapi_parser → generate_api + 9 .j2 (nunjucks) → _run + __init__ + .py 정리)
 5. ~~**`rules/flutter/custom-lint/architecture-lint.py`**~~ ✅ 완료

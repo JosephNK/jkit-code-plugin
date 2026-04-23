@@ -25,30 +25,26 @@ Automatically configures iOS build settings for a Flutter project.
 2. **Determine package name**: If package name is omitted
    - Extract `PRODUCT_BUNDLE_IDENTIFIER` value from `{entry}/ios/Runner.xcodeproj/project.pbxproj`
    - If the file doesn't exist, prompt the user for the package name
-3. **Install dependencies** (once):
+3. **Generate project.pbxproj** (full replacement): Generate template code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
-   ```
-4. **Generate project.pbxproj** (full replacement): Generate template code with the following command
-   ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_ios_pbxproj_template.py <AppName> <package_name> {entry}/ios/Runner.xcodeproj/project.pbxproj
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-ios-pbxproj-template.mjs <AppName> <package_name> {entry}/ios/Runner.xcodeproj/project.pbxproj
    ```
    Save the output to `{entry}/ios/Runner.xcodeproj/project.pbxproj`
-5. **Patch Info.plist** (modify existing file): Generate patched code with the following command
+4. **Patch Info.plist** (modify existing file): Generate patched code with the following command
    ```bash
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-ios-info-plist-setup.mjs {entry}/ios/Runner/Info.plist
    ```
    Save the output to `{entry}/ios/Runner/Info.plist`
-6. **Generate xcschemes** (4 flavors): Generate a scheme for each flavor with the following commands
+5. **Generate xcschemes** (4 flavors): Generate a scheme for each flavor with the following commands
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_ios_xcscheme_template.py production
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_ios_xcscheme_template.py development
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_ios_xcscheme_template.py staging
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_ios_xcscheme_template.py qa
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-ios-xcscheme-template.mjs production
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-ios-xcscheme-template.mjs development
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-ios-xcscheme-template.mjs staging
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-ios-xcscheme-template.mjs qa
    ```
    Save each output to `{entry}/ios/Runner.xcodeproj/xcshareddata/xcschemes/{flavor}.xcscheme`
-7. **Delete existing Runner.xcscheme**: Delete `{entry}/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme` (if exists)
-8. **Verify results**: Display the list of created/modified files to the user and provide `pod install` instructions
+6. **Delete existing Runner.xcscheme**: Delete `{entry}/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme` (if exists)
+7. **Verify results**: Display the list of created/modified files to the user and provide `pod install` instructions
 
 ## Target Files
 

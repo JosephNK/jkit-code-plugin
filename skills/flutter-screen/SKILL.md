@@ -34,20 +34,17 @@ Generates new Screen files along with BLoC files in a Flutter project.
    - Example: `{entry}/lib/features/{feature_path}/presentation/bloc/`
 5. **Generate templates**: Generate template code with the following commands
    ```bash
-   # Install dependencies (once)
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
-
    # Screen template
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_screen_template.py <ScreenName>
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-screen-template.mjs <ScreenName>
 
    # View templates
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_app_bar_template.py <ScreenName>
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_body_view_template.py <ScreenName>
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-app-bar-template.mjs <ScreenName>
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-body-view-template.mjs <ScreenName>
 
    # BLoC templates
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> bloc
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> event
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_bloc_template.py <ScreenName> state
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-bloc-template.mjs <ScreenName> bloc
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-bloc-template.mjs <ScreenName> event
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-bloc-template.mjs <ScreenName> state
    ```
 6. **Generate filenames**: Convert Screen name to snake_case
 7. **Create directories**: Create directories with mkdir -p if they don't exist
@@ -60,7 +57,7 @@ Generates new Screen files along with BLoC files in a Flutter project.
 10. **Register DI**: Add BLoC registration to `{entry}/lib/di/injection_container.dart`
     - Generate DI registration template:
       ```bash
-      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_di_template.py <ScreenName> <feature_dir>
+      cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-di-template.mjs <ScreenName> <feature_dir>
       ```
     - `<feature_dir>` = `{path_value}/{screen_name_snake_case}` if `-path` provided, otherwise `{screen_name_snake_case}`
     - Add the import at the top of the file (with other BLoC imports)
@@ -71,10 +68,10 @@ Generates new Screen files along with BLoC files in a Flutter project.
     - Generate route template:
       ```bash
       # Default (using builder)
-      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_route_template.py <ScreenName> <path>
+      cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-route-template.mjs <ScreenName> <path>
 
       # NoTransitionPage wrapping (using pageBuilder)
-      cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_route_template.py <ScreenName> <path> -nt
+      cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-route-template.mjs <ScreenName> <path> -nt
       ```
     - `<path>` rule:
       - If `-path` is provided: Use `/{path_value}/{screen_name_snake_case}` as route path (e.g. `-path user` + `Settings` → `/user/settings`)

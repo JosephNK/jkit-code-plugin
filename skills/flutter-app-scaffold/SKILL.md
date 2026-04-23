@@ -19,32 +19,28 @@ Generates initial configuration files (app.dart, main.dart) for a Flutter projec
 1. **Parse arguments**: Extract App name, `-entry` option, and package name from `$ARGUMENTS`
    - If `-entry app` is present, set entry directory to `app`
    - If `-entry` is absent, use `lib/...` as base path
-2. **Install dependencies** (once):
-   ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
-   ```
-3. **Generate router**: Generate router.dart with the following command
+2. **Generate router**: Generate router.dart with the following command
    ```bash
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-route-setup.mjs -entry {entry}
    ```
-4. **Generate localization resources**: Generate lang files and register pubspec.yaml assets
+3. **Generate localization resources**: Generate lang files and register pubspec.yaml assets
    ```bash
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-assets-lang-setup.mjs -entry {entry}
    ```
-5. **Generate app.dart**: Generate template code with the following command
+4. **Generate app.dart**: Generate template code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_app_template.py <AppName> [package_name]
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-app-template.mjs <AppName> [package_name]
    ```
-6. **Generate main.dart**: Generate template code with the following command
+5. **Generate main.dart**: Generate template code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/template/flutter_main_template.py <AppName> [package_name]
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-main-template.mjs <AppName> [package_name]
    ```
-7. **Save files**:
+6. **Save files**:
    - Save app.dart template to `{entry}/lib/app.dart`
    - Save main.dart template to `{entry}/lib/main.dart`
-8. **Initialize test file**:
+7. **Initialize test file**:
    - If `{entry}/test/widget_test.dart` exists, clear its contents (make it an empty file)
-9. **Verify results**: Display the list of generated files to the user
+8. **Verify results**: Display the list of generated files to the user
 
 ## Generated Files
 
