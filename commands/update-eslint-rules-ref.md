@@ -19,10 +19,16 @@ Optionally ask if they want a dry-run first to preview changes without modifying
 
 ### 2. Run script
 
+Resolve the jkit plugin install path:
+
+```bash
+JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/installed_plugins.json)
+```
+
 Run the script with the provided ref (omit `<ref>` to auto-use plugin.json version):
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/typescript/dependencies/update_eslint_rules_ref.py [<ref>] --project-dir <user-project-dir> [--dry-run]
+$JKIT_DIR/scripts/typescript/dependencies/update-eslint-rules-ref.mjs [<ref>] --project-dir <user-project-dir> [--dry-run]
 ```
 
 - `<ref>`: optional new git ref value (e.g., `v0.1.55`, `main`). If omitted, the script reads `version` from `.claude-plugin/plugin.json` and prefixes `v`.
