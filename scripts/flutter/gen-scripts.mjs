@@ -81,30 +81,34 @@ if [ -z "$PLUGIN_ROOT" ]; then
   exit 1
 fi`;
 
-function renderWrapper(pythonPath) {
+function renderWrapper(scriptPath) {
+  const isMjs = scriptPath.endsWith('.mjs');
+  const runner = isMjs
+    ? `node scripts/flutter/${scriptPath}`
+    : `poetry run python scripts/flutter/${scriptPath}`;
   return `#!/bin/bash
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ${PLUGIN_ROOT_SNIPPET}
-cd "$PLUGIN_ROOT" && poetry run python scripts/flutter/${pythonPath} "$@" --project-dir "$PROJECT_DIR"
+cd "$PLUGIN_ROOT" && ${runner} "$@" --project-dir "$PROJECT_DIR"
 `;
 }
 
 const WRAPPERS = [
-  { name: 'flutter-build-deploy.sh', python: 'build/flutter_build_deploy.py' },
-  { name: 'update-dependencies.sh', python: 'dependencies/update_dependencies.py' },
-  { name: 'update-leaf-kit-ref.sh', python: 'dependencies/update_leaf_kit_ref.py' },
+  { name: 'flutter-build-deploy.sh', script: 'build/flutter-build-deploy.mjs' },
+  { name: 'update-dependencies.sh', script: 'dependencies/update-dependencies.mjs' },
+  { name: 'update-leaf-kit-ref.sh', script: 'dependencies/update-leaf-kit-ref.mjs' },
   {
     name: 'android-show-info-keystore.sh',
-    python: 'keystore/android_show_info_keystore.py',
+    script: 'keystore/android-show-info-keystore.mjs',
   },
   {
     name: 'android-signing-report.sh',
-    python: 'keystore/android_signing_report_keystore.py',
+    script: 'keystore/android-signing-report-keystore.mjs',
   },
   {
     name: 'android-signing-verify-apk.sh',
-    python: 'keystore/android_signing_verify_apk.py',
+    script: 'keystore/android-signing-verify-apk.mjs',
   },
 ];
 
@@ -131,7 +135,7 @@ function main() {
 
   for (const w of WRAPPERS) {
     const dest = path.join(scriptsDir, w.name);
-    fs.writeFileSync(dest, renderWrapper(w.python));
+    fs.writeFileSync(dest, renderWrapper(w.script));
     fs.chmodSync(dest, 0o755);
     process.stdout.write(`Generated: ${dest}\n`);
   }

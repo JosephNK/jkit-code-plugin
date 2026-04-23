@@ -21,7 +21,7 @@ Optionally ask if they want a dry-run first to preview changes without modifying
 Run the script with the provided ref:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/dependencies/update_architecture_lint_ref.py <ref> --project-dir <user-project-dir> [--dry-run]
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/dependencies/update-architecture-lint-ref.mjs <ref> --project-dir <user-project-dir> [--dry-run]
 ```
 
 - `<ref>`: the new git ref value (e.g., `v0.1.32`, `main`)

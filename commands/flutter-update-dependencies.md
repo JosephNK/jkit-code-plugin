@@ -22,7 +22,7 @@ Ask the user what they want to do:
 Run the script with the selected options:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/dependencies/update_dependencies.py --project-dir <user-project-dir> [options]
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/dependencies/update-dependencies.mjs --project-dir <user-project-dir> [options]
 ```
 
 - `<user-project-dir>`: the user's current working directory (absolute path)

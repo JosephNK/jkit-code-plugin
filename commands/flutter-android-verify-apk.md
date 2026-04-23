@@ -24,7 +24,7 @@ If no APK files are found, ask the user to input the APK file path manually.
 Verify the selected APK file exists, then run:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/keystore/android_signing_verify_apk.py <apk-path> --project-dir <user-project-dir>
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/keystore/android-signing-verify-apk.mjs <apk-path> --project-dir <user-project-dir>
 ```
 
 - `<apk-path>`: APK file path (relative or absolute)

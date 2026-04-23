@@ -36,7 +36,7 @@ Automatically configures iOS build settings for a Flutter project.
    Save the output to `{entry}/ios/Runner.xcodeproj/project.pbxproj`
 5. **Patch Info.plist** (modify existing file): Generate patched code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/setup/flutter_ios_info_plist_setup.py {entry}/ios/Runner/Info.plist
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-ios-info-plist-setup.mjs {entry}/ios/Runner/Info.plist
    ```
    Save the output to `{entry}/ios/Runner/Info.plist`
 6. **Generate xcschemes** (4 flavors): Generate a scheme for each flavor with the following commands

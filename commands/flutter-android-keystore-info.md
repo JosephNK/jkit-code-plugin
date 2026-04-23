@@ -24,7 +24,7 @@ Example: `my-release-key.keystore`, `app/android/release.keystore`
 Verify the selected keystore file exists, then run:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/keystore/android_show_info_keystore.py <keystore-path> --project-dir <user-project-dir>
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/keystore/android-show-info-keystore.mjs <keystore-path> --project-dir <user-project-dir>
 ```
 
 - `<keystore-path>`: keystore file name or relative path

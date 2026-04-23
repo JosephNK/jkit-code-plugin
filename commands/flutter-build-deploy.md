@@ -21,7 +21,7 @@ Ask the user for the following:
 Run the build script with the selected options:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/build/flutter_build_deploy.py <os> <flavor> --project-dir <user-project-dir> [options]
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/build/flutter-build-deploy.mjs <os> <flavor> --project-dir <user-project-dir> [options]
 ```
 
 - `<os>`: `aos` or `ios`

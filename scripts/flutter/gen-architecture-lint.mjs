@@ -3,9 +3,9 @@
 // Injects architecture_lint (as a git dependency) into pubspec.yaml and
 // registers it as an analyzer plugin in analysis_options.yaml.
 //
-// Delegates the YAML edits to the Python script
-// `architecture_lint/inject_architecture_lint.py`, which must be run inside
-// the plugin's poetry environment (ruamel-yaml).
+// Delegates the YAML edits to the Node script
+// `architecture_lint/inject-architecture-lint.mjs`, which uses the `yaml`
+// package for round-trip YAML editing (preserves comments & formatting).
 //
 // Usage:
 //   gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
@@ -28,8 +28,7 @@ const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry 
 Injects architecture_lint (as a git dependency) into pubspec.yaml and
 registers it as an analyzer plugin in analysis_options.yaml.
 
-Requires: poetry environment with ruamel-yaml installed.
-Must be run AFTER \`poetry install\`.
+Requires: plugin's node_modules installed (\`npm install\` in plugin root).
 
 Arguments:
   flutter        Framework name (currently flutter only)
@@ -150,15 +149,12 @@ function main() {
   const injectScript = path.join(
     scriptDir,
     'architecture_lint',
-    'inject_architecture_lint.py',
+    'inject-architecture-lint.mjs',
   );
 
-  // Run the Python injector inside the project's poetry env.
   const result = spawnSync(
-    'poetry',
+    process.execPath,
     [
-      'run',
-      'python3',
       injectScript,
       '--pubspec',
       path.join(args.entry, 'pubspec.yaml'),
@@ -180,7 +176,9 @@ function main() {
   );
 
   if (result.error) {
-    process.stderr.write(`Error running poetry: ${result.error.message}\n`);
+    process.stderr.write(
+      `Error running inject-architecture-lint.mjs: ${result.error.message}\n`,
+    );
     process.exit(1);
   }
   if (result.status !== 0) {

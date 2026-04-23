@@ -36,7 +36,7 @@ Automatically configures Android build settings for a Flutter project.
    Save the output to `{entry}/android/app/build.gradle.kts`
 5. **Patch AndroidManifest.xml** (modify existing file): Generate patched code with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/setup/flutter_android_manifest_setup.py {entry}/android/app/src/main/AndroidManifest.xml
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-android-manifest-setup.mjs {entry}/android/app/src/main/AndroidManifest.xml
    ```
    Save the output to `{entry}/android/app/src/main/AndroidManifest.xml`
 6. **Generate proguard-rules.pro** (only if not exists): If the file doesn't exist, generate with the following command

@@ -25,11 +25,11 @@ Generates initial configuration files (app.dart, main.dart) for a Flutter projec
    ```
 3. **Generate router**: Generate router.dart with the following command
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/setup/flutter_route_setup.py -entry {entry}
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-route-setup.mjs -entry {entry}
    ```
 4. **Generate localization resources**: Generate lang files and register pubspec.yaml assets
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/setup/flutter_assets_lang_setup.py -entry {entry}
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/setup/flutter-assets-lang-setup.mjs -entry {entry}
    ```
 5. **Generate app.dart**: Generate template code with the following command
    ```bash

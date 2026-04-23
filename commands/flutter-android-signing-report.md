@@ -27,7 +27,7 @@ Then ask for:
 Verify the selected keystore file exists, then run:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/keystore/android_signing_report_keystore.py <keystore-path> <alias> -s <storepass> -p <keypass> --project-dir <user-project-dir>
+cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/keystore/android-signing-report-keystore.mjs <keystore-path> <alias> -s <storepass> -p <keypass> --project-dir <user-project-dir>
 ```
 
 - `<keystore-path>`: keystore file name or relative path
