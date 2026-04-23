@@ -41,7 +41,7 @@
   - `.mjs` → `node scripts/flutter/<path>.mjs`
   - `.py`  → `poetry run python scripts/flutter/<path>.py`
   - WRAPPERS 항목 `python` → `script`로 리네임
-- [x] **`scripts/flutter/gen-pyproject.mjs`** — 유지 (프로젝트 스크립트용 Poetry 태스크 러너로만 사용; pre-commit이 husky로 이전되어 `poetry run pre-commit install` 의존은 사라짐)
+- [x] **`scripts/flutter/gen-pyproject.mjs`** ✅ 삭제 (husky 이전으로 Poetry 의존 완전 제거)
 - [x] **`example/hello_flutter/scripts/*.sh`** (6개) ✅ 모두 `.mjs`를 가리키도록 갱신됨 (`gen-scripts.mjs`로 재생성)
 - [x] **`commands/*.md`** 스윕 ✅ 완료
   - 플러그인 `.py` 경로 언급 없음
@@ -99,7 +99,7 @@
 
 ### 후속 검토 필요 (이번 세션 범위 밖)
 
-- [ ] **`pyproject.toml` / `poetry.lock` / `gen-pyproject.mjs` 제거 가능성** — pre-commit 의존 제거로 Poetry의 유일한 잔여 목적은 프로젝트 스크립트 태스크 러너. downstream이 husky+npm 체인으로 정착되면 Poetry 완전 드롭 검토 가능.
+- [x] ~~**`pyproject.toml` / `poetry.lock` / `gen-pyproject.mjs` 제거 가능성**~~ ✅ 완료 — 플러그인 루트 `pyproject.toml` / `poetry.lock` 삭제, `gen-pyproject.mjs` 삭제, `flutter-init.md`에서 Step 4(pyproject 옵션)·Step 7(`poetry install`) 제거 및 단계 번호 재조정, `README.md`에서 `gen-pyproject.mjs` 엔트리 제거, `gen-scripts.mjs` `.py` 브랜치 제거.
 - [ ] **downstream 설치 체인 설계** — Flutter 프로젝트에 `package.json` + husky/@commitlint devDeps 추가 방법. `example/hello_flutter` 검증은 사용자 지시로 이번 범위 밖.
 
 ---

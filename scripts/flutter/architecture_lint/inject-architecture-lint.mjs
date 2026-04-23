@@ -3,7 +3,7 @@
 // Inject architecture_lint into pubspec.yaml and analysis_options.yaml.
 //
 // Uses the `yaml` package (Document API) for round-trip YAML editing —
-// preserves comments, formatting, and existing structure (ruamel.yaml 대체).
+// preserves comments, formatting, and existing structure.
 //
 // architecture_lint is injected as a git dependency so the generated
 // pubspec.yaml is portable across developer machines and CI.

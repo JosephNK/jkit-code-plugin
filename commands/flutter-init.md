@@ -42,13 +42,7 @@ Show the **conventions** stacks below and ask the user to select (comma-separate
 
 Ask the user for the Flutter entry directory. Default: `app`.
 
-### 4. Ask pyproject.toml options
-
-Ask the user for:
-- **description** (default: "Flutter project scripts")
-- **author** (optional, e.g. "Name <email>")
-
-### 5. Ask AGENTS.md generation
+### 4. Ask AGENTS.md generation
 
 Ask the user whether to generate `AGENTS.md` and `CLAUDE.md` symlink.
 This step is optional because the user may need to customize these files.
@@ -59,7 +53,7 @@ cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/gen-agents.mjs flutter -p . -n "<project-name>" --docs-dir docs
 ```
 
-### 6. Run generator scripts
+### 5. Run generator scripts
 
 Run the following scripts from the plugin's `scripts/` directory.
 
@@ -78,27 +72,22 @@ $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks
 # 4. Husky hooks (.husky/pre-commit에 <entry-dir>이 인라인 치환됨, .husky/commit-msg)
 $JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
 
-# 5. pyproject.toml
-$JKIT_DIR/scripts/flutter/gen-pyproject.mjs flutter -p . -entry <entry-dir> -n "<project-name>" -d "<description>" -a "<author>"
-
-# 6. Utility scripts
+# 5. Utility scripts
 $JKIT_DIR/scripts/flutter/gen-scripts.mjs -p . -entry <entry-dir>
 ```
 
 Skip `--with` if the user selected no stacks for that generator.
-Skip `-d` and `-a` in gen-pyproject.mjs if the user did not provide them.
 
-### 7. Install dependencies
+### 6. Clear stale git hooks path
 
-Run `poetry install` so `pyproject.toml`의 스크립트/태스크 런너가 준비되도록 합니다. husky 훅은 downstream의 `package.json` + `npm install` 흐름에서 활성화되므로 여기서는 건드리지 않습니다.
+husky 훅은 downstream의 `package.json` + `npm install` 흐름에서 활성화됩니다. 이전 pre-commit 프레임워크가 남긴 `core.hooksPath` 설정이 있으면 제거합니다.
 
 ```bash
 cd "$PROJECT_ROOT"
-poetry install
 git config --local --unset-all core.hooksPath || true
 ```
 
-### 8. Inject architecture lint plugin (optional)
+### 7. Inject architecture lint plugin (optional)
 
 Ask the user whether to inject `architecture_lint` analyzer plugin. Default: **no**.
 
@@ -119,7 +108,7 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 
 If no, skip this step entirely. The user can install it later by running this command manually, or add `architecture_lint` to `dev_dependencies` in `pubspec.yaml` themselves.
 
-### 9. Report
+### 8. Report
 
 Tell the user what was created:
 - `AGENTS.md` — AI agent entry point
@@ -129,11 +118,10 @@ Tell the user what was created:
 - `CONVENTIONS.md` — Conventions with selected stacks
 - `.husky/pre-commit` — husky pre-commit hook (dart format, flutter analyze, architecture_lint, flutter test related; entry 디렉토리가 파일에 베이킹됨)
 - `.husky/commit-msg` — husky commit-msg hook (`commitlint --edit $1`)
-- `pyproject.toml` — Poetry config for project scripts
 - `scripts/flutter-build-deploy.sh` — Flutter build wrapper
 - `scripts/update-dependencies.sh` — Dependencies update wrapper
 - `scripts/update-leaf-kit-ref.sh` — Leaf kit ref update wrapper
 - `scripts/android-show-info-keystore.sh` — Keystore info wrapper
 - `scripts/android-signing-report.sh` — Signing report wrapper
 - `scripts/android-signing-verify-apk.sh` — APK verify wrapper
-- `architecture_lint` (optional) — IDE analyzer plugin injected into `pubspec.yaml` + `analysis_options.yaml` (Step 8에서 yes 응답 시에만)
+- `architecture_lint` (optional) — IDE analyzer plugin injected into `pubspec.yaml` + `analysis_options.yaml` (Step 7에서 yes 응답 시에만)

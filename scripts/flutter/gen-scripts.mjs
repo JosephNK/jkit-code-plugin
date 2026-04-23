@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // =============================================================================
 // Generates wrapper shell scripts in <output-dir>/scripts/ that invoke the
-// plugin's Python utilities via `poetry run`.
+// plugin's Node.js utilities.
 //
 // Each wrapper is intentionally a .sh file — it is what the Flutter project
 // user runs directly.
@@ -82,15 +82,11 @@ if [ -z "$PLUGIN_ROOT" ]; then
 fi`;
 
 function renderWrapper(scriptPath) {
-  const isMjs = scriptPath.endsWith('.mjs');
-  const runner = isMjs
-    ? `node scripts/flutter/${scriptPath}`
-    : `poetry run python scripts/flutter/${scriptPath}`;
   return `#!/bin/bash
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ${PLUGIN_ROOT_SNIPPET}
-cd "$PLUGIN_ROOT" && ${runner} "$@" --project-dir "$PROJECT_DIR"
+cd "$PLUGIN_ROOT" && node scripts/flutter/${scriptPath} "$@" --project-dir "$PROJECT_DIR"
 `;
 }
 

@@ -3,8 +3,12 @@
 // Copies .husky hook templates from rules/<framework>/base/husky/ into
 // <output-dir>/.husky/ and makes each hook executable.
 //
+// Optional -entry <dir> substitutes {{ENTRY}} placeholders in the copied
+// hook files (used by flutter templates to bake the entry directory into
+// the pre-commit script).
+//
 // Usage:
-//   gen-husky.mjs <framework> -p <output-dir>
+//   gen-husky.mjs <framework> -p <output-dir> [-entry <dir>]
 // =============================================================================
 
 import fs from 'node:fs';
@@ -12,20 +16,22 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-const HELP = `Usage: gen-husky.mjs <framework> -p <output-dir>
+const HELP = `Usage: gen-husky.mjs <framework> -p <output-dir> [-entry <dir>]
 
 Generates .husky hook files for the given framework.
 
 Arguments:
-  <framework>    Framework name (e.g. nextjs, nestjs)
+  <framework>    Framework name (e.g. nextjs, nestjs, flutter)
 
 Options:
   -p <dir>       Output directory (required)
+  -entry <dir>   Substitute {{ENTRY}} in hook files (e.g. -entry app)
   -h, --help     Show this help
 
 Examples:
-  ./scripts/typescript/gen-husky.mjs nextjs -p ./my-project
-  ./scripts/typescript/gen-husky.mjs nestjs -p ./my-project
+  ./scripts/gen-husky.mjs nextjs -p ./my-project
+  ./scripts/gen-husky.mjs nestjs -p ./my-project
+  ./scripts/gen-husky.mjs flutter -p ./my-project -entry app
 `;
 
 function usage(code = 1) {
@@ -34,7 +40,7 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '' };
+  const args = { framework: '', outputDir: '', entry: '' };
   const rest = argv.slice(2);
 
   if (rest.length >= 1 && !rest[0].startsWith('-')) {
@@ -50,6 +56,13 @@ function parseArgs(argv) {
           usage();
         }
         args.outputDir = rest.shift();
+        break;
+      case '-entry':
+        if (!rest.length) {
+          process.stderr.write('-entry requires a directory\n');
+          usage();
+        }
+        args.entry = rest.shift();
         break;
       case '-h':
       case '--help':
@@ -77,7 +90,7 @@ function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..');
+  const pluginRoot = path.resolve(scriptDir, '..');
   const huskySrc = path.join(
     pluginRoot,
     'rules',
@@ -102,7 +115,11 @@ function main() {
     if (!fs.statSync(src).isFile()) continue;
 
     const dest = path.join(huskyDest, hookName);
-    fs.copyFileSync(src, dest);
+    let content = fs.readFileSync(src, 'utf8');
+    if (args.entry) {
+      content = content.replaceAll('{{ENTRY}}', args.entry);
+    }
+    fs.writeFileSync(dest, content);
     fs.chmodSync(dest, 0o755);
     process.stdout.write(`Generated: ${dest}\n`);
   }

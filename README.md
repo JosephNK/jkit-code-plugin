@@ -57,7 +57,7 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 
 | Command | Description |
 |---------|-------------|
-| `/jkit:flutter-init` | 프로젝트 초기화 (conventions, husky hooks, commitlint, pyproject 등) |
+| `/jkit:flutter-init` | 프로젝트 초기화 (conventions, husky hooks, commitlint 등) |
 | `/jkit:flutter-app-scaffold` | app.dart, main.dart, router, 다국어 리소스 생성 |
 | `/jkit:flutter-android-setup` | build.gradle.kts, AndroidManifest, proguard 설정 |
 | `/jkit:flutter-ios-setup` | pbxproj (4 flavor × 3 build type), xcscheme, Info.plist 설정 |
@@ -125,7 +125,6 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 ./scripts/typescript/gen-tsconfig.mjs <framework> -p /path/to/project --with stack1
 
 # Flutter
-./scripts/flutter/gen-pyproject.mjs -p /path/to/project
 ./scripts/flutter/gen-scripts.mjs -p /path/to/project
 ```
 
