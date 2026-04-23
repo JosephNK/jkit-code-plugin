@@ -16,7 +16,7 @@
 | `create/` | 0 | ~~`flutter_create_package.py`~~ ✅ (flutter-create-package.mjs) |
 | `dependencies/` | 0 | ~~`update_architecture_lint_ref.py`~~ ✅ (update-architecture-lint-ref.mjs), ~~`update_dependencies.py`~~ ✅ (update-dependencies.mjs), ~~`update_leaf_kit_ref.py`~~ ✅ (update-leaf-kit-ref.mjs) |
 | `keystore/` | 0 | ~~`android_show_info_keystore.py`~~ ✅ (android-show-info-keystore.mjs), ~~`android_signing_report_keystore.py`~~ ✅ (android-signing-report-keystore.mjs), ~~`android_signing_verify_apk.py`~~ ✅ (android-signing-verify-apk.mjs) |
-| `openapi/` | 5 | `__init__.py`, `_run.py`, `dart_name_utils.py` 🔄 (dart-name-utils.mjs 존재; .py는 _run 이전 후 삭제), `generate_api.py` 🔄 (generate-api.mjs 존재; .py는 _run 이전 후 삭제), `openapi_parser.py` 🔄 (openapi-parser.mjs 존재; .py는 _run 이전 후 삭제), ~~`update_pubspec.py`~~ ✅ (update-pubspec.mjs) |
+| `openapi/` | 0 | ~~`__init__.py`~~ ✅, ~~`_run.py`~~ ✅ (generate-api.mjs가 CLI 역할 흡수), ~~`dart_name_utils.py`~~ ✅ (dart-name-utils.mjs), ~~`generate_api.py`~~ ✅ (generate-api.mjs), ~~`openapi_parser.py`~~ ✅ (openapi-parser.mjs), ~~`update_pubspec.py`~~ ✅ (update-pubspec.mjs) |
 | `setup/` | 0 | ~~`flutter_android_manifest_setup.py`~~ ✅ (flutter-android-manifest-setup.mjs), ~~`flutter_assets_lang_setup.py`~~ ✅ (flutter-assets-lang-setup.mjs), ~~`flutter_ios_info_plist_setup.py`~~ ✅ (flutter-ios-info-plist-setup.mjs), ~~`flutter_route_setup.py`~~ ✅ (flutter-route-setup.mjs) |
 | `template/` | 12 | `flutter_app_template.py`, `flutter_app_bar_template.py`, `flutter_bloc_template.py`, `flutter_body_view_template.py`, `flutter_di_template.py`, `flutter_main_template.py`, `flutter_route_template.py`, `flutter_screen_template.py`, `flutter_android_build_gradle_template.py`, `flutter_android_proguard_template.py`, `flutter_ios_pbxproj_template.py`, `flutter_ios_xcscheme_template.py` |
 
@@ -41,8 +41,8 @@
   - `.py`  → `poetry run python scripts/flutter/<path>.py`
   - WRAPPERS 항목 `python` → `script`로 리네임
 - [ ] **`scripts/flutter/gen-pyproject.mjs`**
-  - 모든 `.py` 제거 시 poetry/pyproject 자체가 불필요
-  - 제거 여부 판단 → 제거 시 관련 gen 로직/커맨드 정리
+  - ⚠️ 당장 제거 불가: downstream Flutter 프로젝트의 pre-commit 훅이 `poetry run pre-commit install`에 의존
+  - `template/*.py` 12개도 아직 남아있음 → 이전 완료 후에도 pyproject 유지 여부 재판단
 - [ ] **`example/hello_flutter/scripts/*.sh`** (6개)
   - `flutter-build-deploy.sh`, `update-dependencies.sh`, `update-leaf-kit-ref.sh`, `android-show-info-keystore.sh`, `android-signing-report.sh`, `android-signing-verify-apk.sh`
   - `gen-scripts.mjs` 출력물 → 재생성 시 자동 갱신
@@ -67,7 +67,7 @@
 1. **shell 정리**: `block-dangerous-commands.sh` 사용 여부 확인 → 제거 or 변환
 2. **독립 Python 템플릿**: `template/*.py` 12개 (대부분 텍스트 생성기, 의존성 없음)
 3. **의존성 있는 Python**: `keystore/`, `setup/`, `create/`, `build/`, `dependencies/`, `architecture_lint/`
-4. **openapi 패키지**: 6개 파일 간 상호 import 있음 — 한 묶음으로
+4. ~~**openapi 패키지**~~ ✅ 완료 (5-phase 분할: update_pubspec → dart_name_utils → openapi_parser → generate_api + 9 .j2 (nunjucks) → _run + __init__ + .py 정리)
 5. ~~**`rules/flutter/custom-lint/architecture-lint.py`**~~ ✅ 완료
 6. **연동 수정**: `gen-scripts.mjs` 수정 → example 재생성 → `commands/*.md` 스윕 → `gen-pyproject.mjs` 정리
 

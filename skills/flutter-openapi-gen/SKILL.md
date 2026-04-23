@@ -23,33 +23,29 @@ Generates BuiltValue models, LeafDioService services, endpoints, and client init
 ## Workflow
 
 1. **Parse arguments**: Extract spec path/URL, api_name, output-dir, dry-run from `$ARGUMENTS`
-2. **Install dependencies** (once):
-   ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
-   ```
-3. **Check/add pubspec dependencies**:
+2. **Check/add pubspec dependencies**:
    ```bash
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/openapi/update-pubspec.mjs {package_pubspec_path}
    ```
    - `{package_pubspec_path}`: output-dir 기준 `../pubspec.yaml` (예: `packages/myapp_network/pubspec.yaml`)
-4. **Run flutter pub get**:
+3. **Run flutter pub get**:
    ```bash
    flutter pub get
    ```
-5. **Generate API code**:
+4. **Generate API code**:
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/openapi/_run.py {spec} {api_name} --output-dir {output_dir} [--dry-run]
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/openapi/generate-api.mjs {spec} {api_name} --output-dir {output_dir} [--dry-run]
    ```
-6. **Run build_runner** (skip if --dry-run):
+5. **Run build_runner** (skip if --dry-run):
    ```bash
    (cd {package_dir} && dart run build_runner clean && dart run build_runner build --delete-conflicting-outputs)
    ```
    - **중요**: 반드시 서브셸 `(...)` 로 감싸서 `cd`가 이후 단계의 작업 디렉토리에 영향을 주지 않도록 할 것
-7. **Run dart format** (skip if --dry-run):
+6. **Run dart format** (skip if --dry-run):
    ```bash
    dart format {output_dir}/src/api/{api_name}/
    ```
-8. **Report results**: Show generated file summary
+7. **Report results**: Show generated file summary
 
 ## Generated File Structure
 
