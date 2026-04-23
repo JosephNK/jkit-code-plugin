@@ -20,8 +20,8 @@
 | `setup/` | 0 | ~~`flutter_android_manifest_setup.py`~~ ✅ (flutter-android-manifest-setup.mjs), ~~`flutter_assets_lang_setup.py`~~ ✅ (flutter-assets-lang-setup.mjs), ~~`flutter_ios_info_plist_setup.py`~~ ✅ (flutter-ios-info-plist-setup.mjs), ~~`flutter_route_setup.py`~~ ✅ (flutter-route-setup.mjs) |
 | `template/` | 12 | `flutter_app_template.py`, `flutter_app_bar_template.py`, `flutter_bloc_template.py`, `flutter_body_view_template.py`, `flutter_di_template.py`, `flutter_main_template.py`, `flutter_route_template.py`, `flutter_screen_template.py`, `flutter_android_build_gradle_template.py`, `flutter_android_proguard_template.py`, `flutter_ios_pbxproj_template.py`, `flutter_ios_xcscheme_template.py` |
 
-### `rules/flutter/custom-lint/` (1개)
-- [ ] `architecture-lint.py` — hexagonal architecture linter (Dart 소스 import 규칙 검사)
+### `rules/flutter/custom-lint/` (0개)
+- [x] ~~`architecture-lint.py`~~ ✅ (architecture-lint.mjs) — hexagonal architecture linter (Dart 소스 import 규칙 검사)
 
 ---
 
@@ -68,7 +68,7 @@
 2. **독립 Python 템플릿**: `template/*.py` 12개 (대부분 텍스트 생성기, 의존성 없음)
 3. **의존성 있는 Python**: `keystore/`, `setup/`, `create/`, `build/`, `dependencies/`, `architecture_lint/`
 4. **openapi 패키지**: 6개 파일 간 상호 import 있음 — 한 묶음으로
-5. **`rules/flutter/custom-lint/architecture-lint.py`**: 독립 변환
+5. ~~**`rules/flutter/custom-lint/architecture-lint.py`**~~ ✅ 완료
 6. **연동 수정**: `gen-scripts.mjs` 수정 → example 재생성 → `commands/*.md` 스윕 → `gen-pyproject.mjs` 정리
 
 ---
