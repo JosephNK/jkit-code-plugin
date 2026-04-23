@@ -435,20 +435,13 @@ React/Next.js 타입·런타임에 직접 의존하면 안 된다.
 
 ### 도메인 레이어 금지 패키지
 
-- `react`
-- `react/**`
-- `react-dom`
-- `react-dom/**`
-- `next`
-- `next/**`
-- `mongodb`
-- `mongodb/**`
-- `pg`
-- `pg/**`
-- `redis`
-- `redis/**`
-- `typeorm`
-- `typeorm/**`
+- `react` (+ 서브경로)
+- `react-dom` (+ 서브경로)
+- `next` (+ 서브경로)
+- `mongodb` (+ 서브경로)
+- `pg` (+ 서브경로)
+- `redis` (+ 서브경로)
+- `typeorm` (+ 서브경로)
 
 ## Rule Overrides (룰 오버라이드)
 

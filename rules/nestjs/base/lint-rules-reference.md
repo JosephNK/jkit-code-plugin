@@ -283,8 +283,7 @@ export class CreateOrderRequestDto {
 - `@nestjs/*`
 - `class-validator`
 - `class-transformer`
-- `express`
-- `express/*`
+- `express` (+ 서브경로)
 
 ## Rule Overrides (룰 오버라이드)
 

@@ -659,6 +659,45 @@ function renderBulletList(items) {
   return items.map((i) => `- \`${i}\``).join('\n');
 }
 
+function collapsePackagePairs(items) {
+  const info = new Map();
+  for (const p of items) {
+    const match = p.match(/^(.+?)\/(\*{1,2})$/);
+    if (match) {
+      const base = match[1];
+      if (!info.has(base)) info.set(base, { hasRoot: false, hasWild: false, wildcard: '' });
+      const entry = info.get(base);
+      entry.hasWild = true;
+      entry.wildcard = match[2];
+    } else {
+      if (!info.has(p)) info.set(p, { hasRoot: false, hasWild: false, wildcard: '' });
+      info.get(p).hasRoot = true;
+    }
+  }
+  const seen = new Set();
+  const result = [];
+  for (const p of items) {
+    const match = p.match(/^(.+?)\/(\*{1,2})$/);
+    const base = match ? match[1] : p;
+    if (seen.has(base)) continue;
+    seen.add(base);
+    const meta = info.get(base);
+    if (meta.hasRoot && meta.hasWild) {
+      result.push({ pattern: base, subpaths: true });
+    } else {
+      result.push({ pattern: p, subpaths: false });
+    }
+  }
+  return result;
+}
+
+function renderPackageBulletList(items) {
+  const collapsed = collapsePackagePairs(items);
+  return collapsed
+    .map((c) => (c.subpaths ? `- \`${c.pattern}\` (+ 서브경로)` : `- \`${c.pattern}\``))
+    .join('\n');
+}
+
 /**
  * 무시 패턴을 의미 카테고리로 분류 — 카테고리별 그루핑 렌더용.
  * 매칭 안 되는 패턴은 `special` (프로젝트 고유 예외).
@@ -972,7 +1011,7 @@ function renderReference({
     }
     body.push('### 도메인 레이어 금지 패키지');
     body.push('');
-    body.push(renderBulletList(domainBannedPackages));
+    body.push(renderPackageBulletList(domainBannedPackages));
     sections.push(body.join('\n'));
   }
 
@@ -984,7 +1023,7 @@ function renderReference({
       body.push(jsdocMap.frameworkPackages);
       body.push('');
     }
-    body.push(renderBulletList(frameworkPackages));
+    body.push(renderPackageBulletList(frameworkPackages));
     sections.push(body.join('\n'));
   }
 
@@ -996,7 +1035,7 @@ function renderReference({
       body.push(jsdocMap.infraPackages);
       body.push('');
     }
-    body.push(renderBulletList(infraPackages));
+    body.push(renderPackageBulletList(infraPackages));
     sections.push(body.join('\n'));
   }
 
