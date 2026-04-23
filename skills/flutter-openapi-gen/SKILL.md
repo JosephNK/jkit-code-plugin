@@ -29,7 +29,7 @@ Generates BuiltValue models, LeafDioService services, endpoints, and client init
    ```
 3. **Check/add pubspec dependencies**:
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/openapi/update_pubspec.py {package_pubspec_path}
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/openapi/update-pubspec.mjs {package_pubspec_path}
    ```
    - `{package_pubspec_path}`: output-dir 기준 `../pubspec.yaml` (예: `packages/myapp_network/pubspec.yaml`)
 4. **Run flutter pub get**:
