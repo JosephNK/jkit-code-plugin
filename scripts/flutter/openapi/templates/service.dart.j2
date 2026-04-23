@@ -73,7 +73,7 @@ class {{ class_name }} extends LeafDioService {
     return {{ method.http_method }}<{{ method.response_type }}, {{ method.error_type }}>(
       {{ method.endpoint_call }},
       data: formData,
-{% if method.query_params %}
+{% if method.query_params | length %}
       queryParameters: {
 {% for param in method.query_params %}
 {% if param.is_nullable %}
@@ -109,7 +109,7 @@ class {{ class_name }} extends LeafDioService {
 {% if method.request_body %}
     {{ method.request_body_type }} {{ method.request_body_name }},
 {% endif %}
-{%- if method.query_params %}
+{%- if method.query_params | length %}
     {
 {% for param in method.query_params %}
 {% if param.is_nullable %}
@@ -129,7 +129,7 @@ class {{ class_name }} extends LeafDioService {
         {{ method.request_body_name }},
       ),
 {% endif %}
-{% if method.query_params %}
+{% if method.query_params | length %}
       queryParameters: {
 {% for param in method.query_params %}
 {% if param.is_nullable %}
