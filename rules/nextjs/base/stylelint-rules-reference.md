@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/gen-stylelint-reference.mjs -->
+<!-- Generator: scripts/typescript/gen-stylelint-reference.mjs -->
 <!-- Source: rules/nextjs/base/stylelint.rules.mjs -->
 <!-- Export: stylelintBaseConfig -->
 

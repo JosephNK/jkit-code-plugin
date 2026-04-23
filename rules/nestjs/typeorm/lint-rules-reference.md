@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->
 <!-- Source: rules/nestjs/typeorm/eslint.rules.mjs -->
 
 # Lint Rules Reference (nestjs/typeorm)
@@ -15,5 +15,4 @@ TypeORM을 "프레임워크" 패키지로 분류하여 model/, port/, exception/
 
 TypeORM 사용 가능 위치: provider/ (Port 구현체), infrastructure/ (커넥션 초기화)
 
-- `typeorm`
-- `typeorm/*`
+- `typeorm` (+ 서브경로)

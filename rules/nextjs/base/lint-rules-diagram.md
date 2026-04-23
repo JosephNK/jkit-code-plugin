@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->
 <!-- Source: rules/nextjs/base/eslint.rules.mjs (baseBoundaryRules) -->
 
 # Lint Rules — Dependency Diagram (nextjs/base)

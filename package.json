@@ -8,12 +8,12 @@
     "./nestjs/*": "./rules/nestjs/*"
   },
   "bin": {
-    "jkit-check-i18n": "./scripts/check-i18n.mjs"
+    "jkit-check-i18n": "./scripts/typescript/check-i18n.mjs"
   },
   "files": [
     "rules/nextjs",
     "rules/nestjs",
-    "scripts/check-i18n.mjs"
+    "scripts/typescript/check-i18n.mjs"
   ],
   "license": "MIT",
   "author": "JosephNK <nkw0608@gmail.com>",

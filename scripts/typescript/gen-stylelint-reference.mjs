@@ -45,7 +45,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`사용법: node scripts/gen-stylelint-reference.mjs <path-to-stylelint.rules.mjs> [options]
+  console.log(`사용법: node scripts/typescript/gen-stylelint-reference.mjs <path-to-stylelint.rules.mjs> [options]
 
 옵션:
   --out-dir <dir>   출력 디렉토리 (기본: 입력 파일과 동일)
@@ -485,7 +485,7 @@ function renderRuleSection(rule, idx) {
 }
 
 function renderReference({ inputRelPath, stackLabel, configExportName, config, baseJSDoc }) {
-  const scriptPath = 'scripts/gen-stylelint-reference.mjs';
+  const scriptPath = 'scripts/typescript/gen-stylelint-reference.mjs';
   const lines = [];
   lines.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
   lines.push(`<!-- Generator: ${scriptPath} -->`);

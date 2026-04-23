@@ -6,7 +6,7 @@
 // 자동 생성한다.
 //
 // 사용법:
-//   node scripts/gen-lint-reference.mjs <path-to-lint-file> [options]
+//   node scripts/typescript/gen-eslint-reference.mjs <path-to-lint-file> [options]
 //
 // 옵션:
 //   --out-dir <dir>   출력 디렉토리 (기본: 입력 파일과 동일)
@@ -64,7 +64,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`사용법: node scripts/gen-lint-reference.mjs <path-to-lint-file> [options]
+  console.log(`사용법: node scripts/typescript/gen-eslint-reference.mjs <path-to-lint-file> [options]
 
 옵션:
   --out-dir <dir>   출력 디렉토리 (기본: 입력 파일과 동일)
@@ -505,7 +505,7 @@ function renderStructure({ jsdocMap, elements, inlineComments, annotations, stac
   const lines = [];
   const sourceExports = [elementsExportName, annotationsExportName].filter(Boolean).join(', ');
   lines.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  lines.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  lines.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
   lines.push(`<!-- Source: ${inputRelPath}${sourceExports ? ` (${sourceExports})` : ''} -->`);
   lines.push('');
   lines.push(`# Lint Rules — Structure Reference (${stackLabel})`);
@@ -905,7 +905,7 @@ function renderBoundaryAllowPatches(patches) {
 function renderDiagram({ boundaryRules, stackLabel, inputRelPath }) {
   const out = [];
   out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  out.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  out.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
   out.push(`<!-- Source: ${inputRelPath} (baseBoundaryRules) -->`);
   out.push('');
   out.push(`# Lint Rules — Dependency Diagram (${stackLabel})`);
@@ -936,7 +936,7 @@ function renderReference({
 }) {
   const out = [];
   out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  out.push('<!-- Generator: scripts/gen-lint-reference.mjs -->');
+  out.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
   out.push(`<!-- Source: ${inputRelPath} -->`);
   out.push('');
   out.push(`# Lint Rules Reference (${stackLabel})`);
@@ -1303,7 +1303,7 @@ function main() {
       }
     }
     if (drift) {
-      console.error('\n생성물이 커밋된 파일과 다릅니다. `node scripts/gen-lint-reference.mjs <파일>` 을 실행하고 결과를 커밋하세요.');
+      console.error('\n생성물이 커밋된 파일과 다릅니다. `node scripts/typescript/gen-eslint-reference.mjs <파일>` 을 실행하고 결과를 커밋하세요.');
       process.exit(1);
     }
     console.log('드리프트 없음.');

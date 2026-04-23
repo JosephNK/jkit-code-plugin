@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/gen-lint-reference.mjs -->
+<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->
 <!-- Source: rules/nextjs/antd/eslint.rules.mjs -->
 
 # Lint Rules Reference (nextjs/antd)
@@ -25,6 +25,5 @@ antd는 내부적으로 `@ant-design/cssinjs`를 CSS-in-JS 런타임으로 사�
 
 ### 도메인 레이어 금지 패키지
 
-- `antd`
-- `antd/**`
+- `antd` (+ 서브경로)
 - `@ant-design/**`
