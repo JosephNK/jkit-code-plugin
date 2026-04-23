@@ -807,58 +807,66 @@ function renderLayerGlossary(elements, layerSemantics) {
 }
 
 /**
- * Rule Overrides 테이블 렌더.
- * - severity / options 2컬럼으로 분리
- * - severity 우선순위 (error → warn → off → 기타) 그룹 정렬, 내부 알파벳
- * - 문자열 값: severity만 존재, options 없음
- * - 배열 값: [severity, ...options]
+ * LLM이 코드 작성 시 실제로 따라야 할 ESLint 규칙 힌트 맵.
+ * - autofix-only (import-sort, prettier)는 제외 — tool이 처리하므로 LLM이 몰라도 됨
+ * - LLM 기본 동작과 일치하는 규칙 (prefer-const 등)도 제외 — 노이즈
+ * - 새 규칙을 config에 추가해도 이 맵에 없으면 렌더되지 않음 (의도적 allowlist).
+ */
+const RULE_OVERRIDE_HINTS = {
+  '@typescript-eslint/consistent-type-imports':
+    'type-only import은 `import type { X } from "..."` 인라인 형식으로 작성.',
+  '@typescript-eslint/no-explicit-any':
+    '`any` 금지 — 정확한 타입 또는 `unknown` 사용.',
+  '@typescript-eslint/no-floating-promises':
+    'Promise는 반드시 `await` 또는 `.catch()` 체이닝 (방치 금지).',
+  '@typescript-eslint/no-unsafe-argument':
+    '`any` 값을 타입된 파라미터에 전달 금지 — 타입 가드/단언으로 좁힌 뒤 전달.',
+  '@typescript-eslint/no-deprecated':
+    'deprecated API 사용 금지 — 대체 API로 마이그레이션.',
+  'no-console':
+    '`console.warn` / `console.error`만 허용. `console.log` / `console.debug` 금지.',
+  'no-warning-comments':
+    'TODO / FIXME / HACK 주석을 코드에 남기지 말 것 — 이슈 트래커 사용.',
+  'sonarjs/no-nested-conditional':
+    '중첩 삼항 연산자 금지 — `if/else` 블록 또는 함수 추출.',
+  'unused-imports/no-unused-vars':
+    '사용 안 하는 변수/파라미터는 `_` prefix (예: `_unused`, `_ctx`).',
+};
+
+/**
+ * Rule Overrides 렌더 — LLM이 코드 작성 시 주의할 규칙만 선별하여 bullet + 힌트로 출력.
+ * 입력 shape: { unscoped: [...], scoped: [...] }.
+ * scoped를 먼저 적용하고 unscoped로 덮어써서 "unscoped 우선" 의미론 구현.
+ *   - 양쪽에 같은 룰이 있으면 unscoped 값 (프로덕션 전반 정책)
+ *   - scoped에만 있는 룰은 그대로 포함
+ * severity `off` 또는 hint 맵에 없는 규칙은 렌더 제외.
  */
 function renderRuleOverrides(collected) {
-  // 입력 shape: { unscoped: [...], scoped: [...] }
-  // scoped를 먼저 적용하고 unscoped로 덮어써서 "unscoped 우선" 의미론 구현.
-  // - 양쪽에 같은 룰이 있으면 unscoped 값 (프로덕션 전반 정책)
-  // - scoped에만 있는 룰은 그대로 포함 (예: 특정 파일군 전용 강화)
   const merged = {};
   const unscopedBlocks = collected?.unscoped || [];
   const scopedBlocks = collected?.scoped || [];
   for (const b of scopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
   for (const b of unscopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
-  const keys = Object.keys(merged);
-  if (keys.length === 0) return '';
 
-  const severityRank = { error: 0, warn: 1, off: 2 };
   const parseEntry = (v) => {
-    if (typeof v === 'string') return { severity: v, options: null };
+    if (typeof v === 'string') return { severity: v };
     if (Array.isArray(v)) {
-      const [sev, ...rest] = v;
-      const opts = rest.length === 0 ? null : rest.length === 1 ? rest[0] : rest;
-      return { severity: typeof sev === 'string' ? sev : String(sev), options: opts };
+      const [sev] = v;
+      return { severity: typeof sev === 'string' ? sev : String(sev) };
     }
-    return { severity: '(동적)', options: v };
+    return { severity: '(동적)' };
   };
 
-  // `off`는 LLM 코드 작성에 무관한 정보 (무관심 영역) — 렌더 제외.
-  // error/warn만 남겨 "준수해야 할 / 피해야 할" 룰 목록으로 정제.
-  const rows = keys
-    .map((k) => ({ rule: k, ...parseEntry(merged[k]) }))
-    .filter((row) => row.severity !== 'off');
-  if (rows.length === 0) return '';
-  rows.sort((a, b) => {
-    const ra = severityRank[a.severity] ?? 99;
-    const rb = severityRank[b.severity] ?? 99;
-    if (ra !== rb) return ra - rb;
-    return a.rule.localeCompare(b.rule);
-  });
-
-  const lines = [];
-  lines.push('| 룰 | Severity | 옵션 |');
-  lines.push('| --- | --- | --- |');
-  for (const row of rows) {
-    const sev = `\`${row.severity}\``;
-    const opt = row.options == null ? '—' : `\`${JSON.stringify(row.options)}\``;
-    lines.push(`| \`${row.rule}\` | ${sev} | ${opt} |`);
+  const rows = [];
+  for (const rule of Object.keys(RULE_OVERRIDE_HINTS)) {
+    if (!(rule in merged)) continue;
+    const { severity } = parseEntry(merged[rule]);
+    if (severity === 'off') continue;
+    rows.push({ rule, hint: RULE_OVERRIDE_HINTS[rule] });
   }
-  return lines.join('\n');
+  if (rows.length === 0) return '';
+  rows.sort((a, b) => a.rule.localeCompare(b.rule));
+  return rows.map((r) => `- \`${r.rule}\` — ${r.hint}`).join('\n');
 }
 
 /**
@@ -1042,9 +1050,10 @@ function renderReference({
   const overrideTable = renderRuleOverrides(ruleOverrides);
   if (overrideTable) {
     const body = [];
-    body.push('## Rule Overrides (룰 오버라이드)');
+    body.push('## Rule Overrides (코드 작성 주의)');
     body.push('');
-    body.push('프로젝트 공용 ESLint 룰 오버라이드 중 코드 작성에 영향이 있는 것만 (severity: error/warn).');
+    body.push('ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 할 규칙만 선별**.');
+    body.push('(autofix가 처리하거나 LLM 기본 동작과 동일한 규칙은 생략.)');
     body.push('');
     body.push(overrideTable);
     sections.push(body.join('\n'));

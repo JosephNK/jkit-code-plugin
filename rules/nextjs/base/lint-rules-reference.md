@@ -443,23 +443,17 @@ React/Next.js 타입·런타임에 직접 의존하면 안 된다.
 - `redis` (+ 서브경로)
 - `typeorm` (+ 서브경로)
 
-## Rule Overrides (룰 오버라이드)
+## Rule Overrides (코드 작성 주의)
 
-프로젝트 공용 ESLint 룰 오버라이드 중 코드 작성에 영향이 있는 것만 (severity: error/warn).
+ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 할 규칙만 선별**.
+(autofix가 처리하거나 LLM 기본 동작과 동일한 규칙은 생략.)
 
-| 룰 | Severity | 옵션 |
-| --- | --- | --- |
-| `@typescript-eslint/consistent-type-imports` | `error` | `{"prefer":"type-imports","fixStyle":"inline-type-imports"}` |
-| `@typescript-eslint/no-deprecated` | `error` | — |
-| `prefer-const` | `error` | — |
-| `react/function-component-definition` | `error` | `{"namedComponents":["function-declaration","arrow-function"],"unnamedComponents":"arrow-function"}` |
-| `simple-import-sort/exports` | `error` | — |
-| `simple-import-sort/imports` | `error` | — |
-| `unused-imports/no-unused-imports` | `error` | — |
-| `@typescript-eslint/no-explicit-any` | `warn` | — |
-| `no-console` | `warn` | `{"allow":["warn","error"]}` |
-| `sonarjs/no-nested-conditional` | `warn` | — |
-| `unused-imports/no-unused-vars` | `warn` | `{"vars":"all","varsIgnorePattern":"^_","args":"after-used","argsIgnorePattern":"^_"}` |
+- `@typescript-eslint/consistent-type-imports` — type-only import은 `import type { X } from "..."` 인라인 형식으로 작성.
+- `@typescript-eslint/no-deprecated` — deprecated API 사용 금지 — 대체 API로 마이그레이션.
+- `@typescript-eslint/no-explicit-any` — `any` 금지 — 정확한 타입 또는 `unknown` 사용.
+- `no-console` — `console.warn` / `console.error`만 허용. `console.log` / `console.debug` 금지.
+- `sonarjs/no-nested-conditional` — 중첩 삼항 연산자 금지 — `if/else` 블록 또는 함수 추출.
+- `unused-imports/no-unused-vars` — 사용 안 하는 변수/파라미터는 `_` prefix (예: `_unused`, `_ctx`).
 
 ## Ignored Paths (무시 경로)
 
