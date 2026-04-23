@@ -13,7 +13,7 @@
 |---|---|---|
 | `architecture_lint/` | 0 | ~~`inject_architecture_lint.py`~~ ✅ 완료 (inject-architecture-lint.mjs) |
 | `build/` | 0 | ~~`flutter_build_deploy.py`~~ ✅ 완료 (flutter-build-deploy.mjs) |
-| `create/` | 1 | `flutter_create_package.py` |
+| `create/` | 0 | ~~`flutter_create_package.py`~~ ✅ (flutter-create-package.mjs) |
 | `dependencies/` | 0 | ~~`update_architecture_lint_ref.py`~~ ✅ (update-architecture-lint-ref.mjs), ~~`update_dependencies.py`~~ ✅ (update-dependencies.mjs), ~~`update_leaf_kit_ref.py`~~ ✅ (update-leaf-kit-ref.mjs) |
 | `keystore/` | 0 | ~~`android_show_info_keystore.py`~~ ✅ (android-show-info-keystore.mjs), ~~`android_signing_report_keystore.py`~~ ✅ (android-signing-report-keystore.mjs), ~~`android_signing_verify_apk.py`~~ ✅ (android-signing-verify-apk.mjs) |
 | `openapi/` | 6 | `__init__.py`, `_run.py`, `dart_name_utils.py`, `generate_api.py`, `openapi_parser.py`, `update_pubspec.py` |

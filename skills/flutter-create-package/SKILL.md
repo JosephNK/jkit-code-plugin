@@ -19,16 +19,12 @@ Creates a new Flutter package in the monorepo and integrates it with the Dart wo
 ## Workflow
 
 1. **Parse arguments**: Extract package name and options from `$ARGUMENTS`
-2. **Install dependencies** (once):
+2. **Execute script**:
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry install --quiet
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/create/flutter-create-package.mjs <package_name> [-entry <dir>] [--with-leaf-kit] [--leaf-kit-ref <ref>] [--no-app-dep]
    ```
-3. **Execute script**:
-   ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && poetry run python scripts/flutter/create/flutter_create_package.py <package_name> [-entry <dir>] [--with-leaf-kit] [--leaf-kit-ref <ref>] [--no-app-dep]
-   ```
-4. **Verify results**: Check script output for errors
-5. **Report**: Display summary of created/modified files
+3. **Verify results**: Check script output for errors
+4. **Report**: Display summary of created/modified files
 
 ## What the Script Does (Idempotent)
 
