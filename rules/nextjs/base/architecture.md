@@ -4,6 +4,7 @@
 > 레이어별 책임·포함·네이밍·대표 코드 형태: `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md` ("레이어 글로서리")
 > 레이어 경로 매핑 (App Router 트리): `@jkit/eslint-rules/nextjs/base/lint-rules-structure-reference.md`
 > 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nextjs/base/lint-rules-reference.md`
+> 레이어 의존성 그래프 (Mermaid 시각화): `@jkit/eslint-rules/nextjs/base/lint-rules-diagram.md`
 
 Hexagonal Architecture (Ports and Adapters) + Next.js App Router colocated components.
 Domain logic is pure TypeScript with no framework dependencies.
