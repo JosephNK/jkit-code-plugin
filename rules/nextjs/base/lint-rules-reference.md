@@ -545,20 +545,6 @@ Boundary 검사에서 제외할 파일/디렉토리 (boundaries/no-unknown-files
 
 ### 무시 패턴 목록
 
-- `**/*.test.ts`
-- `**/*.test.tsx`
-- `**/*.spec.ts`
-- `**/*.spec.tsx`
-- `*.config.*`
-- `*.ts`
-- `*.d.ts`
-- `types/**`
-- `src/common/types/**`
-- `.jkit/**`
-- `scripts/**`
-- `e2e/**`
-- `.next/**`
-- `out/**`
-- `build/**`
-- `coverage/**`
-- `next-env.d.ts`
+- **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`
+- **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/common/types/**`
+- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`

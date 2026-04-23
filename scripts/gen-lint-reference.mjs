@@ -660,6 +660,58 @@ function renderBulletList(items) {
 }
 
 /**
+ * 무시 패턴을 의미 카테고리로 분류 — 카테고리별 그루핑 렌더용.
+ * 매칭 안 되는 패턴은 `special` (프로젝트 고유 예외).
+ */
+function categorizeIgnorePattern(p) {
+  // 구체 경로 매칭 먼저 (regex 오탐 방지):
+  // - `next-env.d.ts`는 `.d.ts`지만 자동 생성 메타 → build
+  // - `eslint.config.mjs`는 `.config.`지만 ESLint 자체 설정 → build
+  if (p === 'next-env.d.ts' || p === 'eslint.config.mjs') return 'build';
+  if (
+    /^(?:dist|build|coverage|\.next|out|\.jkit|scripts|e2e|node_modules|eslint-rules)(?:\/|$)/.test(p)
+  )
+    return 'build';
+  if (/\.(?:spec|test)\.(?:ts|tsx|js|jsx)$/.test(p)) return 'test';
+  if (/^test\/|\/test\/|^src\/test\//.test(p)) return 'test';
+  if (/\.config\./.test(p)) return 'test';
+  if (/\.module\.(?:ts|tsx)$/.test(p)) return 'module';
+  if (/\.d\.ts$/.test(p) || p === '*.ts' || /(^|\/)types\//.test(p)) return 'meta';
+  if (/^src\/main\.|^src\/app\./.test(p)) return 'bootstrap';
+  return 'special';
+}
+
+/**
+ * 무시 패턴을 카테고리별로 묶어 렌더.
+ * 빌드 산출물은 "코드 작성 무관"임을 명시해 LLM이 관심 두지 않도록 유도.
+ */
+function renderIgnoredPaths(patterns) {
+  const groups = [
+    { key: 'test', label: '테스트/설정 파일', items: [] },
+    { key: 'module', label: 'NestJS DI 조립', items: [] },
+    { key: 'meta', label: '타입/메타 파일', items: [] },
+    { key: 'bootstrap', label: '앱 부트스트랩', items: [] },
+    { key: 'special', label: '특수 경로', items: [] },
+    { key: 'build', label: '빌드/툴 산출물 (코드 작성 무관)', items: [] },
+  ];
+  const byKey = new Map(groups.map((g) => [g.key, g]));
+  const seen = new Set();
+  for (const p of patterns) {
+    if (seen.has(p)) continue;
+    seen.add(p);
+    const cat = categorizeIgnorePattern(p);
+    (byKey.get(cat) || byKey.get('special')).items.push(p);
+  }
+  const out = [];
+  for (const g of groups) {
+    if (g.items.length === 0) continue;
+    const patt = g.items.map((p) => `\`${p}\``).join(', ');
+    out.push(`- **${g.label}**: ${patt}`);
+  }
+  return out.join('\n');
+}
+
+/**
  * 레이어 글로서리 렌더. baseBoundaryElements 순서로 각 타입의 semantics를 섹션화한다.
  * semantics가 없는 레이어는 건너뛴다 (부분 정의 가능).
  *
@@ -951,7 +1003,7 @@ function renderReference({
     }
     body.push('### 무시 패턴 목록');
     body.push('');
-    body.push(renderBulletList(ignoredPaths));
+    body.push(renderIgnoredPaths(ignoredPaths));
     sections.push(body.join('\n'));
   }
 

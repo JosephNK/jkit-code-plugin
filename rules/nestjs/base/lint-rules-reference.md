@@ -358,17 +358,8 @@ Boundary 검사에서 제외할 파일/디렉토리.
 
 ### 무시 패턴 목록
 
-- `**/*.spec.ts`
-- `**/*.test.ts`
-- `**/*.module.ts`
-- `src/main.ts`
-- `src/app.*.ts`
-- `src/test/**`
-- `src/modules/health/**`
-- `src/modules/**/common/**`
-- `test/**`
-- `.jkit/**`
-- `eslint.config.mjs`
-- `eslint-rules/**`
-- `dist/**`
-- `coverage/**`
+- **테스트/설정 파일**: `**/*.spec.ts`, `**/*.test.ts`, `src/test/**`, `test/**`
+- **NestJS DI 조립**: `**/*.module.ts`
+- **앱 부트스트랩**: `src/main.ts`, `src/app.*.ts`
+- **특수 경로**: `src/modules/health/**`, `src/modules/**/common/**`
+- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `eslint.config.mjs`, `eslint-rules/**`, `dist/**`, `coverage/**`
