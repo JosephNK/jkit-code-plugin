@@ -12,13 +12,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
-const HELP = `Usage: update-architecture-lint-ref.mjs <ref> --project-dir <dir> [--dry-run]
+const HELP = `Usage: update-architecture-lint-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
 
 모든 pubspec.yaml에서 architecture_lint의 git ref를 업데이트합니다.
 
 Arguments:
-  <ref>              새로운 git ref 값 (예: v0.1.32, 0.1.32, main)
+  <ref>              선택. 새로운 git ref 값 (예: v0.1.32, 0.1.32, main).
+                     생략 시 .claude-plugin/plugin.json의 version을 사용.
 
 Options:
   --project-dir <dir>  프로젝트 루트 디렉토리 (required)
@@ -32,7 +34,7 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { ref: '', projectDir: '', dryRun: false };
+  const args = { ref: null, projectDir: '', dryRun: false };
   const positional = [];
   const rest = argv.slice(2);
 
@@ -62,15 +64,13 @@ function parseArgs(argv) {
     }
   }
 
-  if (positional.length === 0) {
-    process.stderr.write('Error: <ref> is required\n');
-    usage();
-  }
   if (positional.length > 1) {
     process.stderr.write(`Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`);
     usage();
   }
-  args.ref = positional[0];
+  if (positional.length === 1) {
+    args.ref = positional[0];
+  }
 
   if (!args.projectDir) {
     process.stderr.write('Error: --project-dir is required\n');
@@ -85,6 +85,32 @@ function normalizeRef(ref) {
     return ref;
   }
   return `v${ref}`;
+}
+
+function resolvePluginVersion() {
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const pluginRoot = path.resolve(scriptDir, '..', '..', '..');
+  const pluginJson = path.join(pluginRoot, '.claude-plugin', 'plugin.json');
+
+  if (!fs.existsSync(pluginJson) || !fs.statSync(pluginJson).isFile()) {
+    process.stderr.write(`plugin.json을 찾을 수 없습니다: ${pluginJson}\n`);
+    process.exit(1);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(pluginJson, 'utf-8'));
+  } catch (exc) {
+    process.stderr.write(`plugin.json 파싱 실패: ${exc.message}\n`);
+    process.exit(1);
+  }
+
+  const version = data.version;
+  if (typeof version !== 'string' || !version) {
+    process.stderr.write('plugin.json의 version 필드가 비어 있습니다.\n');
+    process.exit(1);
+  }
+  return normalizeRef(version);
 }
 
 function findPubspecFiles(projectRoot) {
@@ -158,11 +184,19 @@ function updateArchitectureLintRef(pubspecPath, newRef, dryRun) {
 function main() {
   const args = parseArgs(process.argv);
 
-  const ref = normalizeRef(args.ref);
+  let ref;
+  let refSource;
+  if (args.ref === null) {
+    ref = resolvePluginVersion();
+    refSource = 'plugin.json 자동 감지';
+  } else {
+    ref = normalizeRef(args.ref);
+    refSource = 'CLI 인자';
+  }
   const projectRoot = path.resolve(args.projectDir);
 
   process.stdout.write(`프로젝트 루트: ${projectRoot}\n`);
-  process.stdout.write(`새 ref: ${ref}\n`);
+  process.stdout.write(`새 ref: ${ref} (${refSource})\n`);
   if (args.dryRun) process.stdout.write('(dry-run 모드)\n');
   process.stdout.write('\n');
 

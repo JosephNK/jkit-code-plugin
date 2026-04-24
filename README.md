@@ -96,8 +96,6 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 | Command | Description |
 |---------|-------------|
 | `/jkit:flutter-update-dependencies` | pub.dev 패키지 최신 버전 업데이트 |
-| `/jkit:flutter-update-leaf-kit-ref` | flutter_leaf_kit git ref 일괄 업데이트 |
-| `/jkit:flutter-update-architecture-lint-ref` | architecture_lint git ref 일괄 업데이트 |
 
 ### Cross-Framework
 
@@ -105,6 +103,7 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 |---------|-------------|
 | `/jkit:commit` | 변경 분석 → 한국어 커밋 메시지 자동 생성 (3개 후보) |
 | `/jkit:typeorm-migration` | TypeORM 마이그레이션 SQL 생성 (dev/prod 분리) |
+| `/jkit:update-plugin-ref` | JKit 의존성 git ref 일괄 업데이트 (`code-plugin` / `architecture-lint` / `leaf-kit`) |
 
 ## Generator Scripts
 
