@@ -4,7 +4,7 @@
 // by replacing `// {{MARKER}}` placeholders with concatenated snippets from
 // each `--with` stack's eslint.manifest.
 //
-// Also pins the `@jkit/eslint-rules` git dependency in the user's package.json
+// Also pins the `@jkit/code-plugin` git dependency in the user's package.json
 // to `v<plugin-version>` (read from .claude-plugin/plugin.json).
 //
 // Manifest format (plaintext):
@@ -273,8 +273,8 @@ function main() {
 
   const pkg = JSON.parse(fs.readFileSync(userPkgPath, 'utf8'));
   const dev = pkg.devDependencies || {};
-  const old = dev['@jkit/eslint-rules'];
-  dev['@jkit/eslint-rules'] = gitDep;
+  const old = dev['@jkit/code-plugin'];
+  dev['@jkit/code-plugin'] = gitDep;
 
   // Sort devDependencies alphabetically to keep diffs minimal.
   const sortedDev = {};
@@ -284,11 +284,11 @@ function main() {
   fs.writeFileSync(userPkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
   if (old === gitDep) {
-    process.stdout.write(`  Unchanged: @jkit/eslint-rules (${gitDep})\n`);
+    process.stdout.write(`  Unchanged: @jkit/code-plugin (${gitDep})\n`);
   } else if (old) {
-    process.stdout.write(`  Updated:   @jkit/eslint-rules ${old} → ${gitDep}\n`);
+    process.stdout.write(`  Updated:   @jkit/code-plugin ${old} → ${gitDep}\n`);
   } else {
-    process.stdout.write(`  Added:     @jkit/eslint-rules → ${gitDep}\n`);
+    process.stdout.write(`  Added:     @jkit/code-plugin → ${gitDep}\n`);
   }
 
   process.stdout.write('\n');

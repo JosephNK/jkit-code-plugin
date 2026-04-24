@@ -3,7 +3,7 @@
 // Copies rules/<framework>/base/stylelint.template.mjs to
 // <output-dir>/stylelint.config.mjs and patches <output-dir>/package.json:
 //   - devDependencies: stylelint, stylelint-config-standard,
-//     stylelint-declaration-strict-value, @jkit/eslint-rules
+//     stylelint-declaration-strict-value, @jkit/code-plugin
 //   - scripts.lint:css
 //   - lint-staged glob for CSS files
 //
@@ -22,7 +22,7 @@ const HELP = `Usage: gen-stylelint.mjs <framework> -p <output-dir>
 
 Copies the framework's stylelint template to <output-dir>/stylelint.config.mjs
 and patches <output-dir>/package.json with:
-  - devDependencies: stylelint, stylelint-config-standard, @jkit/eslint-rules
+  - devDependencies: stylelint, stylelint-config-standard, @jkit/code-plugin
   - scripts.lint:css
   - lint-staged glob for CSS files
 
@@ -162,8 +162,8 @@ function main() {
   devChanges.push(setDep(dev, 'stylelint-config-standard', '^36.0.0'));
   // Enforces token usage (stylelint.rules.mjs uses scale-unlimited/declaration-strict-value).
   devChanges.push(setDep(dev, 'stylelint-declaration-strict-value', '^1.10.0'));
-  // gen-eslint.mjs already pins @jkit/eslint-rules; re-sync here for idempotency.
-  devChanges.push(setDep(dev, '@jkit/eslint-rules', gitDep));
+  // gen-eslint.mjs already pins @jkit/code-plugin; re-sync here for idempotency.
+  devChanges.push(setDep(dev, '@jkit/code-plugin', gitDep));
 
   const sortedDev = {};
   for (const k of Object.keys(dev).sort()) sortedDev[k] = dev[k];

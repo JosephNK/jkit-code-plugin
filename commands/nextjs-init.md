@@ -190,10 +190,10 @@ $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 
 ### 9. ESLint rules 의존성 설치
 
-`gen-eslint.mjs`는 생성된 `eslint.config.mjs`에서 `@jkit/eslint-rules`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
+`gen-eslint.mjs`는 생성된 `eslint.config.mjs`에서 `@jkit/code-plugin`를 import하도록 작성하고, 사용자 프로젝트의 `package.json` `devDependencies`에 git 의존성을 추가합니다:
 
 ```json
-"@jkit/eslint-rules": "github:JosephNK/jkit-code-plugin#v<current-version>"
+"@jkit/code-plugin": "github:JosephNK/jkit-code-plugin#v<current-version>"
 ```
 
 의존성을 실제로 설치합니다. 명령은 Step 7에서 결정된 `PM` 변수에 따라 분기합니다.
@@ -208,9 +208,9 @@ case "$PM" in
 esac
 ```
 
-> 설치 후 `node_modules/@jkit/eslint-rules/`에 `rules/nextjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nextjs 규칙만 포함).
+> 설치 후 `node_modules/@jkit/code-plugin/`에 `rules/nextjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nextjs 규칙만 포함).
 
-> **peerDependencies**: `@jkit/eslint-rules`는 `eslint-plugin-import`를 peer로 요구합니다 (순환 의존성 감지용). 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
+> **peerDependencies**: `@jkit/code-plugin`는 `eslint-plugin-import`를 peer로 요구합니다 (순환 의존성 감지용). 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
 >
 > ```bash
 > cd "$PROJECT_ROOT"
@@ -230,9 +230,9 @@ esac
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
 - `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션
-- `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/eslint-rules/nextjs/*` import)
+- `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nextjs/*` import)
 - `stylelint.config.mjs` — Stylelint 설정 (`stylelint-config-standard` extends + jkit baseline 규칙)
-- `package.json` — `devDependencies`(`@jkit/eslint-rules`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.prepare: "husky"` + CSS 대상 `lint-staged` glob
+- `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.prepare: "husky"` + CSS 대상 `lint-staged` glob
 - `tsconfig.json` — 프레임워크별 설정으로 패치됨
 - `.husky/pre-commit` — `npx lint-staged`
 - `.husky/commit-msg` — `npx --no -- commitlint --edit $1`

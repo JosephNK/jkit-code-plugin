@@ -1,7 +1,7 @@
 {
-  "name": "@jkit/eslint-rules",
+  "name": "@jkit/code-plugin",
   "version": "0.1.56",
-  "description": "ESLint rule sets shared by jkit-code-plugin",
+  "description": "Shared ESLint/Stylelint rules, formatters, and CLI for jkit-code-plugin",
   "type": "module",
   "exports": {
     "./nextjs/*": "./rules/nextjs/*",

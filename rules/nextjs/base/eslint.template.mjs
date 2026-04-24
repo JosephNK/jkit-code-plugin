@@ -30,7 +30,7 @@ import {
   buildArchitectureBoundaries,
   buildDomainPurity,
   buildRestrictedImports,
-} from '@jkit/eslint-rules/nextjs/base/eslint.rules.mjs';
+} from '@jkit/code-plugin/nextjs/base/eslint.rules.mjs';
 // {{STACK_IMPORTS}}
 
 // ─── Helper: patch additional allow rules into base boundary rules ────────────

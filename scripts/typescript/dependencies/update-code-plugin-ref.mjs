@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // =============================================================================
-// Updates the git ref of @jkit/eslint-rules across all package.json files in
+// Updates the git ref of @jkit/code-plugin across all package.json files in
 // the target project.
 //
 // Usage:
-//   update-eslint-rules-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
+//   update-code-plugin-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
 // =============================================================================
 
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGE_NAME = '@jkit/eslint-rules';
+const PACKAGE_NAME = '@jkit/code-plugin';
 const GIT_PREFIX = 'github:JosephNK/jkit-code-plugin#';
 const SKIP_DIR_NAMES = new Set([
   'node_modules',
@@ -23,9 +23,9 @@ const SKIP_DIR_NAMES = new Set([
   '.cache',
 ]);
 
-const HELP = `Usage: update-eslint-rules-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
+const HELP = `Usage: update-code-plugin-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
 
-Updates @jkit/eslint-rules git ref across all package.json files.
+Updates @jkit/code-plugin git ref across all package.json files.
 
 Arguments:
   <ref>                  Optional new git ref (e.g. v0.1.55, 0.1.55, main).

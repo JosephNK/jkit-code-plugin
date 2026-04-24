@@ -1,7 +1,7 @@
 # Conventions
 
-> 레이어 경로 매핑: `@jkit/eslint-rules/nestjs/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/eslint-rules/nestjs/base/lint-rules-reference.md`
+> 레이어 경로 매핑: `@jkit/code-plugin/nestjs/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/code-plugin/nestjs/base/lint-rules-reference.md`
 
 ## Layer Rules
 

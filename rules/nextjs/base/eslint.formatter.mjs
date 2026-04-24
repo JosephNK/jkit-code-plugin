@@ -6,9 +6,9 @@
 // 통과하므로 전체 lint 출력을 망가뜨리지 않는다.
 //
 // 사용법 (프로젝트 root 기준):
-//   pnpm eslint --format @jkit/eslint-rules/nextjs/base/eslint.formatter.mjs
+//   pnpm eslint --format @jkit/code-plugin/nextjs/base/eslint.formatter.mjs
 //   또는 package.json:
-//     "lint": "eslint --format @jkit/eslint-rules/nextjs/base/eslint.formatter.mjs ."
+//     "lint": "eslint --format @jkit/code-plugin/nextjs/base/eslint.formatter.mjs ."
 //
 // 추가 룰 메시지 커스터마이징이 필요하면 MESSAGE_OVERRIDES에 항목 추가.
 //   - key   : ESLint ruleId

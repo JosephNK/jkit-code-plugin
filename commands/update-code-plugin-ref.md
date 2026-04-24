@@ -1,10 +1,10 @@
 ---
-description: Update @jkit/eslint-rules git ref in all package.json files
+description: Update @jkit/code-plugin git ref in all package.json files
 ---
 
-# Update @jkit/eslint-rules Ref
+# Update @jkit/code-plugin Ref
 
-Update the git ref version of `@jkit/eslint-rules` (`github:JosephNK/jkit-code-plugin#<ref>`) across all `package.json` files in the project.
+Update the git ref version of `@jkit/code-plugin` (`github:JosephNK/jkit-code-plugin#<ref>`) across all `package.json` files in the project.
 
 ## Steps
 
@@ -28,7 +28,7 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 Run the script with the provided ref (omit `<ref>` to auto-use plugin.json version):
 
 ```bash
-$JKIT_DIR/scripts/typescript/dependencies/update-eslint-rules-ref.mjs [<ref>] --project-dir <user-project-dir> [--dry-run]
+$JKIT_DIR/scripts/typescript/dependencies/update-code-plugin-ref.mjs [<ref>] --project-dir <user-project-dir> [--dry-run]
 ```
 
 - `<ref>`: optional new git ref value (e.g., `v0.1.55`, `main`). If omitted, the script reads `version` from `.claude-plugin/plugin.json` and prefixes `v`.
@@ -39,4 +39,4 @@ $JKIT_DIR/scripts/typescript/dependencies/update-eslint-rules-ref.mjs [<ref>] --
 
 Show the update result to the user.
 If dry-run was used, show which files would be changed and ask if they want to proceed with the actual update.
-If the command fails, inform the user about the possible cause (e.g., no package.json found, no @jkit/eslint-rules dependency found).
+If the command fails, inform the user about the possible cause (e.g., no package.json found, no @jkit/code-plugin dependency found).
