@@ -21,9 +21,9 @@ Updates:
   - .claude-plugin/plugin.json            (version)
   - .claude-plugin/marketplace.json       (version)
   - package.json                          (version)
-  - rules/flutter/custom-lint/architecture_lint/pubspec.yaml
+  - rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml
     (version)
-  - rules/flutter/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml
+  - rules/flutter/base/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml
     (version + architecture_lint git ref → v<new-version>)
 
 Then:
@@ -217,9 +217,9 @@ async function main() {
   const marketplaceJsonPath = '.claude-plugin/marketplace.json';
   const rootPackageJsonPath = 'package.json';
   const architectureLintPubspecPath =
-    'rules/flutter/custom-lint/architecture_lint/pubspec.yaml';
+    'rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml';
   const analyzerPluginPubspecPath =
-    'rules/flutter/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml';
+    'rules/flutter/base/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml';
 
   const current = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8')).version;
   process.stdout.write(`Current version: ${current}\n`);

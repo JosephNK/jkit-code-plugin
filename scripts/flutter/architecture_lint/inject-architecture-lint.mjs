@@ -13,7 +13,7 @@
 //     --pubspec app/pubspec.yaml \
 //     --analysis-options app/analysis_options.yaml \
 //     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
-//     --git-path rules/flutter/custom-lint/architecture_lint \
+//     --git-path rules/flutter/base/custom-lint/architecture_lint \
 //     --git-ref v0.1.28
 // =============================================================================
 

@@ -11,7 +11,7 @@ dependencies:
   architecture_lint:
     git:
       url: https://github.com/JosephNK/jkit-code-plugin.git
-      path: rules/flutter/custom-lint/architecture_lint
+      path: rules/flutter/base/custom-lint/architecture_lint
       ref: v0.1.56
   analyzer: ">=6.0.0 <13.0.0"
   analyzer_plugin: ">=0.13.0 <0.15.0"

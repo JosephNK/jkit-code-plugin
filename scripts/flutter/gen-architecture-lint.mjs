@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { ensureFlutterRoot, normalizePath } from '../common.mjs';
 
 const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
-const GIT_PATH = 'rules/flutter/custom-lint/architecture_lint';
+const GIT_PATH = 'rules/flutter/base/custom-lint/architecture_lint';
 
 const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
 

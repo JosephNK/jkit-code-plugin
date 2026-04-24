@@ -8,7 +8,7 @@
 // Sources:
 //   - rules/flutter/base/architecture.md
 //   - rules/flutter/base/conventions.md
-//   - rules/flutter/custom-lint/architecture/arch_rules_test.dart
+//   - rules/flutter/base/custom-lint/architecture/arch_rules_test.dart
 //
 // Rules:
 //   E1  entities/ must only import codegen annotations (freezed_annotation, etc.)
