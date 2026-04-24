@@ -21,8 +21,10 @@ Updates:
   - .claude-plugin/plugin.json            (version)
   - .claude-plugin/marketplace.json       (version)
   - package.json                          (version)
+  - rules/flutter/custom-lint/architecture_lint/pubspec.yaml
+    (version)
   - rules/flutter/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml
-    (architecture_lint git ref → v<new-version>)
+    (version + architecture_lint git ref → v<new-version>)
 
 Then:
   - git add + commit "chore: 버전 <new> 범프"
@@ -170,6 +172,22 @@ function updatePubspecRef(filePath, newVersion) {
   process.stdout.write(`  Updated ${filePath} (ref → v${newVersion})\n`);
 }
 
+function updateYamlVersion(filePath, newVersion) {
+  if (!fs.existsSync(filePath)) {
+    process.stdout.write(`  Skipped ${filePath} (not found)\n`);
+    return;
+  }
+  const txt = fs.readFileSync(filePath, 'utf-8');
+  const re = /^(version:\s*)[\d.]+(?:[-+][\w.]+)?/m;
+  if (!re.test(txt)) {
+    process.stderr.write(`Failed to find version: field in ${filePath}\n`);
+    process.exit(1);
+  }
+  const newTxt = txt.replace(re, `$1${newVersion}`);
+  fs.writeFileSync(filePath, newTxt);
+  process.stdout.write(`  Updated ${filePath} (version → ${newVersion})\n`);
+}
+
 async function main() {
   const args = parseArgs(process.argv);
 
@@ -198,7 +216,9 @@ async function main() {
   const pluginJsonPath = '.claude-plugin/plugin.json';
   const marketplaceJsonPath = '.claude-plugin/marketplace.json';
   const rootPackageJsonPath = 'package.json';
-  const bootstrapPubspecPath =
+  const architectureLintPubspecPath =
+    'rules/flutter/custom-lint/architecture_lint/pubspec.yaml';
+  const analyzerPluginPubspecPath =
     'rules/flutter/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml';
 
   const current = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8')).version;
@@ -256,10 +276,15 @@ async function main() {
   process.stdout.write(
     `  3. Update ${rootPackageJsonPath}                          → ${newVersion}\n`,
   );
-  process.stdout.write(`  4. Update tools/analyzer_plugin/pubspec.yaml    → ref: ${tag}\n`);
-  process.stdout.write(`  5. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
-  process.stdout.write(`  6. git tag ${tag}\n`);
-  process.stdout.write(`  7. git push origin ${branch} --follow-tags\n\n`);
+  process.stdout.write(
+    `  4. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  5. Update analyzer_plugin/pubspec.yaml            → version: ${newVersion}, ref: ${tag}\n`,
+  );
+  process.stdout.write(`  6. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
+  process.stdout.write(`  7. git tag ${tag}\n`);
+  process.stdout.write(`  8. git push origin ${branch} --follow-tags\n\n`);
 
   if (!args.yes) {
     const ans = await prompt('Proceed with release? [y/N] ');
@@ -273,10 +298,17 @@ async function main() {
   updateJsonVersion(pluginJsonPath, newVersion);
   updateJsonVersion(marketplaceJsonPath, newVersion);
   updateJsonVersion(rootPackageJsonPath, newVersion);
-  updatePubspecRef(bootstrapPubspecPath, newVersion);
+  updateYamlVersion(architectureLintPubspecPath, newVersion);
+  updateYamlVersion(analyzerPluginPubspecPath, newVersion);
+  updatePubspecRef(analyzerPluginPubspecPath, newVersion);
 
   // Commit + tag + push
-  const addFiles = [pluginJsonPath, marketplaceJsonPath, bootstrapPubspecPath];
+  const addFiles = [
+    pluginJsonPath,
+    marketplaceJsonPath,
+    architectureLintPubspecPath,
+    analyzerPluginPubspecPath,
+  ];
   if (fs.existsSync(rootPackageJsonPath)) addFiles.push(rootPackageJsonPath);
   spawnSync('git', ['add', ...addFiles], { stdio: 'inherit' });
   spawnSync('git', ['commit', '-m', `chore: 버전 ${newVersion} 범프`], { stdio: 'inherit' });
