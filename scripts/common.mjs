@@ -9,6 +9,7 @@
 //   normalizePath(p)              → returns absolute path (path must exist)
 //   ensureGitRepo(p)              → throws if <p> is not a git repo root
 //   ensureFlutterRoot(root, entry)→ throws unless <root>/<entry>/pubspec.yaml exists
+//   setDep(dev, name, version)    → upsert a devDep and return a log line
 // =============================================================================
 
 import fs from 'node:fs';
@@ -41,6 +42,24 @@ export function ensureGitRepo(p = '.') {
     ].join('\n');
     throw new Error(msg);
   }
+}
+
+// Upsert `name` → `version` in a devDependencies-like object.
+// Returns a one-line log string describing what changed:
+//   "  Added:     X -> 1.0.0"
+//   "  Updated:   X 1.0.0 -> 2.0.0"
+//   "  Unchanged: X (1.0.0)"
+// The caller is responsible for sorting keys and writing the JSON back.
+export function setDep(dev, name, version) {
+  const old = dev[name];
+  dev[name] = version;
+  if (old === version) {
+    return `  Unchanged: ${name} (${version})`;
+  }
+  if (old) {
+    return `  Updated:   ${name} ${old} -> ${version}`;
+  }
+  return `  Added:     ${name} -> ${version}`;
 }
 
 export function ensureFlutterRoot(root, entry) {

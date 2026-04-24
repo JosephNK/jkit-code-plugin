@@ -16,6 +16,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { setDep } from '../common.mjs';
+
 const HELP = `Usage: gen-stylelint.mjs <framework> -p <output-dir>
 
 Copies the framework's stylelint template to <output-dir>/stylelint.config.mjs
@@ -78,18 +80,6 @@ function parseArgs(argv) {
   }
 
   return args;
-}
-
-function setDep(dev, name, version) {
-  const old = dev[name];
-  dev[name] = version;
-  if (old === version) {
-    return `  Unchanged: ${name} (${version})`;
-  }
-  if (old) {
-    return `  Updated:   ${name} ${old} -> ${version}`;
-  }
-  return `  Added:     ${name} -> ${version}`;
 }
 
 // Repr a JS string the way Python's `repr()` of a str does:

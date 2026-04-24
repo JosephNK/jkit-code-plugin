@@ -3,6 +3,13 @@
 // Copies .husky hook templates from rules/<framework>/base/husky/ into
 // <output-dir>/.husky/ and makes each hook executable.
 //
+// Also patches <output-dir>/package.json:
+//   - devDependencies: husky (all frameworks) + framework-specific deps
+//       flutter: @commitlint/cli, @commitlint/config-conventional
+//       nestjs:  lint-staged, @commitlint/cli, @commitlint/config-conventional
+//       nextjs:  lint-staged
+//   - scripts.prepare = "husky"  (husky v9 auto-installs hooks on `npm install`)
+//
 // Optional -entry <dir> substitutes {{ENTRY}} placeholders in the copied
 // hook files (used by flutter templates to bake the entry directory into
 // the pre-commit script).
@@ -16,9 +23,12 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { setDep } from './common.mjs';
+
 const HELP = `Usage: gen-husky.mjs <framework> -p <output-dir> [-entry <dir>]
 
-Generates .husky hook files for the given framework.
+Generates .husky hook files for the given framework and patches package.json
+with husky/commitlint/lint-staged devDependencies + scripts.prepare.
 
 Arguments:
   <framework>    Framework name (e.g. nextjs, nestjs, flutter)
@@ -33,6 +43,32 @@ Examples:
   ./scripts/gen-husky.mjs nestjs -p ./my-project
   ./scripts/gen-husky.mjs flutter -p ./my-project -entry app
 `;
+
+// Pinned versions aligned to the bin/CLI shape used by the husky hook templates.
+// Bump these in one place when upgrading across downstream projects.
+const HUSKY_VERSION = '^9.1.0';
+const LINT_STAGED_VERSION = '^15.2.0';
+const COMMITLINT_CLI_VERSION = '^19.4.0';
+const COMMITLINT_CONFIG_CONVENTIONAL_VERSION = '^19.4.0';
+
+// Framework → devDeps required by the generated hooks.
+// `husky` itself is added for every framework (needed by `prepare`).
+const FRAMEWORK_DEPS = {
+  flutter: {
+    '@commitlint/cli': COMMITLINT_CLI_VERSION,
+    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+  },
+  nestjs: {
+    'lint-staged': LINT_STAGED_VERSION,
+    '@commitlint/cli': COMMITLINT_CLI_VERSION,
+    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+  },
+  nextjs: {
+    'lint-staged': LINT_STAGED_VERSION,
+    '@commitlint/cli': COMMITLINT_CLI_VERSION,
+    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+  },
+};
 
 function usage(code = 1) {
   (code === 0 ? process.stdout : process.stderr).write(HELP);
@@ -86,6 +122,84 @@ function parseArgs(argv) {
   return args;
 }
 
+function copyHooks(huskySrc, huskyDest, entry) {
+  fs.mkdirSync(huskyDest, { recursive: true });
+
+  // Sort for stable, bash-glob-like iteration.
+  const entries = fs.readdirSync(huskySrc).sort();
+
+  for (const hookName of entries) {
+    const src = path.join(huskySrc, hookName);
+    if (!fs.statSync(src).isFile()) continue;
+
+    const dest = path.join(huskyDest, hookName);
+    let content = fs.readFileSync(src, 'utf8');
+    if (entry) {
+      content = content.replaceAll('{{ENTRY}}', entry);
+    }
+    fs.writeFileSync(dest, content);
+    fs.chmodSync(dest, 0o755);
+    process.stdout.write(`Generated: ${dest}\n`);
+  }
+}
+
+// Patch <outputDir>/package.json with husky/commitlint/lint-staged devDeps
+// and ensure `scripts.prepare = "husky"`.
+//
+// Requires package.json to already exist (downstream init command is expected
+// to bootstrap it via `npm init -y` / `pnpm init` / etc.). Fails loudly so
+// the caller doesn't ship a silently-broken husky install.
+function patchPackageJson(outputDir, framework) {
+  const pkgPath = path.join(outputDir, 'package.json');
+  if (!fs.existsSync(pkgPath)) {
+    process.stderr.write(
+      `Error: package.json not found at ${pkgPath}\n` +
+        'Hint: create it first (e.g., `npm init -y` / `pnpm init`) before ' +
+        'running gen-husky.mjs.\n',
+    );
+    process.exit(1);
+  }
+
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+  const changes = [];
+
+  // ── devDependencies ───────────────────────────────────────────────────────
+  const dev = pkg.devDependencies || {};
+  changes.push(setDep(dev, 'husky', HUSKY_VERSION));
+  const extraDeps = FRAMEWORK_DEPS[framework] || {};
+  for (const [name, version] of Object.entries(extraDeps)) {
+    changes.push(setDep(dev, name, version));
+  }
+  const sortedDev = {};
+  for (const k of Object.keys(dev).sort()) sortedDev[k] = dev[k];
+  pkg.devDependencies = sortedDev;
+
+  // ── scripts.prepare ───────────────────────────────────────────────────────
+  // husky v9 initializes hooks when the `prepare` lifecycle script runs
+  // `husky` with no args (npm/pnpm/yarn all run `prepare` after install).
+  const scripts = pkg.scripts || {};
+  const prevPrepare = scripts.prepare;
+  let prepareNote;
+  if (!prevPrepare) {
+    scripts.prepare = 'husky';
+    prepareNote = '  Added:     scripts.prepare -> husky';
+  } else if (prevPrepare === 'husky') {
+    prepareNote = '  Unchanged: scripts.prepare (husky)';
+  } else {
+    // User already has a prepare script — don't clobber. husky v9 is tolerant
+    // of being invoked from any prepare chain, so leave composition to the
+    // downstream project owner.
+    prepareNote = `  Skipped:   scripts.prepare (already set: "${prevPrepare}")`;
+  }
+  pkg.scripts = scripts;
+
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+
+  for (const line of changes) process.stdout.write(line + '\n');
+  process.stdout.write(prepareNote + '\n');
+  process.stdout.write(`Patched:   ${pkgPath}\n`);
+}
+
 function main() {
   const args = parseArgs(process.argv);
 
@@ -104,25 +218,22 @@ function main() {
     process.exit(1);
   }
 
-  const huskyDest = path.join(args.outputDir, '.husky');
-  fs.mkdirSync(huskyDest, { recursive: true });
-
-  // Sort for stable, bash-glob-like iteration.
-  const entries = fs.readdirSync(huskySrc).sort();
-
-  for (const hookName of entries) {
-    const src = path.join(huskySrc, hookName);
-    if (!fs.statSync(src).isFile()) continue;
-
-    const dest = path.join(huskyDest, hookName);
-    let content = fs.readFileSync(src, 'utf8');
-    if (args.entry) {
-      content = content.replaceAll('{{ENTRY}}', args.entry);
-    }
-    fs.writeFileSync(dest, content);
-    fs.chmodSync(dest, 0o755);
-    process.stdout.write(`Generated: ${dest}\n`);
+  // Fail-fast: verify package.json exists before writing any hook files so
+  // a partial failure doesn't leave orphan `.husky/` artifacts behind.
+  const pkgPath = path.join(args.outputDir, 'package.json');
+  if (!fs.existsSync(pkgPath)) {
+    process.stderr.write(
+      `Error: package.json not found at ${pkgPath}\n` +
+        'Hint: create it first (e.g., `npm init -y` / `pnpm init`) before ' +
+        'running gen-husky.mjs.\n',
+    );
+    process.exit(1);
   }
+
+  const huskyDest = path.join(args.outputDir, '.husky');
+  copyHooks(huskySrc, huskyDest, args.entry);
+
+  patchPackageJson(args.outputDir, args.framework);
 }
 
 main();

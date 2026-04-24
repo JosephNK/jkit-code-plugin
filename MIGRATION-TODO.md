@@ -100,7 +100,14 @@
 ### 후속 검토 필요 (이번 세션 범위 밖)
 
 - [x] ~~**`pyproject.toml` / `poetry.lock` / `gen-pyproject.mjs` 제거 가능성**~~ ✅ 완료 — 플러그인 루트 `pyproject.toml` / `poetry.lock` 삭제, `gen-pyproject.mjs` 삭제, `flutter-init.md`에서 Step 4(pyproject 옵션)·Step 7(`poetry install`) 제거 및 단계 번호 재조정, `README.md`에서 `gen-pyproject.mjs` 엔트리 제거, `gen-scripts.mjs` `.py` 브랜치 제거.
-- [ ] **downstream 설치 체인 설계** — Flutter 프로젝트에 `package.json` + husky/@commitlint devDeps 추가 방법. `example/hello_flutter` 검증은 사용자 지시로 이번 범위 밖.
+- [x] ~~**downstream 설치 체인 설계**~~ ✅ 완료 — 세 프레임워크(flutter/nestjs/nextjs) 공통으로 체인 일원화:
+  - `scripts/common.mjs`에 `setDep` 공용 추출 (+ `gen-stylelint.mjs`가 import해 사용)
+  - `scripts/gen-husky.mjs` 확장: framework별 devDep 세트(`husky` 공통 + flutter `@commitlint/*` / nestjs `lint-staged + @commitlint/*` / nextjs `lint-staged + @commitlint/*`) + `scripts.prepare: "husky"` 주입. `package.json` 미존재 시 fail-fast.
+  - `rules/nextjs/base/husky/commit-msg` 신규 (세 프레임워크 훅 셋 일관)
+  - `rules/common/commitlint.config.mjs` + `scripts/gen-commitlint.mjs` 신규 — Conventional Commits + `rules/common/git.md`의 허용 타입 8개(`feat/fix/refactor/docs/test/chore/perf/ci`) 강제
+  - `commands/flutter-init.md` 재구성: PM 감지 + `package.json` ensure 스텝 추가 → `gen-husky.mjs` 실행 → `core.hooksPath` 청소 → `npm install`(husky v9 `prepare` 트리거로 hooks 활성화)
+  - `commands/nestjs-init.md`, `commands/nextjs-init.md`에 `gen-commitlint.mjs` 스텝 추가 + Report 갱신
+  - `example/hello_flutter` 검증은 사용자 지시로 이번 범위 밖.
 
 ---
 

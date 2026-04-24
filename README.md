@@ -118,7 +118,12 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 ./scripts/gen-conventions.mjs <framework> -p /path/to/project --with stack1,stack2
 
 # Husky hooks (all frameworks)
+# - .husky/pre-commit, .husky/commit-msg 생성
+# - package.json에 husky/lint-staged/@commitlint devDeps + scripts.prepare 주입
 ./scripts/gen-husky.mjs <framework> -p /path/to/project [-entry <dir>]
+
+# Commitlint config (Conventional Commits + 프로젝트 허용 타입)
+./scripts/gen-commitlint.mjs -p /path/to/project
 
 # TypeScript (Next.js / NestJS)
 ./scripts/typescript/gen-eslint.mjs <framework> -p /path/to/project --with stack1,stack2
