@@ -1,7 +1,7 @@
 --- import ---
 import {
   tanstackQueryDomainBannedPackages,
-} from '@jkit/eslint-rules/nextjs/tanstack-query/eslint.rules.mjs';
+} from '@jkit/code-plugin/nextjs/tanstack-query/eslint.rules.mjs';
 --- restricted ---
 --- domain ---
     ...tanstackQueryDomainBannedPackages,

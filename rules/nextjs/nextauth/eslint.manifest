@@ -4,7 +4,7 @@ import {
   nextauthBoundaryElements,
   nextauthBoundaryRules,
   nextauthDomainBannedPackages,
-} from '@jkit/eslint-rules/nextjs/nextauth/eslint.rules.mjs';
+} from '@jkit/code-plugin/nextjs/nextauth/eslint.rules.mjs';
 --- restricted ---
 --- domain ---
     ...nextauthDomainBannedPackages,
