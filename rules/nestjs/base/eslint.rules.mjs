@@ -200,7 +200,7 @@ export const baseLayerSemantics = {
       "class 기반 도메인 모델 (interface/type + 순수 함수 지향)",
     ],
     scope:
-      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유.",
+      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유. cross-module 공유 타입은 `src/common/model/`에 두고 import 가능.",
     example: [
       "// model/order.entity.ts",
       "export type OrderStatus = 'pending' | 'confirmed' | 'shipped';",
@@ -415,10 +415,11 @@ export const baseLayerSemantics = {
  * 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
  */
 export const baseBoundaryRules = [
-  // model — 자기 자신만 (순수 TS, 외부 의존 0)
+  // model — 자기 자신 + common (cross-module 공유 도메인 타입 허용)
+  // 프레임워크 비의존은 baseDomainBannedPackages가 패키지 레벨로 enforce
   {
     from: { type: "model" },
-    allow: { to: { type: "model" } },
+    allow: { to: { type: ["model", "common"] } },
   },
   // exception — common의 베이스 예외를 상속하여 정의
   {
