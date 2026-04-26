@@ -9,4 +9,4 @@
 - [Architecture]({{DOCS_DIR}}ARCHITECTURE.md) — **MUST read when writing or modifying code.** Full architecture details with code examples
 - [Conventions]({{DOCS_DIR}}CONVENTIONS.md) — **MUST read when writing or modifying code.** Full conventions with code examples
 - [Git]({{DOCS_DIR}}GIT.md) — **MUST read when committing or using git/GitHub commands.** Git & GitHub guide with commit conventions
-- **Lint Rules** — `@jkit/code-plugin/flutter/base/lint-rules-reference.md` (plugin source). Layer glossary, rule table (E/N/S), package whitelists. Companions: `lint-rules-structure-reference.md` (path mapping), `lint-rules-diagram.md` (dependency graph).
+- [Lint]({{DOCS_DIR}}LINT.md) — **MUST read when writing or modifying code.** Layer glossary, rule table (E/N/S), package whitelists, path mapping.

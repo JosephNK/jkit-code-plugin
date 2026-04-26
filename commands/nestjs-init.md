@@ -133,17 +133,20 @@ $JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 # 3. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 
-# 4. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
+# 4. LINT.md
+$JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs
+
+# 5. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
-# 5. tsconfig.json patch
+# 6. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with <tsconfig-stacks>
 
-# 6. Husky hooks
+# 7. Husky hooks
 #    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
 
-# 7. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 8. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 

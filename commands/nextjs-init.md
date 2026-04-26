@@ -167,22 +167,25 @@ else
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs
 fi
 
-# 4. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
+# 4. LINT.md (lint-rules + structure-reference + stylelint-rules)
+$JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs
+
+# 5. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 
-# 5. Stylelint config (항상 실행, 스택 선택 없음)
+# 6. Stylelint config (항상 실행, 스택 선택 없음)
 #    - stylelint.config.mjs 생성
 #    - package.json: devDeps + scripts.lint:css + lint-staged 자동 주입
 $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 
-# 6. tsconfig.json patch
+# 7. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
 
-# 7. Husky hooks
+# 8. Husky hooks
 #    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .
 
-# 8. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 9. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
