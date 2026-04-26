@@ -1,23 +1,8 @@
 # Conventions
 
-## Dependency Rules
-
-1. **entities/** imports only codegen annotations. No runtime frameworks, no external packages
-2. **usecases/** depends on entities/ and ports/ only (no adapters, no presentation)
-3. **adapters/** implements ports/ (may import external packages: network client, etc.)
-4. **DI container** wires Port -> Adapter via get_it
-5. No importing `dio`, `flutter_secure_storage`, or any external SDK in entities/, usecases/, ports/, exceptions/
-6. No framework types in ports/ — convert to domain types (e.g., `Uint8List` instead of `MultipartFile`)
-7. No circular dependencies between layers
-8. No cross-feature imports of ports, adapters, usecases — use DI or event bus
-9. No bare `catch` — always use `on ExceptionType catch (e)` to specify the exception type
-
-## Feature Dependency Rules
-
-1. Feature A **may** import Feature B's **entities** if they share domain concepts
-2. Feature A **must NOT** import Feature B's ports, adapters, usecases directly
-3. Cross-feature communication uses `common/events/` (app-wide event bus) only
-4. If Feature A needs Feature B's business logic, inject Feature B's UseCase via DI — do not import the feature module directly
+> 레이어 경로 매핑: `@jkit/code-plugin/flutter/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (E/N/S 룰 표) · 패키지 화이트/블랙리스트: `@jkit/code-plugin/flutter/base/lint-rules-reference.md`
+> 파일/클래스 네이밍 (Contains): `@jkit/code-plugin/flutter/base/lint-rules-reference.md` ("레이어 글로서리")
 
 ## common/ vs features/ Scope Rules
 
@@ -45,37 +30,7 @@ Both follow the same Port & Adapter pattern. The only difference is scope.
 | Presentation-only feature | presentation/ only | `features/<feature>/presentation/` | Reuses another feature's domain layer via DI (e.g., login screen uses auth usecases) |
 | Shared domain module | entities/ + exceptions/ | `features/shared/domain/` | Shared domain objects with no full stack |
 
-## Naming Convention
-
-### Files
-
-| Element | File Suffix | Example |
-|---------|-------------|---------|
-| Entity | `*.dart` | `user.dart`, `product.dart` |
-| Port | `*_port.dart` | `product_port.dart` |
-| Adapter | `*_adapter.dart` | `product_adapter.dart` |
-| UseCase | `*_usecase.dart` | `get_products_usecase.dart` |
-| UseCase Params | inline in usecase file or `*_params.dart` | `get_products_params.dart` |
-| Screen | `*_screen.dart` | `product_screen.dart` |
-| View | `*_view.dart` | `product_body_view.dart` |
-| Widget | `*_{purpose}.dart` | `product_card.dart`, `product_list_tile.dart` |
-| Exception | `*_exception.dart` | `server_exception.dart` |
-| Test | `*_test.dart` | `product_adapter_test.dart` |
-
-### Classes
-
-| Element | Pattern | Example |
-|---------|---------|---------|
-| Entity | `{Name}` | `User`, `Product` |
-| Port | `{Name}Port` | `ProductPort`, `AuthPort` |
-| Adapter | `{Name}Adapter` | `ProductAdapter`, `AuthAdapter` |
-| UseCase | `{Verb}{Noun}UseCase` | `GetProductsUseCase`, `CreateOrderUseCase` |
-| UseCase Params | `{Verb}{Noun}Params` | `GetProductsParams`, `CreateOrderParams` |
-| Screen | `{Feature}Screen` | `ProductScreen`, `LoginScreen` |
-| View | `{Feature}{Purpose}View` | `ProductBodyView`, `ProductHeaderView` |
-| Widget | `{Feature}{Purpose}` | `ProductCard`, `ProductListTile` |
-
-### Adapter Private Methods
+## Adapter Private Methods
 
 | Purpose | Pattern | Example |
 |---------|---------|---------|
@@ -196,12 +151,6 @@ class DatabaseException implements Exception {
 }
 ```
 
-## Presentation
-
-- **Screen** (pages/): Entry point for a route
-- **View** (views/): Logical section of a screen (`StatelessWidget`)
-- **Widget** (widgets/): Small reusable UI component within a feature
-
 ## Test Strategy
 
 - Mocking: `mocktail` (`Mock`, `when`, `verify`)
@@ -229,7 +178,3 @@ void main() {
 }
 ```
 
-## File Size
-
-- Recommended max: 400 lines
-- Hard limit: 800 lines

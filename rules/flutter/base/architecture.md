@@ -1,6 +1,12 @@
-# Hexagonal Architecture (Ports & Adapters)
+# Architecture
 
-This project follows Hexagonal Architecture. Core principle: **Business logic knows nothing about external infrastructure.**
+> 이 문서: 헥사고날 **원리 · Data Flow · Dependency Direction** 개념 해설.
+> 레이어별 책임·포함 파일·제약·대표 코드 형태: `@jkit/code-plugin/flutter/base/lint-rules-reference.md` ("레이어 글로서리")
+> 레이어 경로 매핑 (폴더 트리): `@jkit/code-plugin/flutter/base/lint-rules-structure-reference.md`
+> 레이어 의존성 규칙 (E/N/S 룰 표): `@jkit/code-plugin/flutter/base/lint-rules-reference.md`
+> 레이어 의존성 그래프 (Mermaid 시각화): `@jkit/code-plugin/flutter/base/lint-rules-diagram.md`
+
+Hexagonal Architecture (Ports and Adapters). 핵심 원칙: **비즈니스 로직은 외부 인프라를 모른다.**
 
 ## Layer Diagram
 
@@ -60,26 +66,3 @@ Presentation -> UseCase -> Port (interface) <- Adapter Impl -> Data Source (API 
                           (all layers depend on this)
 ```
 
-## Layer Details
-
-### entities/ — Immutable Value Objects
-
-The most stable layer. No runtime frameworks, no external packages.
-
-### ports/ — Abstract Interfaces
-
-Define contracts between domain and infrastructure. Ports use only domain types — no framework types allowed. Use `abstract class` (not `abstract interface class`).
-
-### usecases/ — Business Logic
-
-Orchestrate domain operations through Port interfaces. Each UseCase has a single responsibility and is invoked via `call()`.
-
-### adapters/ — Port Implementations
-
-Implement Port interfaces to communicate with data sources (Remote API, Local DB, Platform SDK, etc.). Responsible for raw data → Entity conversion.
-
-### pages/, views/, widgets/ — Presentation
-
-- **Screen** (pages/): Entry point for a route
-- **View** (views/): Logical section of a screen (StatelessWidget)
-- **Widget** (widgets/): Small reusable UI component within a feature
