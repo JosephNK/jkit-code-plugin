@@ -220,6 +220,7 @@ export class CreateOrderRequestDto {
 - Global Interceptor (logging·transform·timeout) — `interceptors/**`
 - Custom Decorator (@CurrentUser·@Public 등) — `decorators/**`
 - Domain/integration event payload·listener — `events/**`
+- 모듈 간 공유 도메인 타입 (Entity·VO·Type) — `model/**`
 - 공용 DTO — `dtos/**`
 - 앱 레벨 설정 (env·ConfigModule schema) — `config/**`
 - 공용 상수 (enum·magic number·token) — `constants/**`
