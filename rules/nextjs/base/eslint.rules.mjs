@@ -34,6 +34,19 @@ export const baseRestrictedPatterns = [
 ];
 
 /**
+ * eslint-plugin-import / boundaries 공용 resolver 설정.
+ * NodeNext의 `.js` 확장자 ESM import + `@/*` path alias 해석 위해 필수.
+ * 미설정 시 boundaries/no-unknown 오발화.
+ * 다운스트림은 `eslint-import-resolver-typescript`를 dev dep으로 설치해야 한다.
+ */
+export const baseImportResolverSettings = {
+  'import/resolver': {
+    typescript: { alwaysTryTypes: true, project: './tsconfig.json' },
+    node: { extensions: ['.js', '.ts', '.tsx'] },
+  },
+};
+
+/**
  * 도메인 레이어(`src/lib/domain/**`)에서 import 금지 패키지.
  * 프레임워크 비의존 유지. 스택별로 UI 라이브러리 추가 차단.
  */
@@ -858,6 +871,7 @@ export function buildArchitectureBoundaries(elements, rules, ignores = baseBound
     {
       plugins: { boundaries },
       settings: {
+        ...baseImportResolverSettings,
         'boundaries/elements': elements,
         'boundaries/ignore': ignores,
       },

@@ -28,6 +28,7 @@
     "yaml": "^2.8.3"
   },
   "peerDependencies": {
+    "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-import": "^2.31.0"
   }
 }

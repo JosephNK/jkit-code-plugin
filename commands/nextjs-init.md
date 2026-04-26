@@ -213,15 +213,19 @@ esac
 
 > 설치 후 `node_modules/@jkit/code-plugin/`에 `rules/nextjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nextjs 규칙만 포함).
 
-> **peerDependencies**: `@jkit/code-plugin`는 `eslint-plugin-import`를 peer로 요구합니다 (순환 의존성 감지용). 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
+> **peerDependencies**: `@jkit/code-plugin`는 다음을 peer로 요구합니다:
+> - `eslint-plugin-import` — `import/*` 룰 (현재 nextjs base는 미사용이나 stack 확장 호환)
+> - `eslint-import-resolver-typescript` — `@/*` path alias 및 NodeNext `.js` import 해석 (boundaries/no-unknown 오발화 방지)
+>
+> 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
 >
 > ```bash
 > cd "$PROJECT_ROOT"
 > case "$PM" in
->   npm)  npm install -D eslint-plugin-import ;;
->   yarn) yarn add -D eslint-plugin-import ;;
->   pnpm) pnpm add -D eslint-plugin-import ;;
->   bun)  bun add -d eslint-plugin-import ;;
+>   npm)  npm install -D eslint-plugin-import eslint-import-resolver-typescript ;;
+>   yarn) yarn add -D eslint-plugin-import eslint-import-resolver-typescript ;;
+>   pnpm) pnpm add -D eslint-plugin-import eslint-import-resolver-typescript ;;
+>   bun)  bun add -d eslint-plugin-import eslint-import-resolver-typescript ;;
 > esac
 > ```
 

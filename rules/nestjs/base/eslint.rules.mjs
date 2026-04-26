@@ -39,6 +39,19 @@ export const basePathAliasPattern = {
 };
 
 /**
+ * eslint-plugin-import / boundaries 공용 resolver 설정.
+ * NodeNext의 `.js` 확장자 ESM import + `@/*` path alias 해석 위해 필수.
+ * 미설정 시 boundaries/no-unknown 오발화·import/no-cycle silent fail.
+ * 다운스트림은 `eslint-import-resolver-typescript`를 dev dep으로 설치해야 한다.
+ */
+export const baseImportResolverSettings = {
+  "import/resolver": {
+    typescript: { alwaysTryTypes: true, project: "./tsconfig.json" },
+    node: { extensions: [".js", ".ts", ".tsx"] },
+  },
+};
+
+/**
  * 순수 레이어(model/port/exception)에서 import 금지되는 프레임워크 패키지.
  * 테스트 용이성·이식성 보장 위해 프레임워크 중립 유지.
  */
@@ -611,6 +624,9 @@ export const baseCycleRules = defineConfig({
   files: ["src/**/*.ts"],
   ignores: ["**/*.spec.ts", "**/*.test.ts"],
   plugins: { import: importPlugin },
+  settings: {
+    ...baseImportResolverSettings,
+  },
   rules: {
     "import/no-cycle": ["warn", { maxDepth: 10, ignoreExternal: true }],
   },
@@ -921,6 +937,7 @@ export function buildArchitectureBoundaries(
   return defineConfig({
     plugins: { boundaries },
     settings: {
+      ...baseImportResolverSettings,
       "boundaries/elements": elements,
       "boundaries/ignore": ignores,
     },
