@@ -32,12 +32,19 @@
     │   ├── interfaces/                 # Shared interfaces
     │   ├── middlewares/                # Global middlewares
     │   ├── pipes/                      # Validation Pipes
-    │   └── dtos/                       # Shared DTOs
+    │   ├── interceptors/               # Global Interceptors (logging, transform, timeout)
+    │   ├── decorators/                 # Custom decorators (@CurrentUser, @Public 등)
+    │   ├── events/                     # Domain/integration event payloads & listeners
+    │   ├── dtos/                       # Shared DTOs
+    │   ├── config/                     # App-level configuration (env, ConfigModule schemas)
+    │   ├── constants/                  # Shared constants (enums, magic numbers, tokens)
+    │   └── utils/                      # Pure utility functions (no framework deps)
     ├── infrastructure/
     │   ├── database/                   # Database configuration
     │   ├── i18n/                       # Internationalization
     │   ├── logger/                     # Logging
-    │   └── transaction/                # Transaction management
+    │   ├── transaction/                # Transaction management
+    │   └── external/                   # External service clients (3rd-party SDK, HTTP client wrappers)
     └── libs/
         └── **                          # libs — 독립 라이브러리
 ```
@@ -53,6 +60,6 @@
 | `provider` | `src/modules/**/provider/**` | — | Port 구현체 |
 | `exception` | `src/modules/**/exception/**` | — | 도메인 예외 |
 | `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
-| `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/dtos/**` | — | 전역 공용 (허용 하위 폴더만) |
-| `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/transaction/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
+| `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/interceptors/**` / `src/common/decorators/**` / `src/common/events/**` / `src/common/dtos/**` / `src/common/config/**` / `src/common/constants/**` / `src/common/utils/**` | — | 전역 공용 (허용 하위 폴더만) |
+| `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/transaction/**` / `src/infrastructure/external/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
 | `libs` | `src/libs/**` | — | 독립 라이브러리 |

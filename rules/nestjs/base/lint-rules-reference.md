@@ -217,7 +217,13 @@ export class CreateOrderRequestDto {
 - 공용 인터페이스 — `interfaces/**`
 - Global Middleware — `middlewares/**`
 - Validation Pipe — `pipes/**`
+- Global Interceptor (logging·transform·timeout) — `interceptors/**`
+- Custom Decorator (@CurrentUser·@Public 등) — `decorators/**`
+- Domain/integration event payload·listener — `events/**`
 - 공용 DTO — `dtos/**`
+- 앱 레벨 설정 (env·ConfigModule schema) — `config/**`
+- 공용 상수 (enum·magic number·token) — `constants/**`
+- 순수 유틸 함수 (프레임워크 비의존) — `utils/**`
 
 **Forbids**
 
@@ -233,6 +239,7 @@ export class CreateOrderRequestDto {
 - I18n 설정 — `i18n/**`
 - Logger 설정 — `logger/**`
 - 트랜잭션 관리 — `transaction/**`
+- 외부 서비스 클라이언트 (3rd-party SDK·HTTP client wrapper) — `external/**`
 
 **Forbids**
 

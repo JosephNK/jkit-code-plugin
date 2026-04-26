@@ -84,7 +84,13 @@ export const baseBoundaryElements = [
       "src/common/interfaces/**",
       "src/common/middlewares/**",
       "src/common/pipes/**",
+      "src/common/interceptors/**",
+      "src/common/decorators/**",
+      "src/common/events/**",
       "src/common/dtos/**",
+      "src/common/config/**",
+      "src/common/constants/**",
+      "src/common/utils/**",
     ],
   }, // 전역 공용 (허용 하위 폴더만)
   {
@@ -94,6 +100,7 @@ export const baseBoundaryElements = [
       "src/infrastructure/i18n/**",
       "src/infrastructure/logger/**",
       "src/infrastructure/transaction/**",
+      "src/infrastructure/external/**",
     ],
   }, // 인프라 수평 관심사 (허용 하위 폴더만)
   { type: "libs", pattern: ["src/libs/**"] }, // 독립 라이브러리
@@ -153,7 +160,13 @@ export const baseStructureAnnotations = {
       { name: "interfaces", note: "Shared interfaces" },
       { name: "middlewares", note: "Global middlewares" },
       { name: "pipes", note: "Validation Pipes" },
+      { name: "interceptors", note: "Global Interceptors (logging, transform, timeout)" },
+      { name: "decorators", note: "Custom decorators (@CurrentUser, @Public 등)" },
+      { name: "events", note: "Domain/integration event payloads & listeners" },
       { name: "dtos", note: "Shared DTOs" },
+      { name: "config", note: "App-level configuration (env, ConfigModule schemas)" },
+      { name: "constants", note: "Shared constants (enums, magic numbers, tokens)" },
+      { name: "utils", note: "Pure utility functions (no framework deps)" },
     ],
   },
   "src/infrastructure": {
@@ -162,6 +175,7 @@ export const baseStructureAnnotations = {
       { name: "i18n", note: "Internationalization" },
       { name: "logger", note: "Logging" },
       { name: "transaction", note: "Transaction management" },
+      { name: "external", note: "External service clients (3rd-party SDK, HTTP client wrappers)" },
     ],
   },
 };
@@ -354,7 +368,13 @@ export const baseLayerSemantics = {
       "공용 인터페이스 — `interfaces/**`",
       "Global Middleware — `middlewares/**`",
       "Validation Pipe — `pipes/**`",
+      "Global Interceptor (logging·transform·timeout) — `interceptors/**`",
+      "Custom Decorator (@CurrentUser·@Public 등) — `decorators/**`",
+      "Domain/integration event payload·listener — `events/**`",
       "공용 DTO — `dtos/**`",
+      "앱 레벨 설정 (env·ConfigModule schema) — `config/**`",
+      "공용 상수 (enum·magic number·token) — `constants/**`",
+      "순수 유틸 함수 (프레임워크 비의존) — `utils/**`",
     ],
     forbids: [
       "허용 하위 폴더 외 경로에 파일 배치 (boundaries/no-unknown-files가 거부)",
@@ -368,6 +388,7 @@ export const baseLayerSemantics = {
       "I18n 설정 — `i18n/**`",
       "Logger 설정 — `logger/**`",
       "트랜잭션 관리 — `transaction/**`",
+      "외부 서비스 클라이언트 (3rd-party SDK·HTTP client wrapper) — `external/**`",
     ],
     forbids: [
       "모듈 도메인 로직 import (service/controller/provider)",
