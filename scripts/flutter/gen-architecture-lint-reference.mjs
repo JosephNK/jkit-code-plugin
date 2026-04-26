@@ -15,10 +15,11 @@
 //
 // 입력 (Source):
 //   rules/flutter/base/custom-lint/architecture_lint/lib/src/
-//     ├── lints/*.dart           — 11개 룰 (E1~E7, N1~N3, S1)
-//     ├── constants.dart         — 패키지 화이트/블랙리스트, maxFileLines
-//     ├── classification.dart    — _layerMarkers (경로 → 레이어 매핑)
-//     └── layer_semantics.dart   — Role/Contains/Example (doc-only 정형)
+//     ├── lints/*.dart              — 11개 룰 (E1~E7, N1~N3, S1)
+//     ├── constants.dart            — 패키지 화이트/블랙리스트, maxFileLines
+//     ├── boundary_element.dart     — projectBoundaryElements (lint 분류 + 트리)
+//     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
+//     └── layer_semantics.dart      — Role/Contains/Example (doc-only 정형)
 //
 // 출력:
 //   rules/flutter/base/
@@ -273,21 +274,6 @@ function parseConstants(filePath) {
   return { raw: sets, resolveSet, scalars, docs };
 }
 
-// ─── classification.dart 파싱 ───────────────────────────────────────────────
-
-function parseLayerMarkers(filePath) {
-  const content = readSource(filePath);
-  const m = content.match(
-    /const\s+_layerMarkers\s*=\s*<\s*String\s*,\s*String\s*>\s*\{([\s\S]*?)\};/,
-  );
-  if (!m) return [];
-  const pairs = [];
-  for (const pm of m[1].matchAll(/'([^']+)'\s*:\s*'([^']+)'/g)) {
-    pairs.push({ dir: pm[1], layer: pm[2] });
-  }
-  return pairs;
-}
-
 // ─── layer_semantics.dart 파싱 ──────────────────────────────────────────────
 
 function parseLayerSemantics(filePath) {
@@ -365,100 +351,346 @@ function extractInlineCodeTokens(text) {
   return out;
 }
 
-// ─── 프로젝트 트리 (project-structure.md 흡수 — 이후 단일 source) ───────────
+// ─── boundary_element.dart / structure_annotation.dart 파싱 ────────────────
+//
+// NestJS의 baseBoundaryElements / baseStructureAnnotations와 동일 모델.
+// Dart const 객체 리터럴을 텍스트(정규식 + 균형 괄호)로 파싱한다.
 
-const PROJECT_TREE = `\`\`\`
-Root (Melos workspace)
-├── app/
-│   └── lib/
-│       ├── common/                      # 모든 feature 공유
-│       │   ├── env/                     # Env 설정 (envied)
-│       │   ├── events/                  # 앱 전역 event bus
-│       │   ├── exceptions/              # 공용 예외 정의
-│       │   ├── extensions/              # Dart extensions
-│       │   ├── services/                # 교차 feature 서비스
-│       │   │   └── <service>/           # Port & Adapter 패턴
-│       │   │       ├── *_port.dart
-│       │   │       └── *_adapter.dart
-│       │   ├── theme/                   # 디자인 시스템
-│       │   └── widgets/                 # 공용 재사용 위젯
-│       ├── di/
-│       │   └── injection_container.dart # get_it 설정
-│       ├── features/                    # Feature 모듈
-│       │   └── <feature>/
-│       │       ├── domain/
-│       │       │   ├── entities/        # Immutable Value Objects
-│       │       │   ├── exceptions/      # 도메인 예외
-│       │       │   ├── ports/           # Abstract interfaces (*_port.dart)
-│       │       │   └── usecases/        # 비즈니스 로직 (*_usecase.dart)
-│       │       ├── infrastructure/
-│       │       │   └── adapters/        # Port 구현체 (*_adapter.dart)
-│       │       └── presentation/
-│       │           ├── bloc/            # 상태 관리 (선택)
-│       │           ├── pages/           # Screen entry points
-│       │           ├── views/           # 논리적 뷰 섹션
-│       │           └── widgets/         # Feature 전용 위젯
-│       ├── router/
-│       │   └── router.dart              # GoRouter 설정
-│       ├── app.dart                     # 앱 root 위젯
-│       └── main.dart                    # 진입점
-└── packages/
-    └── <package>/                       # 공용 / 자동 생성 패키지
-        └── src/
-            ├── api/<api_name>/          # OpenAPI 자동 생성 클라이언트
-            │   ├── models/
-            │   ├── services/
-            │   └── endpoints.dart
-            └── database/                # 로컬 DB 테이블/DAO/마이그레이션
-                ├── tables/
-                └── daos/
-\`\`\``;
+function findBalanced(text, startIdx, openCh, closeCh) {
+  let depth = 1;
+  let i = startIdx;
+  while (i < text.length && depth > 0) {
+    const ch = text[i];
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      i++;
+      while (i < text.length && text[i] !== quote) {
+        if (text[i] === '\\') i += 2;
+        else i++;
+      }
+      i++;
+      continue;
+    }
+    if (ch === openCh) depth++;
+    else if (ch === closeCh) {
+      depth--;
+      if (depth === 0) return i;
+    }
+    i++;
+  }
+  return -1;
+}
+
+function parseBoundaryElementArgs(body) {
+  const out = { layer: '', patterns: [], note: null };
+  const layerM = body.match(/layer\s*:\s*'((?:\\.|[^'\\])*)'/);
+  if (layerM) out.layer = layerM[1];
+  const patM = body.match(/patterns\s*:\s*\[([\s\S]*?)\]/);
+  if (patM) out.patterns = collectStringLiterals(patM[1]);
+  const noteM = body.match(/note\s*:\s*'((?:\\.|[^'\\])*)'/);
+  if (noteM) out.note = noteM[1];
+  return out;
+}
+
+function parseBoundaryElements(filePath) {
+  const content = readSource(filePath);
+  const startM = content.match(
+    /const\s+projectBoundaryElements\s*=\s*<\s*BoundaryElement\s*>\s*\[/,
+  );
+  if (!startM) return [];
+  const startIdx = startM.index + startM[0].length;
+  const endIdx = findBalanced(content, startIdx, '[', ']');
+  if (endIdx < 0) return [];
+  const body = content.slice(startIdx, endIdx);
+  const out = [];
+  const re = /BoundaryElement\s*\(/g;
+  let m;
+  while ((m = re.exec(body)) !== null) {
+    const argStart = m.index + m[0].length;
+    const argEnd = findBalanced(body, argStart, '(', ')');
+    if (argEnd < 0) break;
+    out.push(parseBoundaryElementArgs(body.slice(argStart, argEnd)));
+    re.lastIndex = argEnd + 1;
+  }
+  return out;
+}
+
+function parseAnnotationNodeArgs(body) {
+  const out = {
+    name: '',
+    placeholder: false,
+    inline: false,
+    note: null,
+    children: [],
+  };
+
+  // children 영역을 먼저 잘라낸 뒤, 본문 외부에서만 name/note/placeholder/inline을 매칭.
+  // 그래야 nested AnnotationNode의 필드가 부모로 누출되지 않는다.
+  let outer = body;
+  const childM = body.match(/children\s*:\s*\[/);
+  if (childM) {
+    const start = childM.index + childM[0].length;
+    const end = findBalanced(body, start, '[', ']');
+    if (end > 0) {
+      out.children = parseAnnotationNodeList(body.slice(start, end));
+      outer = body.slice(0, childM.index) + body.slice(end + 1);
+    }
+  }
+
+  const nameM = outer.match(/name\s*:\s*'((?:\\.|[^'\\])*)'/);
+  if (nameM) out.name = nameM[1];
+  if (/placeholder\s*:\s*true\b/.test(outer)) out.placeholder = true;
+  if (/inline\s*:\s*true\b/.test(outer)) out.inline = true;
+  const noteM = outer.match(/note\s*:\s*'((?:\\.|[^'\\])*)'/);
+  if (noteM) out.note = noteM[1];
+
+  return out;
+}
+
+function parseAnnotationNodeList(body) {
+  const nodes = [];
+  const re = /AnnotationNode\s*\(/g;
+  let m;
+  while ((m = re.exec(body)) !== null) {
+    const argStart = m.index + m[0].length;
+    const argEnd = findBalanced(body, argStart, '(', ')');
+    if (argEnd < 0) break;
+    nodes.push(parseAnnotationNodeArgs(body.slice(argStart, argEnd)));
+    re.lastIndex = argEnd + 1;
+  }
+  return nodes;
+}
+
+function parseStructureRoot(filePath) {
+  const content = readSource(filePath);
+  const m = content.match(
+    /const\s+projectStructureRoot\s*=\s*'((?:\\.|[^'\\])*)'\s*;/,
+  );
+  return m ? m[1] : '';
+}
+
+function parseStructureAnnotations(filePath) {
+  const content = readSource(filePath);
+  const startM = content.match(
+    /const\s+projectStructureAnnotations\s*=\s*<\s*String\s*,\s*List<\s*AnnotationNode\s*>\s*>\s*\{/,
+  );
+  if (!startM) return {};
+  const startIdx = startM.index + startM[0].length;
+  const endIdx = findBalanced(content, startIdx, '{', '}');
+  if (endIdx < 0) return {};
+  const body = content.slice(startIdx, endIdx);
+
+  const result = {};
+  let i = 0;
+  while (i < body.length) {
+    while (i < body.length && /\s/.test(body[i])) i++;
+    if (body[i] !== "'" && body[i] !== '"') {
+      i++;
+      continue;
+    }
+    const quote = body[i];
+    let keyEnd = i + 1;
+    while (keyEnd < body.length && body[keyEnd] !== quote) {
+      if (body[keyEnd] === '\\') keyEnd += 2;
+      else keyEnd++;
+    }
+    const key = body.slice(i + 1, keyEnd);
+    i = keyEnd + 1;
+    while (i < body.length && body[i] !== ':') i++;
+    i++;
+    while (i < body.length && /\s/.test(body[i])) i++;
+    if (body[i] !== '[') continue;
+    const listStart = i + 1;
+    const listEnd = findBalanced(body, listStart, '[', ']');
+    if (listEnd < 0) break;
+    const listBody = body.slice(listStart, listEnd);
+    result[key] = { override: parseAnnotationNodeList(listBody) };
+    i = listEnd + 1;
+    while (i < body.length && /[\s,]/.test(body[i])) i++;
+  }
+  return result;
+}
+
+// ─── 트리 빌더/렌더러 (typescript generator 포팅) ───────────────────────────
+
+function buildPathTree(elements) {
+  const root = { name: '', children: [] };
+  for (const el of elements) {
+    for (const p of el.patterns) {
+      const segments = p.split('/').filter((s) => s.length > 0);
+      let cur = root;
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        let child = cur.children.find((c) => c.name === seg);
+        if (!child) {
+          child = { name: seg, children: [] };
+          cur.children.push(child);
+        }
+        if (i === segments.length - 1) child.element = el;
+        cur = child;
+      }
+    }
+  }
+  return root;
+}
+
+function formatSegment(name) {
+  if (name === '*' || name === '**') return name;
+  if (name.startsWith('<')) return name + '/';
+  if (/\.[a-z0-9]+$/i.test(name)) return name;
+  return name + '/';
+}
+
+function findNodeByPath(root, pathStr) {
+  const segs = pathStr.split('/').filter(Boolean);
+  let cur = root;
+  for (const s of segs) {
+    let child = cur.children.find((c) => c.name === s);
+    if (!child) {
+      child = { name: s, children: [] };
+      cur.children.push(child);
+    }
+    cur = child;
+  }
+  return cur;
+}
+
+function annotationToTreeNode(a, byName) {
+  const node = { name: a.name, children: [] };
+  if (a.note) node._note = a.note;
+  if (a.placeholder) node._placeholder = true;
+  if (a.inline) node._inline = true;
+  const matched = byName.get(a.name);
+  if (matched) node.element = matched;
+  for (const c of a.children) {
+    node.children.push(annotationToTreeNode(c, byName));
+  }
+  return node;
+}
+
+function mergeAnnotations(tree, annotations, boundaryElements) {
+  if (!annotations) return;
+  const byName = new Map();
+  for (const el of boundaryElements) {
+    for (const p of el.patterns) {
+      const segs = p.split('/').filter(Boolean);
+      const last = segs[segs.length - 1];
+      if (!last) continue;
+      if (!byName.has(last)) byName.set(last, el);
+    }
+  }
+  for (const [parentPath, spec] of Object.entries(annotations)) {
+    if (!spec || !Array.isArray(spec.override)) continue;
+    const node = findNodeByPath(tree, parentPath);
+    const overrideNames = new Set(spec.override.map((a) => a.name));
+    node.children = node.children.filter(
+      (c) => c.name !== '*' && c.name !== '**' && !overrideNames.has(c.name),
+    );
+    for (const a of spec.override) {
+      node.children.push(annotationToTreeNode(a, byName));
+    }
+  }
+}
+
+function renderPathTree(root, rootLabel) {
+  const rows = [];
+  const walk = (node, prefix, isLast, isRoot) => {
+    if (!isRoot) {
+      const connector = isLast ? '└── ' : '├── ';
+      let display = prefix + connector + formatSegment(node.name);
+      let comment = node._note || null;
+
+      // inline merge: 자식이 정확히 1개이고 _inline이면 부모 줄에 결합.
+      // 결합된 자식의 note는 부모 note를 덮어쓰고, 자식의 children이 새 walk 대상이 된다.
+      let cur = node;
+      while (
+        cur.children.length === 1 &&
+        cur.children[0]._inline
+      ) {
+        const child = cur.children[0];
+        display += formatSegment(child.name);
+        if (child._note) comment = child._note;
+        cur = child;
+      }
+      rows.push({ display, comment });
+
+      const childPrefix = prefix + (isLast ? '    ' : '│   ');
+      cur.children.forEach((c, i) => {
+        walk(c, childPrefix, i === cur.children.length - 1, false);
+      });
+      return;
+    }
+    const childPrefix = '';
+    node.children.forEach((c, i) => {
+      walk(c, childPrefix, i === node.children.length - 1, false);
+    });
+  };
+  walk(root, '', true, true);
+
+  const maxDisplay = Math.max(0, ...rows.map((r) => r.display.length));
+  const lines = ['```'];
+  if (rootLabel) lines.push(rootLabel);
+  for (const r of rows) {
+    if (r.comment) {
+      const pad = ' '.repeat(maxDisplay - r.display.length + 2);
+      lines.push(`${r.display}${pad}# ${r.comment}`);
+    } else {
+      lines.push(r.display);
+    }
+  }
+  lines.push('```');
+  return lines.join('\n');
+}
 
 // ─── lint-rules-structure-reference.md ──────────────────────────────────────
 
-function renderStructureReference({ layerMarkers }) {
-  const lines = genHeader(
-    'Lint Rules — Structure Reference (flutter/base)',
-    'classification.dart',
-  );
+function renderStructureReference({
+  boundaryElements,
+  structureAnnotations,
+  structureRoot,
+}) {
+  const lines = [
+    '<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->',
+    '<!-- Generator: scripts/flutter/gen-architecture-lint-reference.mjs -->',
+    `<!-- Source: ${SRC_REL} (boundary_element.dart, structure_annotation.dart) -->`,
+    '',
+    '# Lint Rules — Structure Reference (flutter/base)',
+    '',
+  ];
 
   lines.push('## 개요');
   lines.push('');
   lines.push(
-    '아키텍처 레이어 ↔ 폴더 매핑. `classification.dart`의 `_layerMarkers`가 ' +
-      '런타임에 파일 경로를 레이어로 분류하며, 모든 E/N/S 룰이 이 분류를 통해 ' +
-      '대상 파일을 필터링한다.',
+    '아키텍처 boundary 정의 — 각 layer ↔ 경로 패턴 매핑. ' +
+      '`boundary_element.dart`의 `projectBoundaryElements`가 lint 분류와 doc ' +
+      '트리의 단일 source이며, `structure_annotation.dart`가 placeholder/' +
+      '하위 폴더 의도를 트리에 보강한다.',
   );
   lines.push('');
 
   lines.push('## 프로젝트 구조');
   lines.push('');
   lines.push(
-    '> 아래 트리는 **대표 구조 예시**입니다. lint는 디렉토리 이름 매칭(`/<dir>/`)으로 ' +
-      '레이어를 판정하므로 `<feature>`, `<service>` 같은 가변 세그먼트의 실제 이름은 ' +
-      '프로젝트마다 다를 수 있습니다.',
+    '> 아래 트리는 **대표 구조 예시**입니다. lint는 glob(`**`, `*`) 기반으로 ' +
+      '매칭하므로 `<feature>`, `<service>`, `<package>` 같은 placeholder ' +
+      '세그먼트의 실제 이름은 프로젝트마다 다를 수 있습니다.',
   );
   lines.push('');
-  lines.push(PROJECT_TREE);
+
+  const tree = buildPathTree(boundaryElements);
+  mergeAnnotations(tree, structureAnnotations, boundaryElements);
+  lines.push(renderPathTree(tree, structureRoot));
   lines.push('');
 
   lines.push('## 레이어별 경로 매핑');
   lines.push('');
-  lines.push('| 디렉토리 | 레이어 | 비고 |');
+  lines.push('| 레이어 | 경로 패턴 | 비고 |');
   lines.push('| --- | --- | --- |');
-  const byLayer = new Map();
-  for (const { dir, layer } of layerMarkers) {
-    if (!byLayer.has(layer)) byLayer.set(layer, []);
-    byLayer.get(layer).push(dir);
+  for (const el of boundaryElements) {
+    const patterns = el.patterns.map((p) => `\`${p}\``).join(' / ');
+    const note = el.note ? escapePipe(el.note) : '—';
+    lines.push(`| \`${el.layer}\` | ${patterns} | ${note} |`);
   }
-  for (const [layer, dirs] of byLayer) {
-    const dirsStr = dirs.map((d) => `\`${d}\``).join(' / ');
-    const note = dirs.length > 1 ? '여러 디렉토리가 같은 레이어로 집계' : '—';
-    lines.push(`| ${dirsStr} | \`${layer}\` | ${note} |`);
-  }
-  lines.push(
-    '| `common/services/<service>/` | `common_services` | classification.dart 의 fallback 분기 |',
-  );
   lines.push('');
 
   return lines.join('\n');
@@ -511,12 +743,11 @@ function renderRulesTable(rules, constants) {
   return lines.join('\n');
 }
 
-function renderGlossary(rules, layerSemantics, layerMarkers) {
+function renderGlossary(rules, layerSemantics, boundaryElements) {
   const layerOrder = [];
-  for (const { layer } of layerMarkers) {
-    if (!layerOrder.includes(layer)) layerOrder.push(layer);
+  for (const el of boundaryElements) {
+    if (!layerOrder.includes(el.layer)) layerOrder.push(el.layer);
   }
-  if (!layerOrder.includes('common_services')) layerOrder.push('common_services');
 
   const blocks = [];
   for (const layer of layerOrder) {
@@ -573,7 +804,7 @@ function renderPackageSection(name, members, doc) {
   return lines.join('\n');
 }
 
-function renderReference({ rules, layerSemantics, layerMarkers, constants }) {
+function renderReference({ rules, layerSemantics, boundaryElements, constants }) {
   const lines = genHeader(
     'Lint Rules Reference (flutter/base)',
     SOURCE_FILES_LABEL,
@@ -583,11 +814,12 @@ function renderReference({ rules, layerSemantics, layerMarkers, constants }) {
   lines.push('');
   lines.push(
     '각 레이어의 책임·포함 파일·제약·대표 코드 형태. ' +
-      '`classification.dart`의 `_layerMarkers`로 분류된 파일별 룰 적용 범위를 ' +
-      '`layer_semantics.dart`(Role/Contains/Example) + `lints/*.dart`(Constraints)로 채운다.',
+      '`boundary_element.dart`의 `projectBoundaryElements`로 분류된 파일별 ' +
+      '룰 적용 범위를 `layer_semantics.dart`(Role/Contains/Example) + ' +
+      '`lints/*.dart`(Constraints)로 채운다.',
   );
   lines.push('');
-  lines.push(renderGlossary(rules, layerSemantics, layerMarkers));
+  lines.push(renderGlossary(rules, layerSemantics, boundaryElements));
   lines.push('');
 
   lines.push('## 규칙 (Rules)');
@@ -623,18 +855,6 @@ function renderReference({ rules, layerSemantics, layerMarkers, constants }) {
     const members = constants.resolveSet(name);
     const doc = constants.docs.get(name) || '';
     lines.push(renderPackageSection(name, members, doc));
-    lines.push('');
-  }
-
-  if (constants.scalars.size) {
-    lines.push('## 스칼라 상수');
-    lines.push('');
-    lines.push('| 이름 | 값 | 설명 |');
-    lines.push('| --- | --- | --- |');
-    for (const [name, value] of constants.scalars) {
-      const doc = constants.docs.get(name) || '—';
-      lines.push(`| \`${name}\` | \`${value}\` | ${escapePipe(doc.split('\n')[0])} |`);
-    }
     lines.push('');
   }
 
@@ -704,22 +924,35 @@ function renderDiagram({ rules }) {
 function main() {
   const args = parseArgs(process.argv);
 
-  const layerMarkers = parseLayerMarkers(path.join(SRC_DIR, 'classification.dart'));
   const constants = parseConstants(path.join(SRC_DIR, 'constants.dart'));
   const layerSemantics = parseLayerSemantics(
     path.join(SRC_DIR, 'layer_semantics.dart'),
+  );
+  const boundaryElements = parseBoundaryElements(
+    path.join(SRC_DIR, 'boundary_element.dart'),
+  );
+  const structureAnnotations = parseStructureAnnotations(
+    path.join(SRC_DIR, 'structure_annotation.dart'),
+  );
+  const structureRoot = parseStructureRoot(
+    path.join(SRC_DIR, 'structure_annotation.dart'),
   );
   const rules = loadAllLints();
 
   const writes = [
     {
       path: path.join(OUT_DIR, 'lint-rules-structure-reference.md'),
-      content: renderStructureReference({ layerMarkers }) + '\n',
+      content:
+        renderStructureReference({
+          boundaryElements,
+          structureAnnotations,
+          structureRoot,
+        }) + '\n',
     },
     {
       path: path.join(OUT_DIR, 'lint-rules-reference.md'),
       content:
-        renderReference({ rules, layerSemantics, layerMarkers, constants }) +
+        renderReference({ rules, layerSemantics, boundaryElements, constants }) +
         '\n',
     },
     {

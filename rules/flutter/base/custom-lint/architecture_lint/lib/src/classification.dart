@@ -21,42 +21,50 @@
 // =============================================================================
 
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
-/// 디렉토리 이름 → 논리 레이어 이름 매핑.
+import 'boundary_element.dart';
+
+/// 입력 path를 boundary 패턴 매칭에 맞게 root-relative 형태로 정규화.
 ///
-/// 여러 디렉토리가 같은 레이어로 집계될 수 있다 (예: pages/views/widgets → presentation).
-/// 경로에 해당 디렉토리 이름이 포함되어 있으면 매칭된다.
-const _layerMarkers = <String, String>{
-  'entities': 'entities',
-  'ports': 'ports',
-  'usecases': 'usecases',
-  'adapters': 'adapters',
-  'bloc': 'bloc',
-  'exceptions': 'exceptions',
-  'pages': 'presentation',
-  'views': 'presentation',
-  'widgets': 'presentation',
-};
+/// boundary 패턴은 `app/lib/...` 또는 `packages/...`로 시작하지만, lint runtime
+/// 입력은 절대 경로 / package URI inner / 상대 경로 normalize 결과 등 형태가
+/// 다양하다. 이 함수가 모든 입력을 패턴과 매칭 가능한 형태로 통일한다.
+///
+/// 다운스트림 앱의 실제 root 폴더 이름(`app`/`mobile`/`client` 등)이 무엇이든
+/// boundary 패턴 매칭 측면에서 항상 `app/`으로 통일된다.
+String _normalizeInputPath(String filePath) {
+  final raw = filePath.replaceAll('\\', '/');
+
+  final pkgIdx = raw.indexOf('/packages/');
+  if (pkgIdx >= 0) return raw.substring(pkgIdx + 1);
+  if (raw.startsWith('packages/')) return raw;
+
+  final libIdx = raw.indexOf('/lib/');
+  if (libIdx >= 0) return 'app${raw.substring(libIdx)}';
+  if (raw.startsWith('lib/')) return 'app/$raw';
+
+  if (RegExp(r'^(features|common|di|router)/').hasMatch(raw)) {
+    return 'app/lib/$raw';
+  }
+
+  return raw;
+}
 
 /// 경로에서 레이어 이름을 추출.
 ///
-/// Windows 경로(\) 도 정규화하여 POSIX 스타일로 비교한다.
-/// `_layerMarkers`에 매칭되지 않으면 `/common/services/` 를 검사하고,
-/// 그것도 없으면 `'other'`를 반환한다.
+/// `_normalizeInputPath`로 입력을 정규화한 뒤 `projectBoundaryElements`의
+/// glob 패턴과 순차 매칭한다. 매칭되는 element가 없으면 `'other'` 반환.
 String classifyLayer(String filePath) {
-  final normalized = '/${filePath.replaceAll('\\', '/')}/';
-
-  for (final entry in _layerMarkers.entries) {
-    if (normalized.contains('/${entry.key}/')) {
-      return entry.value;
+  final normalized = _normalizeInputPath(filePath);
+  for (final el in projectBoundaryElements) {
+    for (final pattern in el.patterns) {
+      if (Glob(pattern).matches(normalized)) {
+        return el.layer;
+      }
     }
   }
-
-  if (normalized.contains('/common/services/')) {
-    return 'common_services';
-  }
-
   return 'other';
 }
 

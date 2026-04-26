@@ -23,19 +23,23 @@
 /// - **S1** `s1_file_size`            : 파일당 800줄 이하
 ///
 /// ## 디렉토리 구조
-/// - `src/constants.dart`     — 패키지 리스트, 레이어 집합, 상수
-/// - `src/classification.dart` — 파일 경로 → 레이어/feature 분류 헬퍼
-/// - `src/dart_lint.dart`     — 모든 룰의 베이스 `DartLint` 추상 클래스
-/// - `src/runner.dart`        — AST 방문자 + 룰 레지스트리
+/// - `src/constants.dart`            — 패키지 리스트, 레이어 집합, 상수
+/// - `src/boundary_element.dart`     — projectBoundaryElements (lint 분류 + 트리 단일 source)
+/// - `src/structure_annotation.dart` — placeholder/하위 폴더 의도 (트리 보강, doc-only)
+/// - `src/classification.dart`       — 파일 경로 → 레이어/feature 분류 헬퍼
+/// - `src/dart_lint.dart`            — 모든 룰의 베이스 `DartLint` 추상 클래스
+/// - `src/runner.dart`               — AST 방문자 + 룰 레지스트리
 /// - `src/architecture_lint_plugin.dart` — analyzer_plugin `ServerPlugin` 구현
-/// - `src/lints/`             — 각 룰 구현체
+/// - `src/lints/`                    — 각 룰 구현체
 library architecture_lint;
 
 export 'src/architecture_lint_plugin.dart';
+export 'src/boundary_element.dart';
 export 'src/classification.dart';
 export 'src/constants.dart';
 export 'src/dart_lint.dart';
 export 'src/runner.dart';
+export 'src/structure_annotation.dart';
 export 'src/lints/e1_entities_import_lint.dart';
 export 'src/lints/e2_usecases_dependency_lint.dart';
 export 'src/lints/e3_bloc_dependency_lint.dart';

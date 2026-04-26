@@ -6,7 +6,7 @@
 
 ## 레이어 글로서리 (Layer Glossary)
 
-각 레이어의 책임·포함 파일·제약·대표 코드 형태. `classification.dart`의 `_layerMarkers`로 분류된 파일별 룰 적용 범위를 `layer_semantics.dart`(Role/Contains/Example) + `lints/*.dart`(Constraints)로 채운다.
+각 레이어의 책임·포함 파일·제약·대표 코드 형태. `boundary_element.dart`의 `projectBoundaryElements`로 분류된 파일별 룰 적용 범위를 `layer_semantics.dart`(Role/Contains/Example) + `lints/*.dart`(Constraints)로 채운다.
 
 ### `entities`
 
@@ -283,10 +283,4 @@ ports/adapters/usecases/bloc은 feature 전용 내부 계약이므로 cross-impo
 - `adapters`
 - `usecases`
 - `bloc`
-
-## 스칼라 상수
-
-| 이름 | 값 | 설명 |
-| --- | --- | --- |
-| `maxFileLines` | `800` | S1 룰 — 파일당 최대 라인 수. |
 
