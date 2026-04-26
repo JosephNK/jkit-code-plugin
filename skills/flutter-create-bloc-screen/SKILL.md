@@ -1,6 +1,6 @@
 ---
-name: flutter-screen
-description: Generates Flutter Screen files. Use for requests like "Create Login screen", "Generate Settings screen", "Add new page".
+name: flutter-create-bloc-screen
+description: Generates Flutter Screen files with BLoC. Use for requests like "Create Login screen", "Generate Settings screen", "Add new page".
 argument-hint: "<ScreenName> [-entry <dir>] [-path <dir>]"
 ---
 
@@ -88,7 +88,7 @@ Generates new Screen files along with BLoC files in a Flutter project.
 
 ## Generated Files
 
-When running `/screen Login -entry app`:
+When running `/flutter-create-bloc-screen Login -entry app`:
 ```
 app/lib/features/login/presentation/
 ├── bloc/
@@ -103,7 +103,7 @@ app/lib/features/login/presentation/
     └── login_body_view.dart
 ```
 
-When running `/screen Settings -entry app -path user`:
+When running `/flutter-create-bloc-screen Settings -entry app -path user`:
 ```
 app/lib/features/user/settings/presentation/
 ├── bloc/
@@ -128,7 +128,7 @@ app/lib/features/user/settings/presentation/
 ## Usage Examples
 
 ```
-/screen Login -entry app
+/flutter-create-bloc-screen Login -entry app
 → Create app/lib/features/login/presentation/pages/login_screen.dart
 → Create app/lib/features/login/presentation/bloc/login_bloc.dart
 → Create app/lib/features/login/presentation/bloc/login_event.dart
@@ -137,12 +137,12 @@ app/lib/features/user/settings/presentation/
 → Create app/lib/features/login/presentation/views/login_body_view.dart
 → Route path: /login
 
-/screen Login
+/flutter-create-bloc-screen Login
 → Create lib/features/login/presentation/pages/login_screen.dart (no entry)
 → Create lib/features/login/presentation/bloc/login_bloc.dart
 → ...
 
-/screen Settings -entry app -path user
+/flutter-create-bloc-screen Settings -entry app -path user
 → Create app/lib/features/user/settings/presentation/pages/settings_screen.dart
 → Create app/lib/features/user/settings/presentation/bloc/settings_bloc.dart
 → Create app/lib/features/user/settings/presentation/bloc/settings_event.dart
@@ -151,7 +151,7 @@ app/lib/features/user/settings/presentation/
 → Create app/lib/features/user/settings/presentation/views/settings_body_view.dart
 → Route path: /user/settings
 
-/screen Profile -entry app -path account
+/flutter-create-bloc-screen Profile -entry app -path account
 → Create app/lib/features/account/profile/presentation/pages/profile_screen.dart
 → Create app/lib/features/account/profile/presentation/bloc/profile_bloc.dart
 → Create app/lib/features/account/profile/presentation/bloc/profile_event.dart

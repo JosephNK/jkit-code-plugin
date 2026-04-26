@@ -68,7 +68,7 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 |---------|-------------|
 | `/jkit:flutter-plan` | 요구사항 분석 → 리스크 평가 → 구현 계획 생성 |
 | `/jkit:flutter-tdd` | RED→GREEN→REFACTOR TDD 워크플로우 |
-| `/jkit:flutter-screen` | Screen + BLoC + View + DI + Route 보일러플레이트 생성 |
+| `/jkit:flutter-create-bloc-screen` | Screen + BLoC + View + DI + Route 보일러플레이트 생성 |
 | `/jkit:flutter-design` | 프로덕션급 UI 디자인 (LeafTheme + Atomic Design) |
 | `/jkit:flutter-openapi-gen` | OpenAPI 3.x → BuiltValue 모델 + Dio 서비스 코드 생성 |
 | `/jkit:flutter-create-package` | 모노레포 워크스페이스 패키지 생성 |
