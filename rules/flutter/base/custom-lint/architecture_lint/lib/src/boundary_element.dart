@@ -84,11 +84,11 @@ const projectBoundaryElements = <BoundaryElement>[
   BoundaryElement(
     layer: 'common_services',
     patterns: [
-      // common/services/<svc>/ 하위의 보조 파일 (config/state/exception/value-object 등).
-      // port/adapter 직속 파일은 위 ports/adapters 레이어로 분류되므로 여기서는 catch-all.
-      'app/lib/common/services/*/**',
+      // 보조 파일은 internal/ 하위로 강제 — 직속 ad-hoc 파일은 unknown layer로
+      // 떨어져 S2 위반. port/adapter 직속 파일은 위 ports/adapters 레이어로 분류.
+      'app/lib/common/services/*/internal/**',
     ],
-    note: '교차 feature 서비스의 보조 파일 (config/state/exception 등)',
+    note: 'internal/ 보조 파일 — 교차 feature 서비스',
   ),
   BoundaryElement(
     layer: 'common',

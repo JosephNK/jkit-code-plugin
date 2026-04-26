@@ -386,7 +386,12 @@ function parseBoundaryElementArgs(body) {
   const layerM = body.match(/layer\s*:\s*'((?:\\.|[^'\\])*)'/);
   if (layerM) out.layer = layerM[1];
   const patM = body.match(/patterns\s*:\s*\[([\s\S]*?)\]/);
-  if (patM) out.patterns = collectStringLiterals(patM[1]);
+  if (patM) {
+    // line 주석만 제거 (block 주석은 glob 패턴 `/**/` 와 충돌 가능 → 손대지 않음).
+    // 패턴 블록 안에 작은따옴표를 쓴 line 주석이 string literal로 오인되는 것을 방지.
+    const stripped = patM[1].replace(/\/\/[^\n]*/g, '');
+    out.patterns = collectStringLiterals(stripped);
+  }
   const noteM = body.match(/note\s*:\s*'((?:\\.|[^'\\])*)'/);
   if (noteM) out.note = noteM[1];
   return out;
