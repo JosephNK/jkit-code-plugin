@@ -1,5 +1,5 @@
 name: architecture_lint
-version: 0.2.17
+version: 0.2.18
 description: Flutter hexagonal architecture linter plugin (analyzer + analyzer_plugin).
 
 publish_to: "none"
