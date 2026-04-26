@@ -1,6 +1,6 @@
 {
   "name": "jkit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Personal development toolkit for Claude Code — scaffolding, conventions, and config generation",
   "author": {
     "name": "josephnk"
