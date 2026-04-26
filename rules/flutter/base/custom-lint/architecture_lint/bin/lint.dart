@@ -3,12 +3,17 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:architecture_lint/architecture_lint.dart';
+import 'package:path/path.dart' as p;
 
 Future<int> main(List<String> args) async {
   final roots = args.isEmpty ? <String>['.'] : args;
   final lints = createArchitectureLints();
 
-  final absRoots = roots.map((r) => Directory(r).absolute.path).toList();
+  // AnalysisContextCollection requires absolute *normalized* paths.
+  // `Directory('.').absolute.path` yields e.g. `/repo/app/.` which is not
+  // normalized and gets rejected, so run it through `p.normalize`.
+  final absRoots =
+      roots.map((r) => p.normalize(Directory(r).absolute.path)).toList();
   final collection = AnalysisContextCollection(includedPaths: absRoots);
 
   var violations = 0;
