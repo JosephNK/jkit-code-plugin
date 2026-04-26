@@ -10,12 +10,8 @@
 - **Extends**: `stylelint-config-standard`
 - **Plugins**: `stylelint-declaration-strict-value`
 
-Stylelint baseline — 모든 Next.js 프로젝트 공통 규약.
-
-Bundled:
-- `stylelint-config-standard` (공식 권장 룰셋)
-- `stylelint-declaration-strict-value` (토큰 하드코딩 차단 플러그인)
-
+Stylelint baseline — Next.js 공통 규약.
+Bundles: `stylelint-config-standard`, `stylelint-declaration-strict-value`.
 사용자 프로젝트는 `stylelint.config.mjs`에서 spread + 추가 rules로 override.
 
 ## Rule 1: `declaration-property-value-disallowed-list`

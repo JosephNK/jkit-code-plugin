@@ -6,11 +6,8 @@
 
 ## 개요
 
-아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
-eslint-plugin-boundaries가 이 맵을 사용하여 파일별 레이어를 판별한다.
-`mode: 'full'`은 단일 파일 경로 정확 매칭 (폴더 아님).
-
-레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
+아키텍처 경계 — 각 레이어 type ↔ 경로 매핑.
+`mode: 'full'`은 단일 파일 정확 매칭. 레이어 책임은 `baseLayerSemantics` 참조.
 
 ## 프로젝트 구조
 

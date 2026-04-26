@@ -6,14 +6,8 @@
 
 ## 개요
 
-아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
-
-폴더 구조: `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
-(model/port/service/controller/provider/exception/dto). `<group>`은 선택,
-`<domain>.module.ts`는 DI 조립 파일(lint 무시).
-전역 수평 관심사: `src/common/` · `src/infrastructure/` · `src/libs/`.
-
-레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
+아키텍처 경계 — 각 레이어 type ↔ 경로 매핑.
+레이어별 책임·파일 종류는 `baseLayerSemantics` 참조.
 
 ## 프로젝트 구조
 

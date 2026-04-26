@@ -6,10 +6,9 @@
 
 ## 레이어 글로서리 (Layer Glossary)
 
-각 레이어(boundary type)가 "무엇을 담고 · 무엇을 금지하며 · 어떻게 생겼는지" 명시.
-"경로·allow 매트릭스"만으로는 드러나지 않는 책임 경계·네이밍 관례·대표 코드 형태를
-채워, LLM/신규 인원이 이 문서 하나로 올바른 레이어에 올바른 형태의 코드를
-배치할 수 있도록 한다.
+각 레이어의 책임·네이밍·대표 코드 형태 (doc-only, ESLint 미참조).
+경로·allow 매트릭스만으로 안 드러나는 정보를 채워 LLM/신규 인원의
+올바른 코드 배치를 돕는다.
 
 ### `domain-model`
 
@@ -416,10 +415,8 @@ export async function GET(
 
 ## Restricted Syntax (AST 금지 구문)
 
-AST selector 기반 금지 구문.
-- `React.FC` / `React.FunctionComponent` 금지
-  이유: children을 암묵적으로 포함해 props 계약을 흐리고, generic 사용이 어렵다.
-  공식 React 팀도 더 이상 권장하지 않음 (명시적 props 타입 권장).
+AST selector 기반 금지 구문. `React.FC` / `React.FunctionComponent` 금지 —
+children 암묵 포함, generic 어려움. 명시적 props 타입 사용.
 
 | Selector | 메시지 |
 | --- | --- |
@@ -428,10 +425,8 @@ AST selector 기반 금지 구문.
 
 ## Domain Purity (도메인 순수성)
 
-도메인 레이어에서 금지하는 패키지 목록.
-도메인 레이어(`src/lib/domain/**`)는 프레임워크 비의존 순수 TypeScript여야 하며
-React/Next.js 타입·런타임에 직접 의존하면 안 된다.
-스택별로 UI 라이브러리(Mantine, Tailwind, TanStack Query 등)를 추가 차단한다.
+도메인 레이어(`src/lib/domain/**`)에서 import 금지 패키지.
+프레임워크 비의존 유지. 스택별로 UI 라이브러리 추가 차단.
 
 ### 도메인 레이어 금지 패키지
 
@@ -457,11 +452,8 @@ ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 
 
 ## Ignored Paths (무시 경로)
 
-Boundary 검사에서 제외할 파일/디렉토리 (boundaries/no-unknown-files 오탐 방지).
-- 테스트/스펙/설정 파일: 레이어 경계와 무관
-- 루트 `*.ts` / `*.d.ts`: next-env.d.ts 같은 메타 파일
-- `scripts/`, `e2e/`: 빌드·테스트 유틸, 앱 소스가 아님
-- `src/common/types/**`: 전역 타입 선언, 레이어 개념 밖
+Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
+테스트/스펙/설정, 루트 메타 파일, scripts/e2e 빌드 유틸, 전역 타입 등.
 
 ### 무시 패턴 목록
 

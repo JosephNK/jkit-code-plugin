@@ -30,9 +30,8 @@ import jkitLocalPlugin from "./custom-rules/index.mjs";
 // ─── Raw data (for project-level merging) ─────────────────────────────────────
 
 /**
- * 상대 경로 parent import(../**) 금지 패턴.
- * 모듈 간 이동/리팩토링 시 경로가 깨지는 것을 방지하고 @/* path alias 사용을 강제.
- * buildLayerRestrictions에서 각 레이어의 no-restricted-imports에 주입된다.
+ * 상대 경로 parent import(../**) 금지 — `@/*` path alias 사용 강제.
+ * buildLayerRestrictions에서 각 레이어의 no-restricted-imports에 주입.
  */
 export const basePathAliasPattern = {
   group: ["../**"],
@@ -41,7 +40,7 @@ export const basePathAliasPattern = {
 
 /**
  * 순수 레이어(model/port/exception)에서 import 금지되는 프레임워크 패키지.
- * 이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
+ * 테스트 용이성·이식성 보장 위해 프레임워크 중립 유지.
  */
 export const baseFrameworkPackages = [
   "@nestjs/*",
@@ -52,14 +51,8 @@ export const baseFrameworkPackages = [
 ];
 
 /**
- * 아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
- *
- * 폴더 구조: `src/modules/<group>/<domain>/` 아래에 레이어별 폴더 배치
- * (model/port/service/controller/provider/exception/dto). `<group>`은 선택,
- * `<domain>.module.ts`는 DI 조립 파일(lint 무시).
- * 전역 수평 관심사: `src/common/` · `src/infrastructure/` · `src/libs/`.
- *
- * 레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
+ * 아키텍처 경계 — 각 레이어 type ↔ 경로 매핑.
+ * 레이어별 책임·파일 종류는 `baseLayerSemantics` 참조.
  */
 export const baseBoundaryElements = [
   { type: "model", pattern: ["src/modules/**/model/**"] }, // 도메인 모델
@@ -94,12 +87,8 @@ export const baseBoundaryElements = [
 ];
 
 /**
- * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조). baseBoundaryElements의
- * glob만으로는 드러나지 않는 하위 폴더 의도를 lint-rules-structure-reference.md
- * 트리에 추가한다.
- *
- * 스키마: { [parentPath]: { override: StructureNode[] } }
- *   StructureNode: { name, note?, placeholder?, children? }
+ * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조).
+ * baseBoundaryElements의 glob만으로 안 드러나는 하위 폴더 의도를 트리에 추가.
  */
 export const baseStructureAnnotations = {
   "src/modules": {
@@ -164,14 +153,10 @@ export const baseStructureAnnotations = {
   },
 };
 
-// 스키마: { [type]: { role, contains[], forbids[], scope?, example? } }
-//   - role / contains / forbids / scope / example 순서로 렌더된다.
-//   - ESLint 런타임에는 참조되지 않는 doc-only export.
 /**
- * 각 레이어(boundary type)가 "무엇을 담고 · 무엇을 금지하며 · 어떻게 생겼는지" 명시.
- * "경로·allow 매트릭스"만으로는 드러나지 않는 책임 경계·네이밍 관례·대표 코드 형태를
- * 채워, LLM/신규 인원이 이 문서 하나로 올바른 레이어에 올바른 형태의 코드를
- * 배치할 수 있도록 한다.
+ * 각 레이어의 책임·네이밍·대표 코드 형태 (doc-only, ESLint 미참조).
+ * 경로·allow 매트릭스만으로 안 드러나는 정보를 채워 LLM/신규 인원의
+ * 올바른 코드 배치를 돕는다.
  */
 export const baseLayerSemantics = {
   model: {
@@ -477,12 +462,8 @@ export const baseBoundaryRules = [
 ];
 
 /**
- * Boundary 검사에서 제외할 파일/디렉토리.
- * - 테스트 파일 : 레이어 경계와 무관 (mock import 자유롭게 허용)
- * - .module.ts : DI 조립 파일이라 모든 레이어를 import해야 함
- * - main.ts, app.*.ts : 앱 부트스트랩
- * - src/modules/health : 헬스체크 유틸 (인프라/컨트롤러 혼합 정상)
- * - 모듈 내부 common 디렉토리 : 모듈 내 공용 (모든 하위 레이어에서 참조)
+ * Boundary 검사 제외 — 테스트, DI 조립(*.module.ts), 부트스트랩(main/app),
+ * 헬스체크, 모듈 내부 common.
  */
 export const baseBoundaryIgnores = [
   "**/*.spec.ts",
@@ -499,15 +480,8 @@ export const baseBoundaryIgnores = [
 
 // ─── Pre-built config (ESLint + TypeScript + Prettier + Import sorting) ───────
 /**
- * NestJS 프로젝트 공용 ESLint 베이스 config.
- * 블록 순서 중요: 뒤의 config가 앞의 룰을 override한다.
- *   1) ESLint 공식 recommended
- *   2) typescript-eslint 타입 기반 recommended
- *   3) Prettier (포맷 강제)
- *   4) 환경 설정 (Node + Jest 글로벌)
- *   5) simple-import-sort + unused-imports (import 정리)
- *   6) 프로젝트 공통 스타일 룰
- *   7) 테스트 파일 완화 (mock/stub 자유)
+ * NestJS 공용 ESLint 베이스. 블록 순서대로 뒤가 앞을 override.
+ * 각 블록 의도는 인라인 주석 참조.
  */
 export const baseConfig = defineConfig(
   // [1~3] 공식 권장 설정 체인
@@ -615,9 +589,8 @@ export const baseImmutabilityRules = defineConfig({
 
 // ─── Pre-built: File size limit ──────────────────────────────────────────────
 /**
- * 파일당 800줄 제한 (warn).
- * 800줄을 넘으면 단일 책임 원칙(SRP) 위반 가능성이 높고, 리뷰/테스트 난이도가 급증.
- * 테스트 파일은 seed 데이터와 시나리오 나열로 길어지기 쉬워 제외.
+ * 파일당 800줄 제한 (warn) — SRP 위반 신호.
+ * 테스트 파일은 seed/시나리오 나열로 길어지기 쉬워 제외.
  */
 export const baseFileSizeRules = defineConfig({
   files: ["src/**/*.ts"],
@@ -632,8 +605,7 @@ export const baseFileSizeRules = defineConfig({
 
 // ─── Pre-built: Circular dependency detection ────────────────────────────────
 /**
- * import/no-cycle — 레이어 간·모듈 간 순환 의존성 감지 (warn).
- * 기존 코드에 cycle이 누적되어 있을 수 있어 warn으로 시작; 운영 데이터 본 뒤 error로 승격 판단.
+ * import/no-cycle — 순환 의존성 감지 (warn).
  * 옵션: maxDepth 10 (성능 균형), ignoreExternal (node_modules 제외).
  */
 export const baseCycleRules = defineConfig({
@@ -647,15 +619,8 @@ export const baseCycleRules = defineConfig({
 
 // ─── Pre-built: Custom rules (conventions.md enforcement) ────────────────────
 /**
- * conventions.md에서 표준 ESLint 룰로 표현이 불가능한 프로젝트 고유 규칙을
- * custom rule로 제공한다. 기존 opt-in 스택(custom-lint)을 base로 병합한 결과.
- *
- * 포함 룰:
- *   - local/require-api-property          : DTO 필드에 @ApiProperty 강제
- *   - local/dto-union-type-restriction    : T | undefined / class union 금지
- *   - local/dto-naming-convention         : bare *ResponseDto, *DataDto 금지
- *   - local/require-timestamptz           : ORM entity Date 컬럼에 timestamptz 강제
- *   - local/require-map-domain-exception  : controller catch에서 mapDomainException 호출 강제
+ * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙 (`local/*` plugin).
+ * 룰별 적용 범위는 아래 블록 인라인 주석 참조.
  */
 export const baseCustomRules = defineConfig(
   {
@@ -725,11 +690,7 @@ export const baseCustomRules = defineConfig(
 
 // ─── Pre-built: Global ignores ────────────────────────────────────────────────
 /**
- * ESLint가 아예 읽지 않을 경로.
- * - eslint.config.mjs  : 자체 설정 파일 (자기 참조 방지)
- * - eslint-rules/**    : jkit에서 주입한 룰 소스 (재-lint 불필요)
- * - dist/, coverage/   : 빌드·테스트 산출물
- * - .jkit/             : 툴체인 내부 작업 공간
+ * ESLint가 아예 읽지 않을 경로 (자체 설정, jkit 주입 룰, 빌드 산출물).
  */
 export const baseIgnores = globalIgnores([
   "eslint.config.mjs",
@@ -741,19 +702,8 @@ export const baseIgnores = globalIgnores([
 
 // ─── Builder: Hexagonal layer import restrictions ────────────────────────────
 /**
- * 헥사고날 아키텍처 레이어별 import 제한 생성기.
- * 각 레이어 파일에 대해 금지 패턴을 적용한다. 스택별 framework/infra 패키지 목록을
- * 머지해 주입받는다.
- *
- * 레이어별 제한 요약:
- *   - model/      : 프레임워크 + 다른 레이어 전부 금지 (순수 TS)
- *   - service/    : @nestjs/common의 Injectable/Inject, @nestjs/event-emitter의
- *                   OnEvent만 허용. controller/provider 직접 import 금지
- *   - port/       : 프레임워크 + 다른 레이어 금지 (인터페이스는 순수해야 함)
- *   - exception/  : 프레임워크 금지 (도메인 예외는 HTTP 비의존)
- *   - dto/        : path alias만 강제 (class-validator 등 사용 허용)
- *   - controller/ : path alias만 강제 (NestJS 생태계 자유 사용)
- *   - provider/   : path alias만 강제 (ORM/SDK 자유 사용 — 구현 계층이므로)
+ * 레이어별 import 제한 생성기. 스택별 framework/infra 패키지를 받아
+ * 각 레이어의 no-restricted-imports를 구성. 레이어별 제한은 인라인 주석 참조.
  */
 export function buildLayerRestrictions(
   frameworkPackages,
@@ -961,12 +911,8 @@ export function buildLayerRestrictions(
 
 // ─── Builder: Architecture boundaries ─────────────────────────────────────────
 /**
- * 아키텍처 경계(boundaries) 룰 생성기.
- * 활성화되는 룰:
- *   - boundaries/no-unknown       : off — 외부 패키지 import는 자유 (NestJS 특성)
- *   - boundaries/no-unknown-files : warn — 매칭 안 되는 파일은 경고만 (*.module.ts 등)
- *   - boundaries/dependencies     : error — from → to 관계 allow-list 검사
- *     (default: 'disallow' — allow에 없으면 전부 거부)
+ * boundaries 플러그인 룰 생성기. elements ↔ rules 매핑으로
+ * from→to 의존을 allow-list 검사 (default: disallow).
  */
 export function buildArchitectureBoundaries(
   elements,

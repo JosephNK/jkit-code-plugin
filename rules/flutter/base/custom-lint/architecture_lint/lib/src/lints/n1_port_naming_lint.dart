@@ -5,16 +5,9 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../classification.dart';
 import '../dart_lint.dart';
 
-/// N1: ports/ 레이어의 클래스는 이름이 `Port`로 끝나야 한다.
+/// N1: `ports/` 레이어 클래스는 `Port` suffix 강제 (warning).
 ///
-/// ## 이유
-/// 아키텍처 레이어의 역할을 클래스 이름만 봐도 파악할 수 있게 하여,
-/// 검색/IDE 탐색/코드 리뷰 효율을 높인다. 예: `AuthPort`, `UserRepositoryPort`.
-///
-/// 네이밍 일관성은 자동화된 DI 설정(예: 이름 기반 바인딩) 및 대규모 리팩토링에도 유리.
-///
-/// ## 심각도
-/// WARNING — 아키텍처 실패는 아니지만 컨벤션 위반으로 경고.
+/// 레이어 역할을 클래스명에서 즉시 식별 — 예: `AuthPort`, `UserRepositoryPort`.
 class N1PortNamingLint extends DartLint {
   @override
   String get code => 'n1_port_naming';

@@ -6,10 +6,9 @@
 
 ## 레이어 글로서리 (Layer Glossary)
 
-각 레이어(boundary type)가 "무엇을 담고 · 무엇을 금지하며 · 어떻게 생겼는지" 명시.
-"경로·allow 매트릭스"만으로는 드러나지 않는 책임 경계·네이밍 관례·대표 코드 형태를
-채워, LLM/신규 인원이 이 문서 하나로 올바른 레이어에 올바른 형태의 코드를
-배치할 수 있도록 한다.
+각 레이어의 책임·네이밍·대표 코드 형태 (doc-only, ESLint 미참조).
+경로·allow 매트릭스만으로 안 드러나는 정보를 채워 LLM/신규 인원의
+올바른 코드 배치를 돕는다.
 
 ### `model`
 
@@ -278,7 +277,7 @@ export class CreateOrderRequestDto {
 ## Framework 금지 패키지 (순수 레이어 차단)
 
 순수 레이어(model/port/exception)에서 import 금지되는 프레임워크 패키지.
-이 계층들은 프레임워크 중립이어야 테스트 용이성과 이식성이 보장된다.
+테스트 용이성·이식성 보장 위해 프레임워크 중립 유지.
 
 - `@nestjs/*`
 - `class-validator`
@@ -298,12 +297,8 @@ ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 
 
 ## Ignored Paths (무시 경로)
 
-Boundary 검사에서 제외할 파일/디렉토리.
-- 테스트 파일 : 레이어 경계와 무관 (mock import 자유롭게 허용)
-- .module.ts : DI 조립 파일이라 모든 레이어를 import해야 함
-- main.ts, app.*.ts : 앱 부트스트랩
-- src/modules/health : 헬스체크 유틸 (인프라/컨트롤러 혼합 정상)
-- 모듈 내부 common 디렉토리 : 모듈 내 공용 (모든 하위 레이어에서 참조)
+Boundary 검사 제외 — 테스트, DI 조립(*.module.ts), 부트스트랩(main/app),
+헬스체크, 모듈 내부 common.
 
 ### 무시 패턴 목록
 

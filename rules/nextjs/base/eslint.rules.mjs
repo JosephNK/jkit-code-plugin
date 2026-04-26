@@ -34,10 +34,8 @@ export const baseRestrictedPatterns = [
 ];
 
 /**
- * 도메인 레이어에서 금지하는 패키지 목록.
- * 도메인 레이어(`src/lib/domain/**`)는 프레임워크 비의존 순수 TypeScript여야 하며
- * React/Next.js 타입·런타임에 직접 의존하면 안 된다.
- * 스택별로 UI 라이브러리(Mantine, Tailwind, TanStack Query 등)를 추가 차단한다.
+ * 도메인 레이어(`src/lib/domain/**`)에서 import 금지 패키지.
+ * 프레임워크 비의존 유지. 스택별로 UI 라이브러리 추가 차단.
  */
 export const baseDomainBannedPackages = [
   'react',
@@ -60,11 +58,8 @@ export const baseDomainBannedPackages = [
 ];
 
 /**
- * 아키텍처 경계 선언 — 각 레이어 type이 어떤 경로에 해당하는지 정의.
- * eslint-plugin-boundaries가 이 맵을 사용하여 파일별 레이어를 판별한다.
- * `mode: 'full'`은 단일 파일 경로 정확 매칭 (폴더 아님).
- *
- * 레이어별 책임·파일 종류는 lint-rules-reference.md의 "레이어 글로서리" 참조.
+ * 아키텍처 경계 — 각 레이어 type ↔ 경로 매핑.
+ * `mode: 'full'`은 단일 파일 정확 매칭. 레이어 책임은 `baseLayerSemantics` 참조.
  */
 export const baseBoundaryElements = [
   // Domain layer — 프레임워크 비의존 순수 TS
@@ -100,13 +95,9 @@ export const baseBoundaryElements = [
 ];
 
 /**
- * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조). baseBoundaryElements의 glob만으로는
- * 드러나지 않는 Next.js App Router 관례(layout.tsx/page.tsx/route group/nested dynamic)를
- * lint-rules-structure-reference.md에 보강한다. parentPath 위치에서 boundary tree의
- * glob 자식을 숨기고 이 override 트리로 대체한다.
- *
- * 스키마: { [parentPath]: { override: StructureNode[] } }
- *   StructureNode: { name, note?, placeholder? (가변 세그먼트 표시), children? }
+ * 경로 트리 시각화용 주석 (doc-only, ESLint 미참조).
+ * App Router 관례(layout/page/route group/nested dynamic) 등
+ * boundary glob만으로 안 드러나는 하위 폴더 의도를 트리에 추가.
  */
 export const baseStructureAnnotations = {
   'src/app': {
@@ -175,14 +166,10 @@ export const baseStructureAnnotations = {
   },
 };
 
-// 스키마: { [type]: { role, contains[], forbids[], scope?, example? } }
-//   - role / contains / forbids / scope / example 순서로 렌더된다.
-//   - ESLint 런타임에는 참조되지 않는 doc-only export.
 /**
- * 각 레이어(boundary type)가 "무엇을 담고 · 무엇을 금지하며 · 어떻게 생겼는지" 명시.
- * "경로·allow 매트릭스"만으로는 드러나지 않는 책임 경계·네이밍 관례·대표 코드 형태를
- * 채워, LLM/신규 인원이 이 문서 하나로 올바른 레이어에 올바른 형태의 코드를
- * 배치할 수 있도록 한다.
+ * 각 레이어의 책임·네이밍·대표 코드 형태 (doc-only, ESLint 미참조).
+ * 경로·allow 매트릭스만으로 안 드러나는 정보를 채워 LLM/신규 인원의
+ * 올바른 코드 배치를 돕는다.
  */
 export const baseLayerSemantics = {
   // ─── Domain layer ─────────────────────────────────────────────────────────
@@ -620,11 +607,8 @@ export const baseBoundaryRules = [
 ];
 
 /**
- * Boundary 검사에서 제외할 파일/디렉토리 (boundaries/no-unknown-files 오탐 방지).
- * - 테스트/스펙/설정 파일: 레이어 경계와 무관
- * - 루트 `*.ts` / `*.d.ts`: next-env.d.ts 같은 메타 파일
- * - `scripts/`, `e2e/`: 빌드·테스트 유틸, 앱 소스가 아님
- * - `src/common/types/**`: 전역 타입 선언, 레이어 개념 밖
+ * Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
+ * 테스트/스펙/설정, 루트 메타 파일, scripts/e2e 빌드 유틸, 전역 타입 등.
  */
 export const baseBoundaryIgnores = [
   '**/*.test.ts',
@@ -642,10 +626,8 @@ export const baseBoundaryIgnores = [
 ];
 
 /**
- * AST selector 기반 금지 구문.
- * - `React.FC` / `React.FunctionComponent` 금지
- *   이유: children을 암묵적으로 포함해 props 계약을 흐리고, generic 사용이 어렵다.
- *   공식 React 팀도 더 이상 권장하지 않음 (명시적 props 타입 권장).
+ * AST selector 기반 금지 구문. `React.FC` / `React.FunctionComponent` 금지 —
+ * children 암묵 포함, generic 어려움. 명시적 props 타입 사용.
  */
 export const baseRestrictedSyntax = [
   {
@@ -660,14 +642,8 @@ export const baseRestrictedSyntax = [
 
 // ─── Pre-built config (Next.js + TypeScript + Prettier + SonarJS + Custom) ───
 /**
- * 프로젝트 공용 ESLint 베이스 config.
- * 블록 순서 중요: 뒤의 config가 앞의 config를 override한다.
- *   1) Next.js 공식 config (core-web-vitals + typescript)
- *   2) typescript-eslint 타입 기반 룰
- *   3) Prettier (포맷 관련 룰 비활성화 — 포맷은 Prettier 전담)
- *   4) SonarJS (코드 스멜/복잡도)
- *   5) simple-import-sort + unused-imports (import 정리)
- *   6) 프로젝트 공통 스타일 룰
+ * Next.js 공용 ESLint 베이스. 블록 순서대로 뒤가 앞을 override.
+ * 각 블록 의도는 인라인 주석 참조.
  */
 export const baseConfig = defineConfig([
   // [1] Next.js 공식 권장 설정 — Core Web Vitals 관련 룰 + TS 기본
@@ -761,9 +737,8 @@ export const baseConfig = defineConfig([
 
 // ─── Pre-built: Server Component rules ────────────────────────────────────────
 /**
- * Server Component(`src/app/**`)에서 React Hook 호출 금지 — 런타임 에러 사전 차단.
- * `_components/`·`_providers/`는 'use client' 가정으로 검사 제외.
- * Selector: `useFoo()` (직접 호출) + `obj.useFoo()` (멤버 호출) 둘 다 catch.
+ * Server Component(`src/app/**`)에서 React Hook 호출 금지 — 런타임 에러 차단.
+ * `_components/`·`_providers/`는 'use client' 가정으로 제외.
  */
 export const baseServerComponentRules = defineConfig([
   {
@@ -787,13 +762,8 @@ export const baseServerComponentRules = defineConfig([
 
 // ─── Pre-built: Custom rules (conventions.md enforcement) ────────────────────
 /**
- * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙.
- *
- * 활성: local/no-inline-style-tokens — JSX 인라인 `style={{...}}` 토큰 하드코딩 차단
- * (stylelint가 커버 못 하는 .tsx 공백 메움).
- *
- * 비활성(보존): local/no-tailwindcss-css — Tailwind import 전역 차단. custom-rules/index.mjs
- * 에서도 plugin 등록이 주석 처리됨. 활성화 시 양쪽 주석을 함께 해제.
+ * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙 (`local/*` plugin).
+ * 룰별 적용 범위·보존 룰은 아래 블록 인라인 주석 참조.
  */
 export const baseCustomRules = defineConfig(
   {
@@ -824,11 +794,7 @@ export const baseCustomRules = defineConfig(
 
 // ─── Pre-built: Global ignores ────────────────────────────────────────────────
 /**
- * ESLint가 아예 읽지 않을 경로.
- * - `.next/`, `out/`, `build/`: Next.js 빌드 산출물
- * - `coverage/`: 테스트 커버리지 리포트
- * - `next-env.d.ts`: Next.js가 자동 생성/관리하는 타입 선언
- * - `.jkit/`: 툴체인 내부 작업 공간
+ * ESLint가 아예 읽지 않을 경로 (빌드 산출물, 자동 생성 타입, 툴체인 작업 공간).
  */
 export const baseIgnores = globalIgnores(['.next/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts', '.jkit/**']);
 
@@ -849,12 +815,9 @@ export function buildRestrictedImports(patterns) {
 
 // ─── Builder: Domain purity (merge base + stack banned packages) ──────────────
 /**
- * 도메인 순수성(Purity) 룰 생성기.
- * src/lib/domain 하위 모든 .ts 파일에만 적용되며 아래를 차단한다:
- *   1. React/Next.js 및 스택별 프레임워크 import
- *   2. 브라우저 글로벌(fetch, window, document, localStorage, sessionStorage)
- * 도메인 서비스가 데이터가 필요하면 반드시 domain-port 인터페이스를 통해
- * 상위 레이어(repository)에서 주입받아야 한다 — 의존성 역전 원칙.
+ * 도메인 순수성 룰 생성기 (`src/lib/domain/**`).
+ * 프레임워크 import + 브라우저 글로벌(fetch/window/document/storage) 차단.
+ * 데이터는 domain-port를 통해 repository에서 주입.
  */
 export function buildDomainPurity(bannedPackages, restrictedPatterns = baseRestrictedPatterns) {
   return defineConfig([
@@ -888,13 +851,8 @@ export function buildDomainPurity(bannedPackages, restrictedPatterns = baseRestr
 
 // ─── Builder: Architecture boundaries (merge base + stack elements/rules) ─────
 /**
- * 아키텍처 경계(boundaries) 룰 생성기.
- * 활성화되는 룰:
- *   - `boundaries/no-unknown`       : elements에 등록되지 않은 경로 import 금지
- *   - `boundaries/no-unknown-files` : elements에 매칭되지 않는 파일 존재 시 에러
- *     (ignores에 추가하거나 element 추가로 해결)
- *   - `boundaries/dependencies`     : from → to 관계 allow-list 검사
- *     (default: 'disallow' — allow에 없으면 전부 거부)
+ * boundaries 플러그인 룰 생성기. elements ↔ rules 매핑으로
+ * from→to 의존을 allow-list 검사 (default: disallow).
  */
 export function buildArchitectureBoundaries(elements, rules, ignores = baseBoundaryIgnores) {
   return defineConfig([

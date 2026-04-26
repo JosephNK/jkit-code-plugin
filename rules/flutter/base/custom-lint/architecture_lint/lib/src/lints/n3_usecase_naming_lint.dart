@@ -5,19 +5,10 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../classification.dart';
 import '../dart_lint.dart';
 
-/// N3: usecases/ 레이어의 클래스는 이름이 `UseCase` 또는 `Params`로 끝나야 한다.
+/// N3: `usecases/` 레이어 클래스는 `UseCase` 또는 `Params` suffix 강제 (warning).
 ///
-/// ## 이유
-/// - `*UseCase` : 비즈니스 동작 하나를 표현하는 Command/Query 객체
-///   예: `GetUserUseCase`, `CreateOrderUseCase`
-/// - `*Params` : UseCase 입력 파라미터를 캡슐화한 객체 (DTO 역할)
-///   예: `GetUserParams`, `CreateOrderParams`
-///
-/// 이 두 접미사로 제한하여 UseCase 폴더 안에 헬퍼/서비스/유틸 클래스가 섞이는 것을
-/// 방지한다 — UseCase 폴더는 "하나의 유스케이스 또는 그 입력" 만 담는다.
-///
-/// ## 심각도
-/// WARNING
+/// `*UseCase` = Command/Query 객체, `*Params` = UseCase 입력 캡슐.
+/// suffix 제한으로 폴더에 헬퍼·유틸이 섞이는 것을 방지.
 class N3UseCaseNamingLint extends DartLint {
   @override
   String get code => 'n3_usecase_naming';

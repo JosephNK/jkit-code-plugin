@@ -5,16 +5,10 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../classification.dart';
 import '../dart_lint.dart';
 
-/// E2: usecases/ 는 entities/, ports/, exceptions/ 만 import 가능.
+/// E2: `usecases/`는 `entities/`, `ports/`, `exceptions/`만 import 허용.
 ///
-/// ## 이유
-/// UseCase는 비즈니스 로직의 중심이며 구체 구현에 의존하지 않아야 한다.
-/// - adapters/ : 구체 구현체를 직접 부르면 DI가 깨진다 (ports를 통해 주입받아야 함)
-/// - bloc/ : 역방향 의존 (상위 레이어가 상태 관리자를 알면 안 됨)
-/// - presentation/ : UI 의존 금지 (UseCase는 headless)
-/// - common_services/ : 전역 서비스 직접 접근 금지 (Port로 추상화)
-///
-/// UI/인프라 없이도 UseCase가 단독 단위 테스트 가능해야 한다는 게 핵심 원칙.
+/// 비즈니스 로직을 인프라/UI에서 분리 — UseCase 단독 단위 테스트 가능 유지.
+/// 금지 대상: `adapters/`, `bloc/`, `presentation/`, `common/services/`.
 class E2UsecasesDependencyLint extends DartLint {
   static const _forbidden = <String>{
     'adapters',
