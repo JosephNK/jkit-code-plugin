@@ -10,16 +10,25 @@ Future<int> main(List<String> args) async {
   final lints = createArchitectureLints();
 
   // AnalysisContextCollection requires absolute *normalized* paths.
-  // `Directory('.').absolute.path` yields e.g. `/repo/app/.` which is not
-  // normalized and gets rejected, so run it through `p.normalize`.
-  final absRoots =
-      roots.map((r) => p.normalize(Directory(r).absolute.path)).toList();
+  // `p.absolute('.')` yields e.g. `/repo/app/.` which is not normalized and
+  // gets rejected, so run it through `p.normalize`. type-agnostic — works
+  // for both file and directory inputs.
+  final absRoots = roots.map((r) => p.normalize(p.absolute(r))).toList();
+
+  // 인자가 파일이면 그 파일들만 보고하도록 필터 set 구성. 디렉토리는 비워둠
+  // (전체 스캔). pre-commit 훅처럼 staged 파일만 검사할 때 사용.
+  final fileFilter = <String>{
+    for (final r in absRoots)
+      if (FileSystemEntity.isFileSync(r)) r,
+  };
+
   final collection = AnalysisContextCollection(includedPaths: absRoots);
 
   var violations = 0;
   for (final ctx in collection.contexts) {
     for (final path in ctx.contextRoot.analyzedFiles()) {
       if (!path.endsWith('.dart')) continue;
+      if (fileFilter.isNotEmpty && !fileFilter.contains(path)) continue;
       // 생성 파일 스킵 (freezed, drift, json_serializable, mockito 등)
       if (path.endsWith('.g.dart') ||
           path.endsWith('.freezed.dart') ||
