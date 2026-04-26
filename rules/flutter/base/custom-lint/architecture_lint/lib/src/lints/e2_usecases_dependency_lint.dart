@@ -10,12 +10,10 @@ import '../dart_lint.dart';
 /// 비즈니스 로직을 인프라/UI에서 분리해 UseCase 단독 단위 테스트 가능 유지.
 /// 인프라 의존은 `ports/`로 추상화하고 DI로 `adapters/`를 주입한다.
 class E2UsecasesDependencyLint extends DartLint {
-  static const _forbidden = <String>{
-    'adapters',
-    'bloc',
-    'presentation',
-    'common_services',
-  };
+  // common_services 레이어는 forbidden에서 제외 — value-object/config/state/exception
+  // 등 공용 서비스의 보조 타입은 usecase에서 자유롭게 import 가능.
+  // (common/services 의 adapter 구현체는 별도 'adapters' 레이어로 분류되어 차단됨)
+  static const _forbidden = <String>{'adapters', 'bloc', 'presentation'};
 
   @override
   String get code => 'e2_usecases_dependency';
