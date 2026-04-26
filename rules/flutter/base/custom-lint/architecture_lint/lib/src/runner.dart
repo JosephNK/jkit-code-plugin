@@ -14,6 +14,7 @@ import 'lints/n1_port_naming_lint.dart';
 import 'lints/n2_adapter_naming_lint.dart';
 import 'lints/n3_usecase_naming_lint.dart';
 import 'lints/s1_file_size_lint.dart';
+import 'lints/s2_unknown_path_lint.dart';
 
 typedef LintMatchHandler = void Function(DartLint lint, SyntacticEntity entity);
 
@@ -60,7 +61,7 @@ class LintRunner extends RecursiveAstVisitor<void> {
   }
 }
 
-/// 기본 아키텍처 lint 규칙 11개 (E1~E7, N1~N3, S1).
+/// 기본 아키텍처 lint 규칙 12개 (E1~E7, N1~N3, S1~S2).
 List<DartLint> createArchitectureLints() => <DartLint>[
   E1EntitiesImportLint(),
   E2UsecasesDependencyLint(),
@@ -73,4 +74,5 @@ List<DartLint> createArchitectureLints() => <DartLint>[
   N2AdapterNamingLint(),
   N3UseCaseNamingLint(),
   S1FileSizeLint(),
+  S2UnknownPathLint(),
 ];

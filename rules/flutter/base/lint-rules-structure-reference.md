@@ -71,4 +71,14 @@ Root (Melos workspace)
 | `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` | 도메인 예외 + 공용 예외 |
 | `presentation` | `app/lib/features/**/presentation/pages/**` / `app/lib/features/**/presentation/views/**` / `app/lib/features/**/presentation/widgets/**` | pages / views / widgets 통합 |
 | `common_services` | `app/lib/common/services/*/**` | Port & Adapter 패턴 — 교차 feature 서비스 |
+| `common` | `app/lib/common/env/**` / `app/lib/common/events/**` / `app/lib/common/extensions/**` / `app/lib/common/theme/**` / `app/lib/common/widgets/**` | 공용 — lint 룰 적용 없음 |
+
+## Ignore 패턴 (S2)
+
+`S2` 룰이 통과시키는 합법 path glob — boundary 외 경로지만 허용된다 (부트스트랩·DI·라우터 등). NestJS의 `baseBoundaryIgnores`에 대응.
+
+- `app/lib/main.dart`
+- `app/lib/app.dart`
+- `app/lib/di/**`
+- `app/lib/router/**`
 

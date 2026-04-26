@@ -15,9 +15,9 @@
 //
 // 입력 (Source):
 //   rules/flutter/base/custom-lint/architecture_lint/lib/src/
-//     ├── lints/*.dart              — 11개 룰 (E1~E7, N1~N3, S1)
+//     ├── lints/*.dart              — 12개 룰 (E1~E7, N1~N3, S1~S2)
 //     ├── constants.dart            — 패키지 화이트/블랙리스트, maxFileLines
-//     ├── boundary_element.dart     — projectBoundaryElements (lint 분류 + 트리)
+//     ├── boundary_element.dart     — projectBoundaryElements + unknownPathIgnores
 //     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
 //     └── layer_semantics.dart      — Role/Contains/Example (doc-only 정형)
 //
@@ -461,6 +461,15 @@ function parseAnnotationNodeList(body) {
   return nodes;
 }
 
+function parseUnknownPathIgnores(filePath) {
+  const content = readSource(filePath);
+  const m = content.match(
+    /const\s+unknownPathIgnores\s*=\s*<\s*String\s*>\s*\[([\s\S]*?)\]\s*;/,
+  );
+  if (!m) return [];
+  return collectStringLiterals(m[1]);
+}
+
 function parseStructureRoot(filePath) {
   const content = readSource(filePath);
   const m = content.match(
@@ -648,6 +657,7 @@ function renderStructureReference({
   boundaryElements,
   structureAnnotations,
   structureRoot,
+  unknownPathIgnores,
 }) {
   const lines = [
     '<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->',
@@ -692,6 +702,20 @@ function renderStructureReference({
     lines.push(`| \`${el.layer}\` | ${patterns} | ${note} |`);
   }
   lines.push('');
+
+  if (unknownPathIgnores && unknownPathIgnores.length > 0) {
+    lines.push('## Ignore 패턴 (S2)');
+    lines.push('');
+    lines.push(
+      '`S2` 룰이 통과시키는 합법 path glob — boundary 외 경로지만 허용된다 ' +
+        '(부트스트랩·DI·라우터 등). NestJS의 `baseBoundaryIgnores`에 대응.',
+    );
+    lines.push('');
+    for (const pat of unknownPathIgnores) {
+      lines.push(`- \`${pat}\``);
+    }
+    lines.push('');
+  }
 
   return lines.join('\n');
 }
@@ -825,7 +849,7 @@ function renderReference({ rules, layerSemantics, boundaryElements, constants })
   lines.push('## 규칙 (Rules)');
   lines.push('');
   lines.push(
-    'architecture_lint 패키지가 활성화하는 11개 룰. 시각화된 의존 다이어그램은 ' +
+    `architecture_lint 패키지가 활성화하는 ${rules.length}개 룰. 시각화된 의존 다이어그램은 ` +
       '`lint-rules-diagram.md` 참조.',
   );
   lines.push('');
@@ -937,6 +961,9 @@ function main() {
   const structureRoot = parseStructureRoot(
     path.join(SRC_DIR, 'structure_annotation.dart'),
   );
+  const unknownPathIgnores = parseUnknownPathIgnores(
+    path.join(SRC_DIR, 'boundary_element.dart'),
+  );
   const rules = loadAllLints();
 
   const writes = [
@@ -947,6 +974,7 @@ function main() {
           boundaryElements,
           structureAnnotations,
           structureRoot,
+          unknownPathIgnores,
         }) + '\n',
     },
     {

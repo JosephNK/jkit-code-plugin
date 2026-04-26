@@ -2,7 +2,7 @@
 // architecture_lint — boundary 정의 (lint 동작 + doc 트리 단일 source)
 // -----------------------------------------------------------------------------
 // 각 BoundaryElement는 하나의 논리 레이어를 정의하고, glob 패턴들로 경계를
-// 표현한다. 11개 룰(E/N/S)이 이 데이터를 통해 path → layer 분류를 수행하며,
+// 표현한다. 12개 룰(E/N/S)이 이 데이터를 통해 path → layer 분류를 수행하며,
 // generator(`scripts/flutter/gen-architecture-lint-reference.mjs`)도 동일
 // 데이터를 읽어 `lint-rules-structure-reference.md`의 트리 + 매핑 표를 합성.
 //
@@ -16,7 +16,7 @@ class BoundaryElement {
     this.note,
   });
 
-  /// 논리 레이어 이름. 11개 lint가 이 값으로 layer를 식별한다.
+  /// 논리 레이어 이름. 12개 lint가 이 값으로 layer를 식별한다.
   final String layer;
 
   /// glob 패턴 배열. 한 layer가 여러 위치에 흩어져도 patterns로 묶는다.
@@ -78,4 +78,26 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: ['app/lib/common/services/*/**'],
     note: 'Port & Adapter 패턴 — 교차 feature 서비스',
   ),
+  BoundaryElement(
+    layer: 'common',
+    patterns: [
+      'app/lib/common/env/**',
+      'app/lib/common/events/**',
+      'app/lib/common/extensions/**',
+      'app/lib/common/theme/**',
+      'app/lib/common/widgets/**',
+    ],
+    note: '공용 — lint 룰 적용 없음',
+  ),
+];
+
+/// `S2` 룰이 통과시키는 합법 path glob — boundary 외 경로지만 허용된다.
+///
+/// NestJS의 `baseBoundaryIgnores`에 대응. boundary 패턴에 enumerate 되지 않지만
+/// `app/lib/` 안에 합법으로 존재하는 부트스트랩(main/app)·DI·라우터 등.
+const unknownPathIgnores = <String>[
+  'app/lib/main.dart',
+  'app/lib/app.dart',
+  'app/lib/di/**',
+  'app/lib/router/**',
 ];

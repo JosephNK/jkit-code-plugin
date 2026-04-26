@@ -68,6 +68,21 @@ String classifyLayer(String filePath) {
   return 'other';
 }
 
+/// 입력 파일이 `app/lib/` 하위인지 검사 (정규화 후).
+/// S2 룰이 lint 적용 범위를 `app/lib/` 안으로만 제한할 때 사용.
+bool isInAppLib(String filePath) {
+  return _normalizeInputPath(filePath).startsWith('app/lib/');
+}
+
+/// 입력 파일이 `unknownPathIgnores`의 어느 glob과도 매칭하는지 검사.
+bool matchesUnknownPathIgnore(String filePath) {
+  final normalized = _normalizeInputPath(filePath);
+  for (final pattern in unknownPathIgnores) {
+    if (Glob(pattern).matches(normalized)) return true;
+  }
+  return false;
+}
+
 /// `features/<name>/...` 경로에서 feature 이름을 추출.
 /// features 세그먼트를 찾지 못하면 null (features 바깥 파일).
 String? extractFeature(String filePath) {
