@@ -68,6 +68,13 @@ const projectStructureAnnotations = <String, List<AnnotationNode>>{
           children: [
             AnnotationNode(name: '*_port.dart'),
             AnnotationNode(name: '*_adapter.dart'),
+            AnnotationNode(
+              name: 'internal',
+              note: '보조 구현 파일 (config/types/helpers 등) — 외부 import 금지',
+              children: [
+                AnnotationNode(name: '*.dart'),
+              ],
+            ),
           ],
         ),
       ],

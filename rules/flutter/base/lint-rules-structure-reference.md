@@ -24,7 +24,9 @@ Root (Melos workspace)
 │       │   ├── services/                 # 교차 feature 서비스
 │       │   │   └── <service>/            # Port & Adapter 패턴
 │       │   │       ├── *_port.dart
-│       │   │       └── *_adapter.dart
+│       │   │       ├── *_adapter.dart
+│       │   │       └── internal/         # 보조 구현 파일 (config/types/helpers 등) — 외부 import 금지
+│       │   │           └── *.dart
 │       │   ├── theme/                    # 디자인 시스템
 │       │   └── widgets/                  # 공용 재사용 위젯
 │       ├── di/
@@ -70,7 +72,7 @@ Root (Melos workspace)
 | `bloc` | `app/lib/features/**/presentation/bloc/**` | 상태 관리 (선택) |
 | `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` | 도메인 예외 + 공용 예외 |
 | `presentation` | `app/lib/features/**/presentation/pages/**` / `app/lib/features/**/presentation/views/**` / `app/lib/features/**/presentation/widgets/**` | pages / views / widgets 통합 |
-| `common_services` | `app/lib/common/services/*/**` | Port & Adapter 패턴 — 교차 feature 서비스 |
+| `common_services` | `app/lib/common/services/*/*_port.dart` / `app/lib/common/services/*/*_adapter.dart` / `app/lib/common/services/*/internal/**` | Port/Adapter + internal/ 보조 파일 — 교차 feature 서비스 |
 | `common` | `app/lib/common/env/**` / `app/lib/common/events/**` / `app/lib/common/extensions/**` / `app/lib/common/theme/**` / `app/lib/common/widgets/**` | 공용 — lint 룰 적용 없음 |
 
 ## Ignore 패턴 (S2)

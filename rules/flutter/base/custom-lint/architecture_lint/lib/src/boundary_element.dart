@@ -75,8 +75,14 @@ const projectBoundaryElements = <BoundaryElement>[
   ),
   BoundaryElement(
     layer: 'common_services',
-    patterns: ['app/lib/common/services/*/**'],
-    note: 'Port & Adapter 패턴 — 교차 feature 서비스',
+    patterns: [
+      // 직속: port/adapter 두 종류만 허용
+      'app/lib/common/services/*/*_port.dart',
+      'app/lib/common/services/*/*_adapter.dart',
+      // 보조 파일은 internal/ 하위 — 외부 import 금지 시그널
+      'app/lib/common/services/*/internal/**',
+    ],
+    note: 'Port/Adapter + internal/ 보조 파일 — 교차 feature 서비스',
   ),
   BoundaryElement(
     layer: 'common',
