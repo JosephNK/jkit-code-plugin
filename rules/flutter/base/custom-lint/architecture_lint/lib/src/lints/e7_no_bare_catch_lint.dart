@@ -4,9 +4,9 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
 import '../dart_lint.dart';
 
-/// E7: bare `catch` 금지 — `on ExceptionType catch (e)` 강제.
+/// E7: bare `catch` 금지 — `on ExceptionType catch (e)` 형태 강제.
 ///
-/// 의도한 예외만 처리하고 프로그래밍 오류(`Error` 계열)는 전파.
+/// 의도한 예외만 처리하고 프로그래밍 오류(`Error` 계열)는 전파한다.
 class E7NoBareCatchLint extends DartLint {
   @override
   String get code => 'e7_no_bare_catch';

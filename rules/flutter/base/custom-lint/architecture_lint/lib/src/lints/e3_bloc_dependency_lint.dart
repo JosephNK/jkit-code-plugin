@@ -6,12 +6,10 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E3: `bloc/`은 `usecases/`/`entities/`/`exceptions/`만 import 허용
-/// (외부는 `blocAllowedPackages`).
+/// E3: `usecases/`/`entities/`/`exceptions/`만 import 허용 — adapters/ports 직접 호출 금지.
 ///
 /// Bloc은 얇은 상태 계층 — 데이터 접근은 UseCase에 위임.
-/// 금지 대상: `adapters/`, `ports/`, `common/services/` 직접 호출.
-/// 허용 패키지: `blocAllowedPackages` (constants.dart).
+/// 외부 패키지는 `blocAllowedPackages`(flutter_bloc·bloc·equatable + codegen)만 허용.
 class E3BlocDependencyLint extends DartLint {
   static const _forbidden = <String>{'adapters', 'ports', 'common_services'};
 

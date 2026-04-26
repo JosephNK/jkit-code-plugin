@@ -6,9 +6,7 @@
 
 ## 레이어 글로서리 (Layer Glossary)
 
-스택이 추가하는 `auth` 레이어의 역할·포함·금지·대표 코드.
-base 글로서리와 별개로 이 레이어 고유 규약을 명시 — LLM이 `src/auth.ts`를
-작성할 때 어떤 형태여야 하고 뭘 넣지 말아야 하는지 판단하는 근거.
+`auth` 레이어 글로서리 — LLM이 `src/auth.ts` 작성 시 형태/금지사항 판단 근거.
 
 ### `auth`
 
@@ -41,9 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 ## 의존성 규칙 (Dependency Rules)
 
-auth.ts는 NextAuth 설정 구성을 위해 api-helper만 import 가능
-(예: DB 어댑터 초기화, 커스텀 콜백에서 api 조회 등).
-domain/UI 직접 의존은 금지.
+auth.ts → api-helper만 허용 (DB 어댑터 초기화·콜백 내 조회 등).
 
 시각화된 의존성 그래프는 `lint-rules-diagram.md` 참조.
 
@@ -55,9 +51,7 @@ domain/UI 직접 의존은 금지.
 
 ## Boundary Allow Patches (base 규칙 추가 허용)
 
-기존 레이어가 auth.ts를 참조할 수 있도록 허용 목록에 추가:
-  - api-helper → auth  : 서버 액션/핸들러에서 `auth()` 호출로 세션 조회
-  - page       → auth  : 페이지/레이아웃에서 `auth()`로 서버 사이드 세션 확인
+기존 레이어 → auth 허용 패치: api-helper·page에서 `auth()` 세션 조회.
 
 | From | 추가 허용 (To) |
 | --- | --- |
@@ -66,9 +60,7 @@ domain/UI 직접 의존은 금지.
 
 ## Domain Purity (도메인 순수성)
 
-도메인 레이어에서 next-auth import 금지.
-인증은 어댑터 레이어 관심사이며 도메인 로직은 auth 구현체에 의존하면 안 된다.
-사용자·세션 개념이 도메인에 필요하면 해당 모델을 도메인 내부에 별도 정의한다.
+도메인 레이어에서 next-auth 차단 — 인증은 어댑터 관심사.
 
 ### 도메인 레이어 금지 패키지
 

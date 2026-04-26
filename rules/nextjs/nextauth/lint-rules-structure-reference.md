@@ -6,10 +6,7 @@
 
 ## 개요
 
-`src/auth.ts` 단일 파일을 `auth` element로 등록.
-NextAuth 설정(handlers/auth/signIn/signOut)을 한 파일에 모으고,
-이 파일만 next-auth를 import 할 수 있게 제한한다.
-`mode: 'full'` — 폴더가 아닌 정확한 파일 경로 매칭.
+`src/auth.ts` 단일 파일만 `auth` element로 등록 — `mode: 'full'` 정확 매칭.
 
 ## 프로젝트 구조
 

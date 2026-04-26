@@ -5,9 +5,9 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// S1: 파일당 최대 `maxFileLines`줄 (warning) — SRP 위반 신호.
+/// S1: 파일당 800줄 초과 금지 — 단일 책임 위반 신호.
 ///
-/// 한계값: `maxFileLines` (constants.dart, 기본 800).
+/// 800은 경험적 임계치. 한계값은 `maxFileLines` 상수로 조정 가능.
 class S1FileSizeLint extends DartLint {
   @override
   String get code => 's1_file_size';

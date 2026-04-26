@@ -6,11 +6,10 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E4: 도메인 레이어(`domainLayers`)는 인프라 SDK import 금지.
+/// E4: 도메인 레이어(entities/ports/usecases/exceptions)는 인프라 SDK import 금지.
 ///
-/// 도메인의 테스트 가능성·이식성 보장 — 인프라 접근은 `adapters/`에서만.
-/// 적용 레이어: `domainLayers` (constants.dart).
-/// 금지 목록: `infraPackages` (constants.dart).
+/// 테스트 가능성·이식성 보장 — 인프라 접근은 `adapters/`에서만.
+/// 금지 목록은 `infraPackages` (dio·http·drift·sqflite·firebase 계열 등).
 class E4DomainNoSdkLint extends DartLint {
   @override
   String get code => 'e4_domain_no_sdk';

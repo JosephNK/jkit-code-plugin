@@ -6,11 +6,10 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E5: `ports/`는 framework 패키지 import 금지.
+/// E5: framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단.
 ///
-/// Port 시그니처에 framework 타입(BuildContext, dio Response 등)이 노출되면
-/// 구현 교체·캡슐화가 깨짐. 도메인 타입만 사용.
-/// 금지 목록: `frameworkPackages` (= `infraPackages` + flutter, constants.dart).
+/// Port는 추상 인터페이스이므로 도메인 타입만 사용해 구현 교체·테스트 용이성 유지.
+/// 금지 목록은 `frameworkPackages` (= `infraPackages` + flutter; BuildContext·dio Response 등 누출 방지).
 class E5PortsNoFrameworkLint extends DartLint {
   @override
   String get code => 'e5_ports_no_framework';

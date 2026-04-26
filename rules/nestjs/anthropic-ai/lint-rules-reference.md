@@ -6,14 +6,12 @@
 
 ## Framework 금지 패키지 (순수 레이어 차단)
 
-Framework 목록 → model/, port/, exception/ 차단.
-도메인 타입에 Anthropic 응답 구조가 노출되지 않도록.
+Framework 차단 — model/port/exception에서 Anthropic 타입 노출 금지.
 
 - `@anthropic-ai/*`
 
 ## Infra 금지 패키지 (service 레이어 차단)
 
-Infra 목록 → service/ 직접 사용 차단.
-LLM 호출은 provider/ 에서 Port 구현체로 캡슐화.
+Infra 차단 — service에서 직접 호출 금지, provider Port 구현체에서만 사용.
 
 - `@anthropic-ai/*`

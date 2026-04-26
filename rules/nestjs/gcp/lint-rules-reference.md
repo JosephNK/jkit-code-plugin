@@ -6,14 +6,12 @@
 
 ## Framework 금지 패키지 (순수 레이어 차단)
 
-Framework 목록에 포함 → model/, port/, exception/ 에서 차단.
-도메인 계층이 특정 클라우드 벤더에 의존하는 상황 방지.
+Framework 차단 — 도메인이 특정 클라우드 벤더 타입에 의존 금지.
 
 - `@google-cloud/*`
 
 ## Infra 금지 패키지 (service 레이어 차단)
 
-Infra 목록에 포함 → service/ 에서도 직접 import 차단.
-GCP SDK는 provider/ 계층에서 Port 구현체로만 호출한다.
+Infra 차단 — service에서 직접 호출 금지, provider Port 구현체에서만 사용.
 
 - `@google-cloud/*`

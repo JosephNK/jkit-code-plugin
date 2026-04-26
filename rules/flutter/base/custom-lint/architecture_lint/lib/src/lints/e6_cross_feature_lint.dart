@@ -8,9 +8,9 @@ import '../dart_lint.dart';
 
 /// E6: feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용.
 ///
-/// feature 모듈 독립성 유지 — 결합은 entities 수준으로만.
-/// 금지 타깃 레이어: `crossFeatureForbidden` (constants.dart).
-/// 예외: `presentation/`·`bloc/`이 다른 feature `domain/` 접근 허용.
+/// feature 모듈 독립성 보장 — 결합은 entities 수준으로만.
+/// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases·bloc 직접 import).
+/// 예외: `presentation/`·`bloc/`이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
 class E6CrossFeatureLint extends DartLint {
   @override
   String get code => 'e6_cross_feature';

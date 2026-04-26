@@ -5,10 +5,9 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../classification.dart';
 import '../dart_lint.dart';
 
-/// N2: `adapters/` 레이어 클래스는 `Adapter` suffix 강제 (warning).
+/// N2: 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`).
 ///
-/// Port ↔ Adapter 역할 구분을 이름으로 명시 —
-/// 예: `AuthPort` ↔ `AuthAdapter`, `ApiAuthAdapter`.
+/// Port ↔ Adapter 역할을 이름에서 구분 (예: `AuthPort` ↔ `AuthAdapter`).
 class N2AdapterNamingLint extends DartLint {
   @override
   String get code => 'n2_adapter_naming';

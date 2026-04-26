@@ -6,10 +6,9 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E1: `entities/`는 codegen annotation 패키지만 import 허용.
+/// E1: codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지.
 ///
-/// 도메인 순수성 유지 — 외부 런타임 의존성 차단.
-/// 허용 목록: `codegenPackages` (constants.dart).
+/// 외부 런타임 의존성 차단. 허용 목록은 `codegenPackages` (freezed_annotation·json_annotation·meta·collection).
 class E1EntitiesImportLint extends DartLint {
   @override
   String get code => 'e1_entities_import';

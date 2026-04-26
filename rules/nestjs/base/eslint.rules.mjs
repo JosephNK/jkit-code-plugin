@@ -154,9 +154,8 @@ export const baseStructureAnnotations = {
 };
 
 /**
- * 각 레이어의 책임·네이밍·대표 코드 형태 (doc-only, ESLint 미참조).
- * 경로·allow 매트릭스만으로 안 드러나는 정보를 채워 LLM/신규 인원의
- * 올바른 코드 배치를 돕는다.
+ * 각 레이어의 책임·포함 파일·금지·대표 코드 형태.
+ * 경로·allow 매트릭스만으로 안 드러나는 의미를 보강해 올바른 코드 배치를 안내.
  */
 export const baseLayerSemantics = {
   model: {

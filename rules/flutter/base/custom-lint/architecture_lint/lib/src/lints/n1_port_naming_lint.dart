@@ -5,9 +5,9 @@ import 'package:analyzer_plugin/protocol/protocol_common.dart'
 import '../classification.dart';
 import '../dart_lint.dart';
 
-/// N1: `ports/` 레이어 클래스는 `Port` suffix 강제 (warning).
+/// N1: 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`).
 ///
-/// 레이어 역할을 클래스명에서 즉시 식별 — 예: `AuthPort`, `UserRepositoryPort`.
+/// 클래스명만으로 레이어 역할을 즉시 식별 — grep/리뷰 효율.
 class N1PortNamingLint extends DartLint {
   @override
   String get code => 'n1_port_naming';
