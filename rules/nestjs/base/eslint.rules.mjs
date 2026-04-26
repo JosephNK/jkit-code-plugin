@@ -76,6 +76,9 @@ export const baseBoundaryElements = [
   { type: "exception", pattern: ["src/modules/**/exception/**"] }, // 도메인 예외
   { type: "dto", pattern: ["src/modules/**/dto/**"] }, // 요청/응답 DTO
   // common/infrastructure는 허용 하위 폴더만 명시 — no-unknown-files가 그 외 경로를 거부
+  // common-pure를 별도 element로 분리 — framework-free 폴더만 묶어 model 포함 모든 레이어에서 import 허용
+  // 새 pure 폴더(utils/events/interfaces 등) 추가 시 pattern 배열에 append만
+  { type: "common-pure", pattern: ["src/common/constants/**"] },
   {
     type: "common",
     pattern: [
@@ -89,7 +92,6 @@ export const baseBoundaryElements = [
       "src/common/events/**",
       "src/common/dtos/**",
       "src/common/config/**",
-      "src/common/constants/**",
       "src/common/utils/**",
     ],
   }, // 전역 공용 (허용 하위 폴더만)
@@ -373,12 +375,24 @@ export const baseLayerSemantics = {
       "Domain/integration event payload·listener — `events/**`",
       "공용 DTO — `dtos/**`",
       "앱 레벨 설정 (env·ConfigModule schema) — `config/**`",
-      "공용 상수 (enum·magic number·token) — `constants/**`",
       "순수 유틸 함수 (프레임워크 비의존) — `utils/**`",
     ],
     forbids: [
       "허용 하위 폴더 외 경로에 파일 배치 (boundaries/no-unknown-files가 거부)",
     ],
+  },
+
+  "common-pure": {
+    role: "framework-free 공용 데이터/유틸 — 모든 레이어가 import 가능한 최하위 순수 sink. 자기 자신만 참조.",
+    contains: [
+      "도메인 enum, magic number, DI 토큰 (Symbol) — `constants/*.ts`",
+    ],
+    forbids: [
+      "다른 모든 레이어 import (model·common·infra 포함 — pure sink 보장)",
+      "프레임워크 의존성 (`@nestjs/*`, `class-validator` 등)",
+    ],
+    scope:
+      "`baseBoundaryRules`에서 모든 from→to allow에 `common-pure` 동반 추가 — model 포함 어떤 레이어에서든 import 가능. 새 pure 폴더 풀 때는 element pattern에만 append.",
   },
 
   infrastructure: {
@@ -412,20 +426,21 @@ export const baseLayerSemantics = {
  * 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
  */
 export const baseBoundaryRules = [
-  // model — 자기 자신만 (순수 TS, 외부 의존 0)
+  // model — 자기 자신 + common-pure만 (순수 TS 유지, framework-coupled common 차단)
+  // common-pure 확장으로 utils/events 등을 풀고 싶으면 element pattern에 폴더 append
   {
     from: { type: "model" },
-    allow: { to: { type: "model" } },
+    allow: { to: { type: ["model", "common-pure"] } },
   },
   // exception — common의 베이스 예외를 상속하여 정의
   {
     from: { type: "exception" },
-    allow: { to: { type: ["exception", "common"] } },
+    allow: { to: { type: ["exception", "common", "common-pure"] } },
   },
   // port — 인터페이스 시그니처에 model과 공용 타입만 사용
   {
     from: { type: "port" },
-    allow: { to: { type: ["model", "common"] } },
+    allow: { to: { type: ["model", "common", "common-pure"] } },
   },
   // service — UseCase. port를 주입받아 도메인 로직 수행
   // controller/provider/dto는 의도적으로 제외 (헥사고날 역방향 의존 방지)
@@ -433,7 +448,7 @@ export const baseBoundaryRules = [
     from: { type: "service" },
     allow: {
       to: {
-        type: ["model", "port", "exception", "common", "infrastructure"],
+        type: ["model", "port", "exception", "common", "common-pure", "infrastructure"],
       },
     },
   },
@@ -443,7 +458,7 @@ export const baseBoundaryRules = [
     from: { type: "controller" },
     allow: {
       to: {
-        type: ["port", "dto", "model", "exception", "common", "libs"],
+        type: ["port", "dto", "model", "exception", "common", "common-pure", "libs"],
       },
     },
   },
@@ -452,25 +467,30 @@ export const baseBoundaryRules = [
     from: { type: "provider" },
     allow: {
       to: {
-        type: ["port", "model", "common", "infrastructure", "provider"],
+        type: ["port", "model", "common", "common-pure", "infrastructure", "provider"],
       },
     },
   },
   // dto — 내부 composition용 dto→dto 허용 (PartialType, PickType 등)
   {
     from: { type: "dto" },
-    allow: { to: { type: ["model", "common", "dto"] } },
+    allow: { to: { type: ["model", "common", "common-pure", "dto"] } },
   },
   // (*.module.ts) — DI 조립 파일. boundaries/ignore에서 제외 처리됨
-  // common — 자기 자신만 (전역 공용은 최하위라 상향 의존 금지)
+  // common — 자기 자신 + common-pure (전역 공용은 최하위라 상향 의존 금지)
   {
     from: { type: "common" },
-    allow: { to: { type: "common" } },
+    allow: { to: { type: ["common", "common-pure"] } },
+  },
+  // common-pure — 순수 데이터 sink. 자기 자신만 참조.
+  {
+    from: { type: "common-pure" },
+    allow: { to: { type: "common-pure" } },
   },
   // infrastructure — common만 참조 가능 (모듈 로직에 의존하면 안 됨)
   {
     from: { type: "infrastructure" },
-    allow: { to: { type: ["infrastructure", "common"] } },
+    allow: { to: { type: ["infrastructure", "common", "common-pure"] } },
   },
   // libs — 독립 라이브러리 모듈. 앱 전체를 조립할 수 있도록 모든 레이어 접근 허용
   {
@@ -486,6 +506,7 @@ export const baseBoundaryRules = [
           "exception",
           "dto",
           "common",
+          "common-pure",
           "infrastructure",
           "libs",
         ],

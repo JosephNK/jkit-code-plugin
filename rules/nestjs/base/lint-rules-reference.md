@@ -206,6 +206,21 @@ export class CreateOrderRequestDto {
 }
 ```
 
+### `common-pure`
+
+**Role** — framework-free 공용 데이터/유틸 — 모든 레이어가 import 가능한 최하위 순수 sink. 자기 자신만 참조.
+
+**Contains**
+
+- 도메인 enum, magic number, DI 토큰 (Symbol) — `constants/*.ts`
+
+**Forbids**
+
+- 다른 모든 레이어 import (model·common·infra 포함 — pure sink 보장)
+- 프레임워크 의존성 (`@nestjs/*`, `class-validator` 등)
+
+**Scope** — `baseBoundaryRules`에서 모든 from→to allow에 `common-pure` 동반 추가 — model 포함 어떤 레이어에서든 import 가능. 새 pure 폴더 풀 때는 element pattern에만 append.
+
 ### `common`
 
 **Role** — 전역 공용 — 모듈 로직 밖의 수평 관심사. 최하위 계층이라 상향 의존 금지.
@@ -222,7 +237,6 @@ export class CreateOrderRequestDto {
 - Domain/integration event payload·listener — `events/**`
 - 공용 DTO — `dtos/**`
 - 앱 레벨 설정 (env·ConfigModule schema) — `config/**`
-- 공용 상수 (enum·magic number·token) — `constants/**`
 - 순수 유틸 함수 (프레임워크 비의존) — `utils/**`
 
 **Forbids**
@@ -269,16 +283,17 @@ export class CreateOrderRequestDto {
 
 | From | Allow → To |
 | --- | --- |
-| `model` | `model` |
-| `exception` | `exception`, `common` |
-| `port` | `model`, `common` |
-| `service` | `model`, `port`, `exception`, `common`, `infrastructure` |
-| `controller` | `port`, `dto`, `model`, `exception`, `common`, `libs` |
-| `provider` | `port`, `model`, `common`, `infrastructure`, `provider` |
-| `dto` | `model`, `common`, `dto` |
-| `common` | `common` |
-| `infrastructure` | `infrastructure`, `common` |
-| `libs` | `model`, `port`, `service`, `controller`, `provider`, `exception`, `dto`, `common`, `infrastructure`, `libs` |
+| `model` | `model`, `common-pure` |
+| `exception` | `exception`, `common`, `common-pure` |
+| `port` | `model`, `common`, `common-pure` |
+| `service` | `model`, `port`, `exception`, `common`, `common-pure`, `infrastructure` |
+| `controller` | `port`, `dto`, `model`, `exception`, `common`, `common-pure`, `libs` |
+| `provider` | `port`, `model`, `common`, `common-pure`, `infrastructure`, `provider` |
+| `dto` | `model`, `common`, `common-pure`, `dto` |
+| `common` | `common`, `common-pure` |
+| `common-pure` | `common-pure` |
+| `infrastructure` | `infrastructure`, `common`, `common-pure` |
+| `libs` | `model`, `port`, `service`, `controller`, `provider`, `exception`, `dto`, `common`, `common-pure`, `infrastructure`, `libs` |
 
 ## Framework 금지 패키지 (순수 레이어 차단)
 
