@@ -147,12 +147,12 @@ function classifyLayer(relPath) {
   // 교차 feature 서비스 분류:
   //   - *_port.dart       → ports
   //   - *_adapter.dart    → adapters
-  //   - internal/** 하위  → common_services
+  //   - support/** 하위   → common_services
   //   - 그 외 직속 파일   → fall-through → 'other' (S2 위반 트리거)
   if (padded.includes('/common/services/')) {
     if (relPath.endsWith('_port.dart')) return 'ports';
     if (relPath.endsWith('_adapter.dart')) return 'adapters';
-    if (padded.includes('/internal/')) return 'common_services';
+    if (padded.includes('/support/')) return 'common_services';
     return 'other';
   }
   for (const [marker, layer] of LAYER_MARKERS) {

@@ -84,11 +84,11 @@ const projectBoundaryElements = <BoundaryElement>[
   BoundaryElement(
     layer: 'common_services',
     patterns: [
-      // 보조 파일은 internal/ 하위로 강제 — 직속 ad-hoc 파일은 unknown layer로
+      // 보조 파일은 support/ 하위로 강제 — 직속 ad-hoc 파일은 unknown layer로
       // 떨어져 S2 위반. port/adapter 직속 파일은 위 ports/adapters 레이어로 분류.
-      'app/lib/common/services/*/internal/**',
+      'app/lib/common/services/*/support/**',
     ],
-    note: 'internal/ 보조 파일 — 교차 feature 서비스',
+    note: 'support/ 보조 파일 — 교차 feature 서비스',
   ),
   BoundaryElement(
     layer: 'common',
