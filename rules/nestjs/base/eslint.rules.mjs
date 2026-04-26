@@ -87,7 +87,6 @@ export const baseBoundaryElements = [
       "src/common/interceptors/**",
       "src/common/decorators/**",
       "src/common/events/**",
-      "src/common/model/**",
       "src/common/dtos/**",
       "src/common/config/**",
       "src/common/constants/**",
@@ -164,7 +163,6 @@ export const baseStructureAnnotations = {
       { name: "interceptors", note: "Global Interceptors (logging, transform, timeout)" },
       { name: "decorators", note: "Custom decorators (@CurrentUser, @Public 등)" },
       { name: "events", note: "Domain/integration event payloads & listeners" },
-      { name: "model", note: "Cross-module shared domain types (Entity·VO·Type)" },
       { name: "dtos", note: "Shared DTOs" },
       { name: "config", note: "App-level configuration (env, ConfigModule schemas)" },
       { name: "constants", note: "Shared constants (enums, magic numbers, tokens)" },
@@ -200,7 +198,7 @@ export const baseLayerSemantics = {
       "class 기반 도메인 모델 (interface/type + 순수 함수 지향)",
     ],
     scope:
-      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유. cross-module 공유 타입은 `src/common/model/`에 두고 import 가능.",
+      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유.",
     example: [
       "// model/order.entity.ts",
       "export type OrderStatus = 'pending' | 'confirmed' | 'shipped';",
@@ -373,7 +371,6 @@ export const baseLayerSemantics = {
       "Global Interceptor (logging·transform·timeout) — `interceptors/**`",
       "Custom Decorator (@CurrentUser·@Public 등) — `decorators/**`",
       "Domain/integration event payload·listener — `events/**`",
-      "모듈 간 공유 도메인 타입 (Entity·VO·Type) — `model/**`",
       "공용 DTO — `dtos/**`",
       "앱 레벨 설정 (env·ConfigModule schema) — `config/**`",
       "공용 상수 (enum·magic number·token) — `constants/**`",
@@ -415,11 +412,10 @@ export const baseLayerSemantics = {
  * 각 레이어의 역할·책임은 "레이어 글로서리" 섹션 참조.
  */
 export const baseBoundaryRules = [
-  // model — 자기 자신 + common (cross-module 공유 도메인 타입 허용)
-  // 프레임워크 비의존은 baseDomainBannedPackages가 패키지 레벨로 enforce
+  // model — 자기 자신만 (순수 TS, 외부 의존 0)
   {
     from: { type: "model" },
-    allow: { to: { type: ["model", "common"] } },
+    allow: { to: { type: "model" } },
   },
   // exception — common의 베이스 예외를 상속하여 정의
   {

@@ -10,8 +10,8 @@
 ```mermaid
 graph LR
   model["model"]
-  common["common"]
   exception["exception"]
+  common["common"]
   port["port"]
   service["service"]
   infrastructure["infrastructure"]
@@ -19,7 +19,6 @@ graph LR
   dto["dto"]
   libs["libs"]
   provider["provider"]
-  model --> common
   exception --> common
   port --> model
   port --> common

@@ -25,7 +25,7 @@
 - ORM 엔티티 정의 (→ `provider/*.orm-entity.ts`로 분리)
 - class 기반 도메인 모델 (interface/type + 순수 함수 지향)
 
-**Scope** — Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유. cross-module 공유 타입은 `src/common/model/`에 두고 import 가능.
+**Scope** — Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유.
 
 ```ts
 // model/order.entity.ts
@@ -220,7 +220,6 @@ export class CreateOrderRequestDto {
 - Global Interceptor (logging·transform·timeout) — `interceptors/**`
 - Custom Decorator (@CurrentUser·@Public 등) — `decorators/**`
 - Domain/integration event payload·listener — `events/**`
-- 모듈 간 공유 도메인 타입 (Entity·VO·Type) — `model/**`
 - 공용 DTO — `dtos/**`
 - 앱 레벨 설정 (env·ConfigModule schema) — `config/**`
 - 공용 상수 (enum·magic number·token) — `constants/**`
@@ -270,7 +269,7 @@ export class CreateOrderRequestDto {
 
 | From | Allow → To |
 | --- | --- |
-| `model` | `model`, `common` |
+| `model` | `model` |
 | `exception` | `exception`, `common` |
 | `port` | `model`, `common` |
 | `service` | `model`, `port`, `exception`, `common`, `infrastructure` |
