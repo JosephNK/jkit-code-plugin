@@ -9,3 +9,4 @@
 - [Architecture]({{DOCS_DIR}}ARCHITECTURE.md) — **MUST read when writing or modifying code.** Full architecture details with code examples
 - [Conventions]({{DOCS_DIR}}CONVENTIONS.md) — **MUST read when writing or modifying code.** Full conventions with code examples
 - [Git]({{DOCS_DIR}}GIT.md) — **MUST read when committing or using git/GitHub commands.** Git & GitHub guide with commit conventions
+- **Lint Rules** — `@jkit/code-plugin/nestjs/base/lint-rules-reference.md` (plugin source). Layer glossary, rule table, allow matrix. Companions: `lint-rules-structure-reference.md` (boundary elements & path layout), `lint-rules-diagram.md` (dependency graph).
