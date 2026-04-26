@@ -66,13 +66,13 @@ Root (Melos workspace)
 | 레이어 | 경로 패턴 | 비고 |
 | --- | --- | --- |
 | `entities` | `app/lib/features/**/domain/entities/**` | Immutable Value Objects |
-| `ports` | `app/lib/features/**/domain/ports/**` | Abstract interfaces (*_port.dart) |
+| `ports` | `app/lib/features/**/domain/ports/**` / `app/lib/common/services/*/*_port.dart` | Abstract interfaces (*_port.dart) |
 | `usecases` | `app/lib/features/**/domain/usecases/**` | 비즈니스 로직 (*_usecase.dart) |
-| `adapters` | `app/lib/features/**/infrastructure/adapters/**` | Port 구현체 (*_adapter.dart) |
+| `adapters` | `app/lib/features/**/infrastructure/adapters/**` / `app/lib/common/services/*/*_adapter.dart` | Port 구현체 (*_adapter.dart) |
 | `bloc` | `app/lib/features/**/presentation/bloc/**` | 상태 관리 (선택) |
 | `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` | 도메인 예외 + 공용 예외 |
 | `presentation` | `app/lib/features/**/presentation/pages/**` / `app/lib/features/**/presentation/views/**` / `app/lib/features/**/presentation/widgets/**` | pages / views / widgets 통합 |
-| `common_services` | `app/lib/common/services/*/*_port.dart` / `app/lib/common/services/*/*_adapter.dart` / `app/lib/common/services/*/internal/**` | Port/Adapter + internal/ 보조 파일 — 교차 feature 서비스 |
+| `common_services` | `app/lib/common/services/*/**` | 교차 feature 서비스의 보조 파일 (config/state/exception 등) |
 | `common` | `app/lib/common/env/**` / `app/lib/common/events/**` / `app/lib/common/extensions/**` / `app/lib/common/theme/**` / `app/lib/common/widgets/**` | 공용 — lint 룰 적용 없음 |
 
 ## Ignore 패턴 (S2)

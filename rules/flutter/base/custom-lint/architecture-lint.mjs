@@ -144,10 +144,15 @@ function readTextSafe(filePath) {
 
 function classifyLayer(relPath) {
   const padded = `/${relPath}/`;
+  // 교차 feature 서비스: 파일명으로 port/adapter 식별 — 나머지는 internal/ 보조 파일
+  if (padded.includes('/common/services/')) {
+    if (relPath.endsWith('_port.dart')) return 'ports';
+    if (relPath.endsWith('_adapter.dart')) return 'adapters';
+    return 'common_services';
+  }
   for (const [marker, layer] of LAYER_MARKERS) {
     if (padded.includes(marker)) return layer;
   }
-  if (padded.includes('/common/services/')) return 'common_services';
   return 'other';
 }
 
@@ -288,12 +293,10 @@ function checkE2UsecasesDependency(layer, importPath, fileRel, packageName) {
   }
   if (targetLayer === null) return null;
 
-  const forbidden = new Set([
-    'adapters',
-    'bloc',
-    'presentation',
-    'common_services',
-  ]);
+  // common_services 레이어는 forbidden에서 제외 — value-object/config/state/exception
+  // 등 공용 서비스의 보조 타입은 usecase에서 자유롭게 import 가능.
+  // (common/services 의 adapter 구현체는 별도 'adapters' 레이어로 분류되어 차단됨)
+  const forbidden = new Set(['adapters', 'bloc', 'presentation']);
   if (forbidden.has(targetLayer)) {
     return `usecases/ must not import from ${targetLayer}/ -- only entities/ and ports/ allowed`;
   }

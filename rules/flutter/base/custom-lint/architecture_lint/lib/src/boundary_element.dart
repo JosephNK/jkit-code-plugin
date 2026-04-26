@@ -38,7 +38,11 @@ const projectBoundaryElements = <BoundaryElement>[
   ),
   BoundaryElement(
     layer: 'ports',
-    patterns: ['app/lib/features/**/domain/ports/**'],
+    patterns: [
+      'app/lib/features/**/domain/ports/**',
+      // 교차 feature 서비스의 port 인터페이스도 ports 레이어로 분류 — usecase 의존 허용
+      'app/lib/common/services/*/*_port.dart',
+    ],
     note: 'Abstract interfaces (*_port.dart)',
   ),
   BoundaryElement(
@@ -48,7 +52,11 @@ const projectBoundaryElements = <BoundaryElement>[
   ),
   BoundaryElement(
     layer: 'adapters',
-    patterns: ['app/lib/features/**/infrastructure/adapters/**'],
+    patterns: [
+      'app/lib/features/**/infrastructure/adapters/**',
+      // 교차 feature 서비스의 adapter 구현체도 adapters 레이어로 분류 — DI 외 직접 의존 차단
+      'app/lib/common/services/*/*_adapter.dart',
+    ],
     note: 'Port 구현체 (*_adapter.dart)',
   ),
   BoundaryElement(
@@ -76,13 +84,11 @@ const projectBoundaryElements = <BoundaryElement>[
   BoundaryElement(
     layer: 'common_services',
     patterns: [
-      // 직속: port/adapter 두 종류만 허용
-      'app/lib/common/services/*/*_port.dart',
-      'app/lib/common/services/*/*_adapter.dart',
-      // 보조 파일은 internal/ 하위 — 외부 import 금지 시그널
-      'app/lib/common/services/*/internal/**',
+      // common/services/<svc>/ 하위의 보조 파일 (config/state/exception/value-object 등).
+      // port/adapter 직속 파일은 위 ports/adapters 레이어로 분류되므로 여기서는 catch-all.
+      'app/lib/common/services/*/**',
     ],
-    note: 'Port/Adapter + internal/ 보조 파일 — 교차 feature 서비스',
+    note: '교차 feature 서비스의 보조 파일 (config/state/exception 등)',
   ),
   BoundaryElement(
     layer: 'common',
