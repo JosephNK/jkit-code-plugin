@@ -16,21 +16,23 @@ import { fileURLToPath } from 'node:url';
 
 import { ensureGitRepo, normalizePath } from './common.mjs';
 
-const HELP = `Usage: gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
+const HELP = `Usage: gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...] [--no-local-init]
 
 Concatenates base/conventions.md + selected stack conventions.md files.
 
 Arguments:
-  <framework>    Framework name (e.g. nextjs, nestjs, flutter)
+  <framework>      Framework name (e.g. nextjs, nestjs, flutter)
 
 Options:
-  -p <dir>       Output directory (required)
-  --with <list>  Comma-separated stacks (e.g. mantine,tanstack-query)
-  -h, --help     Show this help
+  -p <dir>         Output directory (required)
+  --with <list>    Comma-separated stacks (e.g. mantine,tanstack-query)
+  --no-local-init  Do not create CONVENTIONS.LOCAL.md when missing (sync mode)
+  -h, --help       Show this help
 
 Examples:
   ./scripts/gen-conventions.mjs nextjs -p ./my-project --with mantine,tanstack-query,next-proxy
   ./scripts/gen-conventions.mjs nestjs -p ./my-project --with typeorm
+  ./scripts/gen-conventions.mjs nextjs -p ./my-project --with mantine --no-local-init
 `;
 
 function usage(code = 1) {
@@ -39,7 +41,7 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', stacks: '' };
+  const args = { framework: '', outputDir: '', stacks: '', noLocalInit: false };
   const rest = argv.slice(2);
 
   if (rest.length >= 1 && !rest[0].startsWith('-')) {
@@ -62,6 +64,9 @@ function parseArgs(argv) {
           usage();
         }
         args.stacks = rest.shift();
+        break;
+      case '--no-local-init':
+        args.noLocalInit = true;
         break;
       case '-h':
       case '--help':
@@ -171,11 +176,14 @@ function main() {
   }
 
   // CONVENTIONS.LOCAL.md is user-owned. Create it only when missing so
-  // subsequent runs preserve user edits.
+  // subsequent runs preserve user edits. With --no-local-init (sync mode),
+  // skip creation entirely so a deliberately-deleted file stays deleted.
   const localFile = path.join(outputDir, 'CONVENTIONS.LOCAL.md');
   const projectName = path.basename(path.resolve('.'));
   if (fs.existsSync(localFile)) {
     process.stdout.write(`Preserved: ${localFile} (user-owned, untouched)\n`);
+  } else if (args.noLocalInit) {
+    process.stdout.write(`Skipped: ${localFile} (not created, --no-local-init)\n`);
   } else {
     fs.writeFileSync(localFile, renderLocalConventionsTemplate({ projectName }));
     process.stdout.write(`Generated: ${localFile} (user-owned)\n`);
