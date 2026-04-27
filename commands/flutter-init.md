@@ -174,9 +174,11 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
+- `AGENTS.LOCAL.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
-- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션
+- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
+- `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `package.json` — `devDependencies`(`husky`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.prepare: "husky"`
 - `.husky/pre-commit` — husky pre-commit 훅 (dart format, flutter analyze, architecture_lint, 관련 flutter test; 엔트리 디렉토리가 파일에 베이킹됨)
 - `.husky/commit-msg` — husky commit-msg 훅 (`commitlint --edit $1`)

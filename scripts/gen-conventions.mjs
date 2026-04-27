@@ -93,6 +93,29 @@ function splitStacks(raw) {
     .filter((s) => s.length > 0);
 }
 
+function renderConventionsFooter() {
+  return `
+
+---
+
+## Project-specific
+
+See [CONVENTIONS.LOCAL.md](./CONVENTIONS.LOCAL.md) for project-specific convention additions and overrides.
+`;
+}
+
+function renderLocalConventionsTemplate({ projectName }) {
+  return `# ${projectName} — Project-specific Conventions
+
+> 프로젝트 컨벤션을 작성하세요.
+
+<!-- 예:
+## Naming
+- 모든 DTO suffix는 \`Dto\`로 통일
+-->
+`;
+}
+
 function main() {
   const args = parseArgs(process.argv);
 
@@ -138,9 +161,22 @@ function main() {
     fs.appendFileSync(outputFile, fs.readFileSync(stackConv));
   }
 
+  fs.appendFileSync(outputFile, renderConventionsFooter());
+
   process.stdout.write(`Generated: ${outputFile}\n`);
   if (args.stacks) {
     process.stdout.write(`Stacks: ${args.stacks}\n`);
+  }
+
+  // CONVENTIONS.LOCAL.md is user-owned. Create it only when missing so
+  // subsequent runs preserve user edits.
+  const localFile = path.join(outputDir, 'CONVENTIONS.LOCAL.md');
+  const projectName = path.basename(path.resolve('.'));
+  if (fs.existsSync(localFile)) {
+    process.stdout.write(`Preserved: ${localFile} (user-owned, untouched)\n`);
+  } else {
+    fs.writeFileSync(localFile, renderLocalConventionsTemplate({ projectName }));
+    process.stdout.write(`Generated: ${localFile} (user-owned)\n`);
   }
 }
 

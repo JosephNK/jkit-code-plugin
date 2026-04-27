@@ -234,9 +234,11 @@ esac
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
+- `AGENTS.LOCAL.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
-- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션
+- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
+- `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nextjs/*` import)
 - `stylelint.config.mjs` — Stylelint 설정 (`stylelint-config-standard` extends + jkit baseline 규칙)
 - `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.prepare: "husky"` + CSS 대상 `lint-staged` glob

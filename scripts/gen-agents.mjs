@@ -104,6 +104,19 @@ function renderTemplate(template, { projectName, docsDir }) {
     .replaceAll('{{DOCS_DIR}}', docsDir);
 }
 
+function renderLocalTemplate({ projectName }) {
+  return `# ${projectName} — Project-specific
+
+> 프로젝트 가이드를 작성하세요.
+
+### Reference
+
+<!-- 예:
+- [Doc Title](docs/PATH.md) — **MUST read when <조건>**
+-->
+`;
+}
+
 function writeSymlink(target, linkPath) {
   if (fs.existsSync(linkPath) || fs.lstatSync(linkPath, { throwIfNoEntry: false })) {
     fs.rmSync(linkPath, { force: true });
@@ -161,6 +174,16 @@ function main() {
 
   process.stdout.write(`Generated: ${outputFile}\n`);
   process.stdout.write(`Symlink: ${symlink} -> AGENTS.md\n`);
+
+  // AGENTS.LOCAL.md is user-owned. Create it only when missing so subsequent
+  // runs preserve user edits.
+  const localFile = path.join(outputDir, 'AGENTS.LOCAL.md');
+  if (fs.existsSync(localFile)) {
+    process.stdout.write(`Preserved: ${localFile} (user-owned, untouched)\n`);
+  } else {
+    fs.writeFileSync(localFile, renderLocalTemplate({ projectName }));
+    process.stdout.write(`Generated: ${localFile} (user-owned)\n`);
+  }
 }
 
 main();
