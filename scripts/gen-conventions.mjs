@@ -100,7 +100,9 @@ function renderConventionsFooter() {
 
 ## Project-specific
 
-See [CONVENTIONS.LOCAL.md](./CONVENTIONS.LOCAL.md) for project-specific convention additions and overrides.
+@CONVENTIONS.LOCAL.md
+
+See [CONVENTIONS.LOCAL.md](./CONVENTIONS.LOCAL.md) for project-specific required reading.
 `;
 }
 
