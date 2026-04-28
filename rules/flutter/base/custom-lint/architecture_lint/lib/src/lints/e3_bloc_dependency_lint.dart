@@ -6,10 +6,12 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E3: `usecases/`/`entities/`/`exceptions/`만 import 허용 — adapters/ports 직접 호출 금지.
+/// E3: bloc/은 `usecases`/`entities`/`exceptions`만 import — 외부는 `blocAllowedPackages`만 허용.
 ///
 /// Bloc은 얇은 상태 계층 — 데이터 접근은 UseCase에 위임.
-/// 외부 패키지는 `blocAllowedPackages`(flutter_bloc·bloc·equatable + codegen)만 허용.
+/// 외부 패키지는 `blocAllowedPackages` 화이트리스트(`freezed_annotation`,
+/// `flutter_leaf_kit/flutter_leaf_kit_state.dart`)에 매칭되는 import만 허용,
+/// 그 외(`flutter_bloc` 직접 import, leaf_kit 다른 entry 등)는 모두 위반.
 class E3BlocDependencyLint extends DartLint {
   static const _forbidden = <String>{'adapters', 'ports', 'common_services'};
 
@@ -18,16 +20,17 @@ class E3BlocDependencyLint extends DartLint {
 
   @override
   String get message =>
-      'bloc/ must not import adapters/ or ports/ directly. '
-      'Only usecases/, entities/, and exceptions/ are allowed.';
+      'bloc/ may not import adapters/ or ports/ directly, and external '
+      'packages must match an entry in blocAllowedPackages.';
 
   @override
   AnalysisErrorSeverity get severity => AnalysisErrorSeverity.ERROR;
 
   @override
   String? get correction =>
-      'Access data through usecases/ instead of directly importing '
-      'adapters/ or ports/.';
+      'Access data through usecases/ instead of importing adapters/ or '
+      'ports/. For external dependencies, use the allowed entry-points '
+      '(see blocAllowedPackages).';
 
   @override
   SyntacticEntity? matchLint(AstNode node) {
@@ -49,10 +52,8 @@ class E3BlocDependencyLint extends DartLint {
     final projectPkg = getProjectPackageName(node);
 
     if (importPkg != null && importPkg != projectPkg) {
-      // External package — allow bloc-related and codegen only
-      if (blocAllowedPackages.contains(importPkg)) return null;
-      // Other external packages — not an architecture rule, skip
-      return null;
+      if (matchesPackageEntry(importUri, blocAllowedPackages)) return null;
+      return node.uri;
     }
 
     // Internal import — check layer

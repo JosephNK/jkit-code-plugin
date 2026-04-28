@@ -146,6 +146,25 @@ String? extractImportPackageName(String importUri) {
   return null;
 }
 
+/// 화이트리스트 entry에 import URI가 매칭되는지 검사.
+///
+/// entry에 `/`가 있으면 풀 inner path 매칭(`flutter_leaf_kit/foo.dart`처럼
+/// 특정 엔트리포인트만 허용), 없으면 패키지명 매칭(`equatable`처럼 패키지 전체 허용).
+/// 한 Set에서 두 형태 혼용 가능.
+bool matchesPackageEntry(String importUri, Set<String> entries) {
+  if (!importUri.startsWith('package:')) return false;
+  final inner = importUri.substring('package:'.length);
+  final pkg = inner.split('/').first;
+  for (final entry in entries) {
+    if (entry.contains('/')) {
+      if (inner == entry) return true;
+    } else {
+      if (pkg == entry) return true;
+    }
+  }
+  return false;
+}
+
 /// Dart SDK import 여부 (`dart:core`, `dart:async` 등).
 /// 대부분 룰에서 SDK imports는 항상 허용하므로 조기 반환에 사용.
 bool isDartImport(String importUri) {

@@ -17,15 +17,17 @@ const codegenPackages = <String>{
   'collection',
 };
 
-/// bloc/ 레이어에서 허용되는 외부 패키지 (상태 관리 + 코드 생성).
+/// bloc/ 레이어에서 허용되는 외부 import 화이트리스트.
 ///
-/// bloc은 도메인 로직을 호출하면서 상태를 관리하므로 flutter_bloc 생태계가 필요.
-/// codegenPackages를 포함하여 freezed 기반 이벤트/상태 클래스 정의도 가능.
+/// 상태 관리 의존은 `flutter_leaf_kit_state.dart` 단일 진입점을 통하도록 강제 —
+/// `flutter_bloc`/`bloc`/`equatable` 직접 import 및 leaf_kit 다른 entry
+/// (component/route 등 presentation 누출) 모두 차단. 화이트리스트 외 모든
+/// 외부 패키지는 위반(E3 error).
+/// entry에 `/`가 있으면 풀 import URI 매칭(특정 entry-point만 허용),
+/// 없으면 패키지명 단위 매칭(패키지 전체 허용).
 const blocAllowedPackages = <String>{
-  ...codegenPackages,
-  'flutter_bloc',
-  'bloc',
-  'equatable',
+  'freezed_annotation',
+  'flutter_leaf_kit/flutter_leaf_kit_state.dart',
 };
 
 /// 도메인 레이어에서 금지되는 "인프라" 패키지 목록.

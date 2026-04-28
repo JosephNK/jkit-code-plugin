@@ -18,8 +18,5 @@ graph LR
   usecases --> entities
   usecases --> ports
   usecases --> exceptions
-  bloc --> usecases
-  bloc --> entities
-  bloc --> exceptions
 ```
 
