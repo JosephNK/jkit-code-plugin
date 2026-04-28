@@ -24,11 +24,27 @@
 
 | Package | Key Rules |
 |---------|-----------|
-| **leaf_component** | `LeafText` instead of `Text`. Colors via `context.leafColors`. Typography via `context.leafTypography`. Follow Atomic Design hierarchy. |
+| **leaf_component** | Flutter 기본 외 시각 컴포넌트는 Leaf 우선(`Text` → `LeafText` 등; 전체 매핑은 `llms/leaf_component/llms.txt`). Colors via `context.leafColors`. Typography via `context.leafTypography`. Follow Atomic Design hierarchy. |
 | **leaf_network** | (API 사용 시) HTTP client via `LeafDioSharedClient.shared`. Service calls via `.getService<T>()`. Response checks: `.isSuccessful`, `.isHttpUnauthorisedException`. File uploads: `LeafMultipartFile.fromBytes()`. |
 | **leaf_state** | Screens extend `LeafScreenStatefulWidget` / `LeafScreenState`. BLoC consumption via `BlocScreenConsumer<BlocType, StateType>`. |
 | **leaf_common** | Shared utilities (Cancelable, Converter, DateTime Extension, Logger, Model). |
 | **leaf_platform** | Platform features (Config, System, Device, File, Permission, WebView). |
+
+### Component Selection
+
+Flutter 기본 레이아웃/제스처 위젯(`Container`/`Row`/`Column`/`Stack`/`Padding`/`SizedBox`/`GestureDetector` 등)은 그대로 사용. 그 외 시각 컴포넌트는 `flutter_leaf_kit_component.dart`의 Leaf 컴포넌트 우선.
+
+```dart
+import 'package:flutter_leaf_kit/flutter_leaf_kit_component.dart';
+
+// BAD
+Text('Hello', style: TextStyle(fontSize: 16));
+
+// GOOD
+LeafText('Hello', style: context.leafTypography.bodyLg);
+```
+
+전체 컴포넌트 목록과 매핑은 위 LLM Documentation 섹션의 `llms/leaf_component/llms.txt`에서 확인. leaf_component에 동등 컴포넌트가 없을 때만 Flutter 기본/외부 패키지 사용 — 그 경우에도 색·타이포는 `context.leafColors`/`context.leafTypography`로 통일.
 
 ### Network (API 사용 시)
 
