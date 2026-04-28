@@ -93,6 +93,7 @@ const projectBoundaryElements = <BoundaryElement>[
   BoundaryElement(
     layer: 'common',
     patterns: [
+      'app/lib/common/database/**',
       'app/lib/common/env/**',
       'app/lib/common/events/**',
       'app/lib/common/extensions/**',

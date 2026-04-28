@@ -53,6 +53,14 @@ const projectStructureAnnotations = <String, List<AnnotationNode>>{
     AnnotationNode(name: 'main.dart', note: '진입점'),
   ],
   'app/lib/common': [
+    AnnotationNode(
+      name: 'database',
+      note: '로컬 DB 테이블/DAO/마이그레이션',
+      children: [
+        AnnotationNode(name: 'tables'),
+        AnnotationNode(name: 'daos'),
+      ],
+    ),
     AnnotationNode(name: 'env', note: 'Env 설정 (envied)'),
     AnnotationNode(name: 'events', note: '앱 전역 event bus'),
     AnnotationNode(name: 'exceptions', note: '공용 예외 정의'),
