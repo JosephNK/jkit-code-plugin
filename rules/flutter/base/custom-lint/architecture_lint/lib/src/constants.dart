@@ -77,3 +77,15 @@ const crossFeatureForbidden = <String>{'ports', 'adapters', 'usecases', 'bloc'};
 /// S1 룰 — 파일당 최대 라인 수.
 /// 800줄을 넘으면 단일 책임 위반 가능성이 높아 분할 권장.
 const maxFileLines = 800;
+
+/// S1 룰에서 라인 수 검사를 건너뛰는 자동 생성 파일 suffix.
+///
+/// build_runner / freezed / auto_route / injectable / mockito가 만들어내는
+/// 파일은 사람이 분할할 수 없고 800줄을 쉽게 넘기므로 검사 제외.
+const generatedFileSuffixes = <String>{
+  '.g.dart',
+  '.freezed.dart',
+  '.gr.dart',
+  '.config.dart',
+  '.mocks.dart',
+};

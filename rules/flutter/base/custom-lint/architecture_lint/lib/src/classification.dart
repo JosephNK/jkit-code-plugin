@@ -25,6 +25,7 @@ import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 
 import 'boundary_element.dart';
+import 'constants.dart';
 
 /// 입력 path를 boundary 패턴 매칭에 맞게 root-relative 형태로 정규화.
 ///
@@ -72,6 +73,16 @@ String classifyLayer(String filePath) {
 /// S2 룰이 lint 적용 범위를 `app/lib/` 안으로만 제한할 때 사용.
 bool isInAppLib(String filePath) {
   return _normalizeInputPath(filePath).startsWith('app/lib/');
+}
+
+/// 입력 파일이 codegen 산출물(`*.g.dart`, `*.freezed.dart` 등)인지 검사.
+/// `generatedFileSuffixes` 중 하나로 끝나면 true.
+bool isGeneratedFile(String filePath) {
+  final normalized = filePath.replaceAll('\\', '/');
+  for (final suffix in generatedFileSuffixes) {
+    if (normalized.endsWith(suffix)) return true;
+  }
+  return false;
 }
 
 /// 입력 파일이 `unknownPathIgnores`의 어느 glob과도 매칭하는지 검사.

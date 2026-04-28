@@ -887,6 +887,16 @@ function renderReference({ rules, layerSemantics, boundaryElements, constants })
     lines.push('');
   }
 
+  lines.push('## 자동 생성 파일 제외 패턴');
+  lines.push('');
+  for (const name of ['generatedFileSuffixes']) {
+    if (!constants.raw.has(name)) continue;
+    const members = constants.resolveSet(name);
+    const doc = constants.docs.get(name) || '';
+    lines.push(renderPackageSection(name, members, doc));
+    lines.push('');
+  }
+
   return lines.join('\n');
 }
 

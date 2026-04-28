@@ -2,12 +2,14 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
+import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// S1: 파일당 800줄 초과 금지 — 단일 책임 위반 신호.
+/// S1: 파일당 800줄 초과 금지 (codegen 산출물 `*.g.dart` 등 제외) — 단일 책임 위반 신호.
 ///
 /// 800은 경험적 임계치. 한계값은 `maxFileLines` 상수로 조정 가능.
+/// 제외 대상은 `generatedFileSuffixes` (build_runner/freezed/auto_route/injectable/mockito).
 class S1FileSizeLint extends DartLint {
   @override
   String get code => 's1_file_size';
@@ -27,6 +29,9 @@ class S1FileSizeLint extends DartLint {
   @override
   SyntacticEntity? matchLint(AstNode node) {
     if (node is! CompilationUnit) return null;
+
+    final filePath = getFilePath(node);
+    if (filePath != null && isGeneratedFile(filePath)) return null;
 
     final lineCount = node.lineInfo.lineCount;
     if (lineCount > maxFileLines) {
