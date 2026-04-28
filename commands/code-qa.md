@@ -85,8 +85,10 @@ Task 문서(`TASKS.md`) **또는** Phase 문서(`PHASES.md`)와 프로젝트 아
 
 **디자인 도구** 및 **기능 트랙 포함 여부** 판정 (두 모드 공통):
 
-- **기본 경로**: `code-harness/PLAN.md` 상단의 `디자인 도구` 필드(figma/stitch/none)와 `기능 트랙 포함` 필드(yes/no)를 직접 읽어 확인
+- **기본 경로**: `code-harness/PLAN.md` 상단의 `## 트랙 모드` 섹션에서 `디자인 도구`(figma/stitch/none)와 `기능 트랙`(yes/no) 필드를 읽어 확인
 - **PLAN이 다른 경로에 있으면**: `-plan <path>` 옵션으로 경로를 받아 해당 파일을 읽는다
+- **PLAN-DESIGN.md 자동 로드**: PLAN.md `## 트랙 모드` 섹션의 `디자인 계획 문서:` 포인터를 따라 디자인 계획 문서를 추가로 로드 (디자인 도구 ≠ none 일 때만 의미 있음). Step 3-5 디자인 트랙 검증 규칙 추출 시 Figma URL/Stitch 경로/디자인 토큰/공통 컴포넌트/상태 계약/위젯 교체 가능성은 PLAN-DESIGN.md에서 우선 추출하고, 누락(구버전 단일 파일 PLAN) 시 PLAN.md `## 디자인 트랙` 섹션으로 폴백
+- **구버전 호환**: PLAN.md에 `## 트랙 모드` 섹션이 없으면 단일 파일 PLAN으로 간주하고 본문의 `디자인 도구` / `기능 트랙 포함` 필드로 폴백
 - **PLAN이 아예 없으면**: 입력 문서에서 **디자인 시스템 단위 존재 여부**만으로 판정한다:
   - tasks 모드: `type=design-system` Task가 1개 이상 존재 → 디자인 도구 non-none
   - phases 모드: `카테고리: 디자인 시스템` Phase가 1개 이상 존재 → 디자인 도구 non-none
@@ -167,7 +169,12 @@ Task 문서(`TASKS.md`) **또는** Phase 문서(`PHASES.md`)와 프로젝트 아
 
 #### 3-5. 디자인 트랙 검증 규칙 추출 (디자인 도구 ≠ none 일 때만)
 
-PLAN/TASKS의 디자인 트랙 정보를 기반으로 검증 규칙을 추출합니다. 디자인 도구 = none 이면 이 단계 전체를 생략합니다.
+디자인 트랙 정보를 기반으로 검증 규칙을 추출합니다. 디자인 도구 = none 이면 이 단계 전체를 생략합니다.
+
+**소스 우선순위**:
+1. **PLAN-DESIGN.md** (`## 디자인 트랙`) — Figma URL/Stitch 경로, 디자인 토큰, 공통 컴포넌트, 상태 계약 표, 위젯 교체 가능성을 우선 추출
+2. **PLAN.md** (`## 디자인 트랙` — 구버전 단일 파일) — PLAN-DESIGN.md가 없을 때 폴백
+3. **TASKS/PHASES 입력 문서** — PLAN/PLAN-DESIGN가 모두 없을 때 design-system 단위 메타로 추론
 
 | # | 규칙 | 검증 방법 | 적용 대상 |
 |---|------|----------|----------|
@@ -176,8 +183,10 @@ PLAN/TASKS의 디자인 트랙 정보를 기반으로 검증 규칙을 추출합
 | D3 | 디자인 소스 일치 — figma 선택 시 Figma Frame의 레이아웃/색/spacing과 구현 일치 | Figma MCP 조회 + 시각 비교 | screen |
 | D4 | 디자인 소스 일치 — stitch 선택 시 docs/stitch/*.md의 구성 요소/배치와 구현 일치 | 프롬프트 문서 대조 | screen |
 | D5 | 디자인 소스 단일성 — 하나의 screen에 Figma와 Stitch가 동시에 참조되지 않음 | Task 메타 필드 확인 | screen |
+| D6 | 위젯 ↔ 상태관리 분리 — 위젯이 PLAN-DESIGN.md `상태 계약` 표의 의존 대상(인터페이스/계약)만 import. 직접 API 호출/repository import/영속화/외부 I/O 금지 | 코드 grep (import 경로) + 상태 계약 표 대조 | screen / 디자인 시스템 |
+| D7 | 위젯 교체 가능성 — PLAN-DESIGN.md `위젯 교체 가능성` 섹션의 분리 지점이 코드에 실제로 존재 (인터페이스/View 추상) | 코드 리뷰 + 분리 지점 grep | screen |
 
-**컨벤션에 접근성/반응형/다크모드 규칙이 있으면** D6~ 로 이어서 추가합니다.
+**컨벤션에 접근성/반응형/다크모드 규칙이 있으면** D8~ 로 이어서 추가합니다.
 
 ### Step 4: QA 검증 카테고리 정의
 
