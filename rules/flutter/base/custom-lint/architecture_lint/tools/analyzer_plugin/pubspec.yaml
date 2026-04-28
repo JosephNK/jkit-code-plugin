@@ -1,5 +1,5 @@
 name: architecture_lint_analyzer_plugin
-version: 0.2.24
+version: 0.2.25
 description: Analyzer plugin entry point for architecture_lint.
 
 publish_to: "none"
@@ -12,7 +12,7 @@ dependencies:
     git:
       url: https://github.com/JosephNK/jkit-code-plugin.git
       path: rules/flutter/base/custom-lint/architecture_lint
-      ref: v0.2.24
+      ref: v0.2.25
   analyzer: ">=6.0.0 <13.0.0"
   analyzer_plugin: ">=0.13.0 <0.15.0"
 
