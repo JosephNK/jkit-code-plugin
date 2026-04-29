@@ -159,6 +159,31 @@ class ServerException implements Exception {
 }
 ```
 
+### `presentation`
+
+**Role** — UI 레이어. Screen(라우트 진입점) · View(논리적 섹션) · Widget(재사용 컴포넌트)으로 분할. Bloc을 통해 상태를 구독하고 사용자 입력을 이벤트로 전달.
+
+**Contains**
+
+- Screen (라우트 진입점) — `*_screen.dart` (`pages/`)
+- View (StatelessWidget 섹션) — `*_view.dart` (`views/`)
+- Widget (재사용 컴포넌트) — `*_{purpose}.dart` (`widgets/`)
+
+```dart
+// pages/product_screen.dart
+class ProductScreen extends StatelessWidget {
+  const ProductScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<ProductBloc>()..add(const ProductLoadRequested(page: 1)),
+      child: const ProductBodyView(),
+    );
+  }
+}
+```
+
 ## 규칙 (Rules)
 
 architecture_lint 패키지가 활성화하는 12개 룰. 시각화된 의존 다이어그램은 `lint-rules-diagram.md` 참조.

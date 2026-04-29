@@ -283,23 +283,20 @@ function parseLayerSemantics(filePath) {
   );
   if (!startM) return {};
   const startIdx = startM.index + startM[0].length;
-  // 매칭되는 닫는 `};` 까지 슬라이스 (중첩 괄호 카운트)
-  let depth = 1;
-  let i = startIdx;
-  while (i < content.length && depth > 0) {
-    const ch = content[i];
-    if (ch === '{') depth++;
-    else if (ch === '}') depth--;
-    if (depth === 0) break;
-    i++;
-  }
-  const body = content.slice(startIdx, i);
+  const endIdx = findBalanced(content, startIdx, '{', '}');
+  if (endIdx < 0) return {};
+  const body = content.slice(startIdx, endIdx);
 
+  // 각 entry 헤더(`'key': LayerSemantics(`) 를 찾고, 닫는 `)` 는 균형 괄호로
+  // 식별. lazy regex 는 example 본문의 `(...),` 패턴 + 마지막 entry 직후의
+  // lookahead 부재(닫는 `}` 가 outer body 슬라이스에서 제외됨) 때문에 깨진다.
   const result = {};
-  const entryRe =
-    /'(\w+)'\s*:\s*LayerSemantics\s*\(([\s\S]*?)\)\s*,(?=\s*(?:'|\}))/g;
-  for (const em of body.matchAll(entryRe)) {
-    result[em[1]] = parseLayerSemanticsArgs(em[2]);
+  const headerRe = /'(\w+)'\s*:\s*LayerSemantics\s*\(/g;
+  for (const m of body.matchAll(headerRe)) {
+    const argStart = m.index + m[0].length;
+    const argEnd = findBalanced(body, argStart, '(', ')');
+    if (argEnd < 0) break;
+    result[m[1]] = parseLayerSemanticsArgs(body.slice(argStart, argEnd));
   }
   return result;
 }
