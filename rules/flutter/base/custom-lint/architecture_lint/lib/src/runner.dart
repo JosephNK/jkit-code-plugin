@@ -10,6 +10,7 @@ import 'lints/e4_domain_no_sdk_lint.dart';
 import 'lints/e5_ports_no_framework_lint.dart';
 import 'lints/e6_cross_feature_lint.dart';
 import 'lints/e7_no_bare_catch_lint.dart';
+import 'lints/e8_presentation_dependency_lint.dart';
 import 'lints/n1_port_naming_lint.dart';
 import 'lints/n2_adapter_naming_lint.dart';
 import 'lints/n3_usecase_naming_lint.dart';
@@ -61,7 +62,7 @@ class LintRunner extends RecursiveAstVisitor<void> {
   }
 }
 
-/// 기본 아키텍처 lint 규칙 12개 (E1~E7, N1~N3, S1~S2).
+/// 기본 아키텍처 lint 규칙 13개 (E1~E8, N1~N3, S1~S2).
 List<DartLint> createArchitectureLints() => <DartLint>[
   E1EntitiesImportLint(),
   E2UsecasesDependencyLint(),
@@ -70,6 +71,7 @@ List<DartLint> createArchitectureLints() => <DartLint>[
   E5PortsNoFrameworkLint(),
   E6CrossFeatureLint(),
   E7NoBareCatchLint(),
+  E8PresentationDependencyLint(),
   N1PortNamingLint(),
   N2AdapterNamingLint(),
   N3UseCaseNamingLint(),

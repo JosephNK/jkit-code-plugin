@@ -27,7 +27,7 @@ Both follow the same Port & Adapter pattern. The only difference is scope.
 | Type | Layers | Location | Description |
 |------|--------|----------|-------------|
 | Full-stack feature | domain/ + infrastructure/ + presentation/ | `features/<feature>/` | Has its own port, adapter, usecase, and UI |
-| Presentation-only feature | presentation/ only | `features/<feature>/presentation/` | Reuses another feature's domain layer via DI (e.g., login screen uses auth usecases) |
+| Presentation-only feature | presentation/ only | `features/<feature>/presentation/` | Reuses another feature's domain layer via its own bloc — bloc is required (E8 forbids direct usecase/port/adapter import from presentation). |
 | Shared domain module | entities/ + exceptions/ | `features/shared/domain/` | Shared domain objects with no full stack |
 
 ## Adapter Private Methods
