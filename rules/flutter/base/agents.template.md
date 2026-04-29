@@ -1,16 +1,13 @@
 # {{PROJECT_NAME}}
 
-### Hard Rules
+### Mandatory Docs
 
-- **Never add `.claude/` to `.gitignore`.** Only add specific personal paths like `.claude/settings.local.json`, `.claude/sessions/`, `.claude/todos/`. See [GIT.md]({{DOCS_DIR}}GIT.md#gitignore-rules-for-claude) for the complete list.
+**BEFORE writing or modifying code, you MUST first read:**
+- @{{DOCS_DIR}}ARCHITECTURE.md — Full architecture details with code examples
+- @{{DOCS_DIR}}CONVENTIONS.md — Full conventions with code examples
+- @{{DOCS_DIR}}LINT.md — Layer glossary, rule table (E/N/S), package whitelists, path mapping
 
-### Required Reading
+**BEFORE committing or using git/GitHub commands, you MUST first read:**
+- [Git]({{DOCS_DIR}}GIT.md) — Git & GitHub guide with commit conventions
 
-- [Architecture]({{DOCS_DIR}}ARCHITECTURE.md) — **MUST read when writing or modifying code.** Full architecture details with code examples
-- [Conventions]({{DOCS_DIR}}CONVENTIONS.md) — **MUST read when writing or modifying code.** Full conventions with code examples
-- [Git]({{DOCS_DIR}}GIT.md) — **MUST read when committing or using git/GitHub commands.** Git & GitHub guide with commit conventions
-- [Lint]({{DOCS_DIR}}LINT.md) — **MUST read when writing or modifying code.** Layer glossary, rule table (E/N/S), package whitelists, path mapping.
-
-@AGENTS.LOCAL.md
-
-> AI agents: also read [AGENTS.LOCAL.md](./AGENTS.LOCAL.md) for project-specific required reading.
+See @AGENTS.LOCAL.md for project-specific required reading.
