@@ -27,6 +27,11 @@ import YAML from 'yaml';
 
 import { ensureFlutterRoot, normalizePath } from '../common.mjs';
 
+// `--ref` and the legacy git URL are accepted for CLI backward compatibility
+// but no longer used: plugins: now resolve via `path:` to the local plugin
+// checkout. Re-introduce git wiring once Dart 3.13+ is widespread and the
+// upstream `git:` plugin loader is reliable (dart-lang/sdk#61794).
+
 /**
  * Detect whether projectDir is a Dart pub workspace root that includes the
  * given entry as a member. analysis_server_plugin only honors `plugins:` at
@@ -49,15 +54,18 @@ function isWorkspaceMember(projectDir, entry) {
   return entries.includes(entry.replace(/\/+$/, ''));
 }
 
-const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
-
-const HELP = `Usage: gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <stacks>]
+const HELP = `Usage: gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--stacks <stacks>]
 
 Registers architecture_lint (base) + optional stack lint packages (e.g.
 leaf_kit_lint when --stacks includes leaf-kit) as analyzer plugins in
-analysis_options.yaml via the new top-level \`plugins:\` section. Each lint
-package is pinned to a git ref. The Dart analysis server resolves them in a
-synthetic package, independent of the host project's pubspec.
+analysis_options.yaml via the top-level \`plugins:\` section, using \`path:\`
+deps that point to this plugin's own checkout (auto-detected from script
+location).
+
+The Dart analysis server loads the plugin sources from the path on every
+\`dart analyze\` / \`flutter analyze\` invocation. \`--ref\` is accepted for
+backward compatibility but ignored — git: deps in plugins: are not yet
+fetched on Dart 3.10–3.12 (dart-lang/sdk#61794).
 
 Requires: Dart 3.10+ (Flutter 3.38+) and plugin's node_modules installed
 (\`npm install\` in plugin root).
@@ -68,15 +76,14 @@ Arguments:
 Options:
   -p <dir>        Project root directory (required)
   -entry <dir>    Flutter entry directory (default: app)
-  --ref <ref>     Git ref to pin (default: v<plugin-version> from plugin.json)
   --stacks <s>    Comma-separated convention stacks (default: none)
-                  e.g. leaf-kit,go-router — installs matching stack lint package
+                  e.g. leaf-kit,freezed — installs matching stack lint package
+  --ref <ref>     Deprecated/ignored (kept for backward compat)
   -h, --help      Show this help
 
 Examples:
   ./scripts/flutter/gen-custom-lint.mjs flutter -p .
   ./scripts/flutter/gen-custom-lint.mjs flutter -p . -entry app
-  ./scripts/flutter/gen-custom-lint.mjs flutter -p . --ref v0.2.30
   ./scripts/flutter/gen-custom-lint.mjs flutter -p . --stacks leaf-kit
 `;
 
@@ -158,27 +165,6 @@ function main() {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const pluginRoot = path.resolve(scriptDir, '..', '..');
 
-  // Resolve ref from plugin.json if not provided.
-  let ref = args.ref;
-  if (!ref) {
-    const pluginJson = path.join(pluginRoot, '.claude-plugin', 'plugin.json');
-    if (!fs.existsSync(pluginJson)) {
-      process.stderr.write(`Error: ${pluginJson} not found\n`);
-      process.exit(1);
-    }
-    try {
-      const meta = JSON.parse(fs.readFileSync(pluginJson, 'utf8'));
-      if (!meta.version) {
-        process.stderr.write(`Error: version missing in ${pluginJson}\n`);
-        process.exit(1);
-      }
-      ref = `v${meta.version}`;
-    } catch (err) {
-      process.stderr.write(`Error: failed to parse ${pluginJson}: ${err.message}\n`);
-      process.exit(1);
-    }
-  }
-
   try {
     ensureFlutterRoot(args.projectDir, args.entry);
   } catch (err) {
@@ -218,16 +204,18 @@ function main() {
     );
   }
 
+  // Use `path:` deps pointing to the local plugin checkout. `git:` deps in
+  // analysis_options.yaml plugins: are parsed but not actually wired up for
+  // fetch until Dart 3.13 Beta 1+ (dart-lang/sdk#61794), causing silent
+  // plugin load failure on Dart 3.10–3.12.
   const injectArgs = [
     injectScript,
     '--pubspec',
     path.join(args.entry, 'pubspec.yaml'),
     '--analysis-options',
     analysisOptionsPath,
-    '--git-url',
-    GIT_URL,
-    '--git-ref',
-    ref,
+    '--plugin-root',
+    pluginRoot,
   ];
   if (stalePath) {
     injectArgs.push('--strip-stale-from', stalePath);

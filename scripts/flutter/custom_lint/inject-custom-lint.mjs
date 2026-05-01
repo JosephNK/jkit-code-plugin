@@ -1,19 +1,26 @@
 #!/usr/bin/env node
 // =============================================================================
 // Inject architecture_lint (base) + stack-specific lint packages into
-// `analysis_options.yaml` via the new top-level `plugins:` section
+// `analysis_options.yaml` via the top-level `plugins:` section
 // (analysis_server_plugin, Dart 3.10+).
 //
-// Each lint package is registered with a git dependency directly under
-// `plugins:` — no umbrella custom_lint package needed. The Dart analysis server
-// creates a synthetic package and runs `dart pub upgrade` to resolve plugin
-// dependencies independently of the user's pubspec.yaml.
+// Dependency form: absolute `path:` to the local jkit-code-plugin checkout.
+// The `git:` form in plugins: is parsed by analyzer but not actually wired up
+// for fetch until Dart 3.13 Beta 1+ (dart-lang/sdk#61794), which causes
+// silent plugin load failure on Dart 3.10–3.12. Using `path:` against the
+// already-installed plugin sources works on all supported Dart versions.
+//
+// Caveat: the written path is per-machine absolute. analysis_options.yaml
+// committed to git becomes machine-specific — each developer / CI must run
+// `/flutter-sync` (or this script) once to regenerate with their own path.
+//
+// TODO(jkit): switch back to `git:` deps once Dart 3.13 is stable and widely
+// adopted, restoring portability of analysis_options.yaml across machines.
 //
 // Workspace handling: in a Dart pub workspace, the `plugins:` section is only
-// honored at the **workspace root**'s analysis_options.yaml. Pass --strip-stale-from
-// to remove a misplaced `plugins:` section (and the `architecture_lint` /
-// `leaf_kit_lint` / `freezed_lint` entries) from a workspace member's
-// analysis_options.yaml — typical when a previous run wrote to the wrong file.
+// honored at the **workspace root**'s analysis_options.yaml. Pass
+// --strip-stale-from to remove a misplaced `plugins:` section from a
+// workspace member's analysis_options.yaml.
 //
 // Also strips the legacy `custom_lint` dev dependency and `analyzer.plugins:
 // [custom_lint]` registration if found, to clean up post-migration.
@@ -25,9 +32,8 @@
 //   inject-custom-lint.mjs \
 //     --pubspec app/pubspec.yaml \
 //     --analysis-options analysis_options.yaml \
-//     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
-//     --git-ref v0.3.0 \
-//     [--stacks leaf-kit,go-router] \
+//     --plugin-root /abs/path/to/jkit-code-plugin \
+//     [--stacks leaf-kit,freezed] \
 //     [--strip-stale-from app/analysis_options.yaml]
 // =============================================================================
 
@@ -40,10 +46,11 @@ import YAML from 'yaml';
 // Legacy umbrella plugin name — stripped from pubspec/analysis_options on injection.
 const LEGACY_CUSTOM_LINT = 'custom_lint';
 
-// Base package — always injected.
+// Base package — always injected. `subPath` is relative to --plugin-root
+// (the local jkit-code-plugin checkout).
 const BASE_PACKAGE = {
   name: 'architecture_lint',
-  gitPath: 'rules/flutter/base/custom-lint/architecture_lint',
+  subPath: 'rules/flutter/base/custom-lint/architecture_lint',
 };
 
 // Stack → package mapping. Selecting a stack installs the corresponding lint
@@ -51,11 +58,11 @@ const BASE_PACKAGE = {
 const STACK_PACKAGES = {
   'leaf-kit': {
     name: 'leaf_kit_lint',
-    gitPath: 'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint',
+    subPath: 'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint',
   },
   freezed: {
     name: 'freezed_lint',
-    gitPath: 'rules/flutter/freezed/custom-lint/freezed_lint',
+    subPath: 'rules/flutter/freezed/custom-lint/freezed_lint',
   },
 };
 
@@ -64,18 +71,18 @@ const ALL_LINT_PACKAGE_NAMES = new Set([
   ...Object.values(STACK_PACKAGES).map((p) => p.name),
 ]);
 
-const HELP = `Usage: inject-custom-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-ref <ref> [--stacks <stacks>]
+const HELP = `Usage: inject-custom-lint.mjs --pubspec <path> --analysis-options <path> --plugin-root <abs-dir> [--stacks <stacks>] [--strip-stale-from <path>]
 
-Inject architecture_lint (base) + optional stack lint packages into Flutter project's analysis_options.yaml via the analysis_server_plugin top-level plugins: section.
+Inject architecture_lint (base) + optional stack lint packages into Flutter project's analysis_options.yaml via the analysis_server_plugin top-level plugins: section, using path: deps that point to --plugin-root.
 
 Options:
-  --pubspec <path>          Path to pubspec.yaml (used to strip legacy custom_lint dev dep)
-  --analysis-options <path> Path to analysis_options.yaml (required)
-  --git-url <url>           Git repository URL (required)
-  --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.3.0)
-  --stacks <stacks>         Comma-separated convention stacks (optional)
-                            Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
-  -h, --help                Show this help
+  --pubspec <path>           Path to pubspec.yaml (used to strip legacy custom_lint dev dep)
+  --analysis-options <path>  Path to analysis_options.yaml (required)
+  --plugin-root <abs-dir>    Absolute path to the local jkit-code-plugin checkout (required)
+  --stacks <stacks>          Comma-separated convention stacks (optional)
+                             Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
+  --strip-stale-from <path>  analysis_options.yaml to strip misplaced plugins:/legacy analyzer.plugins: from
+  -h, --help                 Show this help
 `;
 
 function usage(code = 1) {
@@ -87,8 +94,7 @@ function parseArgs(argv) {
   const args = {
     pubspec: '',
     analysisOptions: '',
-    gitUrl: '',
-    gitRef: '',
+    pluginRoot: '',
     stacks: [],
     stripStaleFrom: '',
   };
@@ -111,19 +117,12 @@ function parseArgs(argv) {
         }
         args.analysisOptions = rest.shift();
         break;
-      case '--git-url':
+      case '--plugin-root':
         if (!rest.length) {
-          process.stderr.write('--git-url requires a value\n');
+          process.stderr.write('--plugin-root requires a value\n');
           usage();
         }
-        args.gitUrl = rest.shift();
-        break;
-      case '--git-ref':
-        if (!rest.length) {
-          process.stderr.write('--git-ref requires a value\n');
-          usage();
-        }
-        args.gitRef = rest.shift();
+        args.pluginRoot = rest.shift();
         break;
       case '--stacks':
         if (!rest.length) {
@@ -156,8 +155,7 @@ function parseArgs(argv) {
   for (const [name, value] of [
     ['--pubspec', args.pubspec],
     ['--analysis-options', args.analysisOptions],
-    ['--git-url', args.gitUrl],
-    ['--git-ref', args.gitRef],
+    ['--plugin-root', args.pluginRoot],
   ]) {
     if (!value) {
       process.stderr.write(`Error: ${name} is required\n`);
@@ -165,13 +163,16 @@ function parseArgs(argv) {
     }
   }
 
+  if (!path.isAbsolute(args.pluginRoot)) {
+    process.stderr.write('Error: --plugin-root must be an absolute path\n');
+    usage();
+  }
+
   return args;
 }
 
-function buildGitDep(url, gitPath, ref) {
-  return {
-    git: { url, path: gitPath, ref },
-  };
+function buildPathDep(absPath) {
+  return { path: absPath };
 }
 
 function nodeToJs(node) {
@@ -254,7 +255,7 @@ function cleanPubspec(pubspecPath) {
 }
 
 // ─── analysis_options.yaml — register plugins under top-level `plugins:` ───
-function injectAnalysisOptions(analysisPath, gitUrl, gitRef, packages) {
+function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
   const doc = loadOrCreateDoc(analysisPath);
 
   // 1. Strip legacy `analyzer.plugins: [custom_lint]` registration.
@@ -272,7 +273,7 @@ function injectAnalysisOptions(analysisPath, gitUrl, gitRef, packages) {
     }
   }
 
-  // 2. Build/update top-level `plugins:` section.
+  // 2. Build/update top-level `plugins:` section with `path:` deps.
   let pluginsMap = doc.get('plugins');
   if (pluginsMap != null && !YAML.isMap(pluginsMap)) {
     doc.delete('plugins');
@@ -282,27 +283,33 @@ function injectAnalysisOptions(analysisPath, gitUrl, gitRef, packages) {
   let changed = false;
 
   for (const pkg of packages) {
+    const absPath = path.join(pluginRoot, pkg.subPath);
+    if (!fs.existsSync(absPath) || !fs.statSync(absPath).isDirectory()) {
+      process.stderr.write(
+        `Error: plugin source not found: ${absPath}\n`,
+      );
+      return false;
+    }
+
     const current = YAML.isMap(pluginsMap) ? nodeToJs(pluginsMap.get(pkg.name)) : null;
-    const desired = buildGitDep(gitUrl, pkg.gitPath, gitRef);
+    const desired = buildPathDep(absPath);
     const alreadyPinned =
       current &&
       typeof current === 'object' &&
-      current.git &&
-      typeof current.git === 'object' &&
-      current.git.url === desired.git.url &&
-      current.git.path === desired.git.path &&
-      current.git.ref === desired.git.ref;
+      typeof current.path === 'string' &&
+      current.path === desired.path &&
+      current.git === undefined;
 
     if (alreadyPinned) {
       process.stdout.write(
-        `  ${pkg.name} already pinned to ${gitRef} in ${analysisPath}\n`,
+        `  ${pkg.name} already pinned to ${absPath} in ${analysisPath}\n`,
       );
       continue;
     }
 
     doc.setIn(['plugins', pkg.name], desired);
     process.stdout.write(
-      `  Registered ${pkg.name} (git ref ${gitRef}) in ${analysisPath} plugins:\n`,
+      `  Registered ${pkg.name} (path: ${absPath}) in ${analysisPath} plugins:\n`,
     );
     changed = true;
   }
@@ -389,8 +396,7 @@ function main() {
   ok =
     injectAnalysisOptions(
       path.resolve(args.analysisOptions),
-      args.gitUrl,
-      args.gitRef,
+      args.pluginRoot,
       packages,
     ) && ok;
 
