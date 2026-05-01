@@ -6,13 +6,21 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E8: presentation/은 `adapters`/`ports`/`usecases` 직접 import 및 인프라 SDK import 금지 — bloc 경유 강제.
+/// E8: presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지 (bloc stack 활성 시 `usecases`도 차단 → bloc 경유 강제).
 ///
-/// UI(pages/views/widgets)는 bloc을 통해서만 도메인 동작을 호출하고
-/// 인프라 SDK(`infraPackages`: dio·sqflite·firebase 등)도 직접 다루지 않는다.
-/// 허용은 entities/·exceptions/·bloc/·common/·di/·router/ 및 그 외 외부 UI 라이브러리.
+/// UI(pages/views/widgets)는 인프라 SDK(`infraPackages`: dio·sqflite·firebase 등)를
+/// 직접 다루지 않는다. bloc stack 활성 시 추가로 `usecases/` 직접 import도 차단되어
+/// bloc을 통해서만 도메인 동작을 호출하도록 강제.
+/// 허용은 entities/·exceptions/·bloc/(stack 활성 시)·common/·di/·router/ 및 그 외 외부 UI 라이브러리.
 class E8PresentationDependencyLint extends DartLint {
-  static const _forbidden = <String>{'adapters', 'ports', 'usecases'};
+  E8PresentationDependencyLint({Set<String> stacks = const {'bloc'}})
+    : _forbidden = {
+        'adapters',
+        'ports',
+        if (stacks.contains('bloc')) 'usecases',
+      };
+
+  final Set<String> _forbidden;
 
   @override
   String get code => 'e8_presentation_dependency';

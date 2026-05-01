@@ -44,7 +44,7 @@ export 'src/runner.dart';
 export 'src/structure_annotation.dart';
 export 'src/lints/e1_entities_import_lint.dart';
 export 'src/lints/e2_usecases_dependency_lint.dart';
-export 'src/lints/e3_bloc_dependency_lint.dart';
+export 'src/lints/bloc/e3_bloc_dependency_lint.dart';
 export 'src/lints/e4_domain_no_sdk_lint.dart';
 export 'src/lints/e5_ports_no_framework_lint.dart';
 export 'src/lints/e6_cross_feature_lint.dart';

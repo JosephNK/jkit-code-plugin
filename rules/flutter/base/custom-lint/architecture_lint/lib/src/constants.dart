@@ -78,12 +78,18 @@ const frameworkPackages = <String>{...infraPackages, 'flutter'};
 /// E4 룰(도메인 순수성 검사)이 이 집합에 속한 파일에만 적용된다.
 const domainLayers = <String>{'entities', 'ports', 'usecases', 'exceptions'};
 
-/// 다른 feature에서 cross-import 하면 안 되는 내부 레이어.
+/// 다른 feature에서 cross-import 하면 안 되는 내부 레이어 (base).
 ///
 /// feature 간 결합을 entities(공용 도메인 타입) 수준으로만 제한하여
 /// 기능 모듈을 독립적으로 변경/삭제할 수 있도록 한다.
-/// ports/adapters/usecases/bloc은 feature 전용 내부 계약이므로 cross-import 금지.
-const crossFeatureForbidden = <String>{'ports', 'adapters', 'usecases', 'bloc'};
+/// ports/adapters/usecases는 feature 전용 내부 계약이므로 cross-import 금지.
+const crossFeatureForbidden = <String>{'ports', 'adapters', 'usecases'};
+
+/// bloc stack 활성 시 추가되는 cross-feature 금지 레이어.
+///
+/// bloc은 feature 전용 상태 계층이므로 다른 feature에서 직접 import 금지.
+/// stack=bloc일 때 `crossFeatureForbidden`에 합쳐진다.
+const crossFeatureForbiddenBloc = <String>{'bloc'};
 
 /// S1 룰 — 파일당 최대 라인 수.
 /// 800줄을 넘으면 단일 책임 위반 가능성이 높아 분할 권장.

@@ -2,9 +2,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer_plugin/protocol/protocol_common.dart'
     show AnalysisErrorSeverity;
-import '../classification.dart';
-import '../constants.dart';
-import '../dart_lint.dart';
+import '../../classification.dart';
+import '../../constants.dart';
+import '../../dart_lint.dart';
 
 /// E3: bloc/은 `usecases`/`entities`/`exceptions`만 import — 외부는 `blocAllowedPackages` ∪ `leafKitBlocAllowed`만 허용.
 ///

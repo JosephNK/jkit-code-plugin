@@ -9,9 +9,22 @@ import '../dart_lint.dart';
 /// E6: feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용.
 ///
 /// feature 모듈 독립성 보장 — 결합은 entities 수준으로만.
-/// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases·bloc 직접 import).
-/// 예외: `presentation/`·`bloc/`이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
+/// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases) + bloc stack 활성 시 `crossFeatureForbiddenBloc`.
+/// 예외: `presentation/`(+ bloc stack 활성 시 `bloc/`)이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
 class E6CrossFeatureLint extends DartLint {
+  E6CrossFeatureLint({Set<String> stacks = const {'bloc'}})
+    : _forbidden = {
+        ...crossFeatureForbidden,
+        if (stacks.contains('bloc')) ...crossFeatureForbiddenBloc,
+      },
+      _domainAccessLayers = {
+        'presentation',
+        if (stacks.contains('bloc')) 'bloc',
+      };
+
+  final Set<String> _forbidden;
+  final Set<String> _domainAccessLayers;
+
   @override
   String get code => 'e6_cross_feature';
 
@@ -56,15 +69,15 @@ class E6CrossFeatureLint extends DartLint {
     // entities/ imports are always allowed across features
     if (targetLayer == 'entities') return null;
 
-    // presentation/bloc may import other features' domain/
+    // presentation (and bloc, when stack=bloc) may import other features' domain/
     final currentLayer = classifyLayer(filePath);
-    if (currentLayer == 'presentation' || currentLayer == 'bloc') {
+    if (_domainAccessLayers.contains(currentLayer)) {
       if (isImportFromDomain(importUri, filePath, projectPkg)) {
         return null;
       }
     }
 
-    if (targetLayer != null && crossFeatureForbidden.contains(targetLayer)) {
+    if (targetLayer != null && _forbidden.contains(targetLayer)) {
       return node.uri;
     }
 

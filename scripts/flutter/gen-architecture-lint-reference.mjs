@@ -15,7 +15,8 @@
 //
 // 입력 (Source):
 //   rules/flutter/base/custom-lint/architecture_lint/lib/src/
-//     ├── lints/*.dart              — 12개 룰 (E1~E7, N1~N3, S1~S2)
+//     ├── lints/*.dart              — base 룰 (E1·E2·E4·E5·E6·E7·E8·N1·N2·N3·S1·S2)
+//     ├── lints/<stack>/*.dart      — stack 룰 (예: lints/bloc/e3_bloc_dependency_lint.dart)
 //     ├── constants.dart            — 패키지 화이트/블랙리스트, maxFileLines
 //     ├── boundary_element.dart     — projectBoundaryElements + unknownPathIgnores
 //     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
@@ -183,13 +184,20 @@ function parseLintFile(filePath) {
 
 function loadAllLints() {
   const lintsDir = path.join(SRC_DIR, 'lints');
-  const files = fs
-    .readdirSync(lintsDir)
-    .filter((f) => f.endsWith('.dart'))
-    .sort();
+  const files = [];
+  // stack 룰은 lints/<stack>/*.dart 하위에 둠 (예: lints/bloc/e3_*.dart) — recursive 수집.
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.isFile() && entry.name.endsWith('.dart')) files.push(full);
+    }
+  }
+  walk(lintsDir);
+  files.sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
   const rules = [];
   for (const f of files) {
-    const r = parseLintFile(path.join(lintsDir, f));
+    const r = parseLintFile(f);
     if (r) rules.push(r);
   }
   return rules;

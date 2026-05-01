@@ -9,8 +9,9 @@ import 'runner.dart';
 
 /// 아키텍처 검증용 analyzer_plugin `ServerPlugin` 구현.
 ///
-/// 12개 `DartLint` 규칙(E1~E7, N1~N3, S1~S2)을 각 Dart 파일의 AST에 적용하고,
-/// 위반 사항을 `AnalysisError`로 변환해 analysis server에 전달한다.
+/// base 12개(E1·E2·E4·E5·E6·E7·E8·N1·N2·N3·S1·S2) + stack 룰(E3 — bloc stack)을
+/// 활성 stack에 따라 합성하여 각 Dart 파일의 AST에 적용하고, 위반 사항을
+/// `AnalysisError`로 변환해 analysis server에 전달한다.
 class ArchitectureLintPlugin extends ServerPlugin {
   ArchitectureLintPlugin({required super.resourceProvider});
 

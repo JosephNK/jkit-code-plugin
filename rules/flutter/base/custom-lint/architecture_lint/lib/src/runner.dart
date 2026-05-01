@@ -3,9 +3,9 @@ import 'package:analyzer/dart/ast/syntactic_entity.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 
 import 'dart_lint.dart';
+import 'lints/bloc/e3_bloc_dependency_lint.dart';
 import 'lints/e1_entities_import_lint.dart';
 import 'lints/e2_usecases_dependency_lint.dart';
-import 'lints/e3_bloc_dependency_lint.dart';
 import 'lints/e4_domain_no_sdk_lint.dart';
 import 'lints/e5_ports_no_framework_lint.dart';
 import 'lints/e6_cross_feature_lint.dart';
@@ -62,16 +62,25 @@ class LintRunner extends RecursiveAstVisitor<void> {
   }
 }
 
-/// 기본 아키텍처 lint 규칙 13개 (E1~E8, N1~N3, S1~S2).
-List<DartLint> createArchitectureLints() => <DartLint>[
+/// 활성 stack에 따라 적용할 lint 규칙 목록을 합성.
+///
+/// base 룰(E1·E2·E4·E5·E6·E7·E8·N1·N2·N3·S1·S2)은 항상 포함.
+/// stack 룰은 `stacks` set에 해당 키가 있을 때만 추가:
+/// - `'bloc'`: E3BlocDependencyLint + E2/E6/E8의 bloc 분기 활성
+///
+/// default `{'bloc'}`는 stack 도입 전 동작 보존 — 명시 토글은 plugin/CLI가
+/// `analysis_options.yaml`의 `architecture_lint.stacks`에서 읽어 주입한다.
+List<DartLint> createArchitectureLints({
+  Set<String> stacks = const {'bloc'},
+}) => <DartLint>[
   E1EntitiesImportLint(),
-  E2UsecasesDependencyLint(),
-  E3BlocDependencyLint(),
+  E2UsecasesDependencyLint(stacks: stacks),
+  if (stacks.contains('bloc')) E3BlocDependencyLint(),
   E4DomainNoSdkLint(),
   E5PortsNoFrameworkLint(),
-  E6CrossFeatureLint(),
+  E6CrossFeatureLint(stacks: stacks),
   E7NoBareCatchLint(),
-  E8PresentationDependencyLint(),
+  E8PresentationDependencyLint(stacks: stacks),
   N1PortNamingLint(),
   N2AdapterNamingLint(),
   N3UseCaseNamingLint(),
