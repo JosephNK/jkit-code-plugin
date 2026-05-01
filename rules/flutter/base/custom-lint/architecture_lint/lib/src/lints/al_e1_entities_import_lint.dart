@@ -4,14 +4,14 @@ import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
 
-/// E1: codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지.
+/// AL_E1: codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지.
 ///
 /// 외부 런타임 의존성 차단. 허용 목록은 `codegenPackages` (freezed_annotation·json_annotation·meta·collection).
-class E1EntitiesImportLint extends DartLintRule {
-  const E1EntitiesImportLint() : super(code: _code);
+class AlE1EntitiesImportLint extends DartLintRule {
+  const AlE1EntitiesImportLint() : super(code: _code);
 
   static const _code = LintCode(
-    name: 'e1_entities_import',
+    name: 'al_e1_entities_import',
     problemMessage:
         'entities/ must only import codegen annotations '
         '(freezed_annotation, json_annotation, meta, collection).',

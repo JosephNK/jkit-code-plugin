@@ -4,21 +4,21 @@ import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
 
-/// E5: framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단.
+/// AL_E4: 도메인 레이어(entities/ports/usecases/exceptions)는 인프라 SDK import 금지.
 ///
-/// Port는 추상 인터페이스이므로 도메인 타입만 사용해 구현 교체·테스트 용이성 유지.
-/// 금지 목록은 `frameworkPackages` (= `infraPackages` + flutter; BuildContext·dio Response 등 누출 방지).
-class E5PortsNoFrameworkLint extends DartLintRule {
-  const E5PortsNoFrameworkLint() : super(code: _code);
+/// 테스트 가능성·이식성 보장 — 인프라 접근은 `adapters/`에서만.
+/// 금지 목록은 `infraPackages` (dio·http·drift·sqflite·firebase 계열 등).
+class AlE4DomainNoSdkLint extends DartLintRule {
+  const AlE4DomainNoSdkLint() : super(code: _code);
 
   static const _code = LintCode(
-    name: 'e5_ports_no_framework',
+    name: 'al_e4_domain_no_sdk',
     problemMessage:
-        'ports/ must not import framework packages (dio, flutter, etc.). '
-        'Use domain types only.',
+        'External SDK packages must not be imported in domain layers '
+        '(entities/, ports/, usecases/, exceptions/).',
     correctionMessage:
-        'Define port interfaces using only domain types (entities, '
-        'exceptions). Framework types belong in adapters/.',
+        'Move infrastructure dependencies to adapters/ and define '
+        'abstractions in ports/.',
     errorSeverity: ErrorSeverity.ERROR,
   );
 
@@ -30,7 +30,8 @@ class E5PortsNoFrameworkLint extends DartLintRule {
   ) {
     context.registry.addImportDirective((node) {
       final filePath = resolver.path;
-      if (classifyLayer(filePath) != 'ports') return;
+      final layer = classifyLayer(filePath);
+      if (!domainLayers.contains(layer)) return;
 
       final importUri = node.uri.stringValue;
       if (importUri == null) return;
@@ -42,7 +43,7 @@ class E5PortsNoFrameworkLint extends DartLintRule {
       final projectPkg = getProjectPackageName(node);
       if (packageName == projectPkg) return;
 
-      if (frameworkPackages.contains(packageName)) {
+      if (infraPackages.contains(packageName)) {
         reporter.atNode(node.uri, code);
       }
     });

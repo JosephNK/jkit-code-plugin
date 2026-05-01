@@ -15,7 +15,7 @@
 //
 // 입력 (Source):
 //   rules/flutter/base/custom-lint/architecture_lint/lib/src/
-//     ├── lints/*.dart              — base 룰 (E1·E2·E4·E5·E6·E7·E8·N1·N2·N3·S1·S2)
+//     ├── lints/*.dart              — base 룰 (AL_E1·AL_E2·AL_E4·AL_E5·AL_E6·AL_E7·AL_E8·AL_N1·AL_N2·AL_N3·AL_S1·AL_S2)
 //     ├── constants.dart            — 패키지 화이트/블랙리스트, maxFileLines
 //     ├── boundary_element.dart     — projectBoundaryElements + unknownPathIgnores
 //     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
@@ -190,7 +190,7 @@ function ruleSummary(doc) {
   if (!doc) return '';
   const firstPara = doc.split(/\n\s*\n/)[0] || '';
   const firstLine = firstPara.split('\n')[0].trim();
-  // Strip ID prefix — base (E1·N2·S1) and stack (LK_E3·GR_E2) variants.
+  // Strip ID prefix — base (AL_E1·AL_N2·AL_S1) and stack (LK_E3·FZ_E1) variants.
   return firstLine.replace(/^[A-Za-z_]+\d+:\s*/, '');
 }
 
@@ -796,7 +796,9 @@ function renderRulesTable(rules, constants) {
   lines.push('| ID | Severity | Layer | 설명 | 참조 |');
   lines.push('| --- | --- | --- | --- | --- |');
   for (const r of rules) {
-    const id = r.code ? r.code.split('_')[0].toUpperCase() : '?';
+    const id = r.code
+      ? r.code.toUpperCase().split('_').slice(0, 2).join('_')
+      : '?';
     const sev = r.severity || '—';
     const layer = ruleAffectedLayer(r);
     const summary = ruleSummary(r.doc);
@@ -839,7 +841,7 @@ function renderGlossary(rules, layerSemantics, boundaryElements) {
       lines.push('**Constraints**');
       lines.push('');
       for (const r of targeted) {
-        const id = r.code.split('_')[0].toUpperCase();
+        const id = r.code.toUpperCase().split('_').slice(0, 2).join('_');
         const sev = r.severity || '—';
         lines.push(`- \`${id}\` (${sev}) — ${ruleSummary(r.doc)}`);
       }

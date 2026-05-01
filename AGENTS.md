@@ -60,15 +60,15 @@ class XxxLint extends DartLint { ... }
 예시
 
 ```dart
-/// S1: 파일당 800줄 초과 금지 — 단일 책임 위반 신호.
+/// AL_S1: 파일당 800줄 초과 금지 — 단일 책임 위반 신호.
 ///
 /// 800은 경험적 임계치. 한계값은 `maxFileLines` 상수로 조정 가능.
-class S1FileSizeLint extends DartLint { ... }
+class AlS1FileSizeLint extends DartLint { ... }
 
-/// N1: 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`).
+/// AL_N1: 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`).
 ///
 /// 클래스명만으로 레이어 역할을 즉시 식별 — grep/리뷰 효율.
-class N1PortNamingLint extends DartLint { ... }
+class AlN1PortNamingLint extends DartLint { ... }
 ```
 
 ### Next.js / NestJS ESLint (`rules/<framework>/<stack>/eslint.rules.mjs`)

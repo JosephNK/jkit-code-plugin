@@ -20,7 +20,7 @@
 
 **Constraints**
 
-- `E1` (error) — codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지.
+- `AL_E1` (error) — codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지.
 
 ```dart
 // entities/order.dart
@@ -47,8 +47,8 @@ class Order {
 
 **Constraints**
 
-- `E5` (error) — framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단.
-- `N1` (warning) — 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`).
+- `AL_E5` (error) — framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단.
+- `AL_N1` (warning) — 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`).
 
 ```dart
 // ports/product_port.dart
@@ -69,8 +69,8 @@ abstract class ProductPort {
 
 **Constraints**
 
-- `E2` (error) — `entities/`/`ports/`/`exceptions/`만 import 허용 — adapters/presentation 금지.
-- `N3` (warning) — 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`).
+- `AL_E2` (error) — `entities/`/`ports/`/`exceptions/`만 import 허용 — adapters/presentation 금지.
+- `AL_N3` (warning) — 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`).
 
 ```dart
 // usecases/get_products_usecase.dart
@@ -94,7 +94,7 @@ class GetProductsUseCase {
 
 **Constraints**
 
-- `N2` (warning) — 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`).
+- `AL_N2` (warning) — 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`).
 
 ```dart
 // adapters/product_api_adapter.dart
@@ -167,7 +167,7 @@ class ServerException implements Exception {
 
 **Constraints**
 
-- `E8` (error) — presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지.
+- `AL_E8` (error) — presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지.
 
 ```dart
 // pages/product_screen.dart
@@ -190,18 +190,18 @@ base 룰 12개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. 시
 
 | ID | Severity | Layer | 설명 | 참조 |
 | --- | --- | --- | --- | --- |
-| E1 | error | `entities` | codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지. | `codegenPackages` |
-| E2 | error | `usecases` | `entities/`/`ports/`/`exceptions/`만 import 허용 — adapters/presentation 금지. | — |
-| E4 | error | `domainLayers` | 도메인 레이어(entities/ports/usecases/exceptions)는 인프라 SDK import 금지. | `infraPackages`, `domainLayers` |
-| E5 | error | `ports` | framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단. | `frameworkPackages`, `infraPackages` |
-| E6 | error | (all features) | feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용. | `crossFeatureForbidden` |
-| E7 | error | (all) | bare `catch` 금지 — `on ExceptionType catch (e)` 형태 강제. | — |
-| E8 | error | `presentation` | presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지. | `infraPackages` |
-| N1 | warning | `ports` | 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`). | — |
-| N2 | warning | `adapters` | 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`). | — |
-| N3 | warning | `usecases` | 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`). | — |
-| S1 | warning | (all) | 파일당 800줄 초과 금지 (codegen 산출물 `*.g.dart` 등 제외) — 단일 책임 위반 신호. | `maxFileLines`, `generatedFileSuffixes` |
-| S2 | error | `other` | `app/lib/` 안에서 boundary 외 경로 금지 — 구조 일관성 강제. | — |
+| AL_E1 | error | `entities` | codegen annotation 패키지만 외부 import 허용 — 도메인 순수성 유지. | `codegenPackages` |
+| AL_E2 | error | `usecases` | `entities/`/`ports/`/`exceptions/`만 import 허용 — adapters/presentation 금지. | — |
+| AL_E4 | error | `domainLayers` | 도메인 레이어(entities/ports/usecases/exceptions)는 인프라 SDK import 금지. | `infraPackages`, `domainLayers` |
+| AL_E5 | error | `ports` | framework 패키지(flutter/dio 등) import 금지 — 시그니처에 framework 타입 노출 차단. | `frameworkPackages`, `infraPackages` |
+| AL_E6 | error | (all features) | feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용. | `crossFeatureForbidden` |
+| AL_E7 | error | (all) | bare `catch` 금지 — `on ExceptionType catch (e)` 형태 강제. | — |
+| AL_E8 | error | `presentation` | presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지. | `infraPackages` |
+| AL_N1 | warning | `ports` | 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`). | — |
+| AL_N2 | warning | `adapters` | 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`). | — |
+| AL_N3 | warning | `usecases` | 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`). | — |
+| AL_S1 | warning | (all) | 파일당 800줄 초과 금지 (codegen 산출물 `*.g.dart` 등 제외) — 단일 책임 위반 신호. | `maxFileLines`, `generatedFileSuffixes` |
+| AL_S2 | error | `other` | `app/lib/` 안에서 boundary 외 경로 금지 — 구조 일관성 강제. | — |
 
 ## 패키지 화이트/블랙리스트
 

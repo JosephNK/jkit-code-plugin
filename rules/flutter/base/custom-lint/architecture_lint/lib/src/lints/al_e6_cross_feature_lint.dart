@@ -4,17 +4,17 @@ import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
 
-/// E6: feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용.
+/// AL_E6: feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용.
 ///
 /// feature 모듈 독립성 보장 — 결합은 entities 수준으로만.
 /// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases).
 /// 예외: `presentation/`이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
 /// stack-specific 추가 차단(예: bloc)은 별도 패키지가 자체 룰로 강제.
-class E6CrossFeatureLint extends DartLintRule {
-  const E6CrossFeatureLint() : super(code: _code);
+class AlE6CrossFeatureLint extends DartLintRule {
+  const AlE6CrossFeatureLint() : super(code: _code);
 
   static const _code = LintCode(
-    name: 'e6_cross_feature',
+    name: 'al_e6_cross_feature',
     problemMessage:
         'Cross-feature imports of internal layers (ports/, adapters/, '
         'usecases/) are not allowed. '
