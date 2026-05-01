@@ -1,10 +1,6 @@
 # Architecture
 
 > 이 문서: 헥사고날 **원리 · Data Flow · Dependency Direction** 개념 해설.
-> 레이어별 책임·포함 파일·제약·대표 코드 형태: `@jkit/code-plugin/flutter/base/lint-rules-reference.md` ("레이어 글로서리")
-> 레이어 경로 매핑 (폴더 트리): `@jkit/code-plugin/flutter/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (E/N/S 룰 표): `@jkit/code-plugin/flutter/base/lint-rules-reference.md`
-> 레이어 의존성 그래프 (Mermaid 시각화): `@jkit/code-plugin/flutter/base/lint-rules-diagram.md`
 
 Hexagonal Architecture (Ports and Adapters). 핵심 원칙: **비즈니스 로직은 외부 인프라를 모른다.**
 

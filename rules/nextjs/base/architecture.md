@@ -1,10 +1,6 @@
 # Architecture
 
 > 이 문서: 헥사고날 **원리 · Data Flow · Dependency Direction** 개념 해설.
-> 레이어별 책임·포함·네이밍·대표 코드 형태: `@jkit/code-plugin/nextjs/base/lint-rules-reference.md` ("레이어 글로서리")
-> 레이어 경로 매핑 (App Router 트리): `@jkit/code-plugin/nextjs/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/code-plugin/nextjs/base/lint-rules-reference.md`
-> 레이어 의존성 그래프 (Mermaid 시각화): `@jkit/code-plugin/nextjs/base/lint-rules-diagram.md`
 
 Hexagonal Architecture (Ports and Adapters) + Next.js App Router colocated components.
 Domain logic is pure TypeScript with no framework dependencies.
@@ -80,6 +76,4 @@ Page (SC) -> _components/ (CC) -> Hook -> Service -> Port (interface) <- Reposit
 
 ## Layer Details
 
-> 각 레이어의 역할·포함 파일 종류·네이밍 관례·대표 코드 형태는
-> `@jkit/code-plugin/nextjs/base/lint-rules-reference.md`의 **"레이어 글로서리 (Layer Glossary)"** 섹션을 참고.
 > 이 문서는 개념/흐름에 집중하고, 실제 레이어별 세부는 단일 소스에서 관리한다.
