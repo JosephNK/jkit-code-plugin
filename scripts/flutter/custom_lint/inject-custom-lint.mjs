@@ -9,6 +9,12 @@
 // creates a synthetic package and runs `dart pub upgrade` to resolve plugin
 // dependencies independently of the user's pubspec.yaml.
 //
+// Workspace handling: in a Dart pub workspace, the `plugins:` section is only
+// honored at the **workspace root**'s analysis_options.yaml. Pass --strip-stale-from
+// to remove a misplaced `plugins:` section (and the `architecture_lint` /
+// `leaf_kit_lint` / `freezed_lint` entries) from a workspace member's
+// analysis_options.yaml — typical when a previous run wrote to the wrong file.
+//
 // Also strips the legacy `custom_lint` dev dependency and `analyzer.plugins:
 // [custom_lint]` registration if found, to clean up post-migration.
 //
@@ -18,10 +24,11 @@
 // Usage:
 //   inject-custom-lint.mjs \
 //     --pubspec app/pubspec.yaml \
-//     --analysis-options app/analysis_options.yaml \
+//     --analysis-options analysis_options.yaml \
 //     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
 //     --git-ref v0.3.0 \
-//     [--stacks leaf-kit,go-router]
+//     [--stacks leaf-kit,go-router] \
+//     [--strip-stale-from app/analysis_options.yaml]
 // =============================================================================
 
 import fs from 'node:fs';
@@ -83,6 +90,7 @@ function parseArgs(argv) {
     gitUrl: '',
     gitRef: '',
     stacks: [],
+    stripStaleFrom: '',
   };
   const rest = argv.slice(2);
 
@@ -127,6 +135,13 @@ function parseArgs(argv) {
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean);
+        break;
+      case '--strip-stale-from':
+        if (!rest.length) {
+          process.stderr.write('--strip-stale-from requires a value\n');
+          usage();
+        }
+        args.stripStaleFrom = rest.shift();
         break;
       case '-h':
       case '--help':
@@ -298,6 +313,63 @@ function injectAnalysisOptions(analysisPath, gitUrl, gitRef, packages) {
   return true;
 }
 
+// ─── analysis_options.yaml — strip plugins from misplaced location ───
+//
+// In a Dart pub workspace, `plugins:` only takes effect at the workspace
+// root. If a previous run wrote it to a workspace member's
+// analysis_options.yaml, the analyzer raises `plugins_in_inner_options`.
+// Strip the entire `plugins:` block (or just our managed entries) to clear it.
+function stripStalePluginsFrom(staleAnalysisPath) {
+  if (
+    !staleAnalysisPath ||
+    !fs.existsSync(staleAnalysisPath) ||
+    !fs.statSync(staleAnalysisPath).isFile()
+  ) {
+    return true;
+  }
+
+  const raw = fs.readFileSync(staleAnalysisPath, 'utf-8');
+  const doc = YAML.parseDocument(raw);
+  if (doc.contents === null) return true;
+
+  let changed = false;
+
+  const plugins = doc.get('plugins');
+  if (YAML.isMap(plugins)) {
+    for (const name of ALL_LINT_PACKAGE_NAMES) {
+      if (plugins.has(name)) {
+        plugins.delete(name);
+        process.stdout.write(
+          `  Stripped misplaced ${name} from ${staleAnalysisPath} plugins:\n`,
+        );
+        changed = true;
+      }
+    }
+    if (plugins.items.length === 0 && changed) {
+      doc.delete('plugins');
+    }
+  }
+
+  // Legacy: also strip `analyzer.plugins: [custom_lint]` if present.
+  const analyzer = doc.get('analyzer');
+  if (YAML.isMap(analyzer)) {
+    const legacyPlugins = analyzer.get('plugins');
+    if (legacyPlugins != null) {
+      analyzer.delete('plugins');
+      process.stdout.write(
+        `  Stripped legacy analyzer.plugins from ${staleAnalysisPath}\n`,
+      );
+      changed = true;
+    }
+    if (analyzer.items.length === 0) {
+      doc.delete('analyzer');
+    }
+  }
+
+  if (changed) writeDoc(staleAnalysisPath, doc);
+  return true;
+}
+
 // ─── Main ───
 
 function main() {
@@ -311,6 +383,9 @@ function main() {
 
   let ok = true;
   ok = cleanPubspec(path.resolve(args.pubspec)) && ok;
+  if (args.stripStaleFrom) {
+    ok = stripStalePluginsFrom(path.resolve(args.stripStaleFrom)) && ok;
+  }
   ok =
     injectAnalysisOptions(
       path.resolve(args.analysisOptions),

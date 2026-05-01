@@ -23,7 +23,31 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import YAML from 'yaml';
+
 import { ensureFlutterRoot, normalizePath } from '../common.mjs';
+
+/**
+ * Detect whether projectDir is a Dart pub workspace root that includes the
+ * given entry as a member. analysis_server_plugin only honors `plugins:` at
+ * the workspace root, so the entry's analysis_options.yaml is the wrong place.
+ */
+function isWorkspaceMember(projectDir, entry) {
+  const rootPubspec = path.join(projectDir, 'pubspec.yaml');
+  if (!fs.existsSync(rootPubspec) || !fs.statSync(rootPubspec).isFile()) {
+    return false;
+  }
+  let doc;
+  try {
+    doc = YAML.parseDocument(fs.readFileSync(rootPubspec, 'utf-8'));
+  } catch {
+    return false;
+  }
+  const ws = doc.get('workspace');
+  if (!YAML.isSeq(ws)) return false;
+  const entries = ws.toJSON().map((s) => String(s).replace(/\/+$/, ''));
+  return entries.includes(entry.replace(/\/+$/, ''));
+}
 
 const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
 
@@ -176,17 +200,38 @@ function main() {
     'inject-custom-lint.mjs',
   );
 
+  // analysis_server_plugin requires `plugins:` to live at the workspace root
+  // when the entry is a workspace member; otherwise the analyzer raises
+  // `plugins_in_inner_options`. Fall back to entry's analysis_options.yaml
+  // for non-workspace projects.
+  const inWorkspace = isWorkspaceMember(projectDir, args.entry);
+  const analysisOptionsPath = inWorkspace
+    ? 'analysis_options.yaml'
+    : path.join(args.entry, 'analysis_options.yaml');
+  const stalePath = inWorkspace
+    ? path.join(args.entry, 'analysis_options.yaml')
+    : null;
+
+  if (inWorkspace) {
+    process.stdout.write(
+      `  Detected pub workspace — writing plugins: to ${analysisOptionsPath} (root)\n`,
+    );
+  }
+
   const injectArgs = [
     injectScript,
     '--pubspec',
     path.join(args.entry, 'pubspec.yaml'),
     '--analysis-options',
-    path.join(args.entry, 'analysis_options.yaml'),
+    analysisOptionsPath,
     '--git-url',
     GIT_URL,
     '--git-ref',
     ref,
   ];
+  if (stalePath) {
+    injectArgs.push('--strip-stale-from', stalePath);
+  }
   if (args.stacks) {
     injectArgs.push('--stacks', args.stacks);
   }
