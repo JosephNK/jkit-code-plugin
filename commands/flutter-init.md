@@ -154,7 +154,7 @@ esac
 
 ### 8. architecture_lint 주입
 
-Flutter 엔트리 프로젝트의 `pubspec.yaml`(`dev_dependencies.architecture_lint`, git dep)과 `analysis_options.yaml`(`analyzer.plugins`)에 `architecture_lint`를 주입합니다. husky pre-commit 훅이 `dart run architecture_lint:lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
+Flutter 엔트리 프로젝트의 `pubspec.yaml`의 `dev_dependencies`에 `architecture_lint`(git dep)와 `custom_lint`(umbrella plugin, pub version)를 추가하고, `analysis_options.yaml`의 `analyzer.plugins`에 `custom_lint`를 등록합니다. custom_lint이 architecture_lint 및 추후 추가될 stack lint 패키지(`leaf_kit_lint` 등)를 자동 발견·합성합니다. husky pre-commit 훅이 `dart run custom_lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
 
 ```bash
 cd "$PROJECT_ROOT"

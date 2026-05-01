@@ -106,46 +106,58 @@ function extractClassDoc(source, className) {
 }
 
 function extractLintClassName(source) {
-  const m = source.match(/^class\s+(\w+Lint)\s+extends\s+DartLint\b/m);
+  const m = source.match(/^class\s+(\w+Lint)\s+extends\s+DartLintRule\b/m);
   return m ? m[1] : null;
 }
 
 /**
- * `String get <name> => '...';` 또는 멀티라인 리터럴 concat을 추출.
+ * LintCode 정의에서 필드(name·problemMessage·correctionMessage·errorSeverity) 추출.
+ * 패턴: `static const _code = LintCode( ... );`
  */
-function extractGetter(source, name) {
-  const re = new RegExp(`get\\s+${name}\\s*=>\\s*([^;]+);`, 's');
-  const m = source.match(re);
+function extractLintCodeBlock(source) {
+  const m = source.match(/static\s+const\s+_code\s*=\s*LintCode\s*\(([\s\S]*?)\);/);
+  return m ? m[1] : null;
+}
+
+function extractLintCodeField(block, fieldName) {
+  if (block == null) return null;
+  // Match `fieldName: 'literal',` or multi-line concat literal.
+  const re = new RegExp(`${fieldName}\\s*:\\s*([\\s\\S]*?)(?=,\\s*\\w+\\s*:|,?\\s*$)`);
+  const m = block.match(re);
   if (!m) return null;
-  const body = m[1].trim();
+  const body = m[1].trim().replace(/,\s*$/, '');
   const literals = collectStringLiterals(body);
   if (literals.length > 0) return literals.join('');
   return body;
 }
 
-function extractSeverity(source) {
-  const raw = extractGetter(source, 'severity');
-  if (!raw) return null;
-  const m = raw.match(/AnalysisErrorSeverity\.(\w+)/);
-  return m ? m[1].toLowerCase() : raw.toLowerCase();
+function extractSeverityFromBlock(block) {
+  if (block == null) return null;
+  const m = block.match(/errorSeverity\s*:\s*ErrorSeverity\.(\w+)/);
+  return m ? m[1].toLowerCase() : null;
 }
 
 /**
- * matchLint() 본문에서 타깃 레이어 추출.
+ * run() 본문에서 타깃 레이어 추출.
  * 패턴:
- *   - `if (layer != 'X')` → { kind: 'layer', value: 'X' }
- *   - `if (!setName.contains(layer))` → { kind: 'layerSet', value: 'setName' }
+ *   - `classifyLayer(filePath) != 'X'` → { kind: 'layer', value: 'X' }
+ *   - `!domainLayers.contains(layer)` 또는 `!setName.contains(classifyLayer(filePath))`
+ *     → { kind: 'layerSet', value: 'setName' }
  */
 function extractTargetLayer(source) {
-  let m = source.match(/if\s*\(\s*layer\s*!=\s*'([^']+)'\s*\)/);
+  let m = source.match(/classifyLayer\s*\([^)]*\)\s*!=\s*'([^']+)'/);
   if (m) return { kind: 'layer', value: m[1] };
-  m = source.match(/if\s*\(\s*!\s*(\w+)\s*\.contains\s*\(\s*layer\s*\)\s*\)/);
+  m = source.match(/!\s*(\w+)\s*\.contains\s*\(\s*layer\s*\)/);
   if (m) return { kind: 'layerSet', value: m[1] };
   return null;
 }
 
+/**
+ * run() 본문의 `context.registry.addXxx(...)` 호출에서 AST 노드 타입 추출.
+ * `addImportDirective` → `ImportDirective`.
+ */
 function extractAppliesTo(source) {
-  const m = source.match(/if\s*\(\s*node\s+is!\s+(\w+)\s*\)/);
+  const m = source.match(/context\.registry\.add(\w+)\s*\(/);
   return m ? m[1] : null;
 }
 
@@ -170,13 +182,14 @@ function parseLintFile(filePath) {
   const content = readSource(filePath);
   const className = extractLintClassName(content);
   if (!className) return null;
+  const codeBlock = extractLintCodeBlock(content);
   return {
     file: path.basename(filePath),
     className,
-    code: extractGetter(content, 'code'),
-    message: extractGetter(content, 'message'),
-    severity: extractSeverity(content),
-    correction: extractGetter(content, 'correction'),
+    code: extractLintCodeField(codeBlock, 'name'),
+    message: extractLintCodeField(codeBlock, 'problemMessage'),
+    severity: extractSeverityFromBlock(codeBlock),
+    correction: extractLintCodeField(codeBlock, 'correctionMessage'),
     doc: extractClassDoc(content, className),
     target: extractTargetLayer(content),
     appliesTo: extractAppliesTo(content),

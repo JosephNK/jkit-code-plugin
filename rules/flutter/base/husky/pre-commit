@@ -13,11 +13,9 @@ echo "$staged_dart" | xargs dart format --set-exit-if-changed
 # flutter analyze
 (cd {{ENTRY}} && flutter analyze --fatal-infos)
 
-# architecture-lint (staged 파일만)
-entry_dart=$(echo "$staged_dart" | grep "^{{ENTRY}}/" | sed "s|^{{ENTRY}}/||" || true)
-if [ -n "$entry_dart" ]; then
-  (cd {{ENTRY}} && echo "$entry_dart" | xargs dart run architecture_lint:lint)
-fi
+# custom_lint (architecture_lint + 설치된 stack lint 패키지 자동 발견)
+# custom_lint은 per-file 필터를 지원하지 않으므로 전체 프로젝트 분석.
+(cd {{ENTRY}} && dart run custom_lint)
 
 # flutter test (related only)
 (cd {{ENTRY}} && tf=$(git diff --cached --name-only --diff-filter=ACMR | grep "^{{ENTRY}}/.*\.dart$" | sed "s|^{{ENTRY}}/||" | while read f; do if [[ $f == test/*_test.dart ]]; then echo "$f"; elif [[ $f == lib/* ]]; then t="test/${f#lib/}"; t="${t%.dart}_test.dart"; [ -f "$t" ] && echo "$t"; fi; done | sort -u); if [ -n "$tf" ]; then flutter test $tf; else echo "No related tests found, skipping"; fi)

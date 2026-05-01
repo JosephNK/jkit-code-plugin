@@ -5,8 +5,10 @@
 // Uses the `yaml` package (Document API) for round-trip YAML editing —
 // preserves comments, formatting, and existing structure.
 //
-// architecture_lint is injected as a git dependency so the generated
-// pubspec.yaml is portable across developer machines and CI.
+// architecture_lint is injected as a git dependency in dev_dependencies.
+// custom_lint (umbrella plugin) is also added to dev_dependencies and
+// registered as the analyzer plugin. custom_lint then auto-discovers
+// architecture_lint and any other custom_lint_builder packages.
 //
 // Usage:
 //   inject-architecture-lint.mjs \
@@ -24,6 +26,8 @@ import process from 'node:process';
 import YAML from 'yaml';
 
 const PACKAGE_NAME = 'architecture_lint';
+const ANALYZER_PLUGIN_NAME = 'custom_lint';
+const CUSTOM_LINT_VERSION = '^0.8.0';
 
 const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-path <path> --git-ref <ref>
 
@@ -162,19 +166,27 @@ function injectPubspec(pubspecPath, gitUrl, gitPath, gitRef) {
   }
 
   const devDeps = doc.get('dev_dependencies');
-  const current = YAML.isMap(devDeps) ? nodeToJs(devDeps.get(PACKAGE_NAME)) : null;
+  const currentArch = YAML.isMap(devDeps)
+    ? nodeToJs(devDeps.get(PACKAGE_NAME))
+    : null;
+  const currentCustom = YAML.isMap(devDeps)
+    ? nodeToJs(devDeps.get(ANALYZER_PLUGIN_NAME))
+    : null;
 
-  if (
-    current &&
-    typeof current === 'object' &&
-    current.git &&
-    typeof current.git === 'object' &&
-    current.git.url === gitUrl &&
-    current.git.path === gitPath &&
-    current.git.ref === gitRef
-  ) {
+  const archAlreadyPinned =
+    currentArch &&
+    typeof currentArch === 'object' &&
+    currentArch.git &&
+    typeof currentArch.git === 'object' &&
+    currentArch.git.url === gitUrl &&
+    currentArch.git.path === gitPath &&
+    currentArch.git.ref === gitRef;
+
+  const customAlreadyPinned = currentCustom === CUSTOM_LINT_VERSION;
+
+  if (archAlreadyPinned && customAlreadyPinned) {
     process.stdout.write(
-      `  ${PACKAGE_NAME} already pinned to ${gitRef} in ${pubspecPath}\n`,
+      `  ${PACKAGE_NAME} already pinned to ${gitRef} and ${ANALYZER_PLUGIN_NAME} ${CUSTOM_LINT_VERSION} in ${pubspecPath}\n`,
     );
     return true;
   }
@@ -185,15 +197,23 @@ function injectPubspec(pubspecPath, gitUrl, gitPath, gitRef) {
     doc.delete('dev_dependencies');
   }
 
-  doc.setIn(
-    ['dev_dependencies', PACKAGE_NAME],
-    buildGitDep(gitUrl, gitPath, gitRef),
-  );
+  if (!archAlreadyPinned) {
+    doc.setIn(
+      ['dev_dependencies', PACKAGE_NAME],
+      buildGitDep(gitUrl, gitPath, gitRef),
+    );
+    process.stdout.write(
+      `  Injected ${PACKAGE_NAME} (git ref ${gitRef}) into ${pubspecPath}\n`,
+    );
+  }
+  if (!customAlreadyPinned) {
+    doc.setIn(['dev_dependencies', ANALYZER_PLUGIN_NAME], CUSTOM_LINT_VERSION);
+    process.stdout.write(
+      `  Injected ${ANALYZER_PLUGIN_NAME} (${CUSTOM_LINT_VERSION}) into ${pubspecPath}\n`,
+    );
+  }
 
   writeDoc(pubspecPath, doc);
-  process.stdout.write(
-    `  Injected ${PACKAGE_NAME} (git ref ${gitRef}) into ${pubspecPath}\n`,
-  );
   return true;
 }
 
@@ -213,32 +233,43 @@ function injectAnalysisOptions(analysisPath) {
     if (analyzer != null && !YAML.isMap(analyzer)) {
       doc.delete('analyzer');
     }
-    doc.setIn(['analyzer', 'plugins'], [PACKAGE_NAME]);
+    doc.setIn(['analyzer', 'plugins'], [ANALYZER_PLUGIN_NAME]);
   } else if (YAML.isSeq(plugins)) {
+    // Drop any legacy 'architecture_lint' entry — only custom_lint should remain
+    // since Dart analyzer only allows one plugin per context.
     const items = plugins.toJSON();
-    if (items.includes(PACKAGE_NAME)) {
+    const filtered = items.filter(
+      (i) => i !== PACKAGE_NAME && i !== ANALYZER_PLUGIN_NAME,
+    );
+    const target = [...filtered, ANALYZER_PLUGIN_NAME];
+    const same =
+      items.length === target.length &&
+      items.every((v, i) => v === target[i]);
+    if (same) {
       pluginsChanged = false;
     } else {
-      plugins.add(PACKAGE_NAME);
+      doc.setIn(['analyzer', 'plugins'], target);
     }
   } else {
     const plain = YAML.isScalar(plugins) ? plugins.value : plugins;
-    if (String(plain) === PACKAGE_NAME) {
+    if (String(plain) === ANALYZER_PLUGIN_NAME) {
       pluginsChanged = false;
     } else {
-      doc.setIn(['analyzer', 'plugins'], [plain, PACKAGE_NAME]);
+      doc.setIn(['analyzer', 'plugins'], [ANALYZER_PLUGIN_NAME]);
     }
   }
 
   if (!pluginsChanged) {
     process.stdout.write(
-      `  ${PACKAGE_NAME} already configured in ${analysisPath}, skipping\n`,
+      `  ${ANALYZER_PLUGIN_NAME} already configured in ${analysisPath}, skipping\n`,
     );
     return true;
   }
 
   writeDoc(analysisPath, doc);
-  process.stdout.write(`  Injected ${PACKAGE_NAME} into ${analysisPath}\n`);
+  process.stdout.write(
+    `  Set analyzer.plugins to [${ANALYZER_PLUGIN_NAME}] in ${analysisPath}\n`,
+  );
   return true;
 }
 
@@ -247,7 +278,7 @@ function injectAnalysisOptions(analysisPath) {
 function main() {
   const args = parseArgs(process.argv);
 
-  process.stdout.write(`Injecting ${PACKAGE_NAME}...\n`);
+  process.stdout.write(`Injecting ${PACKAGE_NAME} via ${ANALYZER_PLUGIN_NAME}...\n`);
 
   let ok = true;
   ok =

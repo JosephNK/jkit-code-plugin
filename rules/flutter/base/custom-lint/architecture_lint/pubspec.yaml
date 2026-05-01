@@ -1,17 +1,14 @@
 name: architecture_lint
 version: 0.2.30
-description: Flutter hexagonal architecture linter plugin (analyzer + analyzer_plugin).
+description: Flutter hexagonal architecture linter (custom_lint plugin).
 
 publish_to: "none"
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-
-executables:
-  architecture_lint: lint
+  sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
-  analyzer: ">=6.0.0 <13.0.0"
-  analyzer_plugin: ">=0.13.0 <0.15.0"
+  analyzer: ^7.0.0
+  custom_lint_builder: ^0.8.0
   glob: ^2.1.0
   path: ^1.0.0

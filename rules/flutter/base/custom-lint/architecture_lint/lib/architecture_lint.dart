@@ -1,7 +1,8 @@
 /// JKit Flutter — Architecture Lint Package (Base)
 ///
-/// Flutter 프로젝트의 Clean Architecture + Feature-first 구조를 정적 분석으로 강제하는
-/// analyzer plugin. base 룰만 포함하며, stack-specific 룰(예: bloc)은 별도 패키지.
+/// Flutter 프로젝트의 Clean Architecture + Feature-first 구조를 정적 분석으로 강제.
+/// custom_lint umbrella plugin을 통해 IDE/CLI에서 동작.
+/// stack-specific 룰(예: bloc)은 별도 패키지로 분리.
 ///
 /// ## 룰 요약 (12종)
 ///
@@ -22,34 +23,45 @@
 /// ### 사이즈/구조 규칙 (S1~S2)
 /// - **S1** `s1_file_size`            : 파일당 800줄 이하 (WARNING)
 /// - **S2** `s2_unknown_path`         : `app/lib/` 안에서 boundary 외 경로 금지 (ERROR)
-///
-/// ## 디렉토리 구조
-/// - `src/constants.dart`            — 패키지 리스트, 레이어 집합, 상수
-/// - `src/boundary_element.dart`     — projectBoundaryElements (lint 분류 + 트리 단일 source)
-/// - `src/structure_annotation.dart` — placeholder/하위 폴더 의도 (트리 보강, doc-only)
-/// - `src/classification.dart`       — 파일 경로 → 레이어/feature 분류 헬퍼
-/// - `src/dart_lint.dart`            — 모든 룰의 베이스 `DartLint` 추상 클래스
-/// - `src/runner.dart`               — AST 방문자 + 룰 레지스트리
-/// - `src/architecture_lint_plugin.dart` — analyzer_plugin `ServerPlugin` 구현
-/// - `src/lints/`                    — 각 룰 구현체
 library architecture_lint;
 
-export 'src/architecture_lint_plugin.dart';
+import 'package:custom_lint_builder/custom_lint_builder.dart';
+
+import 'src/lints/e1_entities_import_lint.dart';
+import 'src/lints/e2_usecases_dependency_lint.dart';
+import 'src/lints/e4_domain_no_sdk_lint.dart';
+import 'src/lints/e5_ports_no_framework_lint.dart';
+import 'src/lints/e6_cross_feature_lint.dart';
+import 'src/lints/e7_no_bare_catch_lint.dart';
+import 'src/lints/e8_presentation_dependency_lint.dart';
+import 'src/lints/n1_port_naming_lint.dart';
+import 'src/lints/n2_adapter_naming_lint.dart';
+import 'src/lints/n3_usecase_naming_lint.dart';
+import 'src/lints/s1_file_size_lint.dart';
+import 'src/lints/s2_unknown_path_lint.dart';
+
 export 'src/boundary_element.dart';
 export 'src/classification.dart';
 export 'src/constants.dart';
-export 'src/dart_lint.dart';
-export 'src/runner.dart';
 export 'src/structure_annotation.dart';
-export 'src/lints/e1_entities_import_lint.dart';
-export 'src/lints/e2_usecases_dependency_lint.dart';
-export 'src/lints/e4_domain_no_sdk_lint.dart';
-export 'src/lints/e5_ports_no_framework_lint.dart';
-export 'src/lints/e6_cross_feature_lint.dart';
-export 'src/lints/e7_no_bare_catch_lint.dart';
-export 'src/lints/e8_presentation_dependency_lint.dart';
-export 'src/lints/n1_port_naming_lint.dart';
-export 'src/lints/n2_adapter_naming_lint.dart';
-export 'src/lints/n3_usecase_naming_lint.dart';
-export 'src/lints/s1_file_size_lint.dart';
-export 'src/lints/s2_unknown_path_lint.dart';
+
+/// custom_lint entrypoint — base 12개 룰 등록.
+PluginBase createPlugin() => _ArchitectureLintPlugin();
+
+class _ArchitectureLintPlugin extends PluginBase {
+  @override
+  List<LintRule> getLintRules(CustomLintConfigs configs) => const [
+    E1EntitiesImportLint(),
+    E2UsecasesDependencyLint(),
+    E4DomainNoSdkLint(),
+    E5PortsNoFrameworkLint(),
+    E6CrossFeatureLint(),
+    E7NoBareCatchLint(),
+    E8PresentationDependencyLint(),
+    N1PortNamingLint(),
+    N2AdapterNamingLint(),
+    N3UseCaseNamingLint(),
+    S1FileSizeLint(),
+    S2UnknownPathLint(),
+  ];
+}

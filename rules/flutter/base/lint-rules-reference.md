@@ -201,7 +201,7 @@ base 룰 12개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. 시
 | N2 | warning | `adapters` | 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`). | — |
 | N3 | warning | `usecases` | 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`). | — |
 | S1 | warning | (all) | 파일당 800줄 초과 금지 (codegen 산출물 `*.g.dart` 등 제외) — 단일 책임 위반 신호. | `maxFileLines`, `generatedFileSuffixes` |
-| S2 | error | (all) | `app/lib/` 안에서 boundary 외 경로 금지 — 구조 일관성 강제. | — |
+| S2 | error | `other` | `app/lib/` 안에서 boundary 외 경로 금지 — 구조 일관성 강제. | — |
 
 ## 패키지 화이트/블랙리스트
 

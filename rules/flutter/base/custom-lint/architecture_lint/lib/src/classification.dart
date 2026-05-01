@@ -112,6 +112,7 @@ String? extractFeature(String filePath) {
 String? getFilePath(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
+    // ignore: experimental_member_use
     return unit.declaredFragment?.source.fullName;
   }
   return null;
@@ -123,6 +124,7 @@ String? getFilePath(AstNode node) {
 String? getProjectPackageName(AstNode node) {
   final unit = node.root;
   if (unit is CompilationUnit) {
+    // ignore: experimental_member_use
     final fragment = unit.declaredFragment;
     final uri = fragment?.source.uri;
     if (uri != null && uri.scheme == 'package') {

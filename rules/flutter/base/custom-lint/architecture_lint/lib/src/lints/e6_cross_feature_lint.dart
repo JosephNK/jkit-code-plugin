@@ -1,10 +1,8 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/syntactic_entity.dart';
-import 'package:analyzer_plugin/protocol/protocol_common.dart'
-    show AnalysisErrorSeverity;
+import 'package:analyzer/error/listener.dart';
+import "package:analyzer/error/error.dart" show ErrorSeverity;
+import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
-import '../dart_lint.dart';
 
 /// E6: feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용.
 ///
@@ -12,63 +10,60 @@ import '../dart_lint.dart';
 /// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases).
 /// 예외: `presentation/`이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
 /// stack-specific 추가 차단(예: bloc)은 별도 패키지가 자체 룰로 강제.
-class E6CrossFeatureLint extends DartLint {
-  @override
-  String get code => 'e6_cross_feature';
+class E6CrossFeatureLint extends DartLintRule {
+  const E6CrossFeatureLint() : super(code: _code);
+
+  static const _code = LintCode(
+    name: 'e6_cross_feature',
+    problemMessage:
+        'Cross-feature imports of internal layers (ports/, adapters/, '
+        'usecases/) are not allowed. '
+        'Use DI or event bus for cross-feature communication.',
+    correctionMessage:
+        'Share types via entities/, inject dependencies through DI, '
+        'or use an event bus for cross-feature communication.',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
 
   @override
-  String get message =>
-      'Cross-feature imports of internal layers (ports/, adapters/, '
-      'usecases/) are not allowed. '
-      'Use DI or event bus for cross-feature communication.';
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    context.registry.addImportDirective((node) {
+      final filePath = resolver.path;
+      final currentFeature = extractFeature(filePath);
+      if (currentFeature == null) return;
 
-  @override
-  AnalysisErrorSeverity get severity => AnalysisErrorSeverity.ERROR;
+      final importUri = node.uri.stringValue;
+      if (importUri == null) return;
 
-  @override
-  String? get correction =>
-      'Share types via entities/, inject dependencies through DI, '
-      'or use an event bus for cross-feature communication.';
+      final projectPkg = getProjectPackageName(node);
 
-  @override
-  SyntacticEntity? matchLint(AstNode node) {
-    if (node is! ImportDirective) return null;
+      final targetFeature = getImportTargetFeature(
+        importUri,
+        filePath,
+        projectPkg,
+      );
+      if (targetFeature == null || targetFeature == currentFeature) return;
 
-    final filePath = getFilePath(node);
-    if (filePath == null) return null;
+      final targetLayer = getImportTargetLayer(importUri, filePath, projectPkg);
 
-    final currentFeature = extractFeature(filePath);
-    if (currentFeature == null) return null;
+      // entities/ imports are always allowed across features
+      if (targetLayer == 'entities') return;
 
-    final importUri = node.uri.stringValue;
-    if (importUri == null) return null;
-
-    final projectPkg = getProjectPackageName(node);
-
-    final targetFeature = getImportTargetFeature(
-      importUri,
-      filePath,
-      projectPkg,
-    );
-    if (targetFeature == null || targetFeature == currentFeature) return null;
-
-    final targetLayer = getImportTargetLayer(importUri, filePath, projectPkg);
-
-    // entities/ imports are always allowed across features
-    if (targetLayer == 'entities') return null;
-
-    // presentation may import other features' domain/
-    final currentLayer = classifyLayer(filePath);
-    if (currentLayer == 'presentation') {
-      if (isImportFromDomain(importUri, filePath, projectPkg)) {
-        return null;
+      // presentation may import other features' domain/
+      final currentLayer = classifyLayer(filePath);
+      if (currentLayer == 'presentation') {
+        if (isImportFromDomain(importUri, filePath, projectPkg)) {
+          return;
+        }
       }
-    }
 
-    if (targetLayer != null && crossFeatureForbidden.contains(targetLayer)) {
-      return node.uri;
-    }
-
-    return null;
+      if (targetLayer != null && crossFeatureForbidden.contains(targetLayer)) {
+        reporter.atNode(node.uri, code);
+      }
+    });
   }
 }

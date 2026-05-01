@@ -1,58 +1,52 @@
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/dart/ast/syntactic_entity.dart';
-import 'package:analyzer_plugin/protocol/protocol_common.dart'
-    show AnalysisErrorSeverity;
+import 'package:analyzer/error/listener.dart';
+import "package:analyzer/error/error.dart" show ErrorSeverity;
+import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
-import '../dart_lint.dart';
 
 /// E2: `entities/`/`ports/`/`exceptions/`만 import 허용 — adapters/presentation 금지.
 ///
 /// 비즈니스 로직을 인프라/UI에서 분리해 UseCase 단독 단위 테스트 가능 유지.
 /// 인프라 의존은 `ports/`로 추상화하고 DI로 `adapters/`를 주입한다.
 /// stack-specific 추가 차단(예: bloc)은 별도 패키지가 자체 룰로 강제.
-class E2UsecasesDependencyLint extends DartLint {
+class E2UsecasesDependencyLint extends DartLintRule {
+  const E2UsecasesDependencyLint() : super(code: _code);
+
   // common_services 레이어는 forbidden에서 제외 — value-object/config/state/exception
   // 등 공용 서비스의 보조 타입은 usecase에서 자유롭게 import 가능.
   // (common/services 의 adapter 구현체는 별도 'adapters' 레이어로 분류되어 차단됨)
   static const _forbidden = <String>{'adapters', 'presentation'};
 
-  @override
-  String get code => 'e2_usecases_dependency';
+  static const _code = LintCode(
+    name: 'e2_usecases_dependency',
+    problemMessage:
+        'usecases/ must not import adapters/ or presentation/. '
+        'Only entities/, ports/, and exceptions/ are allowed.',
+    correctionMessage:
+        'Inject dependencies through ports/ and use DI to wire adapters.',
+    errorSeverity: ErrorSeverity.ERROR,
+  );
 
   @override
-  String get message =>
-      'usecases/ must not import adapters/ or presentation/. '
-      'Only entities/, ports/, and exceptions/ are allowed.';
+  void run(
+    CustomLintResolver resolver,
+    ErrorReporter reporter,
+    CustomLintContext context,
+  ) {
+    context.registry.addImportDirective((node) {
+      final filePath = resolver.path;
+      if (classifyLayer(filePath) != 'usecases') return;
 
-  @override
-  AnalysisErrorSeverity get severity => AnalysisErrorSeverity.ERROR;
+      final importUri = node.uri.stringValue;
+      if (importUri == null) return;
 
-  @override
-  String? get correction =>
-      'Inject dependencies through ports/ and use DI to wire adapters.';
+      // External packages are checked by E4, skip here
+      final packageName = getProjectPackageName(node);
+      final targetLayer = getImportTargetLayer(importUri, filePath, packageName);
+      if (targetLayer == null) return;
 
-  @override
-  SyntacticEntity? matchLint(AstNode node) {
-    if (node is! ImportDirective) return null;
-
-    final filePath = getFilePath(node);
-    if (filePath == null) return null;
-
-    final layer = classifyLayer(filePath);
-    if (layer != 'usecases') return null;
-
-    final importUri = node.uri.stringValue;
-    if (importUri == null) return null;
-
-    // External packages are checked by E4, skip here
-    final packageName = getProjectPackageName(node);
-    final targetLayer = getImportTargetLayer(importUri, filePath, packageName);
-    if (targetLayer == null) return null;
-
-    if (_forbidden.contains(targetLayer)) {
-      return node.uri;
-    }
-
-    return null;
+      if (_forbidden.contains(targetLayer)) {
+        reporter.atNode(node.uri, code);
+      }
+    });
   }
 }

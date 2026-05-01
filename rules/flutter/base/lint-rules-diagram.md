@@ -15,6 +15,7 @@ graph LR
   exceptions["exceptions/"]
   presentation["presentation/"]
   adapters["adapters/"]
+  other["other/"]
   usecases --> entities
   usecases --> ports
   usecases --> exceptions
