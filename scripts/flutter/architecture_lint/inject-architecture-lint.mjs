@@ -1,22 +1,24 @@
 #!/usr/bin/env node
 // =============================================================================
-// Inject architecture_lint into pubspec.yaml and analysis_options.yaml.
+// Inject architecture_lint (base) + stack-specific lint packages into
+// pubspec.yaml and analysis_options.yaml.
 //
 // Uses the `yaml` package (Document API) for round-trip YAML editing —
 // preserves comments, formatting, and existing structure.
 //
-// architecture_lint is injected as a git dependency in dev_dependencies.
-// custom_lint (umbrella plugin) is also added to dev_dependencies and
-// registered as the analyzer plugin. custom_lint then auto-discovers
-// architecture_lint and any other custom_lint_builder packages.
+// architecture_lint (base) is always injected as a git dependency.
+// Stack-specific lint packages (e.g. leaf_kit_lint when leaf-kit convention is
+// selected) are injected as additional git dependencies. custom_lint (umbrella
+// plugin) is also added to dev_dependencies and registered as the analyzer
+// plugin. custom_lint then auto-discovers all installed lint packages.
 //
 // Usage:
 //   inject-architecture-lint.mjs \
 //     --pubspec app/pubspec.yaml \
 //     --analysis-options app/analysis_options.yaml \
 //     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
-//     --git-path rules/flutter/base/custom-lint/architecture_lint \
-//     --git-ref v0.1.28
+//     --git-ref v0.2.30 \
+//     [--stacks leaf-kit,go-router]
 // =============================================================================
 
 import fs from 'node:fs';
@@ -25,20 +27,35 @@ import process from 'node:process';
 
 import YAML from 'yaml';
 
-const PACKAGE_NAME = 'architecture_lint';
 const ANALYZER_PLUGIN_NAME = 'custom_lint';
 const CUSTOM_LINT_VERSION = '^0.8.0';
 
-const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-path <path> --git-ref <ref>
+// Base package — always injected.
+const BASE_PACKAGE = {
+  name: 'architecture_lint',
+  gitPath: 'rules/flutter/base/custom-lint/architecture_lint',
+};
 
-Inject architecture_lint into Flutter project config.
+// Stack → package mapping. Selecting a stack installs the corresponding lint
+// package as an additional custom_lint plugin.
+const STACK_PACKAGES = {
+  'leaf-kit': {
+    name: 'leaf_kit_lint',
+    gitPath: 'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint',
+  },
+};
+
+const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-ref <ref> [--stacks <stacks>]
+
+Inject architecture_lint (base) + optional stack lint packages into Flutter project config.
 
 Options:
   --pubspec <path>          Path to pubspec.yaml (required)
   --analysis-options <path> Path to analysis_options.yaml (required)
   --git-url <url>           Git repository URL (required)
-  --git-path <path>         Path to package within the repo (required)
-  --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.1.28)
+  --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.2.30)
+  --stacks <stacks>         Comma-separated convention stacks (optional)
+                            Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
   -h, --help                Show this help
 `;
 
@@ -52,8 +69,8 @@ function parseArgs(argv) {
     pubspec: '',
     analysisOptions: '',
     gitUrl: '',
-    gitPath: '',
     gitRef: '',
+    stacks: [],
   };
   const rest = argv.slice(2);
 
@@ -81,19 +98,23 @@ function parseArgs(argv) {
         }
         args.gitUrl = rest.shift();
         break;
-      case '--git-path':
-        if (!rest.length) {
-          process.stderr.write('--git-path requires a value\n');
-          usage();
-        }
-        args.gitPath = rest.shift();
-        break;
       case '--git-ref':
         if (!rest.length) {
           process.stderr.write('--git-ref requires a value\n');
           usage();
         }
         args.gitRef = rest.shift();
+        break;
+      case '--stacks':
+        if (!rest.length) {
+          process.stderr.write('--stacks requires a value\n');
+          usage();
+        }
+        args.stacks = rest
+          .shift()
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
         break;
       case '-h':
       case '--help':
@@ -109,7 +130,6 @@ function parseArgs(argv) {
     ['--pubspec', args.pubspec],
     ['--analysis-options', args.analysisOptions],
     ['--git-url', args.gitUrl],
-    ['--git-path', args.gitPath],
     ['--git-ref', args.gitRef],
   ]) {
     if (!value) {
@@ -149,9 +169,19 @@ function writeDoc(filePath, doc) {
   fs.writeFileSync(filePath, String(doc));
 }
 
+// Resolve which lint packages should be installed based on selected stacks.
+function resolvePackages(stacks) {
+  const packages = [BASE_PACKAGE];
+  for (const stack of stacks) {
+    const pkg = STACK_PACKAGES[stack];
+    if (pkg) packages.push(pkg);
+  }
+  return packages;
+}
+
 // ─── pubspec.yaml ───
 
-function injectPubspec(pubspecPath, gitUrl, gitPath, gitRef) {
+function injectPubspec(pubspecPath, gitUrl, gitRef, packages) {
   if (!fs.existsSync(pubspecPath) || !fs.statSync(pubspecPath).isFile()) {
     process.stderr.write(`Error: ${pubspecPath} not found\n`);
     return false;
@@ -165,55 +195,63 @@ function injectPubspec(pubspecPath, gitUrl, gitPath, gitRef) {
     return false;
   }
 
-  const devDeps = doc.get('dev_dependencies');
-  const currentArch = YAML.isMap(devDeps)
-    ? nodeToJs(devDeps.get(PACKAGE_NAME))
-    : null;
-  const currentCustom = YAML.isMap(devDeps)
-    ? nodeToJs(devDeps.get(ANALYZER_PLUGIN_NAME))
-    : null;
-
-  const archAlreadyPinned =
-    currentArch &&
-    typeof currentArch === 'object' &&
-    currentArch.git &&
-    typeof currentArch.git === 'object' &&
-    currentArch.git.url === gitUrl &&
-    currentArch.git.path === gitPath &&
-    currentArch.git.ref === gitRef;
-
-  const customAlreadyPinned = currentCustom === CUSTOM_LINT_VERSION;
-
-  if (archAlreadyPinned && customAlreadyPinned) {
-    process.stdout.write(
-      `  ${PACKAGE_NAME} already pinned to ${gitRef} and ${ANALYZER_PLUGIN_NAME} ${CUSTOM_LINT_VERSION} in ${pubspecPath}\n`,
-    );
-    return true;
-  }
-
   // If dev_dependencies exists but isn't a map (e.g. empty `dev_dependencies:`),
   // drop it so setIn can recreate a proper map.
+  const devDeps = doc.get('dev_dependencies');
   if (devDeps != null && !YAML.isMap(devDeps)) {
     doc.delete('dev_dependencies');
   }
 
-  if (!archAlreadyPinned) {
+  let changed = false;
+
+  // Inject each lint package as a git dependency (idempotent).
+  for (const pkg of packages) {
+    const devDepsMap = doc.get('dev_dependencies');
+    const current = YAML.isMap(devDepsMap) ? nodeToJs(devDepsMap.get(pkg.name)) : null;
+    const alreadyPinned =
+      current &&
+      typeof current === 'object' &&
+      current.git &&
+      typeof current.git === 'object' &&
+      current.git.url === gitUrl &&
+      current.git.path === pkg.gitPath &&
+      current.git.ref === gitRef;
+
+    if (alreadyPinned) {
+      process.stdout.write(
+        `  ${pkg.name} already pinned to ${gitRef} in ${pubspecPath}\n`,
+      );
+      continue;
+    }
+
     doc.setIn(
-      ['dev_dependencies', PACKAGE_NAME],
-      buildGitDep(gitUrl, gitPath, gitRef),
+      ['dev_dependencies', pkg.name],
+      buildGitDep(gitUrl, pkg.gitPath, gitRef),
     );
     process.stdout.write(
-      `  Injected ${PACKAGE_NAME} (git ref ${gitRef}) into ${pubspecPath}\n`,
+      `  Injected ${pkg.name} (git ref ${gitRef}) into ${pubspecPath}\n`,
     );
+    changed = true;
   }
-  if (!customAlreadyPinned) {
+
+  // Inject custom_lint (umbrella) — pinned to fixed version.
+  const devDepsMap = doc.get('dev_dependencies');
+  const currentCustom = YAML.isMap(devDepsMap)
+    ? nodeToJs(devDepsMap.get(ANALYZER_PLUGIN_NAME))
+    : null;
+  if (currentCustom !== CUSTOM_LINT_VERSION) {
     doc.setIn(['dev_dependencies', ANALYZER_PLUGIN_NAME], CUSTOM_LINT_VERSION);
     process.stdout.write(
       `  Injected ${ANALYZER_PLUGIN_NAME} (${CUSTOM_LINT_VERSION}) into ${pubspecPath}\n`,
     );
+    changed = true;
+  } else {
+    process.stdout.write(
+      `  ${ANALYZER_PLUGIN_NAME} already pinned to ${CUSTOM_LINT_VERSION} in ${pubspecPath}\n`,
+    );
   }
 
-  writeDoc(pubspecPath, doc);
+  if (changed) writeDoc(pubspecPath, doc);
   return true;
 }
 
@@ -239,7 +277,7 @@ function injectAnalysisOptions(analysisPath) {
     // since Dart analyzer only allows one plugin per context.
     const items = plugins.toJSON();
     const filtered = items.filter(
-      (i) => i !== PACKAGE_NAME && i !== ANALYZER_PLUGIN_NAME,
+      (i) => i !== 'architecture_lint' && i !== ANALYZER_PLUGIN_NAME,
     );
     const target = [...filtered, ANALYZER_PLUGIN_NAME];
     const same =
@@ -277,16 +315,20 @@ function injectAnalysisOptions(analysisPath) {
 
 function main() {
   const args = parseArgs(process.argv);
+  const packages = resolvePackages(args.stacks);
 
-  process.stdout.write(`Injecting ${PACKAGE_NAME} via ${ANALYZER_PLUGIN_NAME}...\n`);
+  const stackList = args.stacks.length ? args.stacks.join(', ') : '(none)';
+  process.stdout.write(
+    `Injecting lint packages via ${ANALYZER_PLUGIN_NAME} (stacks: ${stackList})...\n`,
+  );
 
   let ok = true;
   ok =
     injectPubspec(
       path.resolve(args.pubspec),
       args.gitUrl,
-      args.gitPath,
       args.gitRef,
+      packages,
     ) && ok;
   ok =
     injectAnalysisOptions(path.resolve(args.analysisOptions)) && ok;

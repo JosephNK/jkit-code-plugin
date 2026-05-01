@@ -152,14 +152,16 @@ case "$PM" in
 esac
 ```
 
-### 8. architecture_lint 주입
+### 8. architecture_lint 주입 (+ stack lint 패키지)
 
-Flutter 엔트리 프로젝트의 `pubspec.yaml`의 `dev_dependencies`에 `architecture_lint`(git dep)와 `custom_lint`(umbrella plugin, pub version)를 추가하고, `analysis_options.yaml`의 `analyzer.plugins`에 `custom_lint`를 등록합니다. custom_lint이 architecture_lint 및 추후 추가될 stack lint 패키지(`leaf_kit_lint` 등)를 자동 발견·합성합니다. husky pre-commit 훅이 `dart run custom_lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
+Flutter 엔트리 프로젝트의 `pubspec.yaml`의 `dev_dependencies`에 `architecture_lint`(base, git dep)와 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)를 git dep으로 추가하고, `custom_lint`(umbrella plugin, pub version)를 추가합니다. `analysis_options.yaml`의 `analyzer.plugins`에는 `custom_lint`만 등록되어 모든 lint 패키지를 자동 발견·합성합니다. husky pre-commit 훅이 `dart run custom_lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
 ```
+
+사용자가 선택한 스택이 없으면 `--stacks` 인자를 생략합니다. base의 `architecture_lint`만 주입됩니다.
 
 주입 후, 새 의존성을 해결하기 위해 엔트리 디렉토리에서 `dart pub get`을 실행합니다:
 
@@ -167,7 +169,7 @@ $JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-d
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
-> `gen-architecture-lint.mjs`는 idempotent — 동일 git ref면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다. stack-specific 룰(예: bloc)은 별도 패키지로 별건 주입.
+> `gen-architecture-lint.mjs`는 idempotent — 동일 git ref면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다. stack ↔ 패키지 매핑은 `inject-architecture-lint.mjs`의 `STACK_PACKAGES`에 정의 (현재 `leaf-kit` → `leaf_kit_lint`).
 
 ### 9. 보고
 
@@ -189,4 +191,5 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `scripts/android-show-info-keystore.sh` — 키스토어 정보 래퍼
 - `scripts/android-signing-report.sh` — 서명 리포트 래퍼
 - `scripts/android-signing-verify-apk.sh` — APK 검증 래퍼
-- `architecture_lint` — `pubspec.yaml`(`dev_dependencies`, git dep) + `analysis_options.yaml`(`analyzer.plugins`)에 주입되는 IDE analyzer + commit-time lint
+- `architecture_lint` (base) — `pubspec.yaml`(`dev_dependencies`, git dep) + `analysis_options.yaml`(`analyzer.plugins: [custom_lint]`)에 주입되는 IDE analyzer + commit-time lint
+- stack lint 패키지(선택한 스택 기반) — `leaf-kit` 선택 시 `leaf_kit_lint` git dep 추가 (custom_lint umbrella가 자동 발견)

@@ -21,13 +21,17 @@
 //     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
 //     └── layer_semantics.dart      — Role/Contains/Example (doc-only 정형)
 //
-// stack-specific 룰(예: bloc)은 별도 패키지로 분리 — 이 generator는 base 패키지 전용.
+//   rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/lib/src/
+//     ├── lints/*.dart              — leaf-kit 룰 (LK_E2·LK_E3·LK_E6·LK_E8)
+//     └── constants.dart            — bloc 화이트리스트 (blocAllowedPackages 등)
 //
 // 출력:
 //   rules/flutter/base/
 //     ├── lint-rules-structure-reference.md  — 경로 매핑 + 프로젝트 트리
 //     ├── lint-rules-reference.md            — 글로서리 + 규칙 표 + 패키지 표
 //     └── lint-rules-diagram.md              — Mermaid 의존성 그래프
+//   rules/flutter/leaf-kit/
+//     └── lint-rules-reference.md            — leaf-kit 룰 + bloc 화이트리스트
 // =============================================================================
 
 import fs from 'node:fs';
@@ -75,6 +79,14 @@ const OUT_DIR = path.join(REPO_ROOT, 'rules/flutter/base');
 const SRC_REL = 'rules/flutter/base/custom-lint/architecture_lint/lib/src/';
 const SOURCE_FILES_LABEL =
   'lints/*.dart, constants.dart, classification.dart, layer_semantics.dart';
+
+const LEAF_KIT_SRC_DIR = path.join(
+  REPO_ROOT,
+  'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/lib/src',
+);
+const LEAF_KIT_OUT_DIR = path.join(REPO_ROOT, 'rules/flutter/leaf-kit');
+const LEAF_KIT_SRC_REL =
+  'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/lib/src/';
 
 // ─── Dart 텍스트 파싱 유틸 ──────────────────────────────────────────────────
 
@@ -165,7 +177,8 @@ function ruleSummary(doc) {
   if (!doc) return '';
   const firstPara = doc.split(/\n\s*\n/)[0] || '';
   const firstLine = firstPara.split('\n')[0].trim();
-  return firstLine.replace(/^[EeNnSs]\d+:\s*/, '');
+  // Strip ID prefix — base (E1·N2·S1) and stack (LK_E3·GR_E2) variants.
+  return firstLine.replace(/^[A-Za-z_]+\d+:\s*/, '');
 }
 
 function collectStringLiterals(s) {
@@ -970,6 +983,130 @@ function renderDiagram({ rules }) {
   return lines.join('\n');
 }
 
+// ─── leaf_kit_lint reference ────────────────────────────────────────────────
+//
+// leaf_kit_lint은 base의 boundary 위에 stack-specific 룰만 더하므로
+// boundary/structure/diagram 없이 룰 표 + 화이트리스트만 렌더링.
+
+function loadLeafKitLints() {
+  const lintsDir = path.join(LEAF_KIT_SRC_DIR, 'lints');
+  if (!fs.existsSync(lintsDir)) return [];
+  const files = fs
+    .readdirSync(lintsDir, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith('.dart'))
+    .map((e) => path.join(lintsDir, e.name))
+    .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+  const rules = [];
+  for (const file of files) {
+    const r = parseLintFile(file);
+    if (r) rules.push(r);
+  }
+  return rules;
+}
+
+function leafKitRuleSourceLayer(rule) {
+  // leaf_kit_lint의 룰들은 helpers의 isXxxFile()로 파일 필터링하므로
+  // run() 본문에서 호출되는 helper 이름으로 적용 레이어를 추출.
+  const m = (rule.runBody || '').match(/!\s*(is\w+File)\s*\(/);
+  if (!m) return '(all)';
+  switch (m[1]) {
+    case 'isBlocFile':
+      return '`bloc`';
+    case 'isUsecaseFile':
+      return '`usecases`';
+    case 'isPresentationViewFile':
+      return '`presentation`';
+    default:
+      return '(all)';
+  }
+}
+
+function parseLintFileWithBody(filePath) {
+  const r = parseLintFile(filePath);
+  if (!r) return null;
+  const content = readSource(filePath);
+  const m = content.match(/void\s+run\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+  r.runBody = m ? m[1] : '';
+  return r;
+}
+
+function loadLeafKitLintsWithBody() {
+  const lintsDir = path.join(LEAF_KIT_SRC_DIR, 'lints');
+  if (!fs.existsSync(lintsDir)) return [];
+  const files = fs
+    .readdirSync(lintsDir, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith('.dart'))
+    .map((e) => path.join(lintsDir, e.name))
+    .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+  const rules = [];
+  for (const file of files) {
+    const r = parseLintFileWithBody(file);
+    if (r) rules.push(r);
+  }
+  return rules;
+}
+
+function renderLeafKitRulesTable(rules) {
+  const lines = [];
+  lines.push('| ID | Severity | Layer | 설명 |');
+  lines.push('| --- | --- | --- | --- |');
+  for (const r of rules) {
+    const id = r.code ? r.code.toUpperCase().split('_').slice(0, 2).join('_') : '?';
+    const sev = r.severity || '—';
+    const layer = leafKitRuleSourceLayer(r);
+    const summary = ruleSummary(r.doc);
+    lines.push(`| ${id} | ${sev} | ${layer} | ${escapePipe(summary)} |`);
+  }
+  return lines.join('\n');
+}
+
+function renderLeafKitReference({ rules, constants }) {
+  const lines = [
+    '<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->',
+    '<!-- Generator: scripts/flutter/gen-architecture-lint-reference.mjs -->',
+    `<!-- Source: ${LEAF_KIT_SRC_REL} (lints/*.dart, constants.dart) -->`,
+    '',
+    '# Lint Rules Reference (flutter/leaf-kit)',
+    '',
+  ];
+
+  lines.push('## 개요');
+  lines.push('');
+  lines.push(
+    '`leaf-kit` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 ' +
+      '함께 `custom_lint` umbrella 하에서 동작 — 두 패키지가 자동 발견·합성된다. ' +
+      'leaf_kit_lint은 base의 boundary 정의 위에 bloc + leaf_kit 전용 의존성 ' +
+      '제약만 추가한다.',
+  );
+  lines.push('');
+
+  lines.push('## 규칙 (Rules)');
+  lines.push('');
+  lines.push(
+    `leaf-kit 룰 ${rules.length}개. base 룰과 함께 모두 적용된다 (base 12개 + leaf-kit ${rules.length}개).`,
+  );
+  lines.push('');
+  lines.push(renderLeafKitRulesTable(rules));
+  lines.push('');
+
+  lines.push('## bloc 화이트리스트 (LK_E3 참조)');
+  lines.push('');
+  lines.push(
+    'LK_E3 룰이 bloc/ 레이어에서 허용하는 외부 의존성. 리스트 외 패키지는 ' +
+      'bloc/에서 import 시 ERROR.',
+  );
+  lines.push('');
+  for (const name of ['blocAllowedPackages', 'leafKitBlocAllowed']) {
+    if (!constants.raw.has(name)) continue;
+    const members = constants.resolveSet(name);
+    const doc = constants.docs.get(name) || '';
+    lines.push(renderPackageSection(name, members, doc));
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 // ─── 메인 ────────────────────────────────────────────────────────────────────
 
 function main() {
@@ -1015,6 +1152,22 @@ function main() {
       content: renderDiagram({ rules }) + '\n',
     },
   ];
+
+  // leaf_kit_lint reference (자체 constants/lints).
+  if (fs.existsSync(LEAF_KIT_SRC_DIR)) {
+    const leafKitConstants = parseConstants(
+      path.join(LEAF_KIT_SRC_DIR, 'constants.dart'),
+    );
+    const leafKitRules = loadLeafKitLintsWithBody();
+    writes.push({
+      path: path.join(LEAF_KIT_OUT_DIR, 'lint-rules-reference.md'),
+      content:
+        renderLeafKitReference({
+          rules: leafKitRules,
+          constants: leafKitConstants,
+        }) + '\n',
+    });
+  }
 
   if (args.check) {
     let drift = false;

@@ -58,16 +58,18 @@ $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs
 
 해당 생성기에 사용자가 선택한 스택이 없으면 `--with` 인자를 생략합니다.
 
-### 4. architecture_lint pin 갱신
+### 4. architecture_lint pin 갱신 (+ stack lint 패키지)
 
-엔트리 프로젝트의 `pubspec.yaml`에 박힌 `architecture_lint` git ref를 플러그인의 현재 버전(`plugin.json`)에 맞춥니다.
+엔트리 프로젝트의 `pubspec.yaml`에 박힌 `architecture_lint` git ref를 플러그인의 현재 버전(`plugin.json`)에 맞추고, 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)도 동일 ref로 갱신·추가합니다.
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
 ```
 
-> idempotent — 동일 git ref면 skip합니다. stack-specific 룰(예: bloc)은 별도 패키지로 별건 sync.
+사용자가 선택한 스택이 없으면 `--stacks` 인자를 생략합니다. base의 `architecture_lint`만 sync됩니다.
+
+> idempotent — 동일 git ref면 skip합니다. additive only — 이전에 설치된 stack 패키지는 자동 제거되지 않으므로, 스택을 빼고 싶으면 `pubspec.yaml`에서 수동 삭제하세요.
 
 ref가 바뀌어 pubspec이 갱신된 경우, 엔트리 디렉토리에서 `dart pub get`을 실행합니다:
 
@@ -83,6 +85,6 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `docs/ARCHITECTURE.md` — 아키텍처 상세 (덮어쓰기)
 - `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.LOCAL.md` 링크 포함)
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
-- `pubspec.yaml` — `architecture_lint` git ref (변경 시에만 갱신)
+- `pubspec.yaml` — `architecture_lint` (base) + 선택한 stack lint 패키지(예: `leaf_kit_lint`) git ref (변경/추가 시에만 갱신)
 
 > 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.LOCAL.md`, `CONVENTIONS.LOCAL.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/`.

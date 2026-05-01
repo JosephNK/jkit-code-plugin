@@ -21,28 +21,32 @@ import { fileURLToPath } from 'node:url';
 import { ensureFlutterRoot, normalizePath } from '../common.mjs';
 
 const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
-const GIT_PATH = 'rules/flutter/base/custom-lint/architecture_lint';
 
-const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
+const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <stacks>]
 
-Injects architecture_lint (as a git dependency) into pubspec.yaml and
-registers it as an analyzer plugin in analysis_options.yaml.
+Injects architecture_lint (base) + optional stack lint packages (e.g.
+leaf_kit_lint when --stacks includes leaf-kit) as git dependencies into
+pubspec.yaml and registers custom_lint as the analyzer plugin in
+analysis_options.yaml.
 
 Requires: plugin's node_modules installed (\`npm install\` in plugin root).
 
 Arguments:
-  flutter        Framework name (currently flutter only)
+  flutter         Framework name (currently flutter only)
 
 Options:
-  -p <dir>       Project root directory (required)
-  -entry <dir>   Flutter entry directory (default: app)
-  --ref <ref>    Git ref to pin (default: v<plugin-version> from plugin.json)
-  -h, --help     Show this help
+  -p <dir>        Project root directory (required)
+  -entry <dir>    Flutter entry directory (default: app)
+  --ref <ref>     Git ref to pin (default: v<plugin-version> from plugin.json)
+  --stacks <s>    Comma-separated convention stacks (default: none)
+                  e.g. leaf-kit,go-router — installs matching stack lint package
+  -h, --help      Show this help
 
 Examples:
   ./scripts/flutter/gen-architecture-lint.mjs flutter -p .
   ./scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry app
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --ref v0.1.28
+  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --ref v0.2.30
+  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --stacks leaf-kit
 `;
 
 function usage(code = 1) {
@@ -56,6 +60,7 @@ function parseArgs(argv) {
     projectDir: '',
     entry: 'app',
     ref: '',
+    stacks: '',
   };
   const rest = argv.slice(2);
 
@@ -86,6 +91,13 @@ function parseArgs(argv) {
           usage();
         }
         args.ref = rest.shift();
+        break;
+      case '--stacks':
+        if (!rest.length) {
+          process.stderr.write('--stacks requires a value\n');
+          usage();
+        }
+        args.stacks = rest.shift();
         break;
       case '-h':
       case '--help':
@@ -165,11 +177,12 @@ function main() {
     path.join(args.entry, 'analysis_options.yaml'),
     '--git-url',
     GIT_URL,
-    '--git-path',
-    GIT_PATH,
     '--git-ref',
     ref,
   ];
+  if (args.stacks) {
+    injectArgs.push('--stacks', args.stacks);
+  }
 
   const result = spawnSync(process.execPath, injectArgs, {
     cwd: projectDir,
