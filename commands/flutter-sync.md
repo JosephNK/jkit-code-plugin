@@ -64,7 +64,7 @@ $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
+$JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
 ```
 
 사용자가 선택한 스택이 없으면 `--stacks` 인자를 생략합니다. base의 `architecture_lint`만 sync됩니다.

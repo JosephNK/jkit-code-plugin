@@ -13,7 +13,7 @@
 // plugin. custom_lint then auto-discovers all installed lint packages.
 //
 // Usage:
-//   inject-architecture-lint.mjs \
+//   inject-custom-lint.mjs \
 //     --pubspec app/pubspec.yaml \
 //     --analysis-options app/analysis_options.yaml \
 //     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
@@ -43,9 +43,13 @@ const STACK_PACKAGES = {
     name: 'leaf_kit_lint',
     gitPath: 'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint',
   },
+  freezed: {
+    name: 'freezed_lint',
+    gitPath: 'rules/flutter/freezed/custom-lint/freezed_lint',
+  },
 };
 
-const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-ref <ref> [--stacks <stacks>]
+const HELP = `Usage: inject-custom-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-ref <ref> [--stacks <stacks>]
 
 Inject architecture_lint (base) + optional stack lint packages into Flutter project config.
 

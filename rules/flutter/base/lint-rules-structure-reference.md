@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/flutter/gen-architecture-lint-reference.mjs -->
+<!-- Generator: scripts/flutter/gen-custom-lint-reference.mjs -->
 <!-- Source: rules/flutter/base/custom-lint/architecture_lint/lib/src/ (boundary_element.dart, structure_annotation.dart) -->
 
 # Lint Rules — Structure Reference (flutter/base)

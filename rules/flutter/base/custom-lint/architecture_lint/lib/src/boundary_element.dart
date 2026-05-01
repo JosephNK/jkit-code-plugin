@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 // 각 BoundaryElement는 하나의 논리 레이어를 정의하고, glob 패턴들로 경계를
 // 표현한다. 12개 룰(E/N/S)이 이 데이터를 통해 path → layer 분류를 수행하며,
-// generator(`scripts/flutter/gen-architecture-lint-reference.mjs`)도 동일
+// generator(`scripts/flutter/gen-custom-lint-reference.mjs`)도 동일
 // 데이터를 읽어 `lint-rules-structure-reference.md`의 트리 + 매핑 표를 합성.
 //
 // NestJS의 `baseBoundaryElements` (eslint-plugin-boundaries)와 동일 모델.

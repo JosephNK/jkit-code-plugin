@@ -5,7 +5,7 @@
 // 의도, placeholder 세그먼트(`<feature>`, `<service>` 등), 단일 파일 노드를
 // 트리에 주입하기 위한 doc-only 데이터. lint 동작과 무관하다.
 //
-// generator(`scripts/flutter/gen-architecture-lint-reference.mjs`)가
+// generator(`scripts/flutter/gen-custom-lint-reference.mjs`)가
 // `parentPath` 기준으로 boundary 트리의 자식을 override하여 최종 시각화 트리를
 // 합성한다. NestJS의 `baseStructureAnnotations`와 동일 모델.
 // =============================================================================

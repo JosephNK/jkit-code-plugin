@@ -158,7 +158,7 @@ Flutter 엔트리 프로젝트의 `pubspec.yaml`의 `dev_dependencies`에 `archi
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
+$JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
 ```
 
 사용자가 선택한 스택이 없으면 `--stacks` 인자를 생략합니다. base의 `architecture_lint`만 주입됩니다.
@@ -169,7 +169,7 @@ $JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-d
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
-> `gen-architecture-lint.mjs`는 idempotent — 동일 git ref면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다. stack ↔ 패키지 매핑은 `inject-architecture-lint.mjs`의 `STACK_PACKAGES`에 정의 (현재 `leaf-kit` → `leaf_kit_lint`).
+> `gen-custom-lint.mjs`는 idempotent — 동일 git ref면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다. stack ↔ 패키지 매핑은 `inject-custom-lint.mjs`의 `STACK_PACKAGES`에 정의 (현재 `leaf-kit` → `leaf_kit_lint`, `freezed` → `freezed_lint`).
 
 ### 9. 보고
 

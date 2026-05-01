@@ -4,11 +4,11 @@
 // registers it as an analyzer plugin in analysis_options.yaml.
 //
 // Delegates the YAML edits to the Node script
-// `architecture_lint/inject-architecture-lint.mjs`, which uses the `yaml`
+// `custom_lint/inject-custom-lint.mjs`, which uses the `yaml`
 // package for round-trip YAML editing (preserves comments & formatting).
 //
 // Usage:
-//   gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
+//   gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
 // =============================================================================
 
 import { spawnSync } from 'node:child_process';
@@ -22,7 +22,7 @@ import { ensureFlutterRoot, normalizePath } from '../common.mjs';
 
 const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
 
-const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <stacks>]
+const HELP = `Usage: gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <stacks>]
 
 Injects architecture_lint (base) + optional stack lint packages (e.g.
 leaf_kit_lint when --stacks includes leaf-kit) as git dependencies into
@@ -43,10 +43,10 @@ Options:
   -h, --help      Show this help
 
 Examples:
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p .
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry app
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --ref v0.2.30
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --stacks leaf-kit
+  ./scripts/flutter/gen-custom-lint.mjs flutter -p .
+  ./scripts/flutter/gen-custom-lint.mjs flutter -p . -entry app
+  ./scripts/flutter/gen-custom-lint.mjs flutter -p . --ref v0.2.30
+  ./scripts/flutter/gen-custom-lint.mjs flutter -p . --stacks leaf-kit
 `;
 
 function usage(code = 1) {
@@ -165,8 +165,8 @@ function main() {
 
   const injectScript = path.join(
     scriptDir,
-    'architecture_lint',
-    'inject-architecture-lint.mjs',
+    'custom_lint',
+    'inject-custom-lint.mjs',
   );
 
   const injectArgs = [
@@ -193,7 +193,7 @@ function main() {
 
   if (result.error) {
     process.stderr.write(
-      `Error running inject-architecture-lint.mjs: ${result.error.message}\n`,
+      `Error running inject-custom-lint.mjs: ${result.error.message}\n`,
     );
     process.exit(1);
   }

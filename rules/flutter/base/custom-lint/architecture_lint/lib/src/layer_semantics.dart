@@ -2,7 +2,7 @@
 // architecture_lint — 레이어 정형 메타데이터
 // -----------------------------------------------------------------------------
 // 각 아키텍처 레이어의 책임·포함 파일 종류·대표 코드 형태 (doc-only).
-// lint 런타임에는 참조되지 않으며, gen-architecture-lint-reference.mjs가
+// lint 런타임에는 참조되지 않으며, gen-custom-lint-reference.mjs가
 // 파싱하여 lint-rules-reference.md의 "레이어 글로서리" 섹션을 생성한다.
 //
 // Forbids/Allowed/Naming은 lints/*.dart의 룰 doc + getter에서 도출되므로

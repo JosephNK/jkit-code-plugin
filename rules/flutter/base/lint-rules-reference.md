@@ -1,5 +1,5 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
-<!-- Generator: scripts/flutter/gen-architecture-lint-reference.mjs -->
+<!-- Generator: scripts/flutter/gen-custom-lint-reference.mjs -->
 <!-- Source: rules/flutter/base/custom-lint/architecture_lint/lib/src/ (lints/*.dart, constants.dart, classification.dart, layer_semantics.dart) -->
 
 # Lint Rules Reference (flutter/base)

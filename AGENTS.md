@@ -107,7 +107,7 @@ export const baseDomainBannedPackages = [...];
 - `scripts/gen-conventions.mjs` — 입력: `rules/<framework>/base/conventions.md` + `rules/<framework>/<stack>/conventions.md` → 출력: `CONVENTIONS.md`. base + 선택 stack conventions 이어 붙임.
 - `scripts/typescript/gen-eslint-reference.mjs` — 입력: `eslint.rules.mjs` → 출력: `lint-rules-{structure-reference,reference,diagram}.md`. AST로 export 데이터를 읽어 ESLint 참조 문서 생성. `--check`로 드리프트 검사.
 - `scripts/typescript/gen-stylelint-reference.mjs` — 입력: `stylelint.rules.mjs` → 출력: `stylelint-rules-reference.md`. AST로 `*Config` export와 rule JSDoc을 읽어 Stylelint 참조 문서 생성. `--check`로 드리프트 검사.
-- `scripts/flutter/gen-architecture-lint-reference.mjs` — 입력: `rules/flutter/base/custom-lint/architecture_lint/lib/src/{lints/*.dart, constants.dart, classification.dart, layer_semantics.dart}` → 출력: `rules/flutter/base/{lint-rules-structure-reference,lint-rules-reference,lint-rules-diagram}.md`. Dart 텍스트 파싱으로 룰 doc·`code`·`severity`·target layer + constants의 Set/스칼라 + layer_semantics의 Role/Contains/Example을 합쳐 Flutter 참조 문서 생성. `--check`로 드리프트 검사.
+- `scripts/flutter/gen-custom-lint-reference.mjs` — 입력: `rules/flutter/base/custom-lint/architecture_lint/lib/src/{lints/*.dart, constants.dart, classification.dart, layer_semantics.dart}` + stack lint 패키지(예: `rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/lib/src/`, `rules/flutter/freezed/custom-lint/freezed_lint/lib/src/`) → 출력: `rules/flutter/base/{lint-rules-structure-reference,lint-rules-reference,lint-rules-diagram}.md` + stack별 `rules/flutter/<stack>/lint-rules-reference.md`. Dart 텍스트 파싱으로 룰 doc·`code`·`severity`·target layer + constants의 Set/스칼라 + layer_semantics의 Role/Contains/Example을 합쳐 Flutter 참조 문서 생성. `--check`로 드리프트 검사.
 
 ## 프로세스
 
@@ -125,7 +125,7 @@ node scripts/typescript/gen-stylelint-reference.mjs <path-to-stylelint.rules.mjs
 `rules/flutter/base/custom-lint/architecture_lint/lib/src/` 하위 원본 수정 후:
 
 ```bash
-node scripts/flutter/gen-architecture-lint-reference.mjs
+node scripts/flutter/gen-custom-lint-reference.mjs
 ```
 
 ## 검증 기준
