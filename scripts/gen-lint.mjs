@@ -98,6 +98,14 @@ function splitStacks(raw) {
     .filter((s) => s.length > 0);
 }
 
+function stripGeneratorBanner(content) {
+  const lines = content.split('\n');
+  let i = 0;
+  while (i < lines.length && /^<!--.*-->\s*$/.test(lines[i])) i++;
+  while (i < lines.length && lines[i].trim() === '') i++;
+  return lines.slice(i).join('\n');
+}
+
 function main() {
   const args = parseArgs(process.argv);
 
@@ -138,11 +146,11 @@ function main() {
 
   const outputFile = path.join(outputDir, 'LINT.md');
   const [first, ...rest] = baseSources;
-  fs.copyFileSync(path.join(baseDir, first), outputFile);
+  fs.writeFileSync(outputFile, stripGeneratorBanner(fs.readFileSync(path.join(baseDir, first), 'utf8')));
 
   for (const name of rest) {
     fs.appendFileSync(outputFile, '\n');
-    fs.appendFileSync(outputFile, fs.readFileSync(path.join(baseDir, name)));
+    fs.appendFileSync(outputFile, stripGeneratorBanner(fs.readFileSync(path.join(baseDir, name), 'utf8')));
   }
 
   const appendedStacks = [];
@@ -155,7 +163,7 @@ function main() {
       continue;
     }
     fs.appendFileSync(outputFile, '\n');
-    fs.appendFileSync(outputFile, fs.readFileSync(stackRef));
+    fs.appendFileSync(outputFile, stripGeneratorBanner(fs.readFileSync(stackRef, 'utf8')));
     appendedStacks.push(stack);
   }
 
