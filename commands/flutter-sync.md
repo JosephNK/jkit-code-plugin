@@ -58,7 +58,18 @@ $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
 
 해당 생성기에 사용자가 선택한 스택이 없으면 `--with` 인자를 생략합니다.
 
-### 4. architecture_lint pin 갱신 (+ stack lint 패키지)
+### 4. analysis_options.yaml 템플릿 sync
+
+엔트리(+ 워크스페이스 모드에선 root)의 `analysis_options.yaml`을 jkit 표준 템플릿(`rules/flutter/base/templates/`)과 sync — **무조건 덮어씀**. 새 lint 룰이 jkit 릴리스에서 추가되면 sync로 전파됩니다. 사용자 수정 파일도 덮어쓰므로 프로젝트별 커스터마이즈는 jkit 체크아웃의 템플릿 파일 자체를 fork해야 합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+$JKIT_DIR/scripts/flutter/gen-analysis-options.mjs flutter -p . -entry <entry-dir>
+```
+
+이 스크립트는 `plugins:` 섹션을 작성하지 않습니다. 다음 스텝의 `gen-custom-lint.mjs`가 같은 파일에 `plugins:`를 YAML round-trip으로 추가합니다 (템플릿 컨텐츠 보존).
+
+### 5. architecture_lint pin 갱신 (+ stack lint 패키지)
 
 엔트리 프로젝트의 `pubspec.yaml`에 박힌 `architecture_lint` git ref를 플러그인의 현재 버전(`plugin.json`)에 맞추고, 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)도 동일 ref로 갱신·추가합니다.
 
@@ -77,7 +88,7 @@ ref가 바뀌어 pubspec이 갱신된 경우, 엔트리 디렉토리에서 `dart
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
-### 5. 보고
+### 6. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
 

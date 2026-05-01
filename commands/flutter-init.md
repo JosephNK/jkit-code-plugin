@@ -152,7 +152,18 @@ case "$PM" in
 esac
 ```
 
-### 8. architecture_lint 주입 (+ stack lint 패키지)
+### 8. analysis_options.yaml scaffold (analyzer/linter 룰 템플릿)
+
+엔트리(+ 워크스페이스 모드에선 워크스페이스 root)의 `analysis_options.yaml`을 jkit 표준 템플릿(`rules/flutter/base/templates/`)으로 **무조건 덮어씀**. `flutter create`가 남긴 기본 파일이나 사용자 수정 파일이 있다면 git history로만 복구 가능합니다. 템플릿 자체를 프로젝트별로 커스터마이즈하려면 jkit 체크아웃의 `rules/flutter/base/templates/*.yaml`을 fork해야 합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+$JKIT_DIR/scripts/flutter/gen-analysis-options.mjs flutter -p . -entry <entry-dir>
+```
+
+이 스크립트는 `plugins:` 섹션을 작성하지 않습니다. 다음 스텝의 `gen-custom-lint.mjs`가 같은 파일에 `plugins:`를 YAML round-trip으로 추가합니다 (템플릿 컨텐츠 보존).
+
+### 9. architecture_lint 주입 (+ stack lint 패키지)
 
 Flutter 엔트리 프로젝트의 `analysis_options.yaml`의 top-level `plugins:` 섹션에 `architecture_lint`(base, git dep)와 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)를 git dep으로 등록합니다. analysis_server_plugin(Dart 3.10+)이 두 패키지를 독립 isolate로 로드해 IDE 및 `dart analyze`에서 동작합니다. 레거시 `custom_lint` dev dep와 `analyzer.plugins:` 항목은 자동으로 제거됩니다. 이 스텝은 **무조건** 실행되어야 합니다.
 
@@ -171,7 +182,7 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 
 > `gen-custom-lint.mjs`는 idempotent — 동일 git ref면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다. stack ↔ 패키지 매핑은 `inject-custom-lint.mjs`의 `STACK_PACKAGES`에 정의 (현재 `leaf-kit` → `leaf_kit_lint`, `freezed` → `freezed_lint`).
 
-### 9. 보고
+### 10. 보고
 
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
