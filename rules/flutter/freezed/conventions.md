@@ -1,7 +1,5 @@
 ## Freezed
 
-All Entities, UseCase Params, BLoC Events, and BLoC States must use `freezed`.
-
 - **Entity**: `@freezed abstract class` + `const factory` + `= _ClassName`
 - **Event / State**: `@freezed sealed class` + named constructors
 

@@ -39,7 +39,7 @@
 
 > **Alias entrypoint 주의**: `*_datetime.dart`/`*_manager.dart`는 의미적 별칭일 뿐 실제 심볼 set은 각각 `core`/`platform`과 동일. 한 파일에서 `*_datetime`과 `*_core`를 동시에 import하면 `ambiguous_export` 충돌이 날 수 있으니 둘 중 하나만 선택할 것.
 
-> **선택 기준**: 단일 영역만 쓰면 sub-entrypoint(`*_state`/`*_network` 등) 우선. 한 화면에서 component + state + route를 함께 쓰면 메인 `flutter_leaf_kit.dart` 사용. Local DB/Platform adapter는 leaf_kit 대신 직접 SDK(drift/sqflite 등) 사용도 무방. 도메인 레이어(`usecases`/`entities`/`ports`/`exceptions`)에서는 leaf_kit import 금지 (`architecture_lint` AL_E1/AL_E4/AL_E5 위반).
+> **선택 기준**: 단일 영역만 쓰면 sub-entrypoint(`*_state`/`*_network` 등) 우선. 한 화면에서 component + state + route를 함께 쓰면 메인 `flutter_leaf_kit.dart` 사용. Local DB/Platform adapter는 leaf_kit 대신 직접 SDK(drift/sqflite 등) 사용도 무방.
 
 ### Usage Rules
 
@@ -98,30 +98,11 @@ class ProductApiAdapter implements ProductPort {
 
 ### BLoC
 
-`presentation/bloc/`은 `flutter_leaf_kit_state.dart` 기반 상태 관리 레이어. usecase를 호출해 도메인 결과를 상태로 변환하고 view에 노출한다. 의존성·네이밍·이벤트 컨벤션은 base의 `architecture_lint` + `leaf_kit_lint`로 정적 검증된다.
+`presentation/bloc/`은 `flutter_leaf_kit_state.dart` 기반 상태 관리 레이어. usecase를 호출해 도메인 결과를 상태로 변환하고 view에 노출한다.
 
 #### Dependency Rules
 
-- **bloc/**은 **usecases/만** 참조 — `adapters/`/`ports/` 직접 호출 금지 (`leaf_kit_lint` LK_E3)
 - bloc/ 이벤트 핸들러에 비즈니스 로직 금지 — usecase에 위임
-
-#### Naming
-
-**Files**
-
-| Element | File Suffix | Example |
-|---------|-------------|---------|
-| BLoC | `*_bloc.dart` | `product_bloc.dart` |
-| Event | `*_event.dart` | `product_event.dart` |
-| State | `*_state.dart` | `product_state.dart` |
-
-**Classes**
-
-| Element | Pattern | Example |
-|---------|---------|---------|
-| BLoC | `{Feature}Bloc` | `ProductBloc`, `LoginBloc` |
-| Event | `{Feature}Event` | `ProductEvent`, `LoginEvent` |
-| State | `{Feature}State` | `ProductState`, `LoginState` |
 
 #### Event Named Constructors
 
@@ -203,7 +184,7 @@ GoRoute(
 
 | Layer | Responsibility |
 |-------|---------------|
-| BLoC | `on Exception catch (e)` 사용 → 에러 상태 emit. bare `catch` 금지 (`architecture_lint` AL_E7). |
+| BLoC | `on Exception catch (e)` 사용 → 에러 상태 emit. |
 
 #### Test Patterns
 

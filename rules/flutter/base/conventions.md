@@ -1,9 +1,5 @@
 # Conventions
 
-> 레이어 경로 매핑: `@jkit/code-plugin/flutter/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (E/N/S 룰 표) · 패키지 화이트/블랙리스트: `@jkit/code-plugin/flutter/base/lint-rules-reference.md`
-> 파일/클래스 네이밍 (Contains): `@jkit/code-plugin/flutter/base/lint-rules-reference.md` ("레이어 글로서리")
-
 ## common/ vs features/ Scope Rules
 
 ### common/services/ vs features/
@@ -27,15 +23,8 @@ Both follow the same Port & Adapter pattern. The only difference is scope.
 | Type | Layers | Location | Description |
 |------|--------|----------|-------------|
 | Full-stack feature | domain/ + infrastructure/ + presentation/ | `features/<feature>/` | Has its own port, adapter, usecase, and UI |
-| Presentation-only feature | presentation/ only | `features/<feature>/presentation/` | Reuses another feature's domain layer via its own bloc — bloc is required (E8 forbids direct usecase/port/adapter import from presentation). |
+| Presentation-only feature | presentation/ only | `features/<feature>/presentation/` | Reuses another feature's domain layer via its own bloc — bloc is required. |
 | Shared domain module | entities/ + exceptions/ | `features/shared/domain/` | Shared domain objects with no full stack |
-
-## Adapter Private Methods
-
-| Purpose | Pattern | Example |
-|---------|---------|---------|
-| Raw data → Entity conversion | `_toEntity()` or `_to{EntityName}()` | `_toProduct()`, `_toOrder()` |
-| Complex parsing | `_parse{Name}()` | `_parseProductPage()` |
 
 ## UseCase Patterns
 
@@ -55,40 +44,12 @@ class CreateOrderUseCase {
 }
 ```
 
-## Port & Adapter Patterns
+## Multi-Source Adapter
 
-- **Port**: `abstract class` with domain types only
-- **Adapter**: implements Port, handles raw data → Entity conversion via `_to{Entity}()` methods
-- Multiple data sources (remote + local): combine in a single Adapter, fallback to cache on network failure
+다수 데이터 소스(remote + local)는 단일 Adapter에서 결합 — 네트워크 실패 시 캐시 fallback.
 
 ```dart
-// Port — data source agnostic
-abstract class ProductPort {
-  Future<ProductPage> getProducts({required int page, required int limit});
-  Future<Product> getProductById({required String id});
-}
-
-// Adapter (Remote API)
-class ProductApiAdapter implements ProductPort {
-  @override
-  Future<ProductPage> getProducts({required int page, required int limit}) async {
-    final response = await apiClient.getProducts(page: page, limit: limit);
-
-    if (response.isSuccessful && response.data != null) {
-      return ProductPage(
-        items: response.data!.items.map(_toProduct).toList(),
-        total: response.data!.total,
-      );
-    }
-    throw ServerException(response.error?.message ?? 'Failed');
-  }
-
-  Product _toProduct(ProductDto dto) => Product(
-    id: dto.id, name: dto.name, price: dto.price, createdAt: dto.createdAt,
-  );
-}
-
-// Adapter (Local DB)
+// Local DB Adapter (동일 ProductPort 구현)
 class ProductLocalAdapter implements ProductPort {
   final AppDatabase _db;
   const ProductLocalAdapter({required AppDatabase db}) : _db = db;

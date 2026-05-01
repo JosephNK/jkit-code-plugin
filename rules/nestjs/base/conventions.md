@@ -1,17 +1,7 @@
 # Conventions
 
-> 레이어 경로 매핑: `@jkit/code-plugin/nestjs/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/code-plugin/nestjs/base/lint-rules-reference.md`
-
-## Layer Rules
-
-1. **provider/ 는 port/ 의 outbound-port 를 구현**
-2. **Module 이 DI 로 Port ↔ 구현체를 연결**
-3. controller/ 에 비즈니스 로직 금지 (service 로 위임)
-
 ## Code Style
 
-- **Validation**: controller/ 에서 Zod / class-validator 로 검증
 - **Naming (model/ only)**: `model/` 만 suffix 없음 허용 (순수 도메인 함수, 예: `cost-calculator.ts`). 허용 suffix: `*.prompt.ts` (AI prompt), `*.types.ts` (타입), `*.constants.ts` (상수 / enum).
 - **File Size**: 파일당 최대 400줄 권장
 
@@ -36,10 +26,7 @@ src/modules/{domain}/dto/
 
 ### Naming Convention
 
-`ApiSuccessResponse` 가 모든 응답을 `{ success, data }` 로 래핑. DTO 이름은 이 envelope 기준으로 정한다.
-
-- **`*DataResponseDto`**: `data` 필드 최상위 타입. 도메인 내 액션 충돌 시 `List` / `Create` / `Detail` prefix 추가, 그 외 생략.
-- **`*ItemDto`**: `*DataResponseDto` 안의 배열 요소 또는 중첩 객체.
+`ApiSuccessResponse` 가 모든 응답을 `{ success, data }` 로 래핑. DTO 이름은 이 envelope 기준으로 정한다 (도메인 내 액션 충돌 시 `List` / `Create` / `Detail` prefix 추가, 그 외 생략).
 
 ```typescript
 // GET /orders → { success: true, data: OrderListDataResponseDto }
@@ -60,7 +47,7 @@ class OrderCreateDataResponseDto {
 
 - **Entity Encapsulation**: DB 스키마와 API 응답 노출을 분리
 - **Example Values**: `@ApiProperty` 에 `example` 지정
-- **Union Type Rules**: `T | null` (원시 / `Date`) 허용. 데코레이터 옵션 정합 (`nullable: true`, `Date` 는 추가로 `type: String, format: 'date-time'`) 은 `local/dto-nullable-match` 가 강제. `T | undefined`, class union, `oneOf` 는 별도 룰로 금지.
+- **Union Type Rules**: `T | null` (원시 / `Date`) 허용 — `Date` 는 `type: String, format: 'date-time'` 명시.
 
 ## Testing Strategy
 

@@ -1,8 +1,5 @@
 # Conventions
 
-> 레이어 경로 매핑: `@jkit/code-plugin/nextjs/base/lint-rules-structure-reference.md`
-> 레이어 의존성 규칙 (allow 매트릭스 / 무시 경로): `@jkit/code-plugin/nextjs/base/lint-rules-reference.md`
-
 ## General Rules
 
 - Path alias: `@/*` → `src/`
@@ -10,8 +7,6 @@
 
 ## Layer Rules
 
-- Domain Port defines Repository contract interfaces
-- Domain Model sits at the bottom of the dependency graph, keeping business logic framework-independent
 - When switching REST → GraphQL, only Repository implementations need to change
 - For simple CRUD, Service may pass through to Port directly (avoid unnecessary wrapping)
 - **API DTO must come from Swagger/OpenAPI codegen** — do not hand-write DTO types
@@ -28,40 +23,9 @@
 - Run `npm run lint:cpd` to check duplication rate
 - **Shared infrastructure MUST be extracted into a named file and imported, not re-implemented** — when two sites need the same helper (error wrapper, DTO serializer, guard, etc.), extract it to a single module under the appropriate layer (`api-mapper`, `api-repository`, or a project-level type) rather than copy-pasting.
 
-## Navigation
-
-- **Internal links MUST use `next/link`** (`Link` component) — NOT `component="a"` + `href`
-- Mantine components (`Button`, `Card`, etc.) that link to internal pages: use `component={Link}` (from `next/link`)
-- `component="a"` is only allowed for **external URLs** (e.g., `https://...`)
-- Reason: `component="a"` causes full page reload, breaking client-side navigation and causing unnecessary loading on browser back/forward
-
-```tsx
-// WRONG — causes full page reload
-<Button component="a" href={`/${locale}/admin/users`}>Manage</Button>
-<Card component="a" href={`/${locale}/projects/${id}`}>...</Card>
-
-// CORRECT — client-side navigation
-import Link from 'next/link';
-<Button component={Link} href={`/${locale}/admin/users`}>Manage</Button>
-<Card component={Link} href={`/${locale}/projects/${id}`}>...</Card>
-```
-
 ## Page + Colocated Components Pattern
 
-### Page (Server Component)
-
-- Role: Dictionary loading, server-side data fetching, passes data to Client Components
-- `async/await` allowed, no Hooks
-
-### Client Component (`_components/`)
-
-- Role: Interactivity, Hooks, loading/error state, rendering
-- Must declare `'use client'`
-- Push `'use client'` boundary as deep (leaf-level) as possible
-
-### Shared UI (`components/ui/`)
-
-- Role: Shared primitives (icons, common UI elements) used across pages
+Page는 dictionary 로딩과 서버 데이터 fetch를 맡고, `_components/`의 Client Component에 props로 전달. Hook 사용은 Client Component에서만. `'use client'` 경계는 leaf-level까지 미룬다.
 
 ```tsx
 // Page (SC): src/app/[locale]/products/page.tsx
@@ -96,8 +60,6 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 
 ## Server Component / Client Component Boundary
 
-- Components are Server Components by default in App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`)
-- Files using Hooks (useState, TanStack Query, etc.) must declare `'use client'` — typically `_components/`, `_providers/`, `src/lib/api/hooks/`
 - Push `'use client'` boundary as deep (leaf-level) as possible
 - `src/lib/domain/`, `src/lib/api/types.ts`, `src/lib/api/mappers/` can be used in both server and client (pure TS)
 
@@ -132,7 +94,6 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 - `en.json` is the source of truth for dictionary keys — `ko.json` must match its structure (located in `src/common/dictionaries/`)
 - Dictionary keys are organized by feature/page (e.g., `Products`, `Navigation`)
 - Client Components receive translated strings as props (no dictionary access inside `_components/`)
-- Dictionary loading happens in Server Components only (`server-only` enforced)
 - Type safety: `Dictionary` type is derived from `en.json` via `typeof import`
 
 ```tsx
