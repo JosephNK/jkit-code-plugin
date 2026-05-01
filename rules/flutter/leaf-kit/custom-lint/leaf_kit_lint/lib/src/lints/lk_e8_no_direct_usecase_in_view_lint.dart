@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import 'package:analyzer/error/error.dart' show ErrorSeverity;
+import 'package:analyzer/error/error.dart' show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
 import '../helpers.dart';
@@ -20,13 +20,13 @@ class LkE8NoDirectUsecaseInViewLint extends DartLintRule {
     correctionMessage:
         'Define a bloc event and call the UseCase from the bloc handler. '
         'View should only emit events and consume state.',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addImportDirective((node) {

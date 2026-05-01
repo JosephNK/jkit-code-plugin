@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import "package:analyzer/error/error.dart" show ErrorSeverity;
+import "package:analyzer/error/error.dart" show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 
@@ -15,13 +15,13 @@ class AlN1PortNamingLint extends DartLintRule {
     correctionMessage:
         "Rename the class to end with 'Port' "
         "(e.g., AuthPort, UserRepositoryPort).",
-    errorSeverity: ErrorSeverity.WARNING,
+    errorSeverity: DiagnosticSeverity.WARNING,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addClassDeclaration((node) {

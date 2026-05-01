@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import "package:analyzer/error/error.dart" show ErrorSeverity;
+import "package:analyzer/error/error.dart" show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
@@ -19,13 +19,13 @@ class AlE5PortsNoFrameworkLint extends DartLintRule {
     correctionMessage:
         'Define port interfaces using only domain types (entities, '
         'exceptions). Framework types belong in adapters/.',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addImportDirective((node) {

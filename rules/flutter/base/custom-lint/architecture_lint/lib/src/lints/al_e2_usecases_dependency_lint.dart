@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import "package:analyzer/error/error.dart" show ErrorSeverity;
+import "package:analyzer/error/error.dart" show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 
@@ -23,13 +23,13 @@ class AlE2UsecasesDependencyLint extends DartLintRule {
         'Only entities/, ports/, and exceptions/ are allowed.',
     correctionMessage:
         'Inject dependencies through ports/ and use DI to wire adapters.',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addImportDirective((node) {

@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import 'package:analyzer/error/error.dart' show ErrorSeverity;
+import 'package:analyzer/error/error.dart' show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
 import '../constants.dart';
@@ -23,13 +23,13 @@ class LkE3BlocDependencyLint extends DartLintRule {
     correctionMessage:
         'Inject UseCase via constructor and call it from bloc — '
         'never reach for adapters/ or ports/ directly.',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addImportDirective((node) {

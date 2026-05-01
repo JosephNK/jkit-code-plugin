@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import "package:analyzer/error/error.dart" show ErrorSeverity;
+import "package:analyzer/error/error.dart" show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 import '../constants.dart';
@@ -23,13 +23,13 @@ class AlE8PresentationDependencyLint extends DartLintRule {
         'Access data through a state/controller layer that calls a UseCase. '
         'Keep presentation/ thin — only widgets, UI state subscription, and '
         'event dispatch.',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addImportDirective((node) {

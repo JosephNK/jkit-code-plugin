@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import "package:analyzer/error/error.dart" show ErrorSeverity;
+import "package:analyzer/error/error.dart" show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 import '../classification.dart';
 
@@ -15,13 +15,13 @@ class AlN3UseCaseNamingLint extends DartLintRule {
     correctionMessage:
         "Rename the class to end with 'UseCase' "
         "(e.g., GetUserUseCase) or 'Params' (e.g., GetUserParams).",
-    errorSeverity: ErrorSeverity.WARNING,
+    errorSeverity: DiagnosticSeverity.WARNING,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addClassDeclaration((node) {

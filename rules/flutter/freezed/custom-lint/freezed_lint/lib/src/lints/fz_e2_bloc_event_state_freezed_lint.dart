@@ -1,5 +1,5 @@
 import 'package:analyzer/error/listener.dart';
-import 'package:analyzer/error/error.dart' show ErrorSeverity;
+import 'package:analyzer/error/error.dart' show DiagnosticSeverity;
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
 import '../helpers.dart';
@@ -17,13 +17,13 @@ class FzE2BlocEventStateFreezedLint extends DartLintRule {
     correctionMessage:
         'Add @freezed and convert to sealed class with named factory constructors '
         '(e.g., `@freezed sealed class FooEvent with _\$FooEvent { const factory FooEvent.x() = _X; }`).',
-    errorSeverity: ErrorSeverity.ERROR,
+    errorSeverity: DiagnosticSeverity.ERROR,
   );
 
   @override
   void run(
     CustomLintResolver resolver,
-    ErrorReporter reporter,
+    DiagnosticReporter reporter,
     CustomLintContext context,
   ) {
     context.registry.addClassDeclaration((node) {
