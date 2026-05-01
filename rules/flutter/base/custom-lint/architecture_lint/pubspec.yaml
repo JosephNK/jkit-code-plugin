@@ -1,5 +1,5 @@
 name: architecture_lint
-version: 0.2.32
+version: 0.2.33
 description: Flutter hexagonal architecture linter (custom_lint plugin).
 
 publish_to: "none"
