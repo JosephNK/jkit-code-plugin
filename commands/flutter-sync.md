@@ -32,7 +32,7 @@ PROJECT_ROOT="$(pwd)"   # 의도한 프로젝트 루트에서 실행
 
 아래 **컨벤션** 스택을 보여주고 사용자에게 선택을 받습니다 (쉼표 구분, 전부 선택은 `all`, 비우면 base만 적용).
 
-> 선택 가능한 컨벤션 스택: `bloc`, `freezed`, `go-router`, `leaf-kit`, `easy-localization`
+> 선택 가능한 컨벤션 스택: `freezed`, `go-router`, `leaf-kit`, `easy-localization`
 
 ### 2. Flutter 엔트리 디렉토리 확인
 

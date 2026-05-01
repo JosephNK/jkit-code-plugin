@@ -96,6 +96,120 @@ class ProductApiAdapter implements ProductPort {
 }
 ```
 
+### BLoC
+
+`presentation/bloc/`은 `flutter_leaf_kit_state.dart` 기반 상태 관리 레이어. usecase를 호출해 도메인 결과를 상태로 변환하고 view에 노출한다. 의존성·네이밍·이벤트 컨벤션은 base의 `architecture_lint` + `leaf_kit_lint`로 정적 검증된다.
+
+#### Dependency Rules
+
+- **bloc/**은 **usecases/만** 참조 — `adapters/`/`ports/` 직접 호출 금지 (`leaf_kit_lint` LK_E3)
+- bloc/ 이벤트 핸들러에 비즈니스 로직 금지 — usecase에 위임
+
+#### Naming
+
+**Files**
+
+| Element | File Suffix | Example |
+|---------|-------------|---------|
+| BLoC | `*_bloc.dart` | `product_bloc.dart` |
+| Event | `*_event.dart` | `product_event.dart` |
+| State | `*_state.dart` | `product_state.dart` |
+
+**Classes**
+
+| Element | Pattern | Example |
+|---------|---------|---------|
+| BLoC | `{Feature}Bloc` | `ProductBloc`, `LoginBloc` |
+| Event | `{Feature}Event` | `ProductEvent`, `LoginEvent` |
+| State | `{Feature}State` | `ProductState`, `LoginState` |
+
+#### Event Named Constructors
+
+`{verb}Requested` 또는 `{verb}Changed` 패턴 사용:
+
+| Action | Pattern | Example |
+|--------|---------|---------|
+| Initial load | `.loadRequested()` | `ProductEvent.loadRequested()` |
+| Pull-to-refresh | `.refreshRequested()` | `ProductEvent.refreshRequested()` |
+| Delete | `.deleteRequested()` | `ProductEvent.deleteRequested(id: id)` |
+| Form input | `.{field}Changed()` | `LoginEvent.emailChanged(value: email)` |
+| Submit | `.submitRequested()` | `LoginEvent.submitRequested()` |
+
+#### Patterns
+
+- `Bloc<Event, State>` 직접 상속 (별도 base class 없음)
+- 생성자에서 이벤트 핸들러 등록: `on<EventType>(_handler)`
+- 핸들러 네이밍: `_on{EventName}`
+- 병렬 요청: `Future.wait()` 사용
+- Pull-to-refresh: 이벤트에 `Completer<void>?` 전달해 완료 신호
+- Stream 구독: `close()` override에서 반드시 cancel
+
+```dart
+class ProductBloc extends Bloc<ProductEvent, ProductState> {
+  final GetProductsUseCase getProductsUseCase;
+
+  ProductBloc({required this.getProductsUseCase})
+      : super(const ProductInitial()) {
+    on<ProductLoadRequested>(_onLoadRequested);
+  }
+
+  Future<void> _onLoadRequested(ProductLoadRequested event, Emitter<ProductState> emit) async {
+    emit(const ProductLoading());
+    try {
+      final result = await getProductsUseCase(const GetProductsParams());
+      emit(ProductLoaded(items: result.items));
+    } on Exception catch (e) {
+      emit(ProductError(message: e.toString()));
+    }
+  }
+}
+```
+
+#### Communication
+
+| Scenario | Pattern |
+|----------|---------|
+| Parent → Child BLoC | 생성자 또는 생성 시점 이벤트로 데이터 전달 |
+| Sibling BLoCs | `common/events/` event bus — 한쪽이 발행, 다른 쪽이 구독 |
+| Global state change (e.g., logout) | `Bloc.observer`가 `addError()` 패턴으로 처리 |
+
+#### DI Registration
+
+| Scope | Registration | Target |
+|-------|-------------|--------|
+| BLoC | `registerFactory` | 라우트마다 새 인스턴스 |
+
+```dart
+sl.registerFactory(() => ProductBloc(getProductsUseCase: sl()));
+```
+
+#### Routing with BLoC
+
+`BlocProvider`로 라우트마다 BLoC 생성 + 초기 이벤트 디스패치:
+
+```dart
+GoRoute(
+  path: '/products',
+  pageBuilder: (context, state) => NoTransitionPage<void>(
+    child: BlocProvider(
+      create: (_) => sl<ProductBloc>()..add(const ProductLoadRequested()),
+      child: const ProductScreen(),
+    ),
+  ),
+),
+```
+
+#### Error Handling
+
+| Layer | Responsibility |
+|-------|---------------|
+| BLoC | `on Exception catch (e)` 사용 → 에러 상태 emit. bare `catch` 금지 (`architecture_lint` E7). |
+
+#### Test Patterns
+
+- `tearDown`에서 `bloc.close()` 호출
+- `setUpAll`에서 Freezed params용 `registerFallbackValue()` 호출
+
 ### Error Handling — 401 (API 사용 시)
 
 > 이 섹션은 Remote API를 데이터 소스로 사용하는 경우에 해당합니다.
