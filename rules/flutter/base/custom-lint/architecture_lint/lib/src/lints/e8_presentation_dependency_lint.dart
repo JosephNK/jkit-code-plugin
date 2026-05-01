@@ -13,7 +13,7 @@ import '../dart_lint.dart';
 /// bloc을 통해서만 도메인 동작을 호출하도록 강제.
 /// 허용은 entities/·exceptions/·bloc/(stack 활성 시)·common/·di/·router/ 및 그 외 외부 UI 라이브러리.
 class E8PresentationDependencyLint extends DartLint {
-  E8PresentationDependencyLint({Set<String> stacks = const {'bloc'}})
+  E8PresentationDependencyLint({Set<String> stacks = const {}})
     : _forbidden = {
         'adapters',
         'ports',

@@ -13,7 +13,7 @@ class E2UsecasesDependencyLint extends DartLint {
   // common_services 레이어는 forbidden에서 제외 — value-object/config/state/exception
   // 등 공용 서비스의 보조 타입은 usecase에서 자유롭게 import 가능.
   // (common/services 의 adapter 구현체는 별도 'adapters' 레이어로 분류되어 차단됨)
-  E2UsecasesDependencyLint({Set<String> stacks = const {'bloc'}})
+  E2UsecasesDependencyLint({Set<String> stacks = const {}})
     : _forbidden = {
         'adapters',
         'presentation',

@@ -12,7 +12,7 @@ import '../dart_lint.dart';
 /// 금지 타깃은 `crossFeatureForbidden` (ports·adapters·usecases) + bloc stack 활성 시 `crossFeatureForbiddenBloc`.
 /// 예외: `presentation/`(+ bloc stack 활성 시 `bloc/`)이 다른 feature `domain/` 접근 허용 (DI/이벤트 버스 권장).
 class E6CrossFeatureLint extends DartLint {
-  E6CrossFeatureLint({Set<String> stacks = const {'bloc'}})
+  E6CrossFeatureLint({Set<String> stacks = const {}})
     : _forbidden = {
         ...crossFeatureForbidden,
         if (stacks.contains('bloc')) ...crossFeatureForbiddenBloc,

@@ -12,11 +12,11 @@ import 'package:yaml/yaml.dart';
 /// ```
 ///
 /// 파일 없음/키 없음/타입 mismatch/파싱 실패는 모두 [defaultStacks]로 fall back.
-/// 마이그레이션 안전성 우선 — 옵션을 명시하지 않은 프로젝트는 기존 동작 유지.
+/// default는 빈 집합 — 옵션을 명시하지 않은 프로젝트는 stack 룰 비활성.
 /// analyzer_plugin과 CLI(bin/lint.dart)가 공유하는 단일 진입점.
 Set<String> loadStacks(
   String? optionsPath, {
-  Set<String> defaultStacks = const {'bloc'},
+  Set<String> defaultStacks = const {},
 }) {
   if (optionsPath == null) return defaultStacks;
   final file = File(optionsPath);

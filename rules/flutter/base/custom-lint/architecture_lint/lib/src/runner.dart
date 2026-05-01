@@ -68,10 +68,12 @@ class LintRunner extends RecursiveAstVisitor<void> {
 /// stack 룰은 `stacks` set에 해당 키가 있을 때만 추가:
 /// - `'bloc'`: E3BlocDependencyLint + E2/E6/E8의 bloc 분기 활성
 ///
-/// default `{'bloc'}`는 stack 도입 전 동작 보존 — 명시 토글은 plugin/CLI가
-/// `analysis_options.yaml`의 `architecture_lint.stacks`에서 읽어 주입한다.
+/// default는 빈 집합 — bloc 룰을 적용하려면 `analysis_options.yaml`의
+/// `architecture_lint.stacks: [bloc]`을 명시한다 (init/sync가 conventions
+/// 선택에서 자동 주입). 기존 v0.2.x 사용자는 sync 한 번 실행으로
+/// 의도한 stacks가 옵션 파일에 set/replace된다.
 List<DartLint> createArchitectureLints({
-  Set<String> stacks = const {'bloc'},
+  Set<String> stacks = const {},
 }) => <DartLint>[
   E1EntitiesImportLint(),
   E2UsecasesDependencyLint(stacks: stacks),
