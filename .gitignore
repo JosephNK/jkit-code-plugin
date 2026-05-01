@@ -15,5 +15,5 @@ docs/
 
 # Dart
 .dart_tool/
-rules/flutter/base/custom-lint/*/pubspec.lock
-rules/flutter/base/custom-lint/*/tools/*/pubspec.lock
+rules/flutter/*/custom-lint/*/pubspec.lock
+rules/flutter/*/custom-lint/*/tools/*/pubspec.lock
