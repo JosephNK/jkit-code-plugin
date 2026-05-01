@@ -6,7 +6,7 @@
 
 ## 개요
 
-`freezed` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 함께 `custom_lint` umbrella 하에서 동작 — 두 패키지가 자동 발견·합성된다. freezed_lint은 entities/event/state/params 클래스의 `@freezed` annotation 필수 적용만 강제한다.
+`freezed` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 함께 `analysis_options.yaml`의 `plugins:` 섹션에 등록 — Dart analysis server가 두 패키지를 독립 isolate로 로드한다. freezed_lint은 entities/event/state/params 클래스의 `@freezed` annotation 필수 적용만 강제한다.
 
 ## 규칙 (Rules)
 

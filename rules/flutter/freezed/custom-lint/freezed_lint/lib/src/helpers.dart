@@ -41,6 +41,16 @@ String _normalizeInputPath(String filePath) {
   return raw;
 }
 
+/// AST 노드에서 파일의 절대 경로를 얻는다 (CompilationUnit 루트에서 조회).
+String? getFilePath(AstNode node) {
+  final unit = node.root;
+  if (unit is CompilationUnit) {
+    // ignore: experimental_member_use
+    return unit.declaredFragment?.source.fullName;
+  }
+  return null;
+}
+
 /// 파일이 codegen 산출물(`*.g.dart`, `*.freezed.dart` 등)인지.
 bool isGeneratedFile(String filePath) {
   final n = filePath.replaceAll('\\', '/');

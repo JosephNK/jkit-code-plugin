@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 // =============================================================================
-// Injects architecture_lint (as a git dependency) into pubspec.yaml and
-// registers it as an analyzer plugin in analysis_options.yaml.
+// Registers architecture_lint (and optional stack lint packages) as analyzer
+// plugins in analysis_options.yaml via the new top-level `plugins:` section
+// (analysis_server_plugin, Dart 3.10+).
 //
-// Delegates the YAML edits to the Node script
-// `custom_lint/inject-custom-lint.mjs`, which uses the `yaml`
-// package for round-trip YAML editing (preserves comments & formatting).
+// Each lint package is registered with a git dependency directly under
+// `plugins:` — no umbrella custom_lint package needed. Also strips legacy
+// custom_lint dev dependency and `analyzer.plugins:` registration if present.
+//
+// Delegates the YAML edits to `custom_lint/inject-custom-lint.mjs`, which uses
+// the `yaml` package for round-trip YAML editing (preserves comments &
+// formatting).
 //
 // Usage:
 //   gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
@@ -24,12 +29,14 @@ const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
 
 const HELP = `Usage: gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <stacks>]
 
-Injects architecture_lint (base) + optional stack lint packages (e.g.
-leaf_kit_lint when --stacks includes leaf-kit) as git dependencies into
-pubspec.yaml and registers custom_lint as the analyzer plugin in
-analysis_options.yaml.
+Registers architecture_lint (base) + optional stack lint packages (e.g.
+leaf_kit_lint when --stacks includes leaf-kit) as analyzer plugins in
+analysis_options.yaml via the new top-level \`plugins:\` section. Each lint
+package is pinned to a git ref. The Dart analysis server resolves them in a
+synthetic package, independent of the host project's pubspec.
 
-Requires: plugin's node_modules installed (\`npm install\` in plugin root).
+Requires: Dart 3.10+ (Flutter 3.38+) and plugin's node_modules installed
+(\`npm install\` in plugin root).
 
 Arguments:
   flutter         Framework name (currently flutter only)
@@ -201,20 +208,23 @@ function main() {
     process.exit(result.status ?? 1);
   }
 
-  // Invalidate Dart analyzer plugin cache.
-  // Dart analyzer copies tools/analyzer_plugin/ into ~/.dartServer/.plugin_manager/
-  // on first load and keys it by content hash. When the git ref changes or the
-  // bootstrap pubspec changes, the stale copy can linger and break resolution.
-  // Dropping the cache forces Dart to re-copy from the patched source on next analyze.
-  const pluginManagerCache = path.join(
-    os.homedir(),
-    '.dartServer',
-    '.plugin_manager',
-  );
-  if (fs.existsSync(pluginManagerCache)) {
-    fs.rmSync(pluginManagerCache, { recursive: true, force: true });
-    process.stdout.write(`  Cleared ${pluginManagerCache}\n`);
+  // Invalidate Dart analyzer plugin caches.
+  // The new analysis_server_plugin system creates a synthetic package per
+  // plugin set and caches the resolved sources. Restart of the analysis server
+  // is required after plugin changes (per Dart docs); clearing both legacy and
+  // new cache directories also helps surface fresh sources on next analyze.
+  for (const cacheDir of [
+    path.join(os.homedir(), '.dartServer', '.plugin_manager'),
+    path.join(os.homedir(), '.dartServer', '.analysis_server_plugin'),
+  ]) {
+    if (fs.existsSync(cacheDir)) {
+      fs.rmSync(cacheDir, { recursive: true, force: true });
+      process.stdout.write(`  Cleared ${cacheDir}\n`);
+    }
   }
+  process.stdout.write(
+    '  Note: restart the Dart Analysis Server (or your IDE) to apply changes.\n',
+  );
 }
 
 main();

@@ -6,7 +6,7 @@
 
 ## 개요
 
-`leaf-kit` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 함께 `custom_lint` umbrella 하에서 동작 — 두 패키지가 자동 발견·합성된다. leaf_kit_lint은 base의 boundary 정의 위에 bloc + leaf_kit 전용 의존성 제약만 추가한다.
+`leaf-kit` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 함께 `analysis_options.yaml`의 `plugins:` 섹션에 등록 — Dart analysis server가 두 패키지를 독립 isolate로 로드한다. leaf_kit_lint은 base의 boundary 정의 위에 bloc + leaf_kit 전용 의존성 제약만 추가한다.
 
 ## 규칙 (Rules)
 

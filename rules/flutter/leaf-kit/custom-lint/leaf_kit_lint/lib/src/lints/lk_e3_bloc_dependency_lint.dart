@@ -1,6 +1,9 @@
-import 'package:analyzer/error/listener.dart';
-import 'package:analyzer/error/error.dart' show DiagnosticSeverity;
-import 'package:custom_lint_builder/custom_lint_builder.dart';
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/error/error.dart';
 
 import '../constants.dart';
 import '../helpers.dart';
@@ -9,54 +12,71 @@ import '../helpers.dart';
 ///
 /// bloc은 상태 관리 + 이벤트 처리만 담당 — 인프라(`adapters/`)/추상 인터페이스
 /// (`ports/`) 직접 의존 시 책임 분리 위반. 데이터 접근은 UseCase 경유.
-class LkE3BlocDependencyLint extends DartLintRule {
-  const LkE3BlocDependencyLint() : super(code: _code);
+class LkE3BlocDependencyLint extends AnalysisRule {
+  LkE3BlocDependencyLint()
+      : super(
+          name: code.lowerCaseName,
+          description: code.problemMessage,
+        );
 
   static const _forbidden = <String>{'adapters', 'ports'};
 
-  static const _code = LintCode(
-    name: 'lk_e3_bloc_dependency',
-    problemMessage:
-        'bloc/ may only import flutter, flutter_bloc, bloc, equatable, meta, '
+  static const code = LintCode(
+    'lk_e3_bloc_dependency',
+    'bloc/ may only import flutter, flutter_bloc, bloc, equatable, meta, '
         'collection, or flutter_leaf_kit_state.dart / flutter_leaf_kit_core.dart. '
         'adapters/ and ports/ direct imports are not allowed.',
     correctionMessage:
         'Inject UseCase via constructor and call it from bloc — '
         'never reach for adapters/ or ports/ directly.',
-    errorSeverity: DiagnosticSeverity.ERROR,
+    severity: DiagnosticSeverity.ERROR,
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    DiagnosticReporter reporter,
-    CustomLintContext context,
+  LintCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    context.registry.addImportDirective((node) {
-      final filePath = resolver.path;
-      if (!isBlocFile(filePath)) return;
+    registry.addImportDirective(this, _Visitor(this, context));
+  }
 
-      final importUri = node.uri.stringValue;
-      if (importUri == null) return;
-      if (isDartImport(importUri)) return;
+  static bool isForbiddenLayer(String layer) => _forbidden.contains(layer);
+}
 
-      final importPkg = extractImportPackageName(importUri);
-      final projectPkg = getProjectPackageName(node);
+class _Visitor extends SimpleAstVisitor<void> {
+  _Visitor(this.rule, this.context);
 
-      // External package — must match whitelist or leaf_kit allowed entry.
-      if (importPkg != null && importPkg != projectPkg) {
-        if (matchesPackageEntry(importUri, leafKitBlocAllowed)) return;
-        if (blocAllowedPackages.contains(importPkg)) return;
-        reporter.atNode(node.uri, code);
-        return;
-      }
+  final LkE3BlocDependencyLint rule;
+  final RuleContext context;
 
-      // Internal import — block forbidden layers.
-      final targetLayer = getImportTargetLayer(importUri, filePath, projectPkg);
-      if (targetLayer == null) return;
-      if (_forbidden.contains(targetLayer)) {
-        reporter.atNode(node.uri, code);
-      }
-    });
+  @override
+  void visitImportDirective(ImportDirective node) {
+    final filePath = getFilePath(node);
+    if (filePath == null) return;
+    if (!isBlocFile(filePath)) return;
+
+    final importUri = node.uri.stringValue;
+    if (importUri == null) return;
+    if (isDartImport(importUri)) return;
+
+    final importPkg = extractImportPackageName(importUri);
+    final projectPkg = getProjectPackageName(node);
+
+    // External package — must match whitelist or leaf_kit allowed entry.
+    if (importPkg != null && importPkg != projectPkg) {
+      if (matchesPackageEntry(importUri, leafKitBlocAllowed)) return;
+      if (blocAllowedPackages.contains(importPkg)) return;
+      rule.reportAtNode(node.uri);
+      return;
+    }
+
+    final targetLayer = getImportTargetLayer(importUri, filePath, projectPkg);
+    if (targetLayer == null) return;
+    if (LkE3BlocDependencyLint.isForbiddenLayer(targetLayer)) {
+      rule.reportAtNode(node.uri);
+    }
   }
 }

@@ -21,10 +21,9 @@ Updates:
   - .claude-plugin/plugin.json            (version)
   - .claude-plugin/marketplace.json       (version)
   - package.json                          (version)
-  - rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml
-    (version)
-  - rules/flutter/base/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml
-    (version + architecture_lint git ref → v<new-version>)
+  - rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml      (version)
+  - rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/pubspec.yaml      (version)
+  - rules/flutter/freezed/custom-lint/freezed_lint/pubspec.yaml        (version)
 
 Then:
   - git add + commit "chore: 버전 <new> 범프"
@@ -161,17 +160,6 @@ function updateJsonVersion(filePath, newVersion) {
   process.stdout.write(`  Updated ${filePath}\n`);
 }
 
-function updatePubspecRef(filePath, newVersion) {
-  const txt = fs.readFileSync(filePath, 'utf-8');
-  const newTxt = txt.replace(/(ref:\s*)v\d+\.\d+\.\d+/, `$1v${newVersion}`);
-  if (newTxt === txt) {
-    process.stderr.write(`Failed to update ref in ${filePath}\n`);
-    process.exit(1);
-  }
-  fs.writeFileSync(filePath, newTxt);
-  process.stdout.write(`  Updated ${filePath} (ref → v${newVersion})\n`);
-}
-
 function updateYamlVersion(filePath, newVersion) {
   if (!fs.existsSync(filePath)) {
     process.stdout.write(`  Skipped ${filePath} (not found)\n`);
@@ -218,8 +206,10 @@ async function main() {
   const rootPackageJsonPath = 'package.json';
   const architectureLintPubspecPath =
     'rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml';
-  const analyzerPluginPubspecPath =
-    'rules/flutter/base/custom-lint/architecture_lint/tools/analyzer_plugin/pubspec.yaml';
+  const leafKitLintPubspecPath =
+    'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/pubspec.yaml';
+  const freezedLintPubspecPath =
+    'rules/flutter/freezed/custom-lint/freezed_lint/pubspec.yaml';
 
   const current = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8')).version;
   process.stdout.write(`Current version: ${current}\n`);
@@ -273,18 +263,13 @@ async function main() {
   process.stdout.write('\n─── Release actions ───\n');
   process.stdout.write(`  1. Update ${pluginJsonPath}            → ${newVersion}\n`);
   process.stdout.write(`  2. Update ${marketplaceJsonPath}       → ${newVersion}\n`);
-  process.stdout.write(
-    `  3. Update ${rootPackageJsonPath}                          → ${newVersion}\n`,
-  );
-  process.stdout.write(
-    `  4. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`,
-  );
-  process.stdout.write(
-    `  5. Update analyzer_plugin/pubspec.yaml            → version: ${newVersion}, ref: ${tag}\n`,
-  );
-  process.stdout.write(`  6. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
-  process.stdout.write(`  7. git tag ${tag}\n`);
-  process.stdout.write(`  8. git push origin ${branch} --follow-tags\n\n`);
+  process.stdout.write(`  3. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
+  process.stdout.write(`  4. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
+  process.stdout.write(`  5. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
+  process.stdout.write(`  6. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
+  process.stdout.write(`  7. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
+  process.stdout.write(`  8. git tag ${tag}\n`);
+  process.stdout.write(`  9. git push origin ${branch} --follow-tags\n\n`);
 
   if (!args.yes) {
     const ans = await prompt('Proceed with release? [y/N] ');
@@ -299,15 +284,16 @@ async function main() {
   updateJsonVersion(marketplaceJsonPath, newVersion);
   updateJsonVersion(rootPackageJsonPath, newVersion);
   updateYamlVersion(architectureLintPubspecPath, newVersion);
-  updateYamlVersion(analyzerPluginPubspecPath, newVersion);
-  updatePubspecRef(analyzerPluginPubspecPath, newVersion);
+  updateYamlVersion(leafKitLintPubspecPath, newVersion);
+  updateYamlVersion(freezedLintPubspecPath, newVersion);
 
   // Commit + tag + push
   const addFiles = [
     pluginJsonPath,
     marketplaceJsonPath,
     architectureLintPubspecPath,
-    analyzerPluginPubspecPath,
+    leafKitLintPubspecPath,
+    freezedLintPubspecPath,
   ];
   if (fs.existsSync(rootPackageJsonPath)) addFiles.push(rootPackageJsonPath);
   spawnSync('git', ['add', ...addFiles], { stdio: 'inherit' });

@@ -1,7 +1,7 @@
 /// JKit Flutter — Architecture Lint Package (Base)
 ///
 /// Flutter 프로젝트의 Clean Architecture + Feature-first 구조를 정적 분석으로 강제.
-/// custom_lint umbrella plugin을 통해 IDE/CLI에서 동작.
+/// `analysis_server_plugin` 기반으로 IDE 및 `dart analyze` / `flutter analyze`에서 동작.
 /// stack-specific 룰(예: bloc)은 별도 패키지로 분리.
 ///
 /// ## 룰 요약 (12종)
@@ -25,43 +25,8 @@
 /// - **AL_S2** `al_s2_unknown_path`         : `app/lib/` 안에서 boundary 외 경로 금지 (ERROR)
 library architecture_lint;
 
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-
-import 'src/lints/al_e1_entities_import_lint.dart';
-import 'src/lints/al_e2_usecases_dependency_lint.dart';
-import 'src/lints/al_e4_domain_no_sdk_lint.dart';
-import 'src/lints/al_e5_ports_no_framework_lint.dart';
-import 'src/lints/al_e6_cross_feature_lint.dart';
-import 'src/lints/al_e7_no_bare_catch_lint.dart';
-import 'src/lints/al_e8_presentation_dependency_lint.dart';
-import 'src/lints/al_n1_port_naming_lint.dart';
-import 'src/lints/al_n2_adapter_naming_lint.dart';
-import 'src/lints/al_n3_usecase_naming_lint.dart';
-import 'src/lints/al_s1_file_size_lint.dart';
-import 'src/lints/al_s2_unknown_path_lint.dart';
-
 export 'src/boundary_element.dart';
 export 'src/classification.dart';
 export 'src/constants.dart';
 export 'src/structure_annotation.dart';
-
-/// custom_lint entrypoint — base 12개 룰 등록.
-PluginBase createPlugin() => _ArchitectureLintPlugin();
-
-class _ArchitectureLintPlugin extends PluginBase {
-  @override
-  List<LintRule> getLintRules(CustomLintConfigs configs) => const [
-    AlE1EntitiesImportLint(),
-    AlE2UsecasesDependencyLint(),
-    AlE4DomainNoSdkLint(),
-    AlE5PortsNoFrameworkLint(),
-    AlE6CrossFeatureLint(),
-    AlE7NoBareCatchLint(),
-    AlE8PresentationDependencyLint(),
-    AlN1PortNamingLint(),
-    AlN2AdapterNamingLint(),
-    AlN3UseCaseNamingLint(),
-    AlS1FileSizeLint(),
-    AlS2UnknownPathLint(),
-  ];
-}
+export 'plugin.dart';

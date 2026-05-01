@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // =============================================================================
-// architecture_lint의 git ref 버전을 업데이트하는 스크립트.
+// architecture_lint(및 leaf_kit_lint, freezed_lint) 의 git ref 버전을
+// `analysis_options.yaml` 의 top-level `plugins:` 섹션에서 업데이트한다.
 //
-// architecture_lint의 git 블록은 url/path/ref 조합이며, 필드 순서는
-// url → path → ref 가 일반적이지만 url → ref → path 케이스도 허용한다.
+// analysis_server_plugin 마이그레이션 이후, 이 lint 패키지들은 `pubspec.yaml`
+// 의 dev_dependencies 가 아닌 `analysis_options.yaml` 의 `plugins:` 섹션에
+// 등록된다.
 //
 // Usage:
 //   update-architecture-lint-ref.mjs <ref> --project-dir <dir> [--dry-run]
@@ -14,13 +16,18 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import YAML from 'yaml';
+
+const LINT_PACKAGE_NAMES = ['architecture_lint', 'leaf_kit_lint', 'freezed_lint'];
+
 const HELP = `Usage: update-architecture-lint-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
 
-모든 pubspec.yaml에서 architecture_lint의 git ref를 업데이트합니다.
+모든 analysis_options.yaml 의 plugins: 섹션에서 architecture_lint /
+leaf_kit_lint / freezed_lint 의 git ref 를 업데이트합니다.
 
 Arguments:
-  <ref>              선택. 새로운 git ref 값 (예: v0.1.32, 0.1.32, main).
-                     생략 시 .claude-plugin/plugin.json의 version을 사용.
+  <ref>              선택. 새로운 git ref 값 (예: v0.3.1, 0.3.1, main).
+                     생략 시 .claude-plugin/plugin.json 의 version 을 사용.
 
 Options:
   --project-dir <dir>  프로젝트 루트 디렉토리 (required)
@@ -113,7 +120,7 @@ function resolvePluginVersion() {
   return normalizeRef(version);
 }
 
-function findPubspecFiles(projectRoot) {
+function findAnalysisOptionsFiles(projectRoot) {
   const results = [];
   const walk = (dir) => {
     let entries;
@@ -123,11 +130,13 @@ function findPubspecFiles(projectRoot) {
       return;
     }
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'build') continue;
+      if (entry.name.startsWith('.') || entry.name === 'build' || entry.name === 'node_modules') {
+        continue;
+      }
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(full);
-      } else if (entry.isFile() && entry.name === 'pubspec.yaml') {
+      } else if (entry.isFile() && entry.name === 'analysis_options.yaml') {
         results.push(full);
       }
     }
@@ -136,49 +145,52 @@ function findPubspecFiles(projectRoot) {
   return results.sort();
 }
 
-// 공통 헤더: architecture_lint: \n  git: \n    url: ...
-const HEADER = /(architecture_lint:\s*\n\s*git:\s*\n\s*url:[^\n]+\n)/;
+function updateLintPluginRefs(analysisPath, newRef, dryRun) {
+  const raw = fs.readFileSync(analysisPath, 'utf-8');
+  const doc = YAML.parseDocument(raw);
+  if (doc.contents === null) return 0;
 
-// Case 1: url → path → ref
-const PATH_FIRST_RE =
-  /(architecture_lint:\s*\n\s*git:\s*\n\s*url:[^\n]+\n)(\s*path:[^\n]+\n)(\s*ref:\s*)['"]?([^'"\n]+)['"]?/;
+  const plugins = doc.get('plugins');
+  if (!YAML.isMap(plugins)) return 0;
 
-// Case 2: url → ref (path 없음 또는 ref 가 먼저)
-const REF_ONLY_RE =
-  /(architecture_lint:\s*\n\s*git:\s*\n\s*url:[^\n]+\n)(\s*ref:\s*)['"]?([^'"\n]+)['"]?/;
+  let updated = 0;
 
-function updateArchitectureLintRef(pubspecPath, newRef, dryRun) {
-  const content = fs.readFileSync(pubspecPath, 'utf-8');
+  for (const pkgName of LINT_PACKAGE_NAMES) {
+    const pluginEntry = plugins.get(pkgName);
+    if (!YAML.isMap(pluginEntry)) continue;
 
-  let match = content.match(PATH_FIRST_RE);
-  let newContent;
-  let oldRef;
+    const gitNode = pluginEntry.get('git');
+    if (!YAML.isMap(gitNode)) continue;
 
-  if (match) {
-    oldRef = match[4];
+    const refNode = gitNode.get('ref', true);
+    const oldRef = YAML.isScalar(refNode) ? String(refNode.value) : null;
     if (oldRef === newRef) {
-      process.stdout.write(`  ⏭️  ${pubspecPath}: 이미 동일한 ref (${oldRef})\n`);
-      return false;
+      process.stdout.write(`  ⏭️  ${analysisPath} [${pkgName}]: 이미 동일한 ref (${oldRef})\n`);
+      continue;
     }
-    newContent = content.replace(PATH_FIRST_RE, `$1$2$3'${newRef}'`);
-  } else {
-    match = content.match(REF_ONLY_RE);
-    if (!match) return false;
-    oldRef = match[3];
-    if (oldRef === newRef) {
-      process.stdout.write(`  ⏭️  ${pubspecPath}: 이미 동일한 ref (${oldRef})\n`);
-      return false;
+
+    if (YAML.isScalar(refNode)) {
+      refNode.value = newRef;
+    } else {
+      gitNode.set('ref', newRef);
     }
-    newContent = content.replace(REF_ONLY_RE, `$1$2'${newRef}'`);
+
+    if (dryRun) {
+      process.stdout.write(
+        `  🔍 ${analysisPath} [${pkgName}]: ${oldRef ?? '(없음)'} → ${newRef} (dry-run)\n`,
+      );
+    } else {
+      process.stdout.write(
+        `  ✅ ${analysisPath} [${pkgName}]: ${oldRef ?? '(없음)'} → ${newRef}\n`,
+      );
+    }
+    updated += 1;
   }
 
-  if (dryRun) {
-    process.stdout.write(`  🔍 ${pubspecPath}: ${oldRef} → ${newRef} (dry-run)\n`);
-  } else {
-    fs.writeFileSync(pubspecPath, newContent);
-    process.stdout.write(`  ✅ ${pubspecPath}: ${oldRef} → ${newRef}\n`);
+  if (updated > 0 && !dryRun) {
+    fs.writeFileSync(analysisPath, String(doc));
   }
-  return true;
+  return updated;
 }
 
 function main() {
@@ -200,22 +212,20 @@ function main() {
   if (args.dryRun) process.stdout.write('(dry-run 모드)\n');
   process.stdout.write('\n');
 
-  const pubspecFiles = findPubspecFiles(projectRoot);
-  process.stdout.write(`발견된 pubspec.yaml: ${pubspecFiles.length}개\n\n`);
+  const files = findAnalysisOptionsFiles(projectRoot);
+  process.stdout.write(`발견된 analysis_options.yaml: ${files.length}개\n\n`);
 
   let updatedCount = 0;
-  for (const pubspec of pubspecFiles) {
-    if (updateArchitectureLintRef(pubspec, ref, args.dryRun)) {
-      updatedCount += 1;
-    }
+  for (const file of files) {
+    updatedCount += updateLintPluginRefs(file, ref, args.dryRun);
   }
 
   process.stdout.write('\n');
   if (updatedCount === 0) {
-    process.stdout.write('변경된 파일이 없습니다.\n');
+    process.stdout.write('변경된 항목이 없습니다.\n');
   } else {
     const action = args.dryRun ? '변경 예정' : '업데이트 완료';
-    process.stdout.write(`${updatedCount}개 파일 ${action}\n`);
+    process.stdout.write(`${updatedCount}개 항목 ${action}\n`);
   }
 }
 

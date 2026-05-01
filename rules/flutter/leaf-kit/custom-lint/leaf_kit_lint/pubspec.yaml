@@ -1,14 +1,14 @@
 name: leaf_kit_lint
-version: 0.2.30
-description: Flutter Leaf Kit (bloc) architecture linter (custom_lint plugin).
+version: 0.2.33
+description: Flutter Leaf Kit (bloc) architecture linter (analysis_server_plugin).
 
 publish_to: "none"
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
-  analyzer: ^8.0.0
-  custom_lint_builder: ^0.8.1
+  analyzer: ^10.0.0
+  analysis_server_plugin: ^0.3.8
   glob: ^2.1.0
   path: ^1.0.0

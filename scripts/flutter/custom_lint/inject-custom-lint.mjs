@@ -1,23 +1,26 @@
 #!/usr/bin/env node
 // =============================================================================
 // Inject architecture_lint (base) + stack-specific lint packages into
-// pubspec.yaml and analysis_options.yaml.
+// `analysis_options.yaml` via the new top-level `plugins:` section
+// (analysis_server_plugin, Dart 3.10+).
+//
+// Each lint package is registered with a git dependency directly under
+// `plugins:` — no umbrella custom_lint package needed. The Dart analysis server
+// creates a synthetic package and runs `dart pub upgrade` to resolve plugin
+// dependencies independently of the user's pubspec.yaml.
+//
+// Also strips the legacy `custom_lint` dev dependency and `analyzer.plugins:
+// [custom_lint]` registration if found, to clean up post-migration.
 //
 // Uses the `yaml` package (Document API) for round-trip YAML editing —
 // preserves comments, formatting, and existing structure.
-//
-// architecture_lint (base) is always injected as a git dependency.
-// Stack-specific lint packages (e.g. leaf_kit_lint when leaf-kit convention is
-// selected) are injected as additional git dependencies. custom_lint (umbrella
-// plugin) is also added to dev_dependencies and registered as the analyzer
-// plugin. custom_lint then auto-discovers all installed lint packages.
 //
 // Usage:
 //   inject-custom-lint.mjs \
 //     --pubspec app/pubspec.yaml \
 //     --analysis-options app/analysis_options.yaml \
 //     --git-url https://github.com/JosephNK/jkit-code-plugin.git \
-//     --git-ref v0.2.30 \
+//     --git-ref v0.3.0 \
 //     [--stacks leaf-kit,go-router]
 // =============================================================================
 
@@ -27,8 +30,8 @@ import process from 'node:process';
 
 import YAML from 'yaml';
 
-const ANALYZER_PLUGIN_NAME = 'custom_lint';
-const CUSTOM_LINT_VERSION = '^0.8.0';
+// Legacy umbrella plugin name — stripped from pubspec/analysis_options on injection.
+const LEGACY_CUSTOM_LINT = 'custom_lint';
 
 // Base package — always injected.
 const BASE_PACKAGE = {
@@ -37,7 +40,7 @@ const BASE_PACKAGE = {
 };
 
 // Stack → package mapping. Selecting a stack installs the corresponding lint
-// package as an additional custom_lint plugin.
+// package as an additional analyzer plugin.
 const STACK_PACKAGES = {
   'leaf-kit': {
     name: 'leaf_kit_lint',
@@ -49,15 +52,20 @@ const STACK_PACKAGES = {
   },
 };
 
+const ALL_LINT_PACKAGE_NAMES = new Set([
+  BASE_PACKAGE.name,
+  ...Object.values(STACK_PACKAGES).map((p) => p.name),
+]);
+
 const HELP = `Usage: inject-custom-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-ref <ref> [--stacks <stacks>]
 
-Inject architecture_lint (base) + optional stack lint packages into Flutter project config.
+Inject architecture_lint (base) + optional stack lint packages into Flutter project's analysis_options.yaml via the analysis_server_plugin top-level plugins: section.
 
 Options:
-  --pubspec <path>          Path to pubspec.yaml (required)
+  --pubspec <path>          Path to pubspec.yaml (used to strip legacy custom_lint dev dep)
   --analysis-options <path> Path to analysis_options.yaml (required)
   --git-url <url>           Git repository URL (required)
-  --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.2.30)
+  --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.3.0)
   --stacks <stacks>         Comma-separated convention stacks (optional)
                             Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
   -h, --help                Show this help
@@ -146,7 +154,9 @@ function parseArgs(argv) {
 }
 
 function buildGitDep(url, gitPath, ref) {
-  return { git: { url, path: gitPath, ref } };
+  return {
+    git: { url, path: gitPath, ref },
+  };
 }
 
 function nodeToJs(node) {
@@ -173,7 +183,6 @@ function writeDoc(filePath, doc) {
   fs.writeFileSync(filePath, String(doc));
 }
 
-// Resolve which lint packages should be installed based on selected stacks.
 function resolvePackages(stacks) {
   const packages = [BASE_PACKAGE];
   for (const stack of stacks) {
@@ -183,135 +192,109 @@ function resolvePackages(stacks) {
   return packages;
 }
 
-// ─── pubspec.yaml ───
-
-function injectPubspec(pubspecPath, gitUrl, gitRef, packages) {
+// ─── pubspec.yaml — strip legacy lint deps ───
+//
+// analysis_server_plugin loads plugins from a synthetic package, so the user's
+// pubspec.yaml does NOT need any of the lint packages or the legacy custom_lint
+// umbrella. Strip them on injection.
+function cleanPubspec(pubspecPath) {
   if (!fs.existsSync(pubspecPath) || !fs.statSync(pubspecPath).isFile()) {
-    process.stderr.write(`Error: ${pubspecPath} not found\n`);
-    return false;
+    return true;
   }
 
   const raw = fs.readFileSync(pubspecPath, 'utf-8');
   const doc = YAML.parseDocument(raw);
-
-  if (doc.contents === null) {
-    process.stderr.write(`Error: ${pubspecPath} is empty\n`);
-    return false;
-  }
-
-  // If dev_dependencies exists but isn't a map (e.g. empty `dev_dependencies:`),
-  // drop it so setIn can recreate a proper map.
-  const devDeps = doc.get('dev_dependencies');
-  if (devDeps != null && !YAML.isMap(devDeps)) {
-    doc.delete('dev_dependencies');
-  }
+  if (doc.contents === null) return true;
 
   let changed = false;
 
-  // Inject each lint package as a git dependency (idempotent).
-  for (const pkg of packages) {
-    const devDepsMap = doc.get('dev_dependencies');
-    const current = YAML.isMap(devDepsMap) ? nodeToJs(devDepsMap.get(pkg.name)) : null;
-    const alreadyPinned =
-      current &&
-      typeof current === 'object' &&
-      current.git &&
-      typeof current.git === 'object' &&
-      current.git.url === gitUrl &&
-      current.git.path === pkg.gitPath &&
-      current.git.ref === gitRef;
+  for (const section of ['dependencies', 'dev_dependencies']) {
+    const sectionMap = doc.get(section);
+    if (!YAML.isMap(sectionMap)) continue;
 
-    if (alreadyPinned) {
+    if (sectionMap.has(LEGACY_CUSTOM_LINT)) {
+      sectionMap.delete(LEGACY_CUSTOM_LINT);
       process.stdout.write(
-        `  ${pkg.name} already pinned to ${gitRef} in ${pubspecPath}\n`,
+        `  Removed legacy ${LEGACY_CUSTOM_LINT} from ${section} in ${pubspecPath}\n`,
       );
-      continue;
+      changed = true;
     }
-
-    doc.setIn(
-      ['dev_dependencies', pkg.name],
-      buildGitDep(gitUrl, pkg.gitPath, gitRef),
-    );
-    process.stdout.write(
-      `  Injected ${pkg.name} (git ref ${gitRef}) into ${pubspecPath}\n`,
-    );
-    changed = true;
-  }
-
-  // Inject custom_lint (umbrella) — pinned to fixed version.
-  const devDepsMap = doc.get('dev_dependencies');
-  const currentCustom = YAML.isMap(devDepsMap)
-    ? nodeToJs(devDepsMap.get(ANALYZER_PLUGIN_NAME))
-    : null;
-  if (currentCustom !== CUSTOM_LINT_VERSION) {
-    doc.setIn(['dev_dependencies', ANALYZER_PLUGIN_NAME], CUSTOM_LINT_VERSION);
-    process.stdout.write(
-      `  Injected ${ANALYZER_PLUGIN_NAME} (${CUSTOM_LINT_VERSION}) into ${pubspecPath}\n`,
-    );
-    changed = true;
-  } else {
-    process.stdout.write(
-      `  ${ANALYZER_PLUGIN_NAME} already pinned to ${CUSTOM_LINT_VERSION} in ${pubspecPath}\n`,
-    );
+    for (const name of ALL_LINT_PACKAGE_NAMES) {
+      if (sectionMap.has(name)) {
+        sectionMap.delete(name);
+        process.stdout.write(
+          `  Removed ${name} from ${section} in ${pubspecPath} (now in analysis_options.yaml plugins:)\n`,
+        );
+        changed = true;
+      }
+    }
+    // Drop the section entirely if it became empty after stripping.
+    if (sectionMap.items.length === 0 && changed) {
+      doc.delete(section);
+    }
   }
 
   if (changed) writeDoc(pubspecPath, doc);
   return true;
 }
 
-// ─── analysis_options.yaml ───
-
-function injectAnalysisOptions(analysisPath) {
+// ─── analysis_options.yaml — register plugins under top-level `plugins:` ───
+function injectAnalysisOptions(analysisPath, gitUrl, gitRef, packages) {
   const doc = loadOrCreateDoc(analysisPath);
 
+  // 1. Strip legacy `analyzer.plugins: [custom_lint]` registration.
   const analyzer = doc.get('analyzer');
-  const plugins = YAML.isMap(analyzer) ? analyzer.get('plugins') : null;
-
-  let pluginsChanged = true;
-
-  if (plugins == null) {
-    // analyzer either missing, null, or without a plugins key.
-    // Drop any non-map analyzer so setIn can auto-create a proper map.
-    if (analyzer != null && !YAML.isMap(analyzer)) {
+  if (YAML.isMap(analyzer)) {
+    const legacyPlugins = analyzer.get('plugins');
+    if (legacyPlugins != null) {
+      analyzer.delete('plugins');
+      process.stdout.write(
+        `  Removed legacy analyzer.plugins from ${analysisPath}\n`,
+      );
+    }
+    if (analyzer.items.length === 0) {
       doc.delete('analyzer');
     }
-    doc.setIn(['analyzer', 'plugins'], [ANALYZER_PLUGIN_NAME]);
-  } else if (YAML.isSeq(plugins)) {
-    // Drop any legacy 'architecture_lint' entry — only custom_lint should remain
-    // since Dart analyzer only allows one plugin per context.
-    const items = plugins.toJSON();
-    const filtered = items.filter(
-      (i) => i !== 'architecture_lint' && i !== ANALYZER_PLUGIN_NAME,
-    );
-    const target = [...filtered, ANALYZER_PLUGIN_NAME];
-    const same =
-      items.length === target.length &&
-      items.every((v, i) => v === target[i]);
-    if (same) {
-      pluginsChanged = false;
-    } else {
-      doc.setIn(['analyzer', 'plugins'], target);
-    }
-  } else {
-    const plain = YAML.isScalar(plugins) ? plugins.value : plugins;
-    if (String(plain) === ANALYZER_PLUGIN_NAME) {
-      pluginsChanged = false;
-    } else {
-      doc.setIn(['analyzer', 'plugins'], [ANALYZER_PLUGIN_NAME]);
-    }
   }
 
-  if (!pluginsChanged) {
+  // 2. Build/update top-level `plugins:` section.
+  let pluginsMap = doc.get('plugins');
+  if (pluginsMap != null && !YAML.isMap(pluginsMap)) {
+    doc.delete('plugins');
+    pluginsMap = null;
+  }
+
+  let changed = false;
+
+  for (const pkg of packages) {
+    const current = YAML.isMap(pluginsMap) ? nodeToJs(pluginsMap.get(pkg.name)) : null;
+    const desired = buildGitDep(gitUrl, pkg.gitPath, gitRef);
+    const alreadyPinned =
+      current &&
+      typeof current === 'object' &&
+      current.git &&
+      typeof current.git === 'object' &&
+      current.git.url === desired.git.url &&
+      current.git.path === desired.git.path &&
+      current.git.ref === desired.git.ref;
+
+    if (alreadyPinned) {
+      process.stdout.write(
+        `  ${pkg.name} already pinned to ${gitRef} in ${analysisPath}\n`,
+      );
+      continue;
+    }
+
+    doc.setIn(['plugins', pkg.name], desired);
     process.stdout.write(
-      `  ${ANALYZER_PLUGIN_NAME} already configured in ${analysisPath}, skipping\n`,
+      `  Registered ${pkg.name} (git ref ${gitRef}) in ${analysisPath} plugins:\n`,
     );
-    return true;
+    changed = true;
   }
 
-  writeDoc(analysisPath, doc);
-  process.stdout.write(
-    `  Set analyzer.plugins to [${ANALYZER_PLUGIN_NAME}] in ${analysisPath}\n`,
-  );
+  if (changed || doc.get('analyzer')?.get?.('plugins') === undefined) {
+    writeDoc(analysisPath, doc);
+  }
   return true;
 }
 
@@ -323,19 +306,18 @@ function main() {
 
   const stackList = args.stacks.length ? args.stacks.join(', ') : '(none)';
   process.stdout.write(
-    `Injecting lint packages via ${ANALYZER_PLUGIN_NAME} (stacks: ${stackList})...\n`,
+    `Registering analysis_server_plugin lint packages (stacks: ${stackList})...\n`,
   );
 
   let ok = true;
+  ok = cleanPubspec(path.resolve(args.pubspec)) && ok;
   ok =
-    injectPubspec(
-      path.resolve(args.pubspec),
+    injectAnalysisOptions(
+      path.resolve(args.analysisOptions),
       args.gitUrl,
       args.gitRef,
       packages,
     ) && ok;
-  ok =
-    injectAnalysisOptions(path.resolve(args.analysisOptions)) && ok;
 
   if (ok) {
     process.stdout.write('Done.\n');

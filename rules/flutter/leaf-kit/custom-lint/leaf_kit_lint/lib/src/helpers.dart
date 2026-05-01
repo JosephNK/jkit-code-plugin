@@ -109,6 +109,16 @@ String? getProjectPackageName(AstNode node) {
   return null;
 }
 
+/// AST 노드에서 파일의 절대 경로를 얻는다 (CompilationUnit 루트에서 조회).
+String? getFilePath(AstNode node) {
+  final unit = node.root;
+  if (unit is CompilationUnit) {
+    // ignore: experimental_member_use
+    return unit.declaredFragment?.source.fullName;
+  }
+  return null;
+}
+
 /// `package:dio/dio.dart` → `dio`.
 String? extractImportPackageName(String importUri) {
   if (importUri.startsWith('package:')) {

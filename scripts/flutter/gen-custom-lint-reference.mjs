@@ -131,22 +131,33 @@ function extractClassDoc(source, className) {
 }
 
 function extractLintClassName(source) {
-  const m = source.match(/^class\s+(\w+Lint)\s+extends\s+DartLintRule\b/m);
+  // analysis_server_plugin: `class XxxLint extends AnalysisRule`.
+  // Legacy custom_lint shape (`extends DartLintRule`) is also accepted to ease
+  // mixed-state diagnosis.
+  const m = source.match(
+    /^class\s+(\w+Lint)\s+extends\s+(?:AnalysisRule|DartLintRule)\b/m,
+  );
   return m ? m[1] : null;
 }
 
 /**
- * LintCode 정의에서 필드(name·problemMessage·correctionMessage·errorSeverity) 추출.
- * 패턴: `static const _code = LintCode( ... );`
+ * LintCode 정의에서 필드(name·problemMessage·correctionMessage·severity) 추출.
+ * 패턴: `static const code = LintCode( ... );` (analysis_server_plugin)
+ *      또는 `static const _code = LintCode( ... );` (legacy custom_lint).
  */
 function extractLintCodeBlock(source) {
-  const m = source.match(/static\s+const\s+_code\s*=\s*LintCode\s*\(([\s\S]*?)\);/);
+  const m = source.match(
+    /static\s+const\s+_?code\s*=\s*LintCode\s*\(([\s\S]*?)\);/,
+  );
   return m ? m[1] : null;
 }
 
+/**
+ * LintCode 인자에서 named field를 추출.
+ * `correctionMessage:` 같은 named 인자를 다음 named 인자 또는 끝까지 파싱.
+ */
 function extractLintCodeField(block, fieldName) {
   if (block == null) return null;
-  // Match `fieldName: 'literal',` or multi-line concat literal.
   const re = new RegExp(`${fieldName}\\s*:\\s*([\\s\\S]*?)(?=,\\s*\\w+\\s*:|,?\\s*$)`);
   const m = block.match(re);
   if (!m) return null;
@@ -156,9 +167,44 @@ function extractLintCodeField(block, fieldName) {
   return body;
 }
 
+/**
+ * analysis_server_plugin LintCode signature의 positional 첫 인자 (name) 추출.
+ * 패턴: `LintCode('rule_name', '...message...', ...)`.
+ */
+function extractLintCodeName(block) {
+  if (block == null) return null;
+  // Try positional first (analysis_server_plugin).
+  const pos = block.match(/^\s*'((?:\\.|[^'\\])*)'/);
+  if (pos) return pos[1];
+  // Fallback to named `name:` (legacy custom_lint).
+  return extractLintCodeField(block, 'name');
+}
+
+/**
+ * analysis_server_plugin LintCode signature의 positional 두번째 인자 (problemMessage) 추출.
+ * 첫 인자 다음의 첫 string literal sequence(인접 concat 포함)를 모은다.
+ */
+function extractLintCodeProblemMessage(block) {
+  if (block == null) return null;
+  // Skip the first positional string (name), then collect the next contiguous
+  // run of string literals (Dart adjacent-string concatenation).
+  const afterFirst = block.replace(/^\s*'(?:\\.|[^'\\])*'\s*,\s*/, '');
+  // Stop at the next named argument boundary (e.g. `correctionMessage:`).
+  const stopIdx = afterFirst.search(/,\s*\w+\s*:/);
+  const slice = stopIdx >= 0 ? afterFirst.slice(0, stopIdx) : afterFirst;
+  const literals = collectStringLiterals(slice);
+  if (literals.length > 0) return literals.join('');
+  // Fallback to named `problemMessage:` (legacy custom_lint).
+  return extractLintCodeField(block, 'problemMessage');
+}
+
 function extractSeverityFromBlock(block) {
   if (block == null) return null;
-  const m = block.match(/errorSeverity\s*:\s*(?:Diagnostic|Error)Severity\.(\w+)/);
+  // analysis_server_plugin: `severity: DiagnosticSeverity.ERROR`.
+  // Legacy custom_lint: `errorSeverity: DiagnosticSeverity.ERROR`.
+  const m = block.match(
+    /(?:errorSeverity|severity)\s*:\s*(?:Diagnostic|Error)Severity\.(\w+)/,
+  );
   return m ? m[1].toLowerCase() : null;
 }
 
@@ -178,11 +224,14 @@ function extractTargetLayer(source) {
 }
 
 /**
- * run() 본문의 `context.registry.addXxx(...)` 호출에서 AST 노드 타입 추출.
+ * `registerNodeProcessors` 본문의 `registry.addXxx(...)` 호출에서 AST 노드 타입 추출.
  * `addImportDirective` → `ImportDirective`.
+ * 양쪽 호출 형태 모두 호환:
+ *   - analysis_server_plugin: `registry.addImportDirective(this, _Visitor(...))`
+ *   - legacy custom_lint:     `context.registry.addImportDirective((node) {...})`
  */
 function extractAppliesTo(source) {
-  const m = source.match(/context\.registry\.add(\w+)\s*\(/);
+  const m = source.match(/(?:context\.)?registry\.add(\w+)\s*\(/);
   return m ? m[1] : null;
 }
 
@@ -212,8 +261,8 @@ function parseLintFile(filePath) {
   return {
     file: path.basename(filePath),
     className,
-    code: extractLintCodeField(codeBlock, 'name'),
-    message: extractLintCodeField(codeBlock, 'problemMessage'),
+    code: extractLintCodeName(codeBlock),
+    message: extractLintCodeProblemMessage(codeBlock),
     severity: extractSeverityFromBlock(codeBlock),
     correction: extractLintCodeField(codeBlock, 'correctionMessage'),
     doc: extractClassDoc(content, className),
@@ -1022,8 +1071,15 @@ function parseLintFileWithBody(filePath) {
   const r = parseLintFile(filePath);
   if (!r) return null;
   const content = readSource(filePath);
-  const m = content.match(/void\s+run\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
-  r.runBody = m ? m[1] : '';
+  // analysis_server_plugin: per-rule body lives in `_Visitor.visitXxx(...)`.
+  // Legacy custom_lint: body lives in `void run(...)`. Concatenate both so the
+  // helper-detection regex (`is\w+File\(`) can match wherever it lands.
+  const visitMatches = content.matchAll(
+    /(?:^|\n)\s*void\s+visit\w+\s*\([^)]*\)\s*\{([\s\S]*?)\n\s*\}/g,
+  );
+  const visitBodies = [...visitMatches].map((m) => m[1]).join('\n');
+  const runM = content.match(/void\s+run\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+  r.runBody = visitBodies || (runM ? runM[1] : '');
   return r;
 }
 
@@ -1071,9 +1127,9 @@ function renderLeafKitReference({ rules, constants }) {
   lines.push('');
   lines.push(
     '`leaf-kit` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 ' +
-      '함께 `custom_lint` umbrella 하에서 동작 — 두 패키지가 자동 발견·합성된다. ' +
-      'leaf_kit_lint은 base의 boundary 정의 위에 bloc + leaf_kit 전용 의존성 ' +
-      '제약만 추가한다.',
+      '함께 `analysis_options.yaml`의 `plugins:` 섹션에 등록 — Dart analysis ' +
+      'server가 두 패키지를 독립 isolate로 로드한다. leaf_kit_lint은 base의 ' +
+      'boundary 정의 위에 bloc + leaf_kit 전용 의존성 제약만 추가한다.',
   );
   lines.push('');
 
@@ -1123,9 +1179,9 @@ function renderFreezedReference({ rules }) {
   lines.push('');
   lines.push(
     '`freezed` 컨벤션을 선택한 프로젝트의 추가 룰. base의 `architecture_lint`와 ' +
-      '함께 `custom_lint` umbrella 하에서 동작 — 두 패키지가 자동 발견·합성된다. ' +
-      'freezed_lint은 entities/event/state/params 클래스의 `@freezed` annotation ' +
-      '필수 적용만 강제한다.',
+      '함께 `analysis_options.yaml`의 `plugins:` 섹션에 등록 — Dart analysis ' +
+      'server가 두 패키지를 독립 isolate로 로드한다. freezed_lint은 ' +
+      'entities/event/state/params 클래스의 `@freezed` annotation 필수 적용만 강제한다.',
   );
   lines.push('');
 

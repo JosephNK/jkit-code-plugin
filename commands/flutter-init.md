@@ -154,7 +154,7 @@ esac
 
 ### 8. architecture_lint 주입 (+ stack lint 패키지)
 
-Flutter 엔트리 프로젝트의 `pubspec.yaml`의 `dev_dependencies`에 `architecture_lint`(base, git dep)와 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)를 git dep으로 추가하고, `custom_lint`(umbrella plugin, pub version)를 추가합니다. `analysis_options.yaml`의 `analyzer.plugins`에는 `custom_lint`만 등록되어 모든 lint 패키지를 자동 발견·합성합니다. husky pre-commit 훅이 `dart run custom_lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
+Flutter 엔트리 프로젝트의 `analysis_options.yaml`의 top-level `plugins:` 섹션에 `architecture_lint`(base, git dep)와 사용자가 선택한 컨벤션 스택에 매칭되는 stack lint 패키지(예: `leaf-kit` 선택 시 `leaf_kit_lint`)를 git dep으로 등록합니다. analysis_server_plugin(Dart 3.10+)이 두 패키지를 독립 isolate로 로드해 IDE 및 `dart analyze`에서 동작합니다. 레거시 `custom_lint` dev dep와 `analyzer.plugins:` 항목은 자동으로 제거됩니다. 이 스텝은 **무조건** 실행되어야 합니다.
 
 ```bash
 cd "$PROJECT_ROOT"
@@ -182,7 +182,7 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
 - `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `package.json` — `devDependencies`(`husky`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.prepare: "husky"`
-- `.husky/pre-commit` — husky pre-commit 훅 (dart format, flutter analyze, architecture_lint, 관련 flutter test; 엔트리 디렉토리가 파일에 베이킹됨)
+- `.husky/pre-commit` — husky pre-commit 훅 (dart format, flutter analyze; analyzer가 architecture_lint 진단을 자동 통합; 엔트리 디렉토리가 파일에 베이킹됨)
 - `.husky/commit-msg` — husky commit-msg 훅 (`commitlint --edit $1`)
 - `commitlint.config.mjs` — Conventional Commits 설정 (허용 타입: feat, fix, refactor, docs, test, chore, perf, ci)
 - `scripts/flutter-build-deploy.sh` — Flutter 빌드 래퍼
@@ -191,5 +191,5 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `scripts/android-show-info-keystore.sh` — 키스토어 정보 래퍼
 - `scripts/android-signing-report.sh` — 서명 리포트 래퍼
 - `scripts/android-signing-verify-apk.sh` — APK 검증 래퍼
-- `architecture_lint` (base) — `pubspec.yaml`(`dev_dependencies`, git dep) + `analysis_options.yaml`(`analyzer.plugins: [custom_lint]`)에 주입되는 IDE analyzer + commit-time lint
-- stack lint 패키지(선택한 스택 기반) — `leaf-kit` 선택 시 `leaf_kit_lint` git dep 추가 (custom_lint umbrella가 자동 발견)
+- `architecture_lint` (base) — `analysis_options.yaml`의 top-level `plugins:` 섹션에 git dep으로 주입. analysis_server_plugin이 IDE/`dart analyze`에 진단 통합
+- stack lint 패키지(선택한 스택 기반) — `leaf-kit` 선택 시 `leaf_kit_lint`도 동일하게 `plugins:`에 등록
