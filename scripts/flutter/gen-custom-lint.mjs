@@ -186,10 +186,12 @@ function main() {
     'inject-custom-lint.mjs',
   );
 
-  // analysis_server_plugin requires `plugins:` to live at the workspace root
-  // when the entry is a workspace member; otherwise the analyzer raises
-  // `plugins_in_inner_options`. Fall back to entry's analysis_options.yaml
-  // for non-workspace projects.
+  // In a Dart pub workspace, the analyzer doesn't auto-inherit options from
+  // the root — each member must `include:` the root's analysis_options.yaml
+  // explicitly to pick up `plugins:` written there. dart-lang/sdk#62161.
+  // We write `plugins:` to the root, and inject-custom-lint.mjs (via
+  // --strip-stale-from) prepends the include into the member's options.
+  // Non-workspace projects get plugins: directly in the entry's options.
   const inWorkspace = isWorkspaceMember(projectDir, args.entry);
   const analysisOptionsPath = inWorkspace
     ? 'analysis_options.yaml'
@@ -200,7 +202,8 @@ function main() {
 
   if (inWorkspace) {
     process.stdout.write(
-      `  Detected pub workspace — writing plugins: to ${analysisOptionsPath} (root)\n`,
+      `  Detected pub workspace — writing plugins: to ${analysisOptionsPath} (root) ` +
+        `and ensuring ${stalePath} includes it\n`,
     );
   }
 

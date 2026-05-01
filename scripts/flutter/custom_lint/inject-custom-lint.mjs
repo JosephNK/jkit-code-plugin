@@ -17,10 +17,22 @@
 // TODO(jkit): switch back to `git:` deps once Dart 3.13 is stable and widely
 // adopted, restoring portability of analysis_options.yaml across machines.
 //
-// Workspace handling: in a Dart pub workspace, the `plugins:` section is only
-// honored at the **workspace root**'s analysis_options.yaml. Pass
-// --strip-stale-from to remove a misplaced `plugins:` section from a
-// workspace member's analysis_options.yaml.
+// Each plugin entry is written with both `path:` and a `diagnostics:` enable
+// list (every rule code mapped to `true`). The codes are auto-extracted from
+// each plugin's `lib/src/lints/*.dart` (`LintCode('code_name', ...)`).
+// `path:` alone is parsed but does NOT activate the rules — the `diagnostics:`
+// block is required for analysis_server_plugin to actually run them.
+//
+// Workspace handling (Dart pub workspace):
+//   - `plugins:` is registered at the workspace **root**'s analysis_options.yaml.
+//   - Members do NOT automatically inherit options from the root — each member
+//     must explicitly `include: <relpath-to-root>/analysis_options.yaml` to
+//     pick up the root's `plugins:` (and other options). Without that include,
+//     the root config has zero effect on the member. dart-lang/sdk#62161.
+//   - Pass --strip-stale-from <member-path> to:
+//       (a) strip any direct `plugins:`/`analyzer.plugins:` from the member
+//           (single source of truth at root)
+//       (b) prepend `include: <relpath-to-root>` if not already present
 //
 // Also strips the legacy `custom_lint` dev dependency and `analyzer.plugins:
 // [custom_lint]` registration if found, to clean up post-migration.
@@ -71,9 +83,16 @@ const ALL_LINT_PACKAGE_NAMES = new Set([
   ...Object.values(STACK_PACKAGES).map((p) => p.name),
 ]);
 
+// Match `LintCode('code_name', ...)` first arg across line breaks. Codes are
+// lowercase snake_case (e.g. `al_e1_entities_import`).
+const LINT_CODE_RE = /LintCode\(\s*['"]([a-z][a-z0-9_]*)['"]/g;
+
 const HELP = `Usage: inject-custom-lint.mjs --pubspec <path> --analysis-options <path> --plugin-root <abs-dir> [--stacks <stacks>] [--strip-stale-from <path>]
 
-Inject architecture_lint (base) + optional stack lint packages into Flutter project's analysis_options.yaml via the analysis_server_plugin top-level plugins: section, using path: deps that point to --plugin-root.
+Inject architecture_lint (base) + optional stack lint packages into Flutter
+project's analysis_options.yaml via the analysis_server_plugin top-level
+plugins: section. Each entry gets path: + diagnostics: enable list (codes
+auto-extracted from each plugin's lib/src/lints/*.dart).
 
 Options:
   --pubspec <path>           Path to pubspec.yaml (used to strip legacy custom_lint dev dep)
@@ -81,7 +100,11 @@ Options:
   --plugin-root <abs-dir>    Absolute path to the local jkit-code-plugin checkout (required)
   --stacks <stacks>          Comma-separated convention stacks (optional)
                              Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
-  --strip-stale-from <path>  analysis_options.yaml to strip misplaced plugins:/legacy analyzer.plugins: from
+  --strip-stale-from <path>  In workspace mode: normalize a member's analysis_options.yaml —
+                             strip its plugins:/analyzer.plugins:, prepend
+                             include: <relpath-to-root> if absent. Required so
+                             the member inherits the root's plugins:.
+                             (dart-lang/sdk#62161)
   -h, --help                 Show this help
 `;
 
@@ -171,8 +194,41 @@ function parseArgs(argv) {
   return args;
 }
 
-function buildPathDep(absPath) {
-  return { path: absPath };
+// Scan `<pluginAbsPath>/lib/src/lints/*.dart` for `LintCode('...')` and
+// return a sorted, de-duplicated list of code names. The diagnostics: enable
+// list in plugins: must contain exactly these codes for rules to fire.
+function extractDiagnosticsFor(pluginAbsPath) {
+  const lintsDir = path.join(pluginAbsPath, 'lib', 'src', 'lints');
+  if (!fs.existsSync(lintsDir) || !fs.statSync(lintsDir).isDirectory()) {
+    return [];
+  }
+  const codes = new Set();
+  for (const entry of fs.readdirSync(lintsDir)) {
+    if (!entry.endsWith('.dart')) continue;
+    const content = fs.readFileSync(path.join(lintsDir, entry), 'utf-8');
+    for (const m of content.matchAll(LINT_CODE_RE)) {
+      codes.add(m[1]);
+    }
+  }
+  return [...codes].sort();
+}
+
+function buildPluginEntry(absPath, diagnosticCodes) {
+  return {
+    path: absPath,
+    diagnostics: Object.fromEntries(diagnosticCodes.map((c) => [c, true])),
+  };
+}
+
+function diagnosticsEqual(a, b) {
+  if (!a || typeof a !== 'object') return false;
+  const aKeys = Object.keys(a).sort();
+  if (aKeys.length !== b.length) return false;
+  for (let i = 0; i < b.length; i++) {
+    if (aKeys[i] !== b[i]) return false;
+    if (a[aKeys[i]] !== true) return false;
+  }
+  return true;
 }
 
 function nodeToJs(node) {
@@ -291,25 +347,34 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
       return false;
     }
 
+    const codes = extractDiagnosticsFor(absPath);
+    if (codes.length === 0) {
+      process.stderr.write(
+        `Error: no LintCode entries found in ${absPath}/lib/src/lints/\n`,
+      );
+      return false;
+    }
+
     const current = YAML.isMap(pluginsMap) ? nodeToJs(pluginsMap.get(pkg.name)) : null;
-    const desired = buildPathDep(absPath);
+    const desired = buildPluginEntry(absPath, codes);
     const alreadyPinned =
       current &&
       typeof current === 'object' &&
       typeof current.path === 'string' &&
       current.path === desired.path &&
-      current.git === undefined;
+      current.git === undefined &&
+      diagnosticsEqual(current.diagnostics, codes);
 
     if (alreadyPinned) {
       process.stdout.write(
-        `  ${pkg.name} already pinned to ${absPath} in ${analysisPath}\n`,
+        `  ${pkg.name} already pinned to ${absPath} (${codes.length} diagnostics) in ${analysisPath}\n`,
       );
       continue;
     }
 
     doc.setIn(['plugins', pkg.name], desired);
     process.stdout.write(
-      `  Registered ${pkg.name} (path: ${absPath}) in ${analysisPath} plugins:\n`,
+      `  Registered ${pkg.name} (path: ${absPath}, ${codes.length} diagnostics) in ${analysisPath} plugins:\n`,
     );
     changed = true;
   }
@@ -320,60 +385,116 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
   return true;
 }
 
-// ─── analysis_options.yaml — strip plugins from misplaced location ───
+// ─── analysis_options.yaml — workspace member normalization ───
 //
-// In a Dart pub workspace, `plugins:` only takes effect at the workspace
-// root. If a previous run wrote it to a workspace member's
-// analysis_options.yaml, the analyzer raises `plugins_in_inner_options`.
-// Strip the entire `plugins:` block (or just our managed entries) to clear it.
-function stripStalePluginsFrom(staleAnalysisPath) {
-  if (
-    !staleAnalysisPath ||
-    !fs.existsSync(staleAnalysisPath) ||
-    !fs.statSync(staleAnalysisPath).isFile()
-  ) {
-    return true;
+// In a Dart pub workspace, the analyzer does NOT auto-inherit options from
+// the workspace root. Each member must explicitly include the root's options
+// to pick up `plugins:` (and other settings) written there. dart-lang/sdk#62161.
+//
+// This function applies three idempotent fixes to a workspace member's
+// analysis_options.yaml:
+//   1. Strip our managed `plugins:` entries (single source of truth at root —
+//      direct entries in the member also raise `plugins_in_inner_options`).
+//   2. Strip legacy `analyzer.plugins: [custom_lint]` registration.
+//   3. Prepend `include: <relpath-to-root>` if absent. If the member already
+//      has a non-matching include, warn and preserve (chain it manually).
+function normalizeWorkspaceMember(memberPath, rootPath) {
+  const includeRelOs = path.relative(path.dirname(memberPath), rootPath);
+  const includeRel = includeRelOs.split(path.sep).join('/');
+
+  // Read existing content (or empty string).
+  let raw = '';
+  if (fs.existsSync(memberPath) && fs.statSync(memberPath).isFile()) {
+    raw = fs.readFileSync(memberPath, 'utf-8');
   }
 
-  const raw = fs.readFileSync(staleAnalysisPath, 'utf-8');
-  const doc = YAML.parseDocument(raw);
-  if (doc.contents === null) return true;
+  let stripped = false;
+  let bodyAfterStrip = raw;
+  let currentInclude;
 
-  let changed = false;
+  if (raw.trim() !== '') {
+    let doc;
+    try {
+      doc = YAML.parseDocument(raw);
+    } catch (e) {
+      process.stderr.write(`Error parsing ${memberPath}: ${e.message}\n`);
+      return false;
+    }
 
-  const plugins = doc.get('plugins');
-  if (YAML.isMap(plugins)) {
-    for (const name of ALL_LINT_PACKAGE_NAMES) {
-      if (plugins.has(name)) {
-        plugins.delete(name);
-        process.stdout.write(
-          `  Stripped misplaced ${name} from ${staleAnalysisPath} plugins:\n`,
-        );
-        changed = true;
+    if (doc.contents !== null) {
+      // 1. Strip our managed plugins:
+      const plugins = doc.get('plugins');
+      if (YAML.isMap(plugins)) {
+        for (const name of ALL_LINT_PACKAGE_NAMES) {
+          if (plugins.has(name)) {
+            plugins.delete(name);
+            process.stdout.write(
+              `  Stripped misplaced ${name} from ${memberPath} plugins:\n`,
+            );
+            stripped = true;
+          }
+        }
+        if (plugins.items.length === 0 && stripped) doc.delete('plugins');
       }
+
+      // 2. Strip legacy analyzer.plugins
+      const analyzer = doc.get('analyzer');
+      if (YAML.isMap(analyzer)) {
+        const legacyPlugins = analyzer.get('plugins');
+        if (legacyPlugins != null) {
+          analyzer.delete('plugins');
+          process.stdout.write(
+            `  Stripped legacy analyzer.plugins from ${memberPath}\n`,
+          );
+          stripped = true;
+          if (analyzer.items.length === 0) doc.delete('analyzer');
+        }
+      }
+
+      currentInclude = doc.get('include');
     }
-    if (plugins.items.length === 0 && changed) {
-      doc.delete('plugins');
-    }
+
+    if (stripped) bodyAfterStrip = String(doc);
   }
 
-  // Legacy: also strip `analyzer.plugins: [custom_lint]` if present.
-  const analyzer = doc.get('analyzer');
-  if (YAML.isMap(analyzer)) {
-    const legacyPlugins = analyzer.get('plugins');
-    if (legacyPlugins != null) {
-      analyzer.delete('plugins');
-      process.stdout.write(
-        `  Stripped legacy analyzer.plugins from ${staleAnalysisPath}\n`,
+  // 3. Decide on include action.
+  let finalContent = bodyAfterStrip;
+  if (currentInclude === undefined) {
+    const includeLine = `include: ${includeRel}\n`;
+    finalContent =
+      bodyAfterStrip.trim() === ''
+        ? includeLine
+        : `${includeLine}${bodyAfterStrip}`;
+    process.stdout.write(
+      `  Prepended include: ${includeRel} to ${memberPath}\n`,
+    );
+  } else if (typeof currentInclude === 'string') {
+    if (currentInclude === includeRel) {
+      // Idempotent — no announce unless we also stripped.
+      if (!stripped) {
+        process.stdout.write(
+          `  ${memberPath} already includes ${includeRel}\n`,
+        );
+      }
+    } else {
+      process.stderr.write(
+        `  Warning: ${memberPath} has include: ${currentInclude} ` +
+          `(expected ${includeRel}) — preserving existing. ` +
+          `The member won't inherit the workspace root's plugins: until ` +
+          `the includes are chained (root analysis_options.yaml should ` +
+          `include the existing target, or vice versa).\n`,
       );
-      changed = true;
     }
-    if (analyzer.items.length === 0) {
-      doc.delete('analyzer');
-    }
+  } else {
+    process.stderr.write(
+      `  Warning: ${memberPath} has unexpected include: type — ` +
+        `skipping include injection\n`,
+    );
   }
 
-  if (changed) writeDoc(staleAnalysisPath, doc);
+  if (finalContent !== raw) {
+    fs.writeFileSync(memberPath, finalContent);
+  }
   return true;
 }
 
@@ -391,7 +512,11 @@ function main() {
   let ok = true;
   ok = cleanPubspec(path.resolve(args.pubspec)) && ok;
   if (args.stripStaleFrom) {
-    ok = stripStalePluginsFrom(path.resolve(args.stripStaleFrom)) && ok;
+    ok =
+      normalizeWorkspaceMember(
+        path.resolve(args.stripStaleFrom),
+        path.resolve(args.analysisOptions),
+      ) && ok;
   }
   ok =
     injectAnalysisOptions(
