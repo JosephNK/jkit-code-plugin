@@ -236,6 +236,7 @@ entry에 `/`가 있으면 풀 import URI 매칭(특정 entry-point만 허용),
 
 - `freezed_annotation`
 - `flutter_leaf_kit/flutter_leaf_kit_state.dart`
+- `flutter_leaf_kit/flutter_leaf_kit_core.dart`
 
 ### `infraPackages`
 

@@ -28,6 +28,7 @@ const codegenPackages = <String>{
 const blocAllowedPackages = <String>{
   'freezed_annotation',
   'flutter_leaf_kit/flutter_leaf_kit_state.dart',
+  'flutter_leaf_kit/flutter_leaf_kit_core.dart',
 };
 
 /// 도메인 레이어에서 금지되는 "인프라" 패키지 목록.
