@@ -154,11 +154,13 @@ esac
 
 ### 8. architecture_lint 주입
 
-Flutter 엔트리 프로젝트의 `pubspec.yaml`(`dev_dependencies.architecture_lint`, git dep)과 `analysis_options.yaml`(`analyzer.plugins`)에 `architecture_lint`를 주입합니다. husky pre-commit 훅이 `dart run architecture_lint:lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
+Flutter 엔트리 프로젝트의 `pubspec.yaml`(`dev_dependencies.architecture_lint`, git dep)과 `analysis_options.yaml`(`analyzer.plugins` + `architecture_lint.stacks`)에 `architecture_lint`를 주입합니다. husky pre-commit 훅이 `dart run architecture_lint:lint`를 호출하므로 이 스텝은 **무조건** 실행되어야 합니다.
+
+`--stacks` 값은 Step 2에서 사용자가 선택한 컨벤션 스택과 lint 인식 스택(현재 `bloc`만 해당)의 **교집합**을 쉼표 결합한 문자열입니다. 교집합이 비면 `""`를 그대로 전달해 `architecture_lint.stacks`를 `[]`로 동기화합니다 (lint stack 룰 비활성).
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-dir> --stacks "<lint-stacks>"
 ```
 
 주입 후, 새 의존성을 해결하기 위해 엔트리 디렉토리에서 `dart pub get`을 실행합니다:
@@ -167,7 +169,7 @@ $JKIT_DIR/scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry <entry-d
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
-> `gen-architecture-lint.mjs`는 idempotent — 동일 git ref로 이미 pin된 경우 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다.
+> `gen-architecture-lint.mjs`는 idempotent — 동일 git ref + 동일 stacks이면 skip합니다. git ref는 플러그인의 `plugin.json` version에서 자동 결정됩니다.
 
 ### 9. 보고
 
