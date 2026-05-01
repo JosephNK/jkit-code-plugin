@@ -17,16 +17,24 @@ const codegenPackages = <String>{
   'collection',
 };
 
-/// bloc/ 레이어에서 허용되는 외부 import 화이트리스트.
+/// bloc/ 레이어에서 허용되는 외부 import 화이트리스트 (bloc stack 고유).
 ///
-/// 상태 관리 의존은 `flutter_leaf_kit_state.dart` 단일 진입점을 통하도록 강제 —
-/// `flutter_bloc`/`bloc`/`equatable` 직접 import 및 leaf_kit 다른 entry
-/// (component/route 등 presentation 누출) 모두 차단. 화이트리스트 외 모든
-/// 외부 패키지는 위반(E3 error).
+/// `flutter_bloc`/`bloc`/`equatable` 직접 import는 모두 차단 — 상태 관리는
+/// `leafKitBlocAllowed`(leaf-kit base 화이트리스트)의 entry-point 경유 강제.
+/// 화이트리스트 외 모든 외부 패키지는 위반(E3 error).
 /// entry에 `/`가 있으면 풀 import URI 매칭(특정 entry-point만 허용),
 /// 없으면 패키지명 단위 매칭(패키지 전체 허용).
 const blocAllowedPackages = <String>{
   'freezed_annotation',
+};
+
+/// bloc/ 레이어에서 허용되는 leaf-kit entry-point 화이트리스트.
+///
+/// leaf-kit은 bloc stack과 무관하게 jkit Flutter 프로젝트의 base 의존이며
+/// 레이어별로 다른 entry-point를 사용한다. bloc/ 레이어는 상태 관리에 한해
+/// `flutter_leaf_kit_state.dart`/`flutter_leaf_kit_core.dart`만 import 허용 —
+/// component/route/network 등 다른 영역의 entry는 누출 차단.
+const leafKitBlocAllowed = <String>{
   'flutter_leaf_kit/flutter_leaf_kit_state.dart',
   'flutter_leaf_kit/flutter_leaf_kit_core.dart',
 };

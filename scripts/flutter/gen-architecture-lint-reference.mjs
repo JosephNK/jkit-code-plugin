@@ -860,7 +860,8 @@ function renderReference({ rules, layerSemantics, boundaryElements, constants })
 
   const pkgGroups = [
     { name: 'codegenPackages', label: 'Codegen Annotation 패키지 (entities/ 허용)' },
-    { name: 'blocAllowedPackages', label: 'Bloc 레이어 허용 외부 패키지' },
+    { name: 'blocAllowedPackages', label: 'Bloc 레이어 허용 외부 패키지 (bloc stack 고유)' },
+    { name: 'leafKitBlocAllowed', label: 'Bloc 레이어 허용 leaf-kit entry (base)' },
     { name: 'infraPackages', label: '인프라 패키지 (도메인 레이어 금지)' },
     { name: 'frameworkPackages', label: 'Framework 패키지 (ports/ 금지)' },
   ];
