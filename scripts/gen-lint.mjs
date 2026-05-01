@@ -2,10 +2,13 @@
 // =============================================================================
 // Concatenates rules/<framework>/base/lint-rules-reference.md and
 // lint-rules-structure-reference.md (and stylelint-rules-reference.md for
-// Next.js) into <output-dir>/LINT.md.
+// Next.js), then appends each `--with` stack's lint-rules-reference.md, into
+// <output-dir>/LINT.md.
+//
+// Missing stack files produce a warning; the run does not fail.
 //
 // Usage:
-//   gen-lint.mjs <framework> -p <output-dir>
+//   gen-lint.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 // =============================================================================
 
 import fs from 'node:fs';
@@ -15,22 +18,24 @@ import { fileURLToPath } from 'node:url';
 
 import { ensureGitRepo, normalizePath } from './common.mjs';
 
-const HELP = `Usage: gen-lint.mjs <framework> -p <output-dir>
+const HELP = `Usage: gen-lint.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 
 Concatenates base/lint-rules-reference.md + lint-rules-structure-reference.md
-(+ stylelint-rules-reference.md for nextjs) into <output-dir>/LINT.md.
+(+ stylelint-rules-reference.md for nextjs) and each --with stack's
+lint-rules-reference.md into <output-dir>/LINT.md.
 
 Arguments:
   <framework>    Framework name (nextjs, nestjs, flutter)
 
 Options:
   -p <dir>       Output directory (required)
+  --with <list>  Comma-separated stack names (e.g. typeorm,gcp)
   -h, --help     Show this help
 
 Examples:
   ./scripts/gen-lint.mjs nextjs -p ./my-project/docs
-  ./scripts/gen-lint.mjs nestjs -p ./my-project/docs
-  ./scripts/gen-lint.mjs flutter -p ./my-project/docs
+  ./scripts/gen-lint.mjs nestjs -p ./my-project/docs --with typeorm,gcp
+  ./scripts/gen-lint.mjs flutter -p ./my-project/docs --with leaf-kit,freezed
 `;
 
 function usage(code = 1) {
@@ -39,7 +44,7 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '' };
+  const args = { framework: '', outputDir: '', stacks: '' };
   const rest = argv.slice(2);
 
   if (rest.length >= 1 && !rest[0].startsWith('-')) {
@@ -55,6 +60,13 @@ function parseArgs(argv) {
           usage();
         }
         args.outputDir = rest.shift();
+        break;
+      case '--with':
+        if (!rest.length) {
+          process.stderr.write('--with requires a stack list\n');
+          usage();
+        }
+        args.stacks = rest.shift();
         break;
       case '-h':
       case '--help':
@@ -76,6 +88,14 @@ function parseArgs(argv) {
   }
 
   return args;
+}
+
+function splitStacks(raw) {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 }
 
 function main() {
@@ -100,14 +120,15 @@ function main() {
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const pluginRoot = path.resolve(scriptDir, '..');
-  const baseDir = path.join(pluginRoot, 'rules', args.framework, 'base');
+  const rulesDir = path.join(pluginRoot, 'rules', args.framework);
+  const baseDir = path.join(rulesDir, 'base');
 
-  const sources = ['lint-rules-reference.md', 'lint-rules-structure-reference.md'];
+  const baseSources = ['lint-rules-reference.md', 'lint-rules-structure-reference.md'];
   if (args.framework === 'nextjs') {
-    sources.push('stylelint-rules-reference.md');
+    baseSources.push('stylelint-rules-reference.md');
   }
 
-  for (const name of sources) {
+  for (const name of baseSources) {
     const p = path.join(baseDir, name);
     if (!fs.existsSync(p)) {
       process.stderr.write(`Error: source not found: ${p}\n`);
@@ -116,7 +137,7 @@ function main() {
   }
 
   const outputFile = path.join(outputDir, 'LINT.md');
-  const [first, ...rest] = sources;
+  const [first, ...rest] = baseSources;
   fs.copyFileSync(path.join(baseDir, first), outputFile);
 
   for (const name of rest) {
@@ -124,8 +145,25 @@ function main() {
     fs.appendFileSync(outputFile, fs.readFileSync(path.join(baseDir, name)));
   }
 
+  const appendedStacks = [];
+  for (const stack of splitStacks(args.stacks)) {
+    const stackRef = path.join(rulesDir, stack, 'lint-rules-reference.md');
+    if (!fs.existsSync(stackRef)) {
+      process.stderr.write(
+        `Warning: lint-rules-reference.md not found for stack '${stack}': ${stackRef}\n`,
+      );
+      continue;
+    }
+    fs.appendFileSync(outputFile, '\n');
+    fs.appendFileSync(outputFile, fs.readFileSync(stackRef));
+    appendedStacks.push(stack);
+  }
+
   process.stdout.write(`Generated: ${outputFile}\n`);
-  process.stdout.write(`Sources: ${sources.join(', ')}\n`);
+  process.stdout.write(`Base sources: ${baseSources.join(', ')}\n`);
+  if (appendedStacks.length) {
+    process.stdout.write(`Stacks: ${appendedStacks.join(', ')}\n`);
+  }
 }
 
 main();

@@ -95,8 +95,8 @@ else
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --no-local-init
 fi
 
-# 4. LINT.md (lint-rules + structure-reference + stylelint-rules)
-$JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs
+# 4. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
+$JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
 
 # 5. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>

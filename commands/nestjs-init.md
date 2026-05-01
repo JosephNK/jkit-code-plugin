@@ -133,8 +133,8 @@ $JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 # 3. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 
-# 4. LINT.md
-$JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs
+# 4. LINT.md (base + 선택 stack lint-rules)
+$JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
 # 5. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>

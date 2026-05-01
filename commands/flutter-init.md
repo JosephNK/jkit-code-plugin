@@ -122,8 +122,8 @@ $JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 # 3. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks>
 
-# 4. LINT.md
-$JKIT_DIR/scripts/gen-lint.mjs flutter -p docs
+# 4. LINT.md (base + 선택 stack lint-rules)
+$JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
 
 # 5. Husky hooks (.husky/pre-commit에 <entry-dir>이 인라인 치환됨, .husky/commit-msg)
 #    + package.json에 husky/@commitlint devDeps와 scripts.prepare 주입

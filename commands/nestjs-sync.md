@@ -84,8 +84,8 @@ $JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 # 3. CONVENTIONS.md (LOCAL은 절대 건드리지 않음 — 없어도 새로 만들지 않음)
 $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks> --no-local-init
 
-# 4. LINT.md
-$JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs
+# 4. LINT.md (base + 선택 stack lint-rules)
+$JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
 # 5. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
