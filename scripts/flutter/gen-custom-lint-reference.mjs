@@ -158,7 +158,7 @@ function extractLintCodeField(block, fieldName) {
 
 function extractSeverityFromBlock(block) {
   if (block == null) return null;
-  const m = block.match(/errorSeverity\s*:\s*ErrorSeverity\.(\w+)/);
+  const m = block.match(/errorSeverity\s*:\s*(?:Diagnostic|Error)Severity\.(\w+)/);
   return m ? m[1].toLowerCase() : null;
 }
 
