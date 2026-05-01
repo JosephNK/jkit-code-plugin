@@ -40,6 +40,7 @@ export 'src/boundary_element.dart';
 export 'src/classification.dart';
 export 'src/constants.dart';
 export 'src/dart_lint.dart';
+export 'src/options_loader.dart';
 export 'src/runner.dart';
 export 'src/structure_annotation.dart';
 export 'src/lints/e1_entities_import_lint.dart';

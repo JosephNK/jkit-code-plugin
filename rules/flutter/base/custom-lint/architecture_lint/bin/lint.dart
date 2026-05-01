@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:analyzer/dart/analysis/analysis_context.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:architecture_lint/architecture_lint.dart';
@@ -7,7 +8,18 @@ import 'package:path/path.dart' as p;
 
 Future<int> main(List<String> args) async {
   final roots = args.isEmpty ? <String>['.'] : args;
-  final lints = createArchitectureLints();
+
+  // 컨텍스트별 analysis_options.yaml의 architecture_lint.stacks를 따라
+  // lint 합성. plugin과 동일한 loadStacks 사용.
+  final lintsByOptions = <String, List<DartLint>>{};
+  List<DartLint> lintsForContext(AnalysisContext ctx) {
+    final optionsPath = ctx.contextRoot.optionsFile?.path;
+    final key = optionsPath ?? '';
+    return lintsByOptions.putIfAbsent(key, () {
+      final stacks = loadStacks(optionsPath);
+      return createArchitectureLints(stacks: stacks);
+    });
+  }
 
   // AnalysisContextCollection requires absolute *normalized* paths.
   // `p.absolute('.')` yields e.g. `/repo/app/.` which is not normalized and
@@ -26,6 +38,7 @@ Future<int> main(List<String> args) async {
 
   var violations = 0;
   for (final ctx in collection.contexts) {
+    final lints = lintsForContext(ctx);
     for (final path in ctx.contextRoot.analyzedFiles()) {
       if (!path.endsWith('.dart')) continue;
       if (fileFilter.isNotEmpty && !fileFilter.contains(path)) continue;
