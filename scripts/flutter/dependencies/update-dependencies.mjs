@@ -8,7 +8,7 @@
 // Usage:
 //   update-dependencies.mjs --project-dir <dir>
 //   update-dependencies.mjs --project-dir <dir> --report
-//   update-dependencies.mjs --project-dir <dir> --package leaf_common
+//   update-dependencies.mjs --project-dir <dir> --package leaf_core
 //   update-dependencies.mjs --project-dir <dir> --include-major
 //   update-dependencies.mjs --project-dir <dir> --exclude flutter_leaf my_internal
 // =============================================================================

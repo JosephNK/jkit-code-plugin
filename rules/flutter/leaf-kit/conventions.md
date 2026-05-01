@@ -11,7 +11,7 @@
 - **Entry point 파일 확인**: `ls {package_root}/lib/` — 메인 + 영역별 sub-entrypoint (Entry Points 섹션 참조)
 - **메인 인덱스**: `{package_root}/llms.txt`
 - **서브 패키지별 문서**: `{package_root}/llms/{package}/llms.txt`
-  - leaf, leaf_common, leaf_component, leaf_network, leaf_platform, leaf_state
+  - leaf, leaf_core, leaf_component, leaf_network, leaf_platform, leaf_route, leaf_state
 
 #### 2순위: GitHub (로컬 캐시에 없을 때 fallback)
 
@@ -25,33 +25,31 @@
 
 `flutter_leaf_kit` 패키지는 **메인 진입점 + 영역별 좁은 진입점** 9개를 제공합니다. 사용 영역에 맞는 좁은 진입점을 우선 선택하면 (1) 의도가 코드에 드러나고 (2) `architecture_lint` 룰과 자연스럽게 정렬됩니다.
 
-| Entry Point | Re-exports | 사용 영역 |
-|-------------|-----------|----------|
-| `package:flutter_leaf_kit/flutter_leaf_kit.dart` | 모든 leaf_* | 일반 presentation (page/widget) — 영역 경계가 모호할 때 |
-| `package:flutter_leaf_kit/flutter_leaf_kit_state.dart` | `flutter_leaf_state` | **bloc 레이어** — `Bloc`, `Emitter`, `BlocBaseState`, `BlocScreenConsumer` 등 |
-| `package:flutter_leaf_kit/flutter_leaf_kit_component.dart` | `flutter_leaf_component` | UI 위젯 (`LeafText`, `LeafCard`, `LeafAppBar` 등) |
-| `package:flutter_leaf_kit/flutter_leaf_kit_route.dart` | `flutter_leaf_route` | 라우팅 |
-| `package:flutter_leaf_kit/flutter_leaf_kit_network.dart` | `flutter_leaf_network` | API adapter (`LeafDioSharedClient` 등) |
-| `package:flutter_leaf_kit/flutter_leaf_kit_platform.dart` | `flutter_leaf_platform` | platform service (`Config`, `Device`, `File` 등) |
-| `package:flutter_leaf_kit/flutter_leaf_kit_manager.dart` | `flutter_leaf_platform` *(alias of platform)* | manager 의도를 코드에 드러내고 싶을 때 — 실제 export는 platform과 동일 |
-| `package:flutter_leaf_kit/flutter_leaf_kit_common.dart` | `flutter_leaf_common` | 유틸리티 (`Cancelable`, `Converter`, `LeafLogging` 등) |
-| `package:flutter_leaf_kit/flutter_leaf_kit_datetime.dart` | `flutter_leaf_common` *(alias of common)* | DateTime extension 영역만 강조하고 싶을 때 — 실제 export는 common과 동일 |
+| Entry Point | 사용 영역 |
+|-------------|----------|
+| `package:flutter_leaf_kit/flutter_leaf_kit.dart` | 일반 presentation (page/widget) — 영역 경계가 모호할 때 |
+| `package:flutter_leaf_kit/flutter_leaf_kit_state.dart` | **bloc 레이어** — `Bloc`, `Emitter`, `BlocBaseState`, `BlocScreenConsumer` 등 |
+| `package:flutter_leaf_kit/flutter_leaf_kit_component.dart` | UI 위젯 (`LeafText`, `LeafCard`, `LeafAppBar` 등) |
+| `package:flutter_leaf_kit/flutter_leaf_kit_route.dart` | 라우팅 |
+| `package:flutter_leaf_kit/flutter_leaf_kit_network.dart` | API adapter (`LeafDioSharedClient` 등) |
+| `package:flutter_leaf_kit/flutter_leaf_kit_platform.dart` | platform service (`Config`, `Device`, `File` 등) |
+| `package:flutter_leaf_kit/flutter_leaf_kit_manager.dart` | manager 의도 — `_platform`의 alias (export 동일) |
+| `package:flutter_leaf_kit/flutter_leaf_kit_core.dart` | 유틸리티 (`Cancelable`, `Converter`, `LeafLogging` 등) |
+| `package:flutter_leaf_kit/flutter_leaf_kit_datetime.dart` | DateTime extension 의도 — `_core`의 alias (export 동일) |
 
-> **Alias entrypoint 주의**: `*_datetime.dart`/`*_manager.dart`는 의미적 별칭일 뿐 실제 심볼 set은 각각 `common`/`platform`과 동일. 한 파일에서 `*_datetime`과 `*_common`을 동시에 import하면 `ambiguous_export` 충돌이 날 수 있으니 둘 중 하나만 선택할 것.
+> **Alias entrypoint 주의**: `*_datetime.dart`/`*_manager.dart`는 의미적 별칭일 뿐 실제 심볼 set은 각각 `core`/`platform`과 동일. 한 파일에서 `*_datetime`과 `*_core`를 동시에 import하면 `ambiguous_export` 충돌이 날 수 있으니 둘 중 하나만 선택할 것.
 
-> **선택 기준**: 단일 영역만 쓰면 sub-entrypoint(`*_state`/`*_network` 등) 우선. 한 화면에서 component + state + route를 함께 쓰면 메인 `flutter_leaf_kit.dart` 사용. Local DB/Platform adapter는 leaf_kit 대신 직접 SDK(drift/sqflite 등) 사용도 무방. 도메인 레이어(`usecases`/`entities`/`ports`)에서는 leaf_kit import 금지 — `architecture_lint` 룰 참조(`rules/flutter/base/lint-rules-reference.md`).
+> **선택 기준**: 단일 영역만 쓰면 sub-entrypoint(`*_state`/`*_network` 등) 우선. 한 화면에서 component + state + route를 함께 쓰면 메인 `flutter_leaf_kit.dart` 사용. Local DB/Platform adapter는 leaf_kit 대신 직접 SDK(drift/sqflite 등) 사용도 무방. 도메인 레이어(`usecases`/`entities`/`ports`/`exceptions`)에서는 leaf_kit import 금지 (`architecture_lint` E1/E4/E5 위반).
 
 ### Usage Rules
 
-각 패키지의 entry point는 위 **Entry Points** 표 참조.
+각 sub-package의 핵심 API. 추상 분류만 있는 항목(`leaf_core`/`leaf_platform`)은 `llms/{package}/llms.txt` 참조.
 
 | Package | Key API |
 |---------|---------|
-| **leaf_component** | Atomic Design hierarchy. Colors via `context.leafColors`. Typography via `context.leafTypography`. 정책·예시는 아래 **Component Selection** 섹션. |
-| **leaf_state** | Screens extend `LeafScreenStatefulWidget` / `LeafScreenState`. BLoC consumption via `BlocScreenConsumer<BlocType, StateType>`. |
-| **leaf_network** | (API 사용 시) HTTP client via `LeafDioSharedClient.shared`. Service calls via `.getService<T>()`. Response checks: `.isSuccessful`, `.isHttpUnauthorisedException`. File uploads: `LeafMultipartFile.fromBytes()`. |
-| **leaf_common** | Shared utilities (Cancelable, Converter, DateTime Extension, Logger, Model). |
-| **leaf_platform** | Platform features (Config, System, Device, File, Permission, WebView). |
+| **leaf_state** | `LeafScreenStatefulWidget` / `LeafScreenState`로 Screen 정의. `BlocScreenConsumer<BlocType, StateType>`로 BLoC 소비. |
+| **leaf_network** | `LeafDioSharedClient.shared.getService<T>()`로 service 호출. Response: `.isSuccessful`, `.isHttpUnauthorisedException`. 파일 업로드: `LeafMultipartFile.fromBytes()`. |
+| **leaf_component** | `context.leafColors` / `context.leafTypography`로 색·타이포 접근. 컴포넌트 선택 정책은 **Component Selection** 섹션. |
 
 ### Component Selection
 
@@ -67,7 +65,7 @@ Text('Hello', style: TextStyle(fontSize: 16));
 LeafText('Hello', style: context.leafTypography.bodyLg);
 ```
 
-전체 컴포넌트 목록과 매핑은 위 LLM Documentation 섹션의 `llms/leaf_component/llms.txt`에서 확인. leaf_component에 동등 컴포넌트가 없을 때만 Flutter 기본/외부 패키지 사용 — 그 경우에도 색·타이포는 `context.leafColors`/`context.leafTypography`로 통일.
+전체 컴포넌트 목록은 leaf-kit `llms/leaf_component/llms.txt` 참조. leaf_component에 동등 컴포넌트가 없을 때만 Flutter 기본/외부 패키지 사용 — 그 경우에도 색·타이포는 `context.leafColors`/`context.leafTypography`로 통일.
 
 ### Network (API 사용 시)
 
@@ -75,7 +73,7 @@ LeafText('Hello', style: context.leafTypography.bodyLg);
 
 #### Initialization
 
-Network initialization in `app.dart` via `LeafDioSharedClient` with automatic token refresh via interceptor.
+`app.dart`에서 `LeafDioSharedClient` 초기화. 토큰 자동 refresh는 interceptor로 구성. 초기화 코드 패턴은 leaf-kit `llms/leaf_network/llms.txt` 참조.
 
 #### Adapter Pattern
 
@@ -102,14 +100,7 @@ class ProductApiAdapter implements ProductPort {
 
 > 이 섹션은 Remote API를 데이터 소스로 사용하는 경우에 해당합니다.
 
-```
-HTTP Response
-    |-- 401 Unauthorized --> throw LeafUnauthorisedException (from response.httpException!)
-    |-- Other failure    --> throw ServerException (or domain-specific exception)
-    +-- Success          --> DTO -> Entity conversion, return domain object
-```
-
-401 is handled globally: BLoC catches `LeafUnauthorisedException` -> `addError(e, st)` -> `Bloc.observer` triggers logout.
+Adapter는 401에서 `response.httpException!`(=`LeafUnauthorisedException`)을 그대로 throw. 그 외 실패는 `ServerException` 또는 도메인 예외. BLoC에서 `LeafUnauthorisedException`을 catch하여 `addError(e, st)`로 위임 — `Bloc.observer`가 글로벌 logout 처리.
 
 ```dart
 // BLoC 401 handling pattern
@@ -128,4 +119,39 @@ Future<void> _onLoadRequested(ProductLoadRequested event, Emitter<ProductState> 
 
 ### Presentation
 
-- **Screen** (pages/): extends `LeafScreenStatefulWidget`, uses `BlocScreenConsumer`
+**Screen** (`pages/`): `LeafScreenStatefulWidget` + `LeafScreenState<T>`. body는 `BlocScreenConsumer`로 BLoC 구독, scaffold/app bar는 base 메서드 override.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_leaf_kit/flutter_leaf_kit.dart';
+
+class ProductScreen extends LeafScreenStatefulWidget {
+  const ProductScreen({super.key});
+
+  @override
+  State<ProductScreen> createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends LeafScreenState<ProductScreen> {
+  @override
+  Color? get backgroundColor => null;
+
+  @override
+  Widget? buildScreen(BuildContext context) {
+    return BlocScreenConsumer<ProductBloc, ProductState>(
+      builder: (context, state) => buildScaffold(context, state),
+      successListener: (context, state) {},
+    );
+  }
+
+  @override
+  PreferredSizeWidget? buildAppBar(BuildContext context, Object? state) =>
+      const ProductAppBar();
+
+  @override
+  Widget buildBody(BuildContext context, Object? state) => const ProductBodyView();
+}
+```
+
+**View** (`views/`): StatelessWidget. 한 화면 내 논리적 섹션 분할용.
+**Widget** (`widgets/`): StatelessWidget 또는 StatefulWidget. 재사용 컴포넌트.

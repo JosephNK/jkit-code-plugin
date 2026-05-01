@@ -18,7 +18,7 @@ function toSnakeCase(name) {
 function generateBloc(blocName) {
   const snakeName = toSnakeCase(blocName);
 
-  return `import 'package:flutter_leaf_kit/flutter_leaf_kit_common.dart';
+  return `import 'package:flutter_leaf_kit/flutter_leaf_kit_core.dart';
 import 'package:flutter_leaf_kit/flutter_leaf_kit_state.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
