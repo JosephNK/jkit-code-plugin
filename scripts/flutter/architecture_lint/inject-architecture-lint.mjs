@@ -25,7 +25,7 @@ import YAML from 'yaml';
 
 const PACKAGE_NAME = 'architecture_lint';
 
-const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-path <path> --git-ref <ref> [--stacks <list>]
+const HELP = `Usage: inject-architecture-lint.mjs --pubspec <path> --analysis-options <path> --git-url <url> --git-path <path> --git-ref <ref>
 
 Inject architecture_lint into Flutter project config.
 
@@ -35,10 +35,6 @@ Options:
   --git-url <url>           Git repository URL (required)
   --git-path <path>         Path to package within the repo (required)
   --git-ref <ref>           Git ref, tag recommended (required, e.g. v0.1.28)
-  --stacks <list>           Comma-separated stack list (e.g. "bloc"); empty
-                            string clears stacks. When provided, sets/replaces
-                            architecture_lint.stacks in analysis_options.yaml.
-                            When omitted, the section is left untouched.
   -h, --help                Show this help
 `;
 
@@ -54,8 +50,6 @@ function parseArgs(argv) {
     gitUrl: '',
     gitPath: '',
     gitRef: '',
-    // null = flag not provided (leave file alone); array = set/replace.
-    stacks: null,
   };
   const rest = argv.slice(2);
 
@@ -96,21 +90,6 @@ function parseArgs(argv) {
           usage();
         }
         args.gitRef = rest.shift();
-        break;
-      case '--stacks':
-        if (!rest.length) {
-          process.stderr.write('--stacks requires a value (use "" for empty)\n');
-          usage();
-        }
-        {
-          const raw = rest.shift();
-          args.stacks = raw === ''
-            ? []
-            : raw
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean);
-        }
         break;
       case '-h':
       case '--help':
@@ -220,7 +199,7 @@ function injectPubspec(pubspecPath, gitUrl, gitPath, gitRef) {
 
 // ─── analysis_options.yaml ───
 
-function injectAnalysisOptions(analysisPath, stacks) {
+function injectAnalysisOptions(analysisPath) {
   const doc = loadOrCreateDoc(analysisPath);
 
   const analyzer = doc.get('analyzer');
@@ -251,29 +230,7 @@ function injectAnalysisOptions(analysisPath, stacks) {
     }
   }
 
-  // Set/replace architecture_lint.stacks only when --stacks was provided.
-  // Idempotent: skip the rewrite if value already matches.
-  let stacksChanged = false;
-  if (stacks !== null) {
-    const existing = doc.get(PACKAGE_NAME);
-    const existingStacks = YAML.isMap(existing)
-      ? nodeToJs(existing.get('stacks'))
-      : null;
-    const same =
-      Array.isArray(existingStacks) &&
-      existingStacks.length === stacks.length &&
-      existingStacks.every((v, i) => v === stacks[i]);
-    if (!same) {
-      // Drop any non-map architecture_lint so setIn can recreate a proper map.
-      if (existing != null && !YAML.isMap(existing)) {
-        doc.delete(PACKAGE_NAME);
-      }
-      doc.setIn([PACKAGE_NAME, 'stacks'], stacks);
-      stacksChanged = true;
-    }
-  }
-
-  if (!pluginsChanged && !stacksChanged) {
+  if (!pluginsChanged) {
     process.stdout.write(
       `  ${PACKAGE_NAME} already configured in ${analysisPath}, skipping\n`,
     );
@@ -281,14 +238,7 @@ function injectAnalysisOptions(analysisPath, stacks) {
   }
 
   writeDoc(analysisPath, doc);
-  if (pluginsChanged) {
-    process.stdout.write(`  Injected ${PACKAGE_NAME} into ${analysisPath}\n`);
-  }
-  if (stacksChanged) {
-    process.stdout.write(
-      `  Set ${PACKAGE_NAME}.stacks=[${stacks.join(', ')}] in ${analysisPath}\n`,
-    );
-  }
+  process.stdout.write(`  Injected ${PACKAGE_NAME} into ${analysisPath}\n`);
   return true;
 }
 
@@ -308,8 +258,7 @@ function main() {
       args.gitRef,
     ) && ok;
   ok =
-    injectAnalysisOptions(path.resolve(args.analysisOptions), args.stacks) &&
-    ok;
+    injectAnalysisOptions(path.resolve(args.analysisOptions)) && ok;
 
   if (ok) {
     process.stdout.write('Done.\n');

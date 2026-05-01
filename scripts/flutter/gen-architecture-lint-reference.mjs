@@ -16,11 +16,12 @@
 // 입력 (Source):
 //   rules/flutter/base/custom-lint/architecture_lint/lib/src/
 //     ├── lints/*.dart              — base 룰 (E1·E2·E4·E5·E6·E7·E8·N1·N2·N3·S1·S2)
-//     ├── lints/<stack>/*.dart      — stack 룰 (예: lints/bloc/e3_bloc_dependency_lint.dart)
 //     ├── constants.dart            — 패키지 화이트/블랙리스트, maxFileLines
 //     ├── boundary_element.dart     — projectBoundaryElements + unknownPathIgnores
 //     ├── structure_annotation.dart — placeholder/하위 폴더 의도 (트리 보강)
 //     └── layer_semantics.dart      — Role/Contains/Example (doc-only 정형)
+//
+// stack-specific 룰(예: bloc)은 별도 패키지로 분리 — 이 generator는 base 패키지 전용.
 //
 // 출력:
 //   rules/flutter/base/
@@ -165,13 +166,12 @@ function collectStringLiterals(s) {
 
 // ─── lints/*.dart 파싱 ──────────────────────────────────────────────────────
 
-function parseLintFile(filePath, stack) {
+function parseLintFile(filePath) {
   const content = readSource(filePath);
   const className = extractLintClassName(content);
   if (!className) return null;
   return {
     file: path.basename(filePath),
-    stack, // null = base 룰; 'bloc' 등 = stack 룰
     className,
     code: extractGetter(content, 'code'),
     message: extractGetter(content, 'message'),
@@ -185,25 +185,14 @@ function parseLintFile(filePath, stack) {
 
 function loadAllLints() {
   const lintsDir = path.join(SRC_DIR, 'lints');
-  const entries = []; // { file, stack }
-  // stack 룰은 lints/<stack>/*.dart 하위에 둠 (예: lints/bloc/e3_*.dart) —
-  // 디렉토리 이름이 stack 식별자.
-  function walk(dir, stack) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(full, entry.name);
-      else if (entry.isFile() && entry.name.endsWith('.dart')) {
-        entries.push({ file: full, stack });
-      }
-    }
-  }
-  walk(lintsDir, null);
-  entries.sort((a, b) =>
-    path.basename(a.file).localeCompare(path.basename(b.file)),
-  );
+  const files = fs
+    .readdirSync(lintsDir, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith('.dart'))
+    .map((e) => path.join(lintsDir, e.name))
+    .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
   const rules = [];
-  for (const { file, stack } of entries) {
-    const r = parseLintFile(file, stack);
+  for (const file of files) {
+    const r = parseLintFile(file);
     if (r) rules.push(r);
   }
   return rules;
@@ -864,46 +853,16 @@ function renderReference({ rules, layerSemantics, boundaryElements, constants })
 
   lines.push('## 규칙 (Rules)');
   lines.push('');
-  const baseRules = rules.filter((r) => !r.stack);
-  const stackBuckets = new Map();
-  for (const r of rules) {
-    if (!r.stack) continue;
-    if (!stackBuckets.has(r.stack)) stackBuckets.set(r.stack, []);
-    stackBuckets.get(r.stack).push(r);
-  }
-  const stackKeys = [...stackBuckets.keys()].sort();
-  const stackSummary = stackKeys.length
-    ? ` + stack 룰 ${stackKeys
-        .map((k) => `${stackBuckets.get(k).length}(\`${k}\`)`)
-        .join(', ')}`
-    : '';
   lines.push(
-    `base 룰 ${baseRules.length}개${stackSummary}. ` +
-      'stack 룰은 `analysis_options.yaml`의 `architecture_lint.stacks`에 ' +
-      '해당 키가 포함될 때만 활성. 시각화된 의존 다이어그램은 ' +
-      '`lint-rules-diagram.md` 참조.',
+    `base 룰 ${rules.length}개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. ` +
+      '시각화된 의존 다이어그램은 `lint-rules-diagram.md` 참조.',
   );
   lines.push('');
-  lines.push('### Base 룰');
+  lines.push(renderRulesTable(rules, constants));
   lines.push('');
-  lines.push(renderRulesTable(baseRules, constants));
-  lines.push('');
-  for (const stackKey of stackKeys) {
-    lines.push(`### Stack 룰 — \`${stackKey}\``);
-    lines.push('');
-    lines.push(
-      `\`stacks: [${stackKey}]\` 활성 시 추가로 적용. ` +
-        '비활성 시 해당 룰은 합성 단계에서 제외된다.',
-    );
-    lines.push('');
-    lines.push(renderRulesTable(stackBuckets.get(stackKey), constants));
-    lines.push('');
-  }
 
   const pkgGroups = [
     { name: 'codegenPackages', label: 'Codegen Annotation 패키지 (entities/ 허용)' },
-    { name: 'blocAllowedPackages', label: 'Bloc 레이어 허용 외부 패키지 (bloc stack 고유)' },
-    { name: 'leafKitBlocAllowed', label: 'Bloc 레이어 허용 leaf-kit entry (base)' },
     { name: 'infraPackages', label: '인프라 패키지 (도메인 레이어 금지)' },
     { name: 'frameworkPackages', label: 'Framework 패키지 (ports/ 금지)' },
   ];

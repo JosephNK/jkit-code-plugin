@@ -6,36 +6,28 @@ import '../classification.dart';
 import '../constants.dart';
 import '../dart_lint.dart';
 
-/// E8: presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지 (bloc stack 활성 시 `usecases`도 차단 → bloc 경유 강제).
+/// E8: presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지.
 ///
 /// UI(pages/views/widgets)는 인프라 SDK(`infraPackages`: dio·sqflite·firebase 등)를
-/// 직접 다루지 않는다. bloc stack 활성 시 추가로 `usecases/` 직접 import도 차단되어
-/// bloc을 통해서만 도메인 동작을 호출하도록 강제.
-/// 허용은 entities/·exceptions/·bloc/(stack 활성 시)·common/·di/·router/ 및 그 외 외부 UI 라이브러리.
+/// 직접 다루지 않는다. 허용은 entities/·exceptions/·common/·di/·router/ 및 그 외 외부 UI 라이브러리.
+/// stack-specific 추가 차단(예: bloc 경유 강제)은 별도 패키지가 자체 룰로 강제.
 class E8PresentationDependencyLint extends DartLint {
-  E8PresentationDependencyLint({Set<String> stacks = const {}})
-    : _forbidden = {
-        'adapters',
-        'ports',
-        if (stacks.contains('bloc')) 'usecases',
-      };
-
-  final Set<String> _forbidden;
+  static const _forbidden = <String>{'adapters', 'ports'};
 
   @override
   String get code => 'e8_presentation_dependency';
 
   @override
   String get message =>
-      'presentation/ must not import adapters/, ports/, usecases/, or '
-      'infrastructure SDK packages. Go through bloc/ for domain access.';
+      'presentation/ must not import adapters/, ports/, or '
+      'infrastructure SDK packages.';
 
   @override
   AnalysisErrorSeverity get severity => AnalysisErrorSeverity.ERROR;
 
   @override
   String? get correction =>
-      'Move data access into a bloc/ event handler that calls a UseCase. '
+      'Access data through a state/controller layer that calls a UseCase. '
       'Keep presentation/ thin — only widgets, UI state subscription, and '
       'event dispatch.';
 

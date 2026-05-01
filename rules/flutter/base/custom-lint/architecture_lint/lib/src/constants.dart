@@ -17,28 +17,6 @@ const codegenPackages = <String>{
   'collection',
 };
 
-/// bloc/ 레이어에서 허용되는 외부 import 화이트리스트 (bloc stack 고유).
-///
-/// `flutter_bloc`/`bloc`/`equatable` 직접 import는 모두 차단 — 상태 관리는
-/// `leafKitBlocAllowed`(leaf-kit base 화이트리스트)의 entry-point 경유 강제.
-/// 화이트리스트 외 모든 외부 패키지는 위반(E3 error).
-/// entry에 `/`가 있으면 풀 import URI 매칭(특정 entry-point만 허용),
-/// 없으면 패키지명 단위 매칭(패키지 전체 허용).
-const blocAllowedPackages = <String>{
-  'freezed_annotation',
-};
-
-/// bloc/ 레이어에서 허용되는 leaf-kit entry-point 화이트리스트.
-///
-/// leaf-kit은 bloc stack과 무관하게 jkit Flutter 프로젝트의 base 의존이며
-/// 레이어별로 다른 entry-point를 사용한다. bloc/ 레이어는 상태 관리에 한해
-/// `flutter_leaf_kit_state.dart`/`flutter_leaf_kit_core.dart`만 import 허용 —
-/// component/route/network 등 다른 영역의 entry는 누출 차단.
-const leafKitBlocAllowed = <String>{
-  'flutter_leaf_kit/flutter_leaf_kit_state.dart',
-  'flutter_leaf_kit/flutter_leaf_kit_core.dart',
-};
-
 /// 도메인 레이어에서 금지되는 "인프라" 패키지 목록.
 ///
 /// 이 패키지들은 외부 세계(네트워크/DB/저장소/Firebase 등)와 직접 통신하므로
@@ -83,13 +61,8 @@ const domainLayers = <String>{'entities', 'ports', 'usecases', 'exceptions'};
 /// feature 간 결합을 entities(공용 도메인 타입) 수준으로만 제한하여
 /// 기능 모듈을 독립적으로 변경/삭제할 수 있도록 한다.
 /// ports/adapters/usecases는 feature 전용 내부 계약이므로 cross-import 금지.
+/// stack-specific 추가 차단(예: bloc)은 별도 패키지가 자체 룰로 강제.
 const crossFeatureForbidden = <String>{'ports', 'adapters', 'usecases'};
-
-/// bloc stack 활성 시 추가되는 cross-feature 금지 레이어.
-///
-/// bloc은 feature 전용 상태 계층이므로 다른 feature에서 직접 import 금지.
-/// stack=bloc일 때 `crossFeatureForbidden`에 합쳐진다.
-const crossFeatureForbiddenBloc = <String>{'bloc'};
 
 /// S1 룰 — 파일당 최대 라인 수.
 /// 800줄을 넘으면 단일 책임 위반 가능성이 높아 분할 권장.

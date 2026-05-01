@@ -13,7 +13,6 @@ graph LR
   entities["entities/"]
   ports["ports/"]
   exceptions["exceptions/"]
-  bloc["bloc/"]
   presentation["presentation/"]
   adapters["adapters/"]
   usecases --> entities

@@ -8,7 +8,7 @@
 // package for round-trip YAML editing (preserves comments & formatting).
 //
 // Usage:
-//   gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <list>]
+//   gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
 // =============================================================================
 
 import { spawnSync } from 'node:child_process';
@@ -23,7 +23,7 @@ import { ensureFlutterRoot, normalizePath } from '../common.mjs';
 const GIT_URL = 'https://github.com/JosephNK/jkit-code-plugin.git';
 const GIT_PATH = 'rules/flutter/base/custom-lint/architecture_lint';
 
-const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>] [--stacks <list>]
+const HELP = `Usage: gen-architecture-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
 
 Injects architecture_lint (as a git dependency) into pubspec.yaml and
 registers it as an analyzer plugin in analysis_options.yaml.
@@ -37,18 +37,12 @@ Options:
   -p <dir>       Project root directory (required)
   -entry <dir>   Flutter entry directory (default: app)
   --ref <ref>    Git ref to pin (default: v<plugin-version> from plugin.json)
-  --stacks <list>
-                 Comma-separated stack list forwarded to inject (e.g. "bloc",
-                 or "" to clear). When omitted, analysis_options.yaml's
-                 architecture_lint.stacks is left untouched.
   -h, --help     Show this help
 
 Examples:
   ./scripts/flutter/gen-architecture-lint.mjs flutter -p .
   ./scripts/flutter/gen-architecture-lint.mjs flutter -p . -entry app
   ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --ref v0.1.28
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --stacks bloc
-  ./scripts/flutter/gen-architecture-lint.mjs flutter -p . --stacks ""
 `;
 
 function usage(code = 1) {
@@ -62,8 +56,6 @@ function parseArgs(argv) {
     projectDir: '',
     entry: 'app',
     ref: '',
-    // null = flag not provided; raw string passed through to inject script.
-    stacks: null,
   };
   const rest = argv.slice(2);
 
@@ -94,13 +86,6 @@ function parseArgs(argv) {
           usage();
         }
         args.ref = rest.shift();
-        break;
-      case '--stacks':
-        if (!rest.length) {
-          process.stderr.write('--stacks requires a value (use "" for empty)\n');
-          usage();
-        }
-        args.stacks = rest.shift();
         break;
       case '-h':
       case '--help':
@@ -185,9 +170,6 @@ function main() {
     '--git-ref',
     ref,
   ];
-  if (args.stacks !== null) {
-    injectArgs.push('--stacks', args.stacks);
-  }
 
   const result = spawnSync(process.execPath, injectArgs, {
     cwd: projectDir,
