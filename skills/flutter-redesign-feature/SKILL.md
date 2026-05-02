@@ -59,7 +59,7 @@ argument-hint: "<free-form text containing target feature + design source>"
 
 ### 수정 금지 (read-only — import 해서 사용만 OK)
 
-- `<entry>/lib/features/<feature>/presentation/bloc/**` — BLoC Event/State는 **계약**. 시그니처 변경이 필요하면 즉시 halt.
+- `<entry>/lib/features/<feature>/presentation/bloc/**` — BLoC Event/State는 **계약**. 시그니처 변경이 필요하면 본 스킬에서는 수정하지 않고 `// TODO(bloc):` 마커로 surface한다 ("Markers" 섹션 참조).
 - `<entry>/lib/features/<feature>/domain/**`
 - `<entry>/lib/features/<feature>/infrastructure/**`
 - 다른 feature 전체
@@ -68,6 +68,22 @@ argument-hint: "<free-form text containing target feature + design source>"
 - `<entry>/lib/router/**`
 
 > import 가능 여부는 `@LINT.md`의 `presentation`·`bloc`·`usecases`·`ports`·`adapters` 레이어 룰을 따른다. 본 스킬은 lint 룰을 복제·요약하지 않으며, 위반은 9단계 검증의 `dart analyze`에서 자동 검출된다.
+
+## Markers (디자인 우선 + 사후 보완)
+
+새 디자인이 현재 BLoC/도메인/디자인 토큰으로 완전히 표현되지 않아도 **UI 재작성을 끝까지 진행**한다. 부족한 부분은 코드에 마커를 남기고 9단계 보고서에 surface해서 별도 작업으로 보완한다.
+
+| 마커 | 용도 | 예시 |
+|---|---|---|
+| `// TODO(bloc):` | 새 BLoC Event/State 또는 도메인 확장 필요 | `// TODO(bloc): HomeEvent에 RankingRefreshed 추가 필요` |
+| `// FIXME(design):` | 미정의 디자인 토큰·공용 위젯 — 임시값 사용 중 | `// FIXME(design): primaryAccent 토큰 미정의, 임시 hex 사용` |
+| `// NOTE(scope):` | 정보성 (예: common 승격 후보) | `// NOTE(scope): common 승격 후보` |
+
+규칙:
+
+- 마커 위치는 부족 동작이 발생하는 라인 바로 위.
+- 빈 콜백·더미값·임시 hex를 두는 경우 **반드시** 마커를 동반.
+- 보고서 단계에서 `grep -rn "TODO(bloc)\|FIXME(design)\|NOTE(scope)" <entry>/lib/features/<feature>/presentation` 결과를 그대로 노출 — 누락 방지.
 
 ## Workflow
 
@@ -106,10 +122,14 @@ Event = UI에서 dispatch 가능한 액션.
 
 ### 5. 디자인 소스 fetch
 
-- Stitch: `mcp__stitch__get_project` + `mcp__stitch__get_screen` 호출. 응답에 hosted image URL이 있으면 `curl -L`로 로컬 임시 파일에 저장 후 Read.
-- Figma: WebFetch로 디자인 페이지 fetch.
-- 이미지 경로: Read.
-- 텍스트: 그대로 사용.
+다운로드 데이터는 소스 종류별로 `/tmp/<source>_<feature>/` 디렉토리에 저장한다 (없으면 `mkdir -p`로 생성). 저장 경로는 9단계 보고서에 surface된다.
+
+- Stitch: `mcp__stitch__get_project` + `mcp__stitch__get_screen` 호출. 결과를 `/tmp/stitch_<feature>/`에 저장.
+  - 스크린샷(PNG): `/tmp/stitch_<feature>/<feature>.png` — `curl -L -o`로 hosted image URL 다운로드
+  - HTML 코드 (Tailwind 마크업): `/tmp/stitch_<feature>/<feature>.html` — Stitch 응답에서 추출
+- Figma: WebFetch로 디자인 페이지 fetch. 응답을 `/tmp/figma_<feature>/<feature>.html` (+ 추출 이미지 `<feature>.png`)로 저장.
+- 이미지 경로 입력: Read만 (이미 디스크에 있음 — 별도 저장 불필요, 원본 경로를 그대로 보고서에 surface).
+- 자유 텍스트: `/tmp/redesign_<feature>/spec.txt`로 저장.
 
 ### 6. Plan 제시 — **의무 컨펌**
 
@@ -135,8 +155,10 @@ Event = UI에서 dispatch 가능한 액션.
 - <Feature>Event.loadRequested   ←  initState
 - <Feature>Event.refreshRequested ←  pull-to-refresh
 
-### 위험 요소
-- (없음 / 또는 — 디자인이 현재 State에 없는 데이터 X 요구)
+### 마커 예정 (사후 보완 필요)
+- TODO(bloc): <FeatureEvent>에 X 추가 — 디자인 Y 항목 위해 필요
+- FIXME(design): <토큰명> 미정의 — 임시 hex 사용 예정
+- (없으면 "없음")
 ```
 
 AskUserQuestion으로 옵션 제시: ["진행", "수정 요청", "취소"].
@@ -144,6 +166,8 @@ AskUserQuestion으로 옵션 제시: ["진행", "수정 요청", "취소"].
 ### 7. 구현
 
 허용 경로 안에서만 파일을 생성/수정/삭제. import 제약 준수. BLoC Event는 dispatch만, 비즈니스 결정 금지.
+
+현재 BLoC/도메인/디자인 토큰으로 표현 불가능한 부분은 위 "Markers" 섹션의 컨벤션으로 마커를 남기고 진행한다. 빈 콜백·더미값·임시 hex에 마커 누락 금지.
 
 ### 8. 검증 (1단계)
 
@@ -184,22 +208,33 @@ git diff --name-only
 ## Lint 결과
 dart analyze: 0 errors, 0 warnings
 
-## Out-of-scope (사용자 결정 필요)
-- (없음 / 또는 — 디자인 X 위해 BLoC State에 ranking 필드 추가 필요. 별도 작업 권장.)
+## 디자인 소스 데이터
+- /tmp/stitch_<feature>/<feature>.png    (Stitch 스크린샷)
+- /tmp/stitch_<feature>/<feature>.html   (Stitch Tailwind HTML)
+- /tmp/figma_<feature>/<feature>.html    (Figma 페이지)
+- /tmp/redesign_<feature>/spec.txt       (자유 텍스트)
+- /abs/path/to/input.png                  (이미지 경로 입력 — 원본)
+
+## 사후 보완 항목 (마커)
+- pages/<feature>_screen.dart:42  TODO(bloc): HomeEvent에 RankingRefreshed 추가 필요
+- widgets/<feature>_card.dart:18  FIXME(design): primaryAccent 토큰 미정의, 임시 hex 사용
+- (없으면 "없음" — `grep -rn "TODO(bloc)\|FIXME(design)\|NOTE(scope)"` 결과 그대로)
 ```
 
-## Halt 조건 — 모두 즉시 멈추고 사용자 결정 요청
+## Halt 조건 / Marker 처리
+
+진짜 halt는 disambiguation·fetch 실패·자동 수정 불가 케이스만. BLoC/토큰 부족은 marker 삽입 후 자동 진행.
 
 | 조건 | 처리 |
 |---|---|
-| feature 키워드 모호 / glob 결과 0개 또는 다중 | AskUserQuestion + 후보 리스트 |
-| 새 BLoC Event가 필요해 보임 | "디자인 X에 새 Event Y 필요. BLoC 변경은 본 스킬 범위 밖 — 별도 작업?" |
-| 새 BLoC State 필드 필요 | "디자인 X는 State에 없는 데이터 Y 요구. BLoC 확장 후 재시도 권장." |
-| 새 공용 위젯이 명백히 필요 | feature/widgets에 우선 생성 + 보고서에 "common 승격 후보" 표시 (자동 진행) |
-| Theme 토큰 변경 필요 | "디자인 X에 새 토큰 Y 필요. 별도 토큰 작업으로 진행?" |
-| 디자인 소스 fetch 실패 | "Stitch/Figma fetch 실패: <error>. 재시도 또는 다른 소스?" |
-| `dart analyze` 에러를 자동 수정 불가 | 에러 원문 제시 + halt |
-| `git diff`에 범위 밖 파일 존재 | "범위 밖 변경: <파일 리스트>. 롤백할까요?" |
+| feature 키워드 모호 / glob 결과 0개 또는 다중 | **halt** + AskUserQuestion (후보 리스트) |
+| 디자인 소스 fetch 실패 | **halt** + "Stitch/Figma fetch 실패: <error>. 재시도 또는 다른 소스?" |
+| `dart analyze` 에러를 자동 수정 불가 | **halt** + 에러 원문 제시 |
+| `git diff`에 범위 밖 파일 존재 | **halt** + "범위 밖 변경: <파일 리스트>. 롤백할까요?" |
+| 새 BLoC Event 필요 | `// TODO(bloc):` 마커 + 빈 콜백, 진행 |
+| 새 BLoC State 필드 필요 | `// TODO(bloc):` 마커 + 더미값/생략 처리, 진행 |
+| 새 공용 위젯 필요 | feature/widgets에 생성 + `// NOTE(scope): common 승격 후보`, 진행 |
+| Theme 토큰 변경 필요 | `// FIXME(design):` 마커 + 임시값, 진행 |
 
 ## Usage Examples
 
@@ -250,6 +285,6 @@ Use a utility like `curl -L` to download the hosted URLs. <feature 키워드> UI
 
 ## Notes
 
-- 본 스킬은 **현재 BLoC 인터페이스(Event/State)가 새 디자인을 표현하기에 충분**하다는 가정에서 동작한다. 부족하면 즉시 halt하고 BLoC 변경 작업을 별도로 요청한다.
-- `common/widgets/`·`common/theme/` 변경은 범위 밖. 새 공용 위젯이 명확히 필요하면 feature/widgets에 우선 둔 뒤 보고서로 "common 승격 후보"를 surface한다.
+- 본 스킬은 **디자인 우선** — 현재 BLoC/도메인이 새 디자인을 완전히 지원하지 못해도, 부족한 부분을 마커("Markers" 섹션 참조)로 남기고 UI 재작성을 끝까지 진행한다. 사후 별도 작업으로 BLoC/토큰을 보완한다.
+- `common/widgets/`·`common/theme/` 변경은 범위 밖. 새 공용 위젯이 명확히 필요하면 feature/widgets에 우선 둔 뒤 `// NOTE(scope): common 승격 후보` 마커로 표시한다.
 - architecture lint 위반(특히 presentation 레이어가 도메인/인프라를 직접 import하는 경우)은 `dart analyze`로 자동 검출되며, 발견 시 즉시 수정 후 재검증한다.
