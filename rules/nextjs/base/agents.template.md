@@ -10,4 +10,4 @@
 **BEFORE committing or using git/GitHub commands, you MUST first read:**
 - [Git]({{DOCS_DIR}}GIT.md) — Git & GitHub guide with commit conventions
 
-See @AGENTS.LOCAL.md for project-specific required reading.
+See @AGENTS.PROJECT.md for project-specific required reading.

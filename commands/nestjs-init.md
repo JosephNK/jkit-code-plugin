@@ -130,23 +130,26 @@ $JKIT_DIR/scripts/gen-git.mjs -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 
-# 3. CONVENTIONS.md
+# 3. STRUCTURE.md (lint-rules-structure-reference 복사)
+$JKIT_DIR/scripts/gen-structure.mjs nestjs -p docs
+
+# 4. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 
-# 4. LINT.md (base + 선택 stack lint-rules)
+# 5. LINT.md (base + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
-# 5. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
+# 6. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
-# 6. tsconfig.json patch
+# 7. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with <tsconfig-stacks>
 
-# 7. Husky hooks
+# 8. Husky hooks
 #    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
 
-# 8. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 9. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
@@ -195,11 +198,12 @@ esac
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
-- `AGENTS.LOCAL.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
+- `AGENTS.PROJECT.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
-- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
-- `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
+- `STRUCTURE.md` — lint 룰이 가정하는 디렉토리 구조 참조
+- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.PROJECT.md` 링크 포함)
+- `CONVENTIONS.PROJECT.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nestjs/*` import)
 - `package.json` — `devDependencies`에 `@jkit/code-plugin`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional` 추가 + `scripts.prepare: "husky"`
 - `tsconfig.json` — 프레임워크별 설정으로 패치됨

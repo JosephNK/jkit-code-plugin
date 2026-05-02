@@ -6,7 +6,7 @@ description: Sync JKit docs and lint config in NestJS project
 
 NestJS 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`)와 `eslint.config.mjs`를 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.LOCAL.md`, `CONVENTIONS.LOCAL.md`, `tsconfig.json`, `.husky/`, `commitlint.config.mjs`는 건드리지 않습니다. 최초 셋업은 `/jkit-nestjs-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `.husky/`, `commitlint.config.mjs`는 건드리지 않습니다. 최초 셋업은 `/jkit-nestjs-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -81,13 +81,16 @@ $JKIT_DIR/scripts/gen-git.mjs -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.mjs nestjs -p docs
 
-# 3. CONVENTIONS.md (LOCAL은 절대 건드리지 않음 — 없어도 새로 만들지 않음)
-$JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks> --no-local-init
+# 3. STRUCTURE.md (lint-rules-structure-reference 복사)
+$JKIT_DIR/scripts/gen-structure.mjs nestjs -p docs
 
-# 4. LINT.md (base + 선택 stack lint-rules)
+# 4. CONVENTIONS.md (PROJECT는 절대 건드리지 않음 — 없어도 새로 만들지 않음)
+$JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks> --no-project-init
+
+# 5. LINT.md (base + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
-# 5. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
+# 6. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 ```
 
@@ -113,9 +116,10 @@ esac
 
 - `docs/GIT.md` — Git & GitHub 가이드 (덮어쓰기)
 - `docs/ARCHITECTURE.md` — 아키텍처 상세 (덮어쓰기)
-- `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.LOCAL.md` 링크 포함)
+- `docs/STRUCTURE.md` — lint 룰이 가정하는 디렉토리 구조 참조 (덮어쓰기)
+- `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.PROJECT.md` 링크 포함)
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (덮어쓰기)
 - `package.json` — `@jkit/code-plugin` git ref만 현재 플러그인 버전으로 갱신 (그 외 필드는 보존)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.LOCAL.md`, `CONVENTIONS.LOCAL.md`, `tsconfig.json`, `.husky/`, `commitlint.config.mjs`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `.husky/`, `commitlint.config.mjs`.

@@ -119,20 +119,23 @@ $JKIT_DIR/scripts/gen-git.mjs -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 
-# 3. CONVENTIONS.md
+# 3. STRUCTURE.md (lint-rules-structure-reference 복사)
+$JKIT_DIR/scripts/gen-structure.mjs flutter -p docs
+
+# 4. CONVENTIONS.md
 $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks>
 
-# 4. LINT.md (base + 선택 stack lint-rules)
+# 5. LINT.md (base + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
 
-# 5. Husky hooks (.husky/pre-commit에 <entry-dir>이 인라인 치환됨, .husky/commit-msg)
+# 6. Husky hooks (.husky/pre-commit에 <entry-dir>이 인라인 치환됨, .husky/commit-msg)
 #    + package.json에 husky/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
 
-# 6. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 7. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 
-# 7. 유틸리티 스크립트
+# 8. 유틸리티 스크립트
 $JKIT_DIR/scripts/flutter/gen-scripts.mjs -p . -entry <entry-dir>
 ```
 
@@ -187,11 +190,12 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
-- `AGENTS.LOCAL.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
+- `AGENTS.PROJECT.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
-- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
-- `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
+- `STRUCTURE.md` — lint 룰이 가정하는 디렉토리 구조 참조
+- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.PROJECT.md` 링크 포함)
+- `CONVENTIONS.PROJECT.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `package.json` — `devDependencies`(`husky`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.prepare: "husky"`
 - `.husky/pre-commit` — husky pre-commit 훅 (dart format, flutter analyze; analyzer가 architecture_lint 진단을 자동 통합; 엔트리 디렉토리가 파일에 베이킹됨)
 - `.husky/commit-msg` — husky commit-msg 훅 (`commitlint --edit $1`)

@@ -104,7 +104,7 @@ function renderTemplate(template, { projectName, docsDir }) {
     .replaceAll('{{DOCS_DIR}}', docsDir);
 }
 
-function renderLocalTemplate({ projectName }) {
+function renderProjectTemplate({ projectName }) {
   return `# ${projectName} — Project-specific
 
 > 프로젝트 가이드를 작성하세요.
@@ -175,14 +175,14 @@ function main() {
   process.stdout.write(`Generated: ${outputFile}\n`);
   process.stdout.write(`Symlink: ${symlink} -> AGENTS.md\n`);
 
-  // AGENTS.LOCAL.md is user-owned. Create it only when missing so subsequent
+  // AGENTS.PROJECT.md is user-owned. Create it only when missing so subsequent
   // runs preserve user edits.
-  const localFile = path.join(outputDir, 'AGENTS.LOCAL.md');
-  if (fs.existsSync(localFile)) {
-    process.stdout.write(`Preserved: ${localFile} (user-owned, untouched)\n`);
+  const projectFile = path.join(outputDir, 'AGENTS.PROJECT.md');
+  if (fs.existsSync(projectFile)) {
+    process.stdout.write(`Preserved: ${projectFile} (user-owned, untouched)\n`);
   } else {
-    fs.writeFileSync(localFile, renderLocalTemplate({ projectName }));
-    process.stdout.write(`Generated: ${localFile} (user-owned)\n`);
+    fs.writeFileSync(projectFile, renderProjectTemplate({ projectName }));
+    process.stdout.write(`Generated: ${projectFile} (user-owned)\n`);
   }
 }
 

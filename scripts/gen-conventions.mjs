@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import { ensureGitRepo, normalizePath } from './common.mjs';
 
-const HELP = `Usage: gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...] [--no-local-init]
+const HELP = `Usage: gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...] [--no-project-init]
 
 Concatenates base/conventions.md + selected stack conventions.md files.
 
@@ -24,15 +24,15 @@ Arguments:
   <framework>      Framework name (e.g. nextjs, nestjs, flutter)
 
 Options:
-  -p <dir>         Output directory (required)
-  --with <list>    Comma-separated stacks (e.g. mantine,tanstack-query)
-  --no-local-init  Do not create CONVENTIONS.LOCAL.md when missing (sync mode)
-  -h, --help       Show this help
+  -p <dir>           Output directory (required)
+  --with <list>      Comma-separated stacks (e.g. mantine,tanstack-query)
+  --no-project-init  Do not create CONVENTIONS.PROJECT.md when missing (sync mode)
+  -h, --help         Show this help
 
 Examples:
   ./scripts/gen-conventions.mjs nextjs -p ./my-project --with mantine,tanstack-query,next-proxy
   ./scripts/gen-conventions.mjs nestjs -p ./my-project --with typeorm
-  ./scripts/gen-conventions.mjs nextjs -p ./my-project --with mantine --no-local-init
+  ./scripts/gen-conventions.mjs nextjs -p ./my-project --with mantine --no-project-init
 `;
 
 function usage(code = 1) {
@@ -41,7 +41,7 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', stacks: '', noLocalInit: false };
+  const args = { framework: '', outputDir: '', stacks: '', noProjectInit: false };
   const rest = argv.slice(2);
 
   if (rest.length >= 1 && !rest[0].startsWith('-')) {
@@ -65,8 +65,8 @@ function parseArgs(argv) {
         }
         args.stacks = rest.shift();
         break;
-      case '--no-local-init':
-        args.noLocalInit = true;
+      case '--no-project-init':
+        args.noProjectInit = true;
         break;
       case '-h':
       case '--help':
@@ -105,13 +105,13 @@ function renderConventionsFooter() {
 
 ## Project-specific
 
-@CONVENTIONS.LOCAL.md
+@CONVENTIONS.PROJECT.md
 
-See [CONVENTIONS.LOCAL.md](./CONVENTIONS.LOCAL.md) for project-specific required reading.
+See [CONVENTIONS.PROJECT.md](./CONVENTIONS.PROJECT.md) for project-specific required reading.
 `;
 }
 
-function renderLocalConventionsTemplate({ projectName }) {
+function renderProjectConventionsTemplate({ projectName }) {
   return `# ${projectName} — Project-specific Conventions
 
 > 프로젝트 컨벤션을 작성하세요.
@@ -175,18 +175,18 @@ function main() {
     process.stdout.write(`Stacks: ${args.stacks}\n`);
   }
 
-  // CONVENTIONS.LOCAL.md is user-owned. Create it only when missing so
-  // subsequent runs preserve user edits. With --no-local-init (sync mode),
+  // CONVENTIONS.PROJECT.md is user-owned. Create it only when missing so
+  // subsequent runs preserve user edits. With --no-project-init (sync mode),
   // skip creation entirely so a deliberately-deleted file stays deleted.
-  const localFile = path.join(outputDir, 'CONVENTIONS.LOCAL.md');
+  const projectFile = path.join(outputDir, 'CONVENTIONS.PROJECT.md');
   const projectName = path.basename(path.resolve('.'));
-  if (fs.existsSync(localFile)) {
-    process.stdout.write(`Preserved: ${localFile} (user-owned, untouched)\n`);
-  } else if (args.noLocalInit) {
-    process.stdout.write(`Skipped: ${localFile} (not created, --no-local-init)\n`);
+  if (fs.existsSync(projectFile)) {
+    process.stdout.write(`Preserved: ${projectFile} (user-owned, untouched)\n`);
+  } else if (args.noProjectInit) {
+    process.stdout.write(`Skipped: ${projectFile} (not created, --no-project-init)\n`);
   } else {
-    fs.writeFileSync(localFile, renderLocalConventionsTemplate({ projectName }));
-    process.stdout.write(`Generated: ${localFile} (user-owned)\n`);
+    fs.writeFileSync(projectFile, renderProjectConventionsTemplate({ projectName }));
+    process.stdout.write(`Generated: ${projectFile} (user-owned)\n`);
   }
 }
 

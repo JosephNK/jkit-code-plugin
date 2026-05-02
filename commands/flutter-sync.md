@@ -6,7 +6,7 @@ description: Sync JKit docs and lint config in Flutter project
 
 Flutter 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`)와 `architecture_lint` pin을 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.LOCAL.md`, `CONVENTIONS.LOCAL.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/` 유틸은 건드리지 않습니다. 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/` 유틸은 건드리지 않습니다. 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -49,10 +49,13 @@ $JKIT_DIR/scripts/gen-git.mjs -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 
-# 3. CONVENTIONS.md (LOCAL은 절대 건드리지 않음 — 없어도 새로 만들지 않음)
-$JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks> --no-local-init
+# 3. STRUCTURE.md (lint-rules-structure-reference 복사)
+$JKIT_DIR/scripts/gen-structure.mjs flutter -p docs
 
-# 4. LINT.md (base + 선택 stack lint-rules)
+# 4. CONVENTIONS.md (PROJECT는 절대 건드리지 않음 — 없어도 새로 만들지 않음)
+$JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks> --no-project-init
+
+# 5. LINT.md (base + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
 ```
 
@@ -94,8 +97,9 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 
 - `docs/GIT.md` — Git & GitHub 가이드 (덮어쓰기)
 - `docs/ARCHITECTURE.md` — 아키텍처 상세 (덮어쓰기)
-- `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.LOCAL.md` 링크 포함)
+- `docs/STRUCTURE.md` — lint 룰이 가정하는 디렉토리 구조 참조 (덮어쓰기)
+- `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.PROJECT.md` 링크 포함)
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
 - `pubspec.yaml` — `architecture_lint` (base) + 선택한 stack lint 패키지(예: `leaf_kit_lint`) git ref (변경/추가 시에만 갱신)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.LOCAL.md`, `CONVENTIONS.LOCAL.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/`.

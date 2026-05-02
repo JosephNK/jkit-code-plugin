@@ -159,7 +159,10 @@ $JKIT_DIR/scripts/gen-git.mjs -p docs
 # 2. ARCHITECTURE.md
 $JKIT_DIR/scripts/gen-architecture.mjs nextjs -p docs
 
-# 3. CONVENTIONS.md — 사용자 선택 스택만 사용 (base에는 stylelint 섹션 없음)
+# 3. STRUCTURE.md (lint-rules-structure-reference 복사)
+$JKIT_DIR/scripts/gen-structure.mjs nextjs -p docs
+
+# 4. CONVENTIONS.md — 사용자 선택 스택만 사용 (base에는 stylelint 섹션 없음)
 USER_CONV_STACKS="<conventions-stacks>"   # Step 2의 사용자 선택값
 if [ -n "$USER_CONV_STACKS" ]; then
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --with "$USER_CONV_STACKS"
@@ -167,25 +170,25 @@ else
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs
 fi
 
-# 4. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
+# 5. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
 
-# 5. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
+# 6. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 
-# 6. Stylelint config (항상 실행, 스택 선택 없음)
+# 7. Stylelint config (항상 실행, 스택 선택 없음)
 #    - stylelint.config.mjs 생성
 #    - package.json: devDeps + scripts.lint:css + lint-staged 자동 주입
 $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 
-# 7. tsconfig.json patch
+# 8. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
 
-# 8. Husky hooks
+# 9. Husky hooks
 #    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .
 
-# 9. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 10. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
@@ -234,11 +237,12 @@ esac
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
-- `AGENTS.LOCAL.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
+- `AGENTS.PROJECT.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)
 - `GIT.md` — Git & GitHub 가이드
 - `ARCHITECTURE.md` — 아키텍처 상세
-- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.LOCAL.md` 링크 포함)
-- `CONVENTIONS.LOCAL.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
+- `STRUCTURE.md` — lint 룰이 가정하는 디렉토리 구조 참조
+- `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.PROJECT.md` 링크 포함)
+- `CONVENTIONS.PROJECT.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nextjs/*` import)
 - `stylelint.config.mjs` — Stylelint 설정 (`stylelint-config-standard` extends + jkit baseline 규칙)
 - `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.prepare: "husky"` + CSS 대상 `lint-staged` glob
