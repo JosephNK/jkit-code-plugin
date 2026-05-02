@@ -33,7 +33,11 @@ class BoundaryElement {
 const projectBoundaryElements = <BoundaryElement>[
   BoundaryElement(
     layer: 'entities',
-    patterns: ['app/lib/features/**/domain/entities/**'],
+    patterns: [
+      'app/lib/features/**/domain/entities/**',
+      // nested cross-cutting subsystem (auth/gatekeeper 등 도메인-rich)
+      'app/lib/common/services/*/entities/**',
+    ],
     note: 'Immutable Value Objects',
   ),
   BoundaryElement(
@@ -41,13 +45,20 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: [
       'app/lib/features/**/domain/ports/**',
       // 교차 feature 서비스의 port 인터페이스도 ports 레이어로 분류 — usecase 의존 허용
+      // FLAT (1-port-1-adapter thin service):
       'app/lib/common/services/*/*_port.dart',
+      // nested (도메인-rich subsystem):
+      'app/lib/common/services/*/ports/**',
     ],
     note: 'Abstract interfaces (*_port.dart)',
   ),
   BoundaryElement(
     layer: 'usecases',
-    patterns: ['app/lib/features/**/domain/usecases/**'],
+    patterns: [
+      'app/lib/features/**/domain/usecases/**',
+      // nested cross-cutting subsystem 의 usecase — feature가 의존 허용 진입점
+      'app/lib/common/services/*/usecases/**',
+    ],
     note: '비즈니스 로직 (*_usecase.dart)',
   ),
   BoundaryElement(
@@ -55,7 +66,10 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: [
       'app/lib/features/**/infrastructure/adapters/**',
       // 교차 feature 서비스의 adapter 구현체도 adapters 레이어로 분류 — DI 외 직접 의존 차단
+      // FLAT:
       'app/lib/common/services/*/*_adapter.dart',
+      // nested:
+      'app/lib/common/services/*/adapters/**',
     ],
     note: 'Port 구현체 (*_adapter.dart)',
   ),
@@ -69,6 +83,8 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: [
       'app/lib/features/**/domain/exceptions/**',
       'app/lib/common/exceptions/**',
+      // nested cross-cutting subsystem 자체 도메인 예외
+      'app/lib/common/services/*/exceptions/**',
     ],
     note: '도메인 예외 + 공용 예외',
   ),

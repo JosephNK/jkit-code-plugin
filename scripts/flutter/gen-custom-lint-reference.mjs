@@ -1146,10 +1146,15 @@ function renderLeafKitReference({ rules, constants }) {
   lines.push('');
   lines.push(
     'LK_E3 룰이 bloc/ 레이어에서 허용하는 외부 의존성. 리스트 외 패키지는 ' +
-      'bloc/에서 import 시 ERROR.',
+      'bloc/에서 import 시 ERROR. `freezedStackBlocAllowed`는 freezed 스택 활성 ' +
+      '시(=프로젝트 pubspec.yaml에 `freezed_annotation` 의존성) 자동 합쳐진다.',
   );
   lines.push('');
-  for (const name of ['blocAllowedPackages', 'leafKitBlocAllowed']) {
+  for (const name of [
+    'blocAllowedPackages',
+    'leafKitBlocAllowed',
+    'freezedStackBlocAllowed',
+  ]) {
     if (!constants.raw.has(name)) continue;
     const members = constants.resolveSet(name);
     const doc = constants.docs.get(name) || '';

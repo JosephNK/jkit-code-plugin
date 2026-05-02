@@ -12,6 +12,8 @@
 //     └── presentation/{bloc,pages,views,widgets}/
 // =============================================================================
 
+import 'dart:io';
+
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:path/path.dart' as p;
 
@@ -62,18 +64,25 @@ bool isPresentationViewFile(String filePath) {
 ///
 /// 'bloc' / 'usecases' / 'adapters' / 'ports' 중 매칭되는 첫 번째 반환.
 /// architecture_lint의 boundary 매칭과 달리 leaf_kit_lint은 4개 레이어만 식별.
+/// `common/services/<svc>/`는 FLAT(`*_port.dart`/`*_adapter.dart`) + nested
+/// (`ports/`·`adapters/`·`usecases/`) 두 패턴을 모두 인식 — base의
+/// `boundary_element.dart` 매핑과 일치시켜 LK_E3가 nested cross-cutting
+/// subsystem 의 ports/adapters에 대한 bloc 직접 의존도 차단하도록 한다.
 String? _classifyInnerPath(String innerPath) {
   if (RegExp(r'features/[^/]+/presentation/bloc/').hasMatch(innerPath)) {
     return 'bloc';
   }
-  if (RegExp(r'features/[^/]+/domain/usecases/').hasMatch(innerPath)) {
+  if (RegExp(r'features/[^/]+/domain/usecases/').hasMatch(innerPath) ||
+      RegExp(r'common/services/[^/]+/usecases/').hasMatch(innerPath)) {
     return 'usecases';
   }
   if (RegExp(r'features/[^/]+/infrastructure/adapters/').hasMatch(innerPath) ||
+      RegExp(r'common/services/[^/]+/adapters/').hasMatch(innerPath) ||
       RegExp(r'common/services/[^/]+/.*_adapter\.dart$').hasMatch(innerPath)) {
     return 'adapters';
   }
   if (RegExp(r'features/[^/]+/domain/ports/').hasMatch(innerPath) ||
+      RegExp(r'common/services/[^/]+/ports/').hasMatch(innerPath) ||
       RegExp(r'common/services/[^/]+/.*_port\.dart$').hasMatch(innerPath)) {
     return 'ports';
   }
@@ -172,6 +181,50 @@ String? getImportTargetLayer(
   final currentDir = p.dirname(currentFilePath);
   final resolved = p.normalize(p.join(currentDir, importUri));
   return _classifyInnerPath(resolved);
+}
+
+/// pubspec.yaml이 있는 가장 가까운 상위 디렉토리(=프로젝트 루트)를 찾는다.
+///
+/// analyzer는 파일 단위로 lint를 실행하므로 import directive 방문 시 파일
+/// 절대 경로로부터 상위로 거슬러 올라가 탐색.
+String? findProjectRootFromFile(String filePath) {
+  var dir = p.dirname(filePath);
+  while (true) {
+    if (File(p.join(dir, 'pubspec.yaml')).existsSync()) {
+      return dir;
+    }
+    final parent = p.dirname(dir);
+    if (parent == dir) return null;
+    dir = parent;
+  }
+}
+
+final _freezedStackCache = <String, bool>{};
+final _freezedAnnotationDepRe = RegExp(
+  r'^\s*freezed_annotation\s*:',
+  multiLine: true,
+);
+
+/// 프로젝트 pubspec.yaml에 `freezed_annotation` 의존성이 등록되어 있는지.
+///
+/// freezed 스택(=`/jkit:flutter-init`에서 freezed 컨벤션 선택) 활성 신호로
+/// 사용. LK_E3가 bloc/에서 `freezed_annotation` import를 조건부 허용할 때
+/// 호출. 결과는 프로젝트 루트 단위로 캐시(같은 isolate 내 1회 read).
+bool projectHasFreezedStack(String filePath) {
+  final root = findProjectRootFromFile(filePath);
+  if (root == null) return false;
+  final cached = _freezedStackCache[root];
+  if (cached != null) return cached;
+
+  final pubspec = File(p.join(root, 'pubspec.yaml'));
+  if (!pubspec.existsSync()) {
+    _freezedStackCache[root] = false;
+    return false;
+  }
+  final raw = pubspec.readAsStringSync();
+  final hit = _freezedAnnotationDepRe.hasMatch(raw);
+  _freezedStackCache[root] = hit;
+  return hit;
 }
 
 /// import 대상 feature 통합 조회.

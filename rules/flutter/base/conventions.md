@@ -6,10 +6,34 @@
 
 | Location | When to use | Example |
 |----------|-------------|---------|
-| `common/services/` | Service used by **multiple features** or global infrastructure | Token storage, TTS, database, image compression |
+| `common/services/` | Service used by **multiple features** or global infrastructure | Token storage, TTS, database, image compression, auth, gatekeeper |
 | `features/<feature>/domain/ports/` | Port specific to **one feature's domain** | Product CRUD, order processing |
 
 Both follow the same Port & Adapter pattern. The only difference is scope.
+
+### common/services/ — FLAT vs nested layout
+
+`common/services/<svc>/` 자체가 두 패턴을 지원한다. 서비스의 도메인 풍부도에 따라 선택:
+
+| Pattern | When to use | Layout |
+|---------|-------------|--------|
+| **FLAT** (thin service) | 외부 시스템 1:1 wrapper, 자체 도메인 거의 없음 (token storage, TTS, image compression 등) | `<svc>/<svc>_port.dart` + `<svc>/<svc>_adapter.dart` (+ optional `support/`) |
+| **nested** (domain-rich subsystem) | 다수 feature가 의존하는 cross-cutting subsystem, 자체 entities/usecases/exceptions 보유 (auth, gatekeeper 등) | `<svc>/{entities,ports,adapters,usecases,exceptions}/` (+ optional `support/`) |
+
+**Lint 적용 (양 모드 동일)**:
+
+- AL_N1/N2/N3 — `Port`/`Adapter`/`UseCase` suffix 강제
+- AL_E1 — `entities/`는 codegen annotation만 외부 import 허용
+- AL_E4 — 도메인 4 레이어(entities/ports/usecases/exceptions)는 인프라 SDK 차단
+- AL_E5 — `ports/`는 framework 패키지 차단
+- AL_E6 — `common/services/`는 feature가 아니므로 cross-feature 위반 fire 안 함 → 모든 feature가 자유롭게 의존 가능
+- LK_E3 — `bloc/` → `common/services/<svc>/usecases/`는 통과, `ports/`/`adapters/` 직접 import는 차단 (DI 경유 강제)
+
+**선택 기준**:
+
+- Adapter 1개 + 자체 도메인 타입 거의 없음 → **FLAT**
+- 다수 feature가 의존 + 서비스가 자체 entities/usecases/exceptions 보유 → **nested**
+- 의심되면 FLAT으로 시작하고, 자체 도메인이 늘어나면 nested로 promote
 
 ### common/widgets/ vs features/widgets/
 

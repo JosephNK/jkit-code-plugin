@@ -15,13 +15,13 @@ leaf-kit 룰 4개. base 룰과 함께 모두 적용된다 (base 12개 + leaf-kit
 | ID | Severity | Layer | 설명 |
 | --- | --- | --- | --- |
 | LK_E2 | error | `usecases` | usecases/는 bloc/ import 금지. |
-| LK_E3 | error | `bloc` | bloc/은 `blocAllowedPackages` + `leafKitBlocAllowed` entrypoint만 허용 — `adapters/`/`ports/` 직접 import 차단. |
+| LK_E3 | error | `bloc` | bloc/은 `blocAllowedPackages` + `leafKitBlocAllowed` entrypoint만 허용 — `adapters/`/`ports/` 직접 import 차단. freezed 스택 활성 시 `freezedStackBlocAllowed`(=`freezed_annotation`)가 화이트리스트에 자동 합쳐짐. |
 | LK_E6 | error | (all) | feature 간 bloc/ cross-import 금지. |
 | LK_E8 | error | `presentation` | presentation/{pages,views,widgets}에서 usecases/ 직접 import 금지. |
 
 ## bloc 화이트리스트 (LK_E3 참조)
 
-LK_E3 룰이 bloc/ 레이어에서 허용하는 외부 의존성. 리스트 외 패키지는 bloc/에서 import 시 ERROR.
+LK_E3 룰이 bloc/ 레이어에서 허용하는 외부 의존성. 리스트 외 패키지는 bloc/에서 import 시 ERROR. `freezedStackBlocAllowed`는 freezed 스택 활성 시(=프로젝트 pubspec.yaml에 `freezed_annotation` 의존성) 자동 합쳐진다.
 
 ### `blocAllowedPackages`
 
@@ -48,4 +48,16 @@ component/network/route entrypoint는 차단.
 
 - `flutter_leaf_kit/flutter_leaf_kit_state.dart`
 - `flutter_leaf_kit/flutter_leaf_kit_core.dart`
+
+### `freezedStackBlocAllowed`
+
+freezed 스택 활성 시 `blocAllowedPackages`에 자동 합쳐지는 패키지.
+
+프로젝트 pubspec.yaml에 `freezed_annotation` 의존성이 있으면(=freezed 스택
+활성 신호) LK_E3가 bloc/에서 해당 import를 자동 허용. freezed_lint의 FZ_E2
+가 bloc/ Event/State에 `@freezed` 적용을 강제하므로 두 스택을 같이 쓰는
+프로젝트의 정상 사용 케이스. 감지는 `helpers.dart`의
+`projectHasFreezedStack()`이 담당.
+
+- `freezed_annotation`
 

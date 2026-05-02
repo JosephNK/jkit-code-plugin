@@ -24,11 +24,16 @@ Root (Melos workspace)
 │       │   ├── events/                   # 앱 전역 event bus
 │       │   ├── exceptions/               # 공용 예외 정의
 │       │   ├── extensions/               # Dart extensions
-│       │   ├── services/                 # 교차 feature 서비스
+│       │   ├── services/                 # 교차 feature 서비스 — FLAT(thin) 또는 nested(domain-rich) 패턴
 │       │   │   └── <service>/            # Port & Adapter 패턴
-│       │   │       ├── *_port.dart
-│       │   │       ├── *_adapter.dart
-│       │   │       └── support/          # 보조 구현 파일 (config/types/helpers 등) — 서비스 구현 디테일
+│       │   │       ├── *_port.dart       # FLAT — thin service (1-port-1-adapter wrapper)
+│       │   │       ├── *_adapter.dart    # FLAT — thin service 구현체
+│       │   │       ├── entities/         # nested — Immutable Value Objects
+│       │   │       ├── ports/            # nested — Abstract interfaces
+│       │   │       ├── adapters/         # nested — Port 구현체
+│       │   │       ├── usecases/         # nested — 비즈니스 로직 (feature가 의존하는 진입점)
+│       │   │       ├── exceptions/       # nested — 서비스 자체 도메인 예외
+│       │   │       └── support/          # 보조 구현 파일 (config/types/helpers 등) — 양 모드 공통
 │       │   │           └── *.dart
 │       │   ├── theme/                    # 디자인 시스템
 │       │   └── widgets/                  # 공용 재사용 위젯
@@ -68,12 +73,12 @@ Root (Melos workspace)
 
 | 레이어 | 경로 패턴 | 비고 |
 | --- | --- | --- |
-| `entities` | `app/lib/features/**/domain/entities/**` | Immutable Value Objects |
-| `ports` | `app/lib/features/**/domain/ports/**` / `app/lib/common/services/*/*_port.dart` | Abstract interfaces (*_port.dart) |
-| `usecases` | `app/lib/features/**/domain/usecases/**` | 비즈니스 로직 (*_usecase.dart) |
-| `adapters` | `app/lib/features/**/infrastructure/adapters/**` / `app/lib/common/services/*/*_adapter.dart` | Port 구현체 (*_adapter.dart) |
+| `entities` | `app/lib/features/**/domain/entities/**` / `app/lib/common/services/*/entities/**` | Immutable Value Objects |
+| `ports` | `app/lib/features/**/domain/ports/**` / `app/lib/common/services/*/*_port.dart` / `app/lib/common/services/*/ports/**` | Abstract interfaces (*_port.dart) |
+| `usecases` | `app/lib/features/**/domain/usecases/**` / `app/lib/common/services/*/usecases/**` | 비즈니스 로직 (*_usecase.dart) |
+| `adapters` | `app/lib/features/**/infrastructure/adapters/**` / `app/lib/common/services/*/*_adapter.dart` / `app/lib/common/services/*/adapters/**` | Port 구현체 (*_adapter.dart) |
 | `bloc` | `app/lib/features/**/presentation/bloc/**` | 상태 관리 (선택) |
-| `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` | 도메인 예외 + 공용 예외 |
+| `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` / `app/lib/common/services/*/exceptions/**` | 도메인 예외 + 공용 예외 |
 | `presentation` | `app/lib/features/**/presentation/pages/**` / `app/lib/features/**/presentation/views/**` / `app/lib/features/**/presentation/widgets/**` | pages / views / widgets 통합 |
 | `common_services` | `app/lib/common/services/*/support/**` | support/ 보조 파일 — 교차 feature 서비스 |
 | `common` | `app/lib/common/database/**` / `app/lib/common/env/**` / `app/lib/common/events/**` / `app/lib/common/extensions/**` / `app/lib/common/theme/**` / `app/lib/common/widgets/**` | 공용 — lint 룰 적용 없음 |

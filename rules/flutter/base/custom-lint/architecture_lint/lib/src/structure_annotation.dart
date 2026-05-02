@@ -67,18 +67,44 @@ const projectStructureAnnotations = <String, List<AnnotationNode>>{
     AnnotationNode(name: 'extensions', note: 'Dart extensions'),
     AnnotationNode(
       name: 'services',
-      note: '교차 feature 서비스',
+      note: '교차 feature 서비스 — FLAT(thin) 또는 nested(domain-rich) 패턴',
       children: [
         AnnotationNode(
           name: '<service>',
           placeholder: true,
           note: 'Port & Adapter 패턴',
           children: [
-            AnnotationNode(name: '*_port.dart'),
-            AnnotationNode(name: '*_adapter.dart'),
+            AnnotationNode(
+              name: '*_port.dart',
+              note: 'FLAT — thin service (1-port-1-adapter wrapper)',
+            ),
+            AnnotationNode(
+              name: '*_adapter.dart',
+              note: 'FLAT — thin service 구현체',
+            ),
+            AnnotationNode(
+              name: 'entities',
+              note: 'nested — Immutable Value Objects',
+            ),
+            AnnotationNode(
+              name: 'ports',
+              note: 'nested — Abstract interfaces',
+            ),
+            AnnotationNode(
+              name: 'adapters',
+              note: 'nested — Port 구현체',
+            ),
+            AnnotationNode(
+              name: 'usecases',
+              note: 'nested — 비즈니스 로직 (feature가 의존하는 진입점)',
+            ),
+            AnnotationNode(
+              name: 'exceptions',
+              note: 'nested — 서비스 자체 도메인 예외',
+            ),
             AnnotationNode(
               name: 'support',
-              note: '보조 구현 파일 (config/types/helpers 등) — 서비스 구현 디테일',
+              note: '보조 구현 파일 (config/types/helpers 등) — 양 모드 공통',
               children: [
                 AnnotationNode(name: '*.dart'),
               ],
