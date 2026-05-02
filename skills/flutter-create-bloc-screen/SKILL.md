@@ -32,10 +32,11 @@ Generates new Screen files along with BLoC files in a Flutter project.
 4. **Determine BLoC path**:
    - Create bloc folder under the presentation folder (sibling of pages)
    - Example: `{entry}/lib/features/{feature_path}/presentation/bloc/`
-5. **Generate templates**: Generate template code with the following commands
+5. **Resolve package name**: Read `<entry>/pubspec.yaml` (or `pubspec.yaml` if no entry) and extract the `name:` field as `<package>`. This is required for emitting `package:` imports per `always_use_package_imports` lint.
+6. **Generate templates**: Generate template code with the following commands. `<feature_dir>` = `{path_value}/{screen_name_snake_case}` if `-path` provided, otherwise `{screen_name_snake_case}`.
    ```bash
-   # Screen template
-   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-screen-template.mjs <ScreenName>
+   # Screen template (package imports)
+   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-screen-template.mjs <ScreenName> --package <package> --feature-dir <feature_dir>
 
    # View templates
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-app-bar-template.mjs <ScreenName>
@@ -46,24 +47,23 @@ Generates new Screen files along with BLoC files in a Flutter project.
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-bloc-template.mjs <ScreenName> event
    cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-bloc-template.mjs <ScreenName> state
    ```
-6. **Generate filenames**: Convert Screen name to snake_case
-7. **Create directories**: Create directories with mkdir -p if they don't exist
-8. **Save files**: Create files at the specified paths
-9. **Run code generation**: Run build_runner in the entry folder (freezed 코드 생성)
-   ```bash
-   (cd {entry} && dart run build_runner build --delete-conflicting-outputs)
-   ```
-   - If no entry, run in the current directory
-10. **Register DI**: Add BLoC registration to `{entry}/lib/di/injection_container.dart`
+7. **Generate filenames**: Convert Screen name to snake_case
+8. **Create directories**: Create directories with mkdir -p if they don't exist
+9. **Save files**: Create files at the specified paths
+10. **Run code generation**: Run build_runner in the entry folder (freezed 코드 생성)
+    ```bash
+    (cd {entry} && dart run build_runner build --delete-conflicting-outputs)
+    ```
+    - If no entry, run in the current directory
+11. **Register DI**: Add BLoC registration to `{entry}/lib/di/injection_container.dart`
     - Generate DI registration template:
       ```bash
-      cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-di-template.mjs <ScreenName> <feature_dir>
+      cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/template/flutter-di-template.mjs <ScreenName> <feature_dir> --package <package>
       ```
-    - `<feature_dir>` = `{path_value}/{screen_name_snake_case}` if `-path` provided, otherwise `{screen_name_snake_case}`
-    - Add the import at the top of the file (with other BLoC imports)
-    - Add `sl.registerFactory(() => {ScreenName}Bloc());` in the `// BLoCs` section of `setupDependencies()`
+    - Add the import at the top of the file (with other BLoC imports). Use `package:<package>/...` form to satisfy `always_use_package_imports`.
+    - Add `sl.registerFactory({ScreenName}Bloc.new);` in the `// BLoCs` section of `setupDependencies()` (tearoff form — avoids `unnecessary_lambdas`).
     - If the BLoC already exists in DI, confirm with the user before proceeding (use AskUserQuestion with options: ["Yes, overwrite", "No, skip"])
-11. **Register route**: Add route to `{entry}/lib/router/router.dart`
+12. **Register route**: Add route to `{entry}/lib/router/router.dart`
     - Ask the user whether to use NoTransitionPage before adding the route (use AskUserQuestion with options: ["Yes", "No"])
     - Generate route template:
       ```bash
@@ -78,11 +78,11 @@ Generates new Screen files along with BLoC files in a Flutter project.
       - If `-path` is absent: Append `/` to the snake_case of the Screen name (e.g. `Login` → `/login`, `UserSettings` → `/user-settings`)
       - Exception: Use `/` for the first route (home)
     - Insert generated code inside the `routes: <RouteBase>[...]` array (append after existing routes)
-    - Add required imports to router.dart:
+    - Add required imports to router.dart (use `package:` form to satisfy `always_use_package_imports`):
       ```dart
       // {feature_dir} = {path_value}/{screen_name_snake_case} if -path provided, otherwise {screen_name_snake_case}
-      import '../features/{feature_dir}/presentation/bloc/{screen_name_snake_case}_bloc.dart';
-      import '../features/{feature_dir}/presentation/pages/{screen_name_snake_case}_screen.dart';
+      import 'package:<package>/features/{feature_dir}/presentation/bloc/{screen_name_snake_case}_bloc.dart';
+      import 'package:<package>/features/{feature_dir}/presentation/pages/{screen_name_snake_case}_screen.dart';
       ```
     - If a route for the same Screen already exists, confirm with the user before proceeding (use AskUserQuestion with options: ["Yes, overwrite route", "No, skip route"])
 

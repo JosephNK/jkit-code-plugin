@@ -7,14 +7,11 @@ function generateRoute(screenName, routePath = '/', noTransition = false) {
   if (noTransition) {
     return `GoRoute(
         path: '${routePath}',
-        pageBuilder: (BuildContext context, GoRouterState state) {
+        pageBuilder: (context, state) {
           return NoTransitionPage<void>(
-            child: MultiBlocProvider(
-              providers: [
-                BlocProvider(
-                  create: (_) => sl<${screenName}Bloc>()..add(${screenName}LoadRequested()),
-                ),
-              ],
+            child: BlocProvider(
+              create: (_) =>
+                  sl<${screenName}Bloc>()..add(const ${screenName}LoadRequested()),
               child: const ${screenName}Screen(),
             ),
           );
@@ -24,14 +21,11 @@ function generateRoute(screenName, routePath = '/', noTransition = false) {
 
   return `GoRoute(
         path: '${routePath}',
-        builder: (BuildContext context, GoRouterState state) {
-          return MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => sl<${screenName}Bloc>()..add(${screenName}LoadRequested()),
-              ),
-            ],
-            child: ${screenName}Screen(),
+        builder: (context, state) {
+          return BlocProvider(
+            create: (_) =>
+                sl<${screenName}Bloc>()..add(const ${screenName}LoadRequested()),
+            child: const ${screenName}Screen(),
           );
         },
       ),`;

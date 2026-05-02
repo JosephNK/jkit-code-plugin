@@ -18,8 +18,7 @@ function toSnakeCase(name) {
 function generateBloc(blocName) {
   const snakeName = toSnakeCase(blocName);
 
-  return `import 'package:flutter_leaf_kit/flutter_leaf_kit_core.dart';
-import 'package:flutter_leaf_kit/flutter_leaf_kit_state.dart';
+  return `import 'package:flutter_leaf_kit/flutter_leaf_kit_state.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part '${snakeName}_bloc.freezed.dart';
@@ -40,7 +39,7 @@ class ${blocName}Bloc extends Bloc<${blocName}Event, ${blocName}State> {
     try {
       // TODO: 데이터 로드 로직 구현
       emit(const ${blocName}Loaded());
-    } catch (e) {
+    } on Exception catch (e) {
       emit(${blocName}Error(message: e.toString()));
     }
   }
@@ -53,7 +52,7 @@ class ${blocName}Bloc extends Bloc<${blocName}Event, ${blocName}State> {
     try {
       // TODO: 데이터 새로고침 로직 구현
       emit(const ${blocName}Loaded());
-    } catch (e) {
+    } on Exception catch (e) {
       emit(${blocName}Error(message: e.toString()));
     }
   }

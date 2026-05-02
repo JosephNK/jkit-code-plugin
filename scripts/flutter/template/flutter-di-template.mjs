@@ -16,11 +16,14 @@ function toSnakeCase(name) {
   return out;
 }
 
-function generateDiRegistration(screenName, featureDir) {
+function generateDiRegistration(screenName, featureDir, pkg) {
   const snakeName = toSnakeCase(screenName);
 
-  const importLine = `import '../features/${featureDir}/presentation/bloc/${snakeName}_bloc.dart';`;
-  const registrationLine = `  sl.registerFactory(() => ${screenName}Bloc());`;
+  const importPath = pkg
+    ? `package:${pkg}/features/${featureDir}/presentation/bloc/${snakeName}_bloc.dart`
+    : `../features/${featureDir}/presentation/bloc/${snakeName}_bloc.dart`;
+  const importLine = `import '${importPath}';`;
+  const registrationLine = `  sl.registerFactory(${screenName}Bloc.new);`;
 
   return `${importLine}
 
@@ -28,20 +31,43 @@ function generateDiRegistration(screenName, featureDir) {
 ${registrationLine}`;
 }
 
+function parseArgs(argv) {
+  const opts = { screenName: '', featureDir: '', pkg: '' };
+  const rest = [...argv];
+  const positional = [];
+  while (rest.length > 0) {
+    const a = rest.shift();
+    if (a === '--package' || a === '-p') {
+      opts.pkg = rest.shift() ?? '';
+    } else if (a === '-h' || a === '--help') {
+      printUsage();
+      process.exit(0);
+    } else if (a.startsWith('-')) {
+      process.stderr.write(`Unknown option: ${a}\n`);
+      process.exit(2);
+    } else {
+      positional.push(a);
+    }
+  }
+  opts.screenName = positional[0] ?? '';
+  opts.featureDir = positional[1] ?? '';
+  return opts;
+}
+
+function printUsage() {
+  process.stderr.write('Usage: flutter-di-template.mjs <ScreenName> [feature_dir] [--package <pkg>]\n');
+  process.stderr.write('Example: flutter-di-template.mjs Login login --package vocabit_app\n');
+  process.stderr.write('Example: flutter-di-template.mjs Settings user/settings --package vocabit_app\n');
+}
+
 function main() {
-  const argv = process.argv.slice(2);
-  if (argv.length < 1) {
-    process.stderr.write('Usage: flutter-di-template.mjs <ScreenName> [feature_dir]\n');
-    process.stderr.write('Example: flutter-di-template.mjs Login login\n');
-    process.stderr.write('Example: flutter-di-template.mjs Settings user/settings\n');
+  const opts = parseArgs(process.argv.slice(2));
+  if (!opts.screenName) {
+    printUsage();
     process.exit(1);
   }
-
-  const screenName = argv[0];
-  const snakeName = toSnakeCase(screenName);
-  const featureDir = argv[1] ?? snakeName;
-
-  console.log(generateDiRegistration(screenName, featureDir));
+  const featureDir = opts.featureDir || toSnakeCase(opts.screenName);
+  console.log(generateDiRegistration(opts.screenName, featureDir, opts.pkg));
 }
 
 main();
