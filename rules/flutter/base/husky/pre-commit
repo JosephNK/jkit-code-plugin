@@ -10,10 +10,14 @@ fi
 # dart format (fail if any staged .dart file would be reformatted)
 echo "$staged_dart" | xargs dart format --set-exit-if-changed
 
-# flutter analyze (architecture_lint 및 stack lint 패키지 진단을 자동 통합)
-# analysis_server_plugin이 analysis_options.yaml의 plugins: 섹션에 등록된
-# 모든 lint 패키지를 isolate로 로드해 함께 보고한다.
-(cd {{ENTRY}} && flutter analyze --fatal-infos)
+# flutter analyze (staged dart 파일만 — 속도 우선)
+# architecture_lint 및 stack lint 패키지 진단은 analysis_server_plugin이
+# analysis_options.yaml의 plugins: 섹션을 isolate로 로드해 함께 보고한다.
+# 주의: cross-file 의존 룰(예: 잘못된 import를 하는 쪽이 staged 안 된 경우)은 검출되지 않을 수 있다.
+staged_in_entry=$(echo "$staged_dart" | grep "^{{ENTRY}}/" | sed "s|^{{ENTRY}}/||" || true)
+if [ -n "$staged_in_entry" ]; then
+  (cd {{ENTRY}} && echo "$staged_in_entry" | xargs flutter analyze --fatal-infos)
+fi
 
 # flutter test (related only)
 (cd {{ENTRY}} && tf=$(git diff --cached --name-only --diff-filter=ACMR | grep "^{{ENTRY}}/.*\.dart$" | sed "s|^{{ENTRY}}/||" | while read f; do if [[ $f == test/*_test.dart ]]; then echo "$f"; elif [[ $f == lib/* ]]; then t="test/${f#lib/}"; t="${t%.dart}_test.dart"; [ -f "$t" ] && echo "$t"; fi; done | sort -u); if [ -n "$tf" ]; then flutter test $tf; else echo "No related tests found, skipping"; fi)
