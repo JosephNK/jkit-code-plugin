@@ -18,6 +18,16 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 
 이후 모든 스크립트 경로는 `$JKIT_DIR`를 기준 디렉토리로 사용합니다.
 
+## 플러그인 의존성 보장
+
+`gen-analysis-options.mjs` / `gen-custom-lint.mjs`는 `yaml` 패키지를 사용합니다. 플러그인이 새 버전으로 캐시될 때 `node_modules`가 비어 있을 수 있으므로 사전 설치합니다.
+
+```bash
+if [ ! -d "$JKIT_DIR/node_modules/yaml" ]; then
+  (cd "$JKIT_DIR" && npm install --silent)
+fi
+```
+
 ## 프로젝트 루트 고정
 
 ```bash

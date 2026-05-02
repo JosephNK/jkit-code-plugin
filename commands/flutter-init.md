@@ -16,6 +16,16 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 
 이후 모든 스크립트 경로는 `$JKIT_DIR`를 기준 디렉토리로 사용합니다.
 
+## 플러그인 의존성 보장
+
+`gen-analysis-options.mjs` / `gen-custom-lint.mjs`는 `yaml` 패키지를 사용합니다. 플러그인이 새 버전으로 캐시될 때 `node_modules`가 비어 있을 수 있으므로 사전 설치합니다.
+
+```bash
+if [ ! -d "$JKIT_DIR/node_modules/yaml" ]; then
+  (cd "$JKIT_DIR" && npm install --silent)
+fi
+```
+
 ## 프로젝트 루트 고정
 
 **중요**: 모든 스텝을 실행하기 **전**에 프로젝트 루트를 캡처하고, 스크립트를 실행하는 모든 스텝 시작 시점에 해당 디렉토리로 `cd` 합니다. cwd drift (예: 앞선 스텝에서 `cd app/` 후 원복 안 된 상태)는 잘못된 디렉토리 버그의 가장 흔한 원인입니다 (예: `app/AGENTS.md` 덮어쓰기, husky 훅에 잘못된 config 경로가 베이킹되는 문제 등).
