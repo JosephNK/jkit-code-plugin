@@ -1,6 +1,6 @@
 {
   "name": "@jkit/code-plugin",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Shared ESLint/Stylelint rules, formatters, and CLI for jkit-code-plugin",
   "type": "module",
   "exports": {
