@@ -186,7 +186,7 @@ class ProductScreen extends StatelessWidget {
 
 ## 규칙 (Rules)
 
-base 룰 12개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. 시각화된 의존 다이어그램은 `lint-rules-diagram.md` 참조.
+base 룰 13개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. 시각화된 의존 다이어그램은 `lint-rules-diagram.md` 참조.
 
 | ID | Severity | Layer | 설명 | 참조 |
 | --- | --- | --- | --- | --- |
@@ -197,6 +197,7 @@ base 룰 12개. stack-specific 룰(예: bloc)은 별도 패키지에 분리. 시
 | AL_E6 | error | (all features) | feature 간 cross-import는 `entities/`와 다른 feature `domain/`만 허용. | `crossFeatureForbidden` |
 | AL_E7 | error | (all) | bare `catch` 금지 — `on ExceptionType catch (e)` 형태 강제. | — |
 | AL_E8 | error | `presentation` | presentation/은 `adapters`/`ports` 직접 import 및 인프라 SDK import 금지. | `infraPackages` |
+| AL_E9 | error | (all) | presentation/views/와 presentation/pages/에서 private widget 클래스 선언 금지. | — |
 | AL_N1 | warning | `ports` | 클래스명에 `Port` suffix 필수 (예: `AuthPort`, `UserRepositoryPort`). | — |
 | AL_N2 | warning | `adapters` | 클래스명에 `Adapter` suffix 필수 (예: `AuthAdapter`, `ApiUserAdapter`). | — |
 | AL_N3 | warning | `usecases` | 클래스명에 `UseCase` 또는 `Params` suffix 필수 (예: `GetUserUseCase`, `GetUserParams`). | — |
