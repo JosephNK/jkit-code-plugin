@@ -75,6 +75,16 @@ bool isInAppLib(String filePath) {
   return _normalizeInputPath(filePath).startsWith('app/lib/');
 }
 
+/// 입력 파일이 `presentation/views/` 또는 `presentation/pages/`에 있는지 검사.
+///
+/// AL_E9 룰이 widget 추출 강제 대상 파일을 필터링할 때 사용한다.
+/// `widgets/`는 sub-widget의 합법 위치이므로 제외.
+bool isInPresentationViewOrPage(String filePath) {
+  final normalized = filePath.replaceAll('\\', '/');
+  return normalized.contains('/presentation/views/') ||
+      normalized.contains('/presentation/pages/');
+}
+
 /// 입력 파일이 codegen 산출물(`*.g.dart`, `*.freezed.dart` 등)인지 검사.
 /// `generatedFileSuffixes` 중 하나로 끝나면 true.
 bool isGeneratedFile(String filePath) {
