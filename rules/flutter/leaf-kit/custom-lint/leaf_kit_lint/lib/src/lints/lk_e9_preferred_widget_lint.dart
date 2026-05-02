@@ -23,7 +23,7 @@ const preferredWidgets = <String, String>{
   'CupertinoSwitch': 'LeafSwitch',
 };
 
-/// LK_E9: presentation/{pages,views,widgets}에서 금지 위젯 직접 생성 금지 — leaf-kit 권장 위젯 사용 (`CustomScrollView`/`SingleChildScrollView` → `LeafScrollView`, `ListView`/`ListView.builder`/`ListView.separated`/`SliverList`/`SliverList.separated` → `LeafListView`, `GridView`/`GridView.builder` → `LeafGridView`, `Text`/`Text.rich` → `LeafText`/`LeafText.rich`, `Switch`/`CupertinoSwitch` → `LeafSwitch`).
+/// LK_E9: presentation/{pages,views,widgets}와 common/widgets에서 금지 위젯 직접 생성 금지 — leaf-kit 권장 위젯 사용 (`CustomScrollView`/`SingleChildScrollView` → `LeafScrollView`, `ListView`/`ListView.builder`/`ListView.separated`/`SliverList`/`SliverList.separated` → `LeafListView`, `GridView`/`GridView.builder` → `LeafGridView`, `Text`/`Text.rich` → `LeafText`/`LeafText.rich`, `Switch`/`CupertinoSwitch` → `LeafSwitch`).
 ///
 /// leaf-kit UI 표준화 — raw Flutter 위젯 직접 사용을 막고 공통 래퍼로 수렴시켜
 /// 스크롤/레이아웃 동작과 유지보수 기준을 일관되게 맞춘다.
@@ -62,7 +62,7 @@ class _Visitor extends SimpleAstVisitor<void> {
   void visitInstanceCreationExpression(InstanceCreationExpression node) {
     final filePath = getFilePath(node);
     if (filePath == null) return;
-    if (!isPresentationViewFile(filePath)) return;
+    if (!isPreferredWidgetLintTargetFile(filePath)) return;
 
     final widgetName = node.constructorName.type.toSource().split('.').last;
     final ctorName = node.constructorName.name?.name;

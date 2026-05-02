@@ -2,7 +2,7 @@
 // leaf_kit_lint — 경로/import 헬퍼 (self-contained)
 // -----------------------------------------------------------------------------
 // architecture_lint와 독립적으로 동작하기 위해 패키지 내부에서 자체 path 분류.
-// 룰 4개(LK_E2/E3/E6/E8)가 필요로 하는 최소 헬퍼만 포함.
+// 룰 5개(LK_E2/E3/E6/E8/E9)가 필요로 하는 최소 헬퍼만 포함.
 //
 // 전제 프로젝트 구조 (architecture_lint와 동일):
 //   app/lib/features/<feature>/
@@ -58,6 +58,15 @@ bool isPresentationViewFile(String filePath) {
   return RegExp(
     r'^app/lib/features/[^/]+/presentation/(pages|views|widgets)/',
   ).hasMatch(n);
+}
+
+/// LK_E9 권장 위젯 룰 대상 파일인지 — feature presentation + common widgets.
+bool isPreferredWidgetLintTargetFile(String filePath) {
+  final n = _normalizeInputPath(filePath);
+  return RegExp(
+        r'^app/lib/features/[^/]+/presentation/(pages|views|widgets)/',
+      ).hasMatch(n) ||
+      RegExp(r'^app/lib/common/widgets/').hasMatch(n);
 }
 
 /// path에서 import 대상 inner-layer 추출.

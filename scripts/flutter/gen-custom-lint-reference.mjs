@@ -1059,6 +1059,7 @@ const STACK_HELPER_TO_LAYER = {
   isBlocFile: '`bloc`',
   isUsecaseFile: '`usecases`',
   isPresentationViewFile: '`presentation`',
+  isPreferredWidgetLintTargetFile: '`presentation`, `common/widgets`',
 };
 
 function stackRuleSourceLayer(rule) {

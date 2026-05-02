@@ -18,7 +18,7 @@ leaf-kit 룰 5개. base 룰과 함께 모두 적용된다 (base 12개 + leaf-kit
 | LK_E3 | error | `bloc` | bloc/은 `blocAllowedPackages` + `leafKitBlocAllowed` entrypoint만 허용 — `adapters/`/`ports/` 직접 import 차단. freezed 스택 활성 시 `freezedStackBlocAllowed`(=`freezed_annotation`)가 화이트리스트에 자동 합쳐짐. |
 | LK_E6 | error | (all) | feature 간 bloc/ cross-import 금지. |
 | LK_E8 | error | `presentation` | presentation/{pages,views,widgets}에서 usecases/ 직접 import 금지. |
-| LK_E9 | error | `presentation` | presentation/{pages,views,widgets}에서 금지 위젯 직접 생성 금지 — leaf-kit 권장 위젯 사용 (`CustomScrollView`/`SingleChildScrollView` → `LeafScrollView`, `ListView`/`ListView.builder`/`ListView.separated`/`SliverList`/`SliverList.separated` → `LeafListView`, `GridView`/`GridView.builder` → `LeafGridView`, `Text`/`Text.rich` → `LeafText`/`LeafText.rich`, `Switch`/`CupertinoSwitch` → `LeafSwitch`). |
+| LK_E9 | error | `presentation`, `common/widgets` | presentation/{pages,views,widgets}와 common/widgets에서 금지 위젯 직접 생성 금지 — leaf-kit 권장 위젯 사용 (`CustomScrollView`/`SingleChildScrollView` → `LeafScrollView`, `ListView`/`ListView.builder`/`ListView.separated`/`SliverList`/`SliverList.separated` → `LeafListView`, `GridView`/`GridView.builder` → `LeafGridView`, `Text`/`Text.rich` → `LeafText`/`LeafText.rich`, `Switch`/`CupertinoSwitch` → `LeafSwitch`). |
 
 ## bloc 화이트리스트 (LK_E3 참조)
 
