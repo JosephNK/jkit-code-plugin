@@ -128,6 +128,13 @@ node scripts/typescript/gen-stylelint-reference.mjs <path-to-stylelint.rules.mjs
 node scripts/flutter/gen-custom-lint-reference.mjs
 ```
 
+Flutter custom lint 동작 검증이 필요하면 기본적으로 `example_flutter/` 프로젝트를 사용한다.
+
+- `example_flutter/analysis_options.yaml`은 Git 추적 대상이며, lint plugin 연결 검증에 사용한다.
+- 검증용 임시 파일은 `example_flutter/lib/features/probe/...` 아래에 만든다.
+- 위반 케이스 확인은 `example_flutter/` 루트에서 `dart analyze <probe-file>` 또는 필요한 범위의 `dart analyze`로 수행한다.
+- 검증이 끝나면 probe 파일은 삭제하고, 필요한 설정 파일만 유지한다.
+
 ## 검증 기준
 
 - 생성 문서가 현재 규칙 정의와 일치해야 한다.
