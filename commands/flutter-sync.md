@@ -6,7 +6,7 @@ description: Sync JKit docs and lint config in Flutter project
 
 Flutter 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`)와 `architecture_lint` pin을 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/` 유틸은 건드리지 않습니다. 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`는 건드리지 않습니다. 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -112,4 +112,4 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
 - `pubspec.yaml` — `architecture_lint` (base) + 선택한 stack lint 패키지(예: `leaf_kit_lint`) git ref (변경/추가 시에만 갱신)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`, `scripts/`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`.

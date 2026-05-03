@@ -144,9 +144,6 @@ $JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
 
 # 7. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
-
-# 8. 유틸리티 스크립트
-$JKIT_DIR/scripts/flutter/gen-scripts.mjs -p . -entry <entry-dir>
 ```
 
 해당 생성기에 사용자가 선택한 스택이 없으면 `--with` 인자를 생략합니다.
@@ -210,11 +207,5 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `.husky/pre-commit` — husky pre-commit 훅 (dart format, flutter analyze; analyzer가 architecture_lint 진단을 자동 통합; 엔트리 디렉토리가 파일에 베이킹됨)
 - `.husky/commit-msg` — husky commit-msg 훅 (`commitlint --edit $1`)
 - `commitlint.config.mjs` — Conventional Commits 설정 (허용 타입: feat, fix, refactor, docs, test, chore, perf, ci)
-- `scripts/flutter-build-deploy.sh` — Flutter 빌드 래퍼
-- `scripts/update-dependencies.sh` — 의존성 업데이트 래퍼
-- `scripts/update-leaf-kit-ref.sh` — Leaf kit ref 업데이트 래퍼
-- `scripts/android-show-info-keystore.sh` — 키스토어 정보 래퍼
-- `scripts/android-signing-report.sh` — 서명 리포트 래퍼
-- `scripts/android-signing-verify-apk.sh` — APK 검증 래퍼
 - `architecture_lint` (base) — `analysis_options.yaml`의 top-level `plugins:` 섹션에 git dep으로 주입. analysis_server_plugin이 IDE/`dart analyze`에 진단 통합
 - stack lint 패키지(선택한 스택 기반) — `leaf-kit` 선택 시 `leaf_kit_lint`도 동일하게 `plugins:`에 등록

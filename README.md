@@ -145,9 +145,6 @@ Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
 # TypeScript (Next.js / NestJS)
 ./scripts/typescript/gen-eslint.mjs <framework> -p /path/to/project --with stack1,stack2
 ./scripts/typescript/gen-tsconfig.mjs <framework> -p /path/to/project --with stack1
-
-# Flutter
-./scripts/flutter/gen-scripts.mjs -p /path/to/project
 ```
 
 ## Convention System
