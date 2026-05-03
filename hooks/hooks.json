@@ -9,6 +9,11 @@
             "type": "command",
             "command": "bash -c 'if [ ! -d ~/.claude/plugins/cache/everything-claude-code ]; then echo \"[jkit] WARNING: ECC plugin is required. Run: /plugin install ecc@ecc\" >&2; fi'",
             "description": "Check ECC plugin dependency on session start"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/cleanup-old-versions.sh\"",
+            "description": "Remove stale jkit cache versions, keep only the active one"
           }
         ]
       }
