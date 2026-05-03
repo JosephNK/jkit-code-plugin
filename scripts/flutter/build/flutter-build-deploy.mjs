@@ -3,9 +3,11 @@
 // Flutter 앱 빌드 스크립트.
 //
 // Usage:
-//   flutter-build-deploy.mjs <os> <flavor> [--no-tree-shake-icons]
+//   flutter-build-deploy.mjs <os> [<flavor>] [--no-tree-shake-icons]
 //                            [--export-options-plist <path>]
 //                            --project-dir <dir>
+//
+// flavor가 생략되면 --flavor 인자 없이 빌드 (flavor를 사용하지 않는 단일-flavor 프로젝트용).
 // =============================================================================
 
 import fs from 'node:fs';
@@ -22,13 +24,14 @@ const SUPPORTED_FLAVORS = [
   'qa',
 ];
 
-const HELP = `Usage: flutter-build-deploy.mjs <os> <flavor> [options] --project-dir <dir>
+const HELP = `Usage: flutter-build-deploy.mjs <os> [<flavor>] [options] --project-dir <dir>
 
 Flutter 앱 빌드 (Android APK/AppBundle, iOS IPA).
 
 Arguments:
   <os>      타겟 OS: ${SUPPORTED_OS.join(' | ')}
-  <flavor>  빌드 flavor (예: ${SUPPORTED_FLAVORS.join(', ')})
+  <flavor>  (옵션) 빌드 flavor (예: ${SUPPORTED_FLAVORS.join(', ')})
+            생략 시 --flavor 없이 빌드 (단일-flavor 프로젝트용).
 
 Options:
   --no-tree-shake-icons          아이콘 tree-shake 비활성화 (기본값: 활성)
@@ -86,12 +89,12 @@ function parseArgs(argv) {
     }
   }
 
-  if (positional.length < 2) {
-    process.stderr.write('Error: <os> and <flavor> are required\n');
+  if (positional.length < 1) {
+    process.stderr.write('Error: <os> is required\n');
     usage();
   }
   args.os = positional[0];
-  args.flavor = positional[1];
+  args.flavor = positional[1] ?? '';
 
   if (!SUPPORTED_OS.includes(args.os)) {
     process.stderr.write(
@@ -170,10 +173,13 @@ function buildAndroid(flavor, treeShakeIcons, cwd) {
       '--flavor',
       'production',
     ];
-  } else {
+  } else if (flavor) {
     const pretty = flavor.charAt(0).toUpperCase() + flavor.slice(1);
     process.stdout.write(`Android ${pretty} Building..\n`);
     cmd = ['flutter', 'build', 'apk', ...treeShakeFlag, '--flavor', flavor];
+  } else {
+    process.stdout.write('Android APK Building..\n');
+    cmd = ['flutter', 'build', 'apk', ...treeShakeFlag];
   }
   return runCommand(cmd, cwd);
 }
@@ -186,9 +192,15 @@ function buildIos(flavor, treeShakeIcons, cwd, exportOptionsPlist) {
     return 1;
   }
 
-  const pretty = flavor.charAt(0).toUpperCase() + flavor.slice(1);
-  process.stdout.write(`iOS ${pretty} Building..\n`);
-  const cmd = ['flutter', 'build', 'ipa', ...treeShakeFlag, '--flavor', flavor];
+  let cmd;
+  if (flavor) {
+    const pretty = flavor.charAt(0).toUpperCase() + flavor.slice(1);
+    process.stdout.write(`iOS ${pretty} Building..\n`);
+    cmd = ['flutter', 'build', 'ipa', ...treeShakeFlag, '--flavor', flavor];
+  } else {
+    process.stdout.write('iOS IPA Building..\n');
+    cmd = ['flutter', 'build', 'ipa', ...treeShakeFlag];
+  }
 
   if (exportOptionsPlist) {
     cmd.push('--export-options-plist', exportOptionsPlist);
