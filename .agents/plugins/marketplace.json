@@ -1,20 +1,21 @@
 {
-  "name": "josephnk",
+  "name": "jkit",
   "interface": {
-    "displayName": "JosephNK"
+    "displayName": "jKit"
   },
   "plugins": [
     {
       "name": "jkit",
+      "version": "0.3.17",
       "source": {
         "source": "local",
-        "path": "."
+        "path": "../.."
       },
       "policy": {
         "installation": "INSTALLED_BY_DEFAULT",
         "authentication": "ON_INSTALL"
       },
-      "category": "Coding"
+      "category": "Productivity"
     }
   ]
 }

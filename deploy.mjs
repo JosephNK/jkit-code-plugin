@@ -18,9 +18,10 @@ const HELP = `Usage: ./deploy.mjs [<version>|patch|minor|major] [--yes]
 Bumps the plugin version, commits, tags, and pushes in one shot.
 
 Updates:
-  - .codex-plugin/plugin.json            (version)
+  - .codex-plugin/plugin.json             (version)
   - .claude-plugin/plugin.json            (version)
   - .claude-plugin/marketplace.json       (version)
+  - .agents/plugins/marketplace.json      (version)
   - package.json                          (version)
   - rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml      (version)
   - rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/pubspec.yaml      (version)
@@ -205,6 +206,7 @@ async function main() {
   const codexPluginJsonPath = '.codex-plugin/plugin.json';
   const pluginJsonPath = '.claude-plugin/plugin.json';
   const marketplaceJsonPath = '.claude-plugin/marketplace.json';
+  const agentsMarketplaceJsonPath = '.agents/plugins/marketplace.json';
   const rootPackageJsonPath = 'package.json';
   const architectureLintPubspecPath =
     'rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml';
@@ -263,16 +265,17 @@ async function main() {
   }
 
   process.stdout.write('\n─── Release actions ───\n');
-  process.stdout.write(`  1. Update ${codexPluginJsonPath}           → ${newVersion}\n`);
+  process.stdout.write(`  1. Update ${codexPluginJsonPath}            → ${newVersion}\n`);
   process.stdout.write(`  2. Update ${pluginJsonPath}            → ${newVersion}\n`);
   process.stdout.write(`  3. Update ${marketplaceJsonPath}       → ${newVersion}\n`);
-  process.stdout.write(`  4. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
-  process.stdout.write(`  5. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
-  process.stdout.write(`  6. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
-  process.stdout.write(`  7. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
-  process.stdout.write(`  8. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
-  process.stdout.write(`  9. git tag ${tag}\n`);
-  process.stdout.write(`  10. git push origin ${branch} --follow-tags\n\n`);
+  process.stdout.write(`  4. Update ${agentsMarketplaceJsonPath}      → ${newVersion}\n`);
+  process.stdout.write(`  5. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
+  process.stdout.write(`  6. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
+  process.stdout.write(`  7. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
+  process.stdout.write(`  8. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
+  process.stdout.write(`  9. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
+  process.stdout.write(`  10. git tag ${tag}\n`);
+  process.stdout.write(`  11. git push origin ${branch} --follow-tags\n\n`);
 
   if (!args.yes) {
     const ans = await prompt('Proceed with release? [y/N] ');
@@ -286,6 +289,7 @@ async function main() {
   updateJsonVersion(codexPluginJsonPath, newVersion);
   updateJsonVersion(pluginJsonPath, newVersion);
   updateJsonVersion(marketplaceJsonPath, newVersion);
+  updateJsonVersion(agentsMarketplaceJsonPath, newVersion);
   updateJsonVersion(rootPackageJsonPath, newVersion);
   updateYamlVersion(architectureLintPubspecPath, newVersion);
   updateYamlVersion(leafKitLintPubspecPath, newVersion);
@@ -296,6 +300,7 @@ async function main() {
     pluginJsonPath,
     codexPluginJsonPath,
     marketplaceJsonPath,
+    agentsMarketplaceJsonPath,
     architectureLintPubspecPath,
     leafKitLintPubspecPath,
     freezedLintPubspecPath,
