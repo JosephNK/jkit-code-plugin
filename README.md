@@ -4,6 +4,8 @@ Flutter / Next.js / NestJS용 Claude Code 플러그인 — 프로젝트 셋업, 
 
 ## Quick Start
 
+### Claude Code
+
 ```bash
 # Add marketplace
 /plugin marketplace add https://github.com/JosephNK/jkit-code-plugin
@@ -11,6 +13,22 @@ Flutter / Next.js / NestJS용 Claude Code 플러그인 — 프로젝트 셋업, 
 # Install plugin
 /plugin install jkit@jkit
 ```
+
+### Codex
+
+Codex에서 이 플러그인을 사용하려면 marketplace를 추가한다.
+
+```bash
+codex plugin marketplace add JosephNK/jkit-code-plugin
+```
+
+특정 릴리스로 고정하려면:
+
+```bash
+codex plugin marketplace add JosephNK/jkit-code-plugin --ref <tag>
+```
+
+추가 후 Codex에서 `jkit:commit` skill을 사용할 수 있다.
 
 ### Local Development (Plugin Testing)
 

@@ -18,6 +18,7 @@ const HELP = `Usage: ./deploy.mjs [<version>|patch|minor|major] [--yes]
 Bumps the plugin version, commits, tags, and pushes in one shot.
 
 Updates:
+  - .codex-plugin/plugin.json            (version)
   - .claude-plugin/plugin.json            (version)
   - .claude-plugin/marketplace.json       (version)
   - package.json                          (version)
@@ -201,6 +202,7 @@ async function main() {
     }
   }
 
+  const codexPluginJsonPath = '.codex-plugin/plugin.json';
   const pluginJsonPath = '.claude-plugin/plugin.json';
   const marketplaceJsonPath = '.claude-plugin/marketplace.json';
   const rootPackageJsonPath = 'package.json';
@@ -261,15 +263,16 @@ async function main() {
   }
 
   process.stdout.write('\n─── Release actions ───\n');
-  process.stdout.write(`  1. Update ${pluginJsonPath}            → ${newVersion}\n`);
-  process.stdout.write(`  2. Update ${marketplaceJsonPath}       → ${newVersion}\n`);
-  process.stdout.write(`  3. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
-  process.stdout.write(`  4. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
-  process.stdout.write(`  5. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
-  process.stdout.write(`  6. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
-  process.stdout.write(`  7. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
-  process.stdout.write(`  8. git tag ${tag}\n`);
-  process.stdout.write(`  9. git push origin ${branch} --follow-tags\n\n`);
+  process.stdout.write(`  1. Update ${codexPluginJsonPath}           → ${newVersion}\n`);
+  process.stdout.write(`  2. Update ${pluginJsonPath}            → ${newVersion}\n`);
+  process.stdout.write(`  3. Update ${marketplaceJsonPath}       → ${newVersion}\n`);
+  process.stdout.write(`  4. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
+  process.stdout.write(`  5. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
+  process.stdout.write(`  6. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
+  process.stdout.write(`  7. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
+  process.stdout.write(`  8. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
+  process.stdout.write(`  9. git tag ${tag}\n`);
+  process.stdout.write(`  10. git push origin ${branch} --follow-tags\n\n`);
 
   if (!args.yes) {
     const ans = await prompt('Proceed with release? [y/N] ');
@@ -280,6 +283,7 @@ async function main() {
   }
 
   // Update version files
+  updateJsonVersion(codexPluginJsonPath, newVersion);
   updateJsonVersion(pluginJsonPath, newVersion);
   updateJsonVersion(marketplaceJsonPath, newVersion);
   updateJsonVersion(rootPackageJsonPath, newVersion);
@@ -290,6 +294,7 @@ async function main() {
   // Commit + tag + push
   const addFiles = [
     pluginJsonPath,
+    codexPluginJsonPath,
     marketplaceJsonPath,
     architectureLintPubspecPath,
     leafKitLintPubspecPath,
