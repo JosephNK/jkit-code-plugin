@@ -1,6 +1,6 @@
 {
   "name": "jkit",
-  "version": "0.3.17",
+  "version": "0.3.18",
   "description": "Personal Codex toolkit for jkit workflows, project scaffolding, conventions, and commit support",
   "author": {
     "name": "josephnk",
@@ -27,7 +27,8 @@
     "developerName": "JosephNK",
     "category": "Productivity",
     "capabilities": [
-      "Read", "Write"
+      "Read",
+      "Write"
     ],
     "websiteURL": "https://github.com/JosephNK/jkit-code-plugin",
     "defaultPrompt": [
