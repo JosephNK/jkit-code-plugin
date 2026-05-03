@@ -26,11 +26,9 @@ Root (Melos workspace)
 │       │   ├── extensions/               # Dart extensions
 │       │   ├── services/                 # 교차 feature 서비스 — FLAT(thin) 또는 nested(domain-rich) 패턴
 │       │   │   └── <service>/            # Port & Adapter 패턴
-│       │   │       ├── *_port.dart       # FLAT — thin service (1-port-1-adapter wrapper)
-│       │   │       ├── *_adapter.dart    # FLAT — thin service 구현체
 │       │   │       ├── entities/         # nested — Immutable Value Objects
-│       │   │       ├── ports/            # nested — Abstract interfaces
-│       │   │       ├── adapters/         # nested — Port 구현체
+│       │   │       ├── ports/            # Abstract interfaces (*_port.dart)
+│       │   │       ├── adapters/         # Port 구현체 (*_adapter.dart)
 │       │   │       ├── usecases/         # nested — 비즈니스 로직 (feature가 의존하는 진입점)
 │       │   │       ├── exceptions/       # nested — 서비스 자체 도메인 예외
 │       │   │       └── support/          # 보조 구현 파일 (config/types/helpers 등) — 양 모드 공통
@@ -74,9 +72,9 @@ Root (Melos workspace)
 | 레이어 | 경로 패턴 | 비고 |
 | --- | --- | --- |
 | `entities` | `app/lib/features/**/domain/entities/**` / `app/lib/common/services/*/entities/**` | Immutable Value Objects |
-| `ports` | `app/lib/features/**/domain/ports/**` / `app/lib/common/services/*/*_port.dart` / `app/lib/common/services/*/ports/**` | Abstract interfaces (*_port.dart) |
+| `ports` | `app/lib/features/**/domain/ports/**` / `app/lib/common/services/*/ports/**` | Abstract interfaces (*_port.dart) |
 | `usecases` | `app/lib/features/**/domain/usecases/**` / `app/lib/common/services/*/usecases/**` | 비즈니스 로직 (*_usecase.dart) |
-| `adapters` | `app/lib/features/**/infrastructure/adapters/**` / `app/lib/common/services/*/*_adapter.dart` / `app/lib/common/services/*/adapters/**` | Port 구현체 (*_adapter.dart) |
+| `adapters` | `app/lib/features/**/infrastructure/adapters/**` / `app/lib/common/services/*/adapters/**` | Port 구현체 (*_adapter.dart) |
 | `bloc` | `app/lib/features/**/presentation/bloc/**` | 상태 관리 (선택) |
 | `exceptions` | `app/lib/features/**/domain/exceptions/**` / `app/lib/common/exceptions/**` / `app/lib/common/services/*/exceptions/**` | 도메인 예외 + 공용 예외 |
 | `presentation` | `app/lib/features/**/presentation/pages/**` / `app/lib/features/**/presentation/views/**` / `app/lib/features/**/presentation/widgets/**` | pages / views / widgets 통합 |

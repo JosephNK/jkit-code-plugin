@@ -73,10 +73,10 @@ bool isPreferredWidgetLintTargetFile(String filePath) {
 ///
 /// 'bloc' / 'usecases' / 'adapters' / 'ports' 중 매칭되는 첫 번째 반환.
 /// architecture_lint의 boundary 매칭과 달리 leaf_kit_lint은 4개 레이어만 식별.
-/// `common/services/<svc>/`는 FLAT(`*_port.dart`/`*_adapter.dart`) + nested
-/// (`ports/`·`adapters/`·`usecases/`) 두 패턴을 모두 인식 — base의
-/// `boundary_element.dart` 매핑과 일치시켜 LK_E3가 nested cross-cutting
-/// subsystem 의 ports/adapters에 대한 bloc 직접 의존도 차단하도록 한다.
+/// `common/services/<svc>/`는 FLAT/nested 모두 `ports/`·`adapters/`·`usecases/`
+/// 하위 패턴으로 인식 — base의 `boundary_element.dart` 매핑과 일치시켜
+/// LK_E3가 cross-cutting subsystem 의 ports/adapters에 대한 bloc 직접 의존도
+/// 차단하도록 한다.
 String? _classifyInnerPath(String innerPath) {
   if (RegExp(r'features/[^/]+/presentation/bloc/').hasMatch(innerPath)) {
     return 'bloc';
@@ -86,13 +86,11 @@ String? _classifyInnerPath(String innerPath) {
     return 'usecases';
   }
   if (RegExp(r'features/[^/]+/infrastructure/adapters/').hasMatch(innerPath) ||
-      RegExp(r'common/services/[^/]+/adapters/').hasMatch(innerPath) ||
-      RegExp(r'common/services/[^/]+/.*_adapter\.dart$').hasMatch(innerPath)) {
+      RegExp(r'common/services/[^/]+/adapters/').hasMatch(innerPath)) {
     return 'adapters';
   }
   if (RegExp(r'features/[^/]+/domain/ports/').hasMatch(innerPath) ||
-      RegExp(r'common/services/[^/]+/ports/').hasMatch(innerPath) ||
-      RegExp(r'common/services/[^/]+/.*_port\.dart$').hasMatch(innerPath)) {
+      RegExp(r'common/services/[^/]+/ports/').hasMatch(innerPath)) {
     return 'ports';
   }
   return null;

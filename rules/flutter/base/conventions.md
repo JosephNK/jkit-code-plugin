@@ -17,7 +17,7 @@ Both follow the same Port & Adapter pattern. The only difference is scope.
 
 | Pattern | When to use | Layout |
 |---------|-------------|--------|
-| **FLAT** (thin service) | 외부 시스템 1:1 wrapper, 자체 도메인 거의 없음 (token storage, TTS, image compression 등) | `<svc>/<svc>_port.dart` + `<svc>/<svc>_adapter.dart` (+ optional `support/`) |
+| **FLAT** (thin service) | 외부 시스템 1:1 wrapper, 자체 도메인 거의 없음 (token storage, TTS, image compression 등) | `<svc>/ports/<svc>_port.dart` + `<svc>/adapters/<svc>_adapter.dart` (+ optional `support/`) |
 | **nested** (domain-rich subsystem) | 다수 feature가 의존하는 cross-cutting subsystem, 자체 entities/usecases/exceptions 보유 (auth, gatekeeper 등) | `<svc>/{entities,ports,adapters,usecases,exceptions}/` (+ optional `support/`) |
 
 **Lint 적용 (양 모드 동일)**:
@@ -162,4 +162,3 @@ void main() {
   });
 }
 ```
-

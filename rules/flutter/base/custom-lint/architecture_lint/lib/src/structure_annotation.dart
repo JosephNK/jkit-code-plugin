@@ -75,24 +75,16 @@ const projectStructureAnnotations = <String, List<AnnotationNode>>{
           note: 'Port & Adapter 패턴',
           children: [
             AnnotationNode(
-              name: '*_port.dart',
-              note: 'FLAT — thin service (1-port-1-adapter wrapper)',
-            ),
-            AnnotationNode(
-              name: '*_adapter.dart',
-              note: 'FLAT — thin service 구현체',
-            ),
-            AnnotationNode(
               name: 'entities',
               note: 'nested — Immutable Value Objects',
             ),
             AnnotationNode(
               name: 'ports',
-              note: 'nested — Abstract interfaces',
+              note: 'Abstract interfaces (*_port.dart)',
             ),
             AnnotationNode(
               name: 'adapters',
-              note: 'nested — Port 구현체',
+              note: 'Port 구현체 (*_adapter.dart)',
             ),
             AnnotationNode(
               name: 'usecases',

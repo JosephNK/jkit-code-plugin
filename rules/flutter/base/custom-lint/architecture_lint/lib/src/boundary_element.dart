@@ -45,9 +45,7 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: [
       'app/lib/features/**/domain/ports/**',
       // 교차 feature 서비스의 port 인터페이스도 ports 레이어로 분류 — usecase 의존 허용
-      // FLAT (1-port-1-adapter thin service):
-      'app/lib/common/services/*/*_port.dart',
-      // nested (도메인-rich subsystem):
+      // FLAT/nested 모두 ports/ 하위에 둔다.
       'app/lib/common/services/*/ports/**',
     ],
     note: 'Abstract interfaces (*_port.dart)',
@@ -66,9 +64,7 @@ const projectBoundaryElements = <BoundaryElement>[
     patterns: [
       'app/lib/features/**/infrastructure/adapters/**',
       // 교차 feature 서비스의 adapter 구현체도 adapters 레이어로 분류 — DI 외 직접 의존 차단
-      // FLAT:
-      'app/lib/common/services/*/*_adapter.dart',
-      // nested:
+      // FLAT/nested 모두 adapters/ 하위에 둔다.
       'app/lib/common/services/*/adapters/**',
     ],
     note: 'Port 구현체 (*_adapter.dart)',
@@ -101,7 +97,7 @@ const projectBoundaryElements = <BoundaryElement>[
     layer: 'common_services',
     patterns: [
       // 보조 파일은 support/ 하위로 강제 — 직속 ad-hoc 파일은 unknown layer로
-      // 떨어져 S2 위반. port/adapter 직속 파일은 위 ports/adapters 레이어로 분류.
+      // 떨어져 S2 위반. port/adapter 파일도 ports/adapters 하위에 둔다.
       'app/lib/common/services/*/support/**',
     ],
     note: 'support/ 보조 파일 — 교차 feature 서비스',
