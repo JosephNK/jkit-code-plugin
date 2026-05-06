@@ -253,6 +253,7 @@ export class CreateOrderRequestDto {
 - I18n 설정 — `i18n/**`
 - Logger 설정 — `logger/**`
 - Cache 설정 — `cache/**`
+- 메일 발송 인프라 — `email/**`
 - 트랜잭션 관리 — `transaction/**`
 - 외부 서비스 클라이언트 (3rd-party SDK·HTTP client wrapper) — `external/**`
 
