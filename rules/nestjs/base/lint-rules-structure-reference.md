@@ -43,6 +43,7 @@
     │   ├── database/                   # Database configuration
     │   ├── i18n/                       # Internationalization
     │   ├── logger/                     # Logging
+    │   ├── cache/                      # Cache configuration
     │   ├── transaction/                # Transaction management
     │   └── external/                   # External service clients (3rd-party SDK, HTTP client wrappers)
     └── libs/
@@ -62,5 +63,5 @@
 | `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
 | `common-pure` | `src/common/constants/**` | — | — |
 | `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/interceptors/**` / `src/common/decorators/**` / `src/common/events/**` / `src/common/dtos/**` / `src/common/config/**` / `src/common/utils/**` | — | 전역 공용 (허용 하위 폴더만) |
-| `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/transaction/**` / `src/infrastructure/external/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
+| `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/cache/**` / `src/infrastructure/transaction/**` / `src/infrastructure/external/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
 | `libs` | `src/libs/**` | — | 독립 라이브러리 |
