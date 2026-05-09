@@ -149,6 +149,19 @@ const MARKERS = [
   { section: 'custom', marker: '// {{CUSTOM_CONFIG}}' },
 ];
 
+// Read jkit project preferences from <projectDir>/package.json.
+// Returns the parsed `jkit` object, or {} if missing/invalid.
+function readJkitPrefs(projectDir) {
+  const pkgPath = path.join(projectDir, 'package.json');
+  if (!fs.existsSync(pkgPath)) return {};
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    return pkg.jkit && typeof pkg.jkit === 'object' ? pkg.jkit : {};
+  } catch {
+    return {};
+  }
+}
+
 // Reproduce the bash-side behavior:
 // Each invocation reads a `value` (possibly multi-line), drops empty lines
 // via `sed '/^$/d'`, then for each line in the current template content:
@@ -234,6 +247,13 @@ function main() {
   for (const { section, marker } of MARKERS) {
     content = replaceMarker(content, marker, buckets[section]);
   }
+
+  // Inline marker: {{PATH_ALIAS_PATTERN}} — package.json.jkit.pathAliasCheck로 토글.
+  // default true (검사 활성). false면 buildLayerRestrictions에 null 주입 → path alias 검사 OFF.
+  const jkitPrefs = readJkitPrefs(args.outputDir);
+  const pathAliasReplacement =
+    jkitPrefs.pathAliasCheck === false ? 'null' : 'basePathAliasPattern';
+  content = content.replaceAll('{{PATH_ALIAS_PATTERN}}', pathAliasReplacement);
 
   // Bash script's trailing-blank-line trim + `echo` writer semantics:
   //   while [[ "$content" == *$'\n'$'\n' ]]; do content="${content%$'\n'}"; done

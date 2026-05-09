@@ -840,6 +840,10 @@ export function buildLayerRestrictions(
   infraPackages = [],
   pathAliasPattern = basePathAliasPattern,
 ) {
+  // null/false 주입 시 path alias 검사 비활성 — patterns 배열에서 제외
+  // (package.json.jkit.pathAliasCheck=false 시 gen-eslint가 null을 주입)
+  const aliasPart = pathAliasPattern ? [pathAliasPattern] : [];
+
   return defineConfig(
     // ─── model/ : 순수 TS 유지 ──────────────────────────────────────────
     // 프레임워크/외부 라이브러리 금지, 다른 레이어 import 금지
@@ -850,7 +854,7 @@ export function buildLayerRestrictions(
           "error",
           {
             patterns: [
-              pathAliasPattern,
+              ...aliasPart,
               {
                 group: frameworkPackages,
                 message:
@@ -899,7 +903,7 @@ export function buildLayerRestrictions(
               },
             ],
             patterns: [
-              pathAliasPattern,
+              ...aliasPart,
               {
                 // @nestjs/* 전부 차단하되 위 paths의 두 패키지는 예외 (`!` prefix)
                 group: [
@@ -941,7 +945,7 @@ export function buildLayerRestrictions(
           "error",
           {
             patterns: [
-              pathAliasPattern,
+              ...aliasPart,
               {
                 group: frameworkPackages,
                 message:
@@ -983,7 +987,7 @@ export function buildLayerRestrictions(
           "error",
           {
             patterns: [
-              pathAliasPattern,
+              ...aliasPart,
               {
                 group: ["@nestjs/*", ...infraPackages],
                 message: "exception/ must not import frameworks.",
@@ -1003,7 +1007,7 @@ export function buildLayerRestrictions(
         "no-restricted-imports": [
           "error",
           {
-            patterns: [pathAliasPattern],
+            patterns: [...aliasPart],
           },
         ],
       },
@@ -1018,7 +1022,7 @@ export function buildLayerRestrictions(
         "no-restricted-imports": [
           "error",
           {
-            patterns: [pathAliasPattern],
+            patterns: [...aliasPart],
           },
         ],
       },
@@ -1033,7 +1037,7 @@ export function buildLayerRestrictions(
         "no-restricted-imports": [
           "error",
           {
-            patterns: [pathAliasPattern],
+            patterns: [...aliasPart],
           },
         ],
       },
@@ -1048,7 +1052,7 @@ export function buildLayerRestrictions(
         "no-restricted-imports": [
           "error",
           {
-            patterns: [pathAliasPattern],
+            patterns: [...aliasPart],
           },
         ],
       },
