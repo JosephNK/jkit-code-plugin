@@ -795,6 +795,15 @@ export const baseCustomRules = defineConfig(
     },
   },
 
+  // Domain folder allow-list — <domain>/ 직속 하위 폴더는 known layer만 허용
+  {
+    files: ["src/modules/**/*.ts"],
+    ignores: ["**/*.spec.ts", "**/*.test.ts", "**/*.module.ts"],
+    rules: {
+      "local/no-unknown-domain-folder": "error",
+    },
+  },
+
   // Controller/Service: entity 직접 return 금지 (명시적 return type 한정)
   {
     files: [
