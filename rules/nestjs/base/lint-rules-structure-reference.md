@@ -57,14 +57,14 @@
 
 | 타입 | 경로 패턴 | 모드 | 설명 |
 | --- | --- | --- | --- |
-| `model` | `src/modules/**/model/*` | — | 도메인 모델 |
-| `port` | `src/modules/**/port/*` | — | 도메인 Port 인터페이스 |
-| `service` | `src/modules/**/service/*` | — | UseCase |
-| `controller` | `src/modules/**/controller/*` | — | HTTP 컨트롤러 |
-| `strategy` | `src/modules/**/strategy/*` | — | Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘 |
-| `provider` | `src/modules/**/provider/*` | — | Port 구현체 |
-| `exception` | `src/modules/**/exception/*` | — | 도메인 예외 |
-| `dto` | `src/modules/**/dto/*` | — | 요청/응답 DTO |
+| `model` | `src/modules/**/model/**` | — | 도메인 모델 |
+| `port` | `src/modules/**/port/**` | — | 도메인 Port 인터페이스 |
+| `service` | `src/modules/**/service/**` | — | UseCase |
+| `controller` | `src/modules/**/controller/**` | — | HTTP 컨트롤러 |
+| `strategy` | `src/modules/**/strategy/**` | — | Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘 |
+| `provider` | `src/modules/**/provider/**` | — | Port 구현체 |
+| `exception` | `src/modules/**/exception/**` | — | 도메인 예외 |
+| `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
 | `common-pure` | `src/common/constants/**` | — | — |
 | `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/interceptors/**` / `src/common/decorators/**` / `src/common/events/**` / `src/common/dtos/**` / `src/common/config/**` / `src/common/utils/**` | — | 전역 공용 (허용 하위 폴더만) |
 | `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/cache/**` / `src/infrastructure/email/**` / `src/infrastructure/transaction/**` / `src/infrastructure/external/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |

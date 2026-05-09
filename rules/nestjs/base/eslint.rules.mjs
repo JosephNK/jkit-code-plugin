@@ -68,16 +68,14 @@ export const baseFrameworkPackages = [
  * 레이어별 책임·파일 종류는 `baseLayerSemantics` 참조.
  */
 export const baseBoundaryElements = [
-  // glob 끝의 `/*`는 layer 직속 파일만 매치 — 하위 폴더(`provider/entities/...`) 금지.
-  // nested 파일은 어떤 element에도 안 잡혀 boundaries/no-unknown-files가 거부.
-  { type: "model", pattern: ["src/modules/**/model/*"] }, // 도메인 모델
-  { type: "port", pattern: ["src/modules/**/port/*"] }, // 도메인 Port 인터페이스
-  { type: "service", pattern: ["src/modules/**/service/*"] }, // UseCase
-  { type: "controller", pattern: ["src/modules/**/controller/*"] }, // HTTP 컨트롤러
-  { type: "strategy", pattern: ["src/modules/**/strategy/*"] }, // Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘
-  { type: "provider", pattern: ["src/modules/**/provider/*"] }, // Port 구현체
-  { type: "exception", pattern: ["src/modules/**/exception/*"] }, // 도메인 예외
-  { type: "dto", pattern: ["src/modules/**/dto/*"] }, // 요청/응답 DTO
+  { type: "model", pattern: ["src/modules/**/model/**"] }, // 도메인 모델
+  { type: "port", pattern: ["src/modules/**/port/**"] }, // 도메인 Port 인터페이스
+  { type: "service", pattern: ["src/modules/**/service/**"] }, // UseCase
+  { type: "controller", pattern: ["src/modules/**/controller/**"] }, // HTTP 컨트롤러
+  { type: "strategy", pattern: ["src/modules/**/strategy/**"] }, // Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘
+  { type: "provider", pattern: ["src/modules/**/provider/**"] }, // Port 구현체
+  { type: "exception", pattern: ["src/modules/**/exception/**"] }, // 도메인 예외
+  { type: "dto", pattern: ["src/modules/**/dto/**"] }, // 요청/응답 DTO
   // common/infrastructure는 허용 하위 폴더만 명시 — no-unknown-files가 그 외 경로를 거부
   // common-pure를 별도 element로 분리 — framework-free 폴더만 묶어 model 포함 모든 레이어에서 import 허용
   // 새 pure 폴더(utils/events/interfaces 등) 추가 시 pattern 배열에 append만
@@ -215,7 +213,7 @@ export const baseLayerSemantics = {
       "class 기반 도메인 모델 (interface/type + 순수 함수 지향)",
     ],
     scope:
-      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유.",
+      "Entity 필드는 `readonly` 강제 (baseImmutabilityRules). 파일 suffix 강제 대상 제외 — 파일 분할 자유 (단, 하위 폴더 금지: local/no-nested-layer-dir).",
     example: [
       "// model/order.entity.ts",
       "export type OrderStatus = 'pending' | 'confirmed' | 'shipped';",
@@ -785,6 +783,15 @@ export const baseCustomRules = defineConfig(
     ignores: ["**/*.spec.ts", "**/*.test.ts", "**/*.module.ts"],
     rules: {
       "local/enforce-file-suffix": "error",
+    },
+  },
+
+  // Layer flat-only enforcement — 레이어 폴더 직속 파일만 허용 (하위 폴더 금지)
+  {
+    files: ["src/modules/**/*.ts"],
+    ignores: ["**/*.spec.ts", "**/*.test.ts", "**/*.module.ts"],
+    rules: {
+      "local/no-nested-layer-dir": "error",
     },
   },
 

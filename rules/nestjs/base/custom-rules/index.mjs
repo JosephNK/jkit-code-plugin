@@ -10,6 +10,7 @@ import dtoUnionTypeRestriction from "./dto-union-type-restriction.mjs";
 import noDtoOneof from "./no-dto-oneof.mjs";
 import dtoNullableMatch from "./dto-nullable-match.mjs";
 import enforceFileSuffix from "./enforce-file-suffix.mjs";
+import noNestedLayerDir from "./no-nested-layer-dir.mjs";
 import noEntityReturn from "./no-entity-return.mjs";
 
 /** @type {import('eslint').ESLint.Plugin} */
@@ -23,6 +24,7 @@ export default {
     "no-dto-oneof": noDtoOneof,
     "dto-nullable-match": dtoNullableMatch,
     "enforce-file-suffix": enforceFileSuffix,
+    "no-nested-layer-dir": noNestedLayerDir,
     "no-entity-return": noEntityReturn,
   },
 };
