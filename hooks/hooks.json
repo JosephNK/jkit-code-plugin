@@ -43,6 +43,11 @@
             "type": "command",
             "command": "bash -c 'INPUT=$(cat); COMMAND=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\"); if echo \"$COMMAND\" | grep -qE \"chmod\\s+0?777\"; then echo \"차단: chmod 777은 보안 정책에 의해 금지되었습니다.\"; exit 2; fi; exit 0'",
             "description": "Block chmod 777"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/block-destructive-git.sh\"",
+            "description": "Block destructive git commands (stash, reset --hard, clean -f, push --force, rebase, commit --amend 등)"
           }
         ]
       }
