@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "jkit",
-      "version": "0.3.31",
+      "version": "0.3.32",
       "source": {
         "source": "local",
         "path": "../.."
