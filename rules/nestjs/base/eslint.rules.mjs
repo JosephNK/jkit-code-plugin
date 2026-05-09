@@ -68,14 +68,16 @@ export const baseFrameworkPackages = [
  * 레이어별 책임·파일 종류는 `baseLayerSemantics` 참조.
  */
 export const baseBoundaryElements = [
-  { type: "model", pattern: ["src/modules/**/model/**"] }, // 도메인 모델
-  { type: "port", pattern: ["src/modules/**/port/**"] }, // 도메인 Port 인터페이스
-  { type: "service", pattern: ["src/modules/**/service/**"] }, // UseCase
-  { type: "controller", pattern: ["src/modules/**/controller/**"] }, // HTTP 컨트롤러
-  { type: "strategy", pattern: ["src/modules/**/strategy/**"] }, // Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘
-  { type: "provider", pattern: ["src/modules/**/provider/**"] }, // Port 구현체
-  { type: "exception", pattern: ["src/modules/**/exception/**"] }, // 도메인 예외
-  { type: "dto", pattern: ["src/modules/**/dto/**"] }, // 요청/응답 DTO
+  // glob 끝의 `/*`는 layer 직속 파일만 매치 — 하위 폴더(`provider/entities/...`) 금지.
+  // nested 파일은 어떤 element에도 안 잡혀 boundaries/no-unknown-files가 거부.
+  { type: "model", pattern: ["src/modules/**/model/*"] }, // 도메인 모델
+  { type: "port", pattern: ["src/modules/**/port/*"] }, // 도메인 Port 인터페이스
+  { type: "service", pattern: ["src/modules/**/service/*"] }, // UseCase
+  { type: "controller", pattern: ["src/modules/**/controller/*"] }, // HTTP 컨트롤러
+  { type: "strategy", pattern: ["src/modules/**/strategy/*"] }, // Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘
+  { type: "provider", pattern: ["src/modules/**/provider/*"] }, // Port 구현체
+  { type: "exception", pattern: ["src/modules/**/exception/*"] }, // 도메인 예외
+  { type: "dto", pattern: ["src/modules/**/dto/*"] }, // 요청/응답 DTO
   // common/infrastructure는 허용 하위 폴더만 명시 — no-unknown-files가 그 외 경로를 거부
   // common-pure를 별도 element로 분리 — framework-free 폴더만 묶어 model 포함 모든 레이어에서 import 허용
   // 새 pure 폴더(utils/events/interfaces 등) 추가 시 pattern 배열에 append만
@@ -151,6 +153,10 @@ export const baseStructureAnnotations = {
               },
               { name: "dto", note: "Input/output DTOs" },
               { name: "exception", note: "Domain-specific exceptions" },
+              {
+                name: "common",
+                note: "(선택) 도메인 내부 공용 — boundary 검사 제외 (escape hatch)",
+              },
               {
                 name: "<domain>.module.ts",
                 placeholder: true,
