@@ -72,6 +72,7 @@ export const baseBoundaryElements = [
   { type: "port", pattern: ["src/modules/**/port/**"] }, // 도메인 Port 인터페이스
   { type: "service", pattern: ["src/modules/**/service/**"] }, // UseCase
   { type: "controller", pattern: ["src/modules/**/controller/**"] }, // HTTP 컨트롤러
+  { type: "strategy", pattern: ["src/modules/**/strategy/**"] }, // Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘
   { type: "provider", pattern: ["src/modules/**/provider/**"] }, // Port 구현체
   { type: "exception", pattern: ["src/modules/**/exception/**"] }, // 도메인 예외
   { type: "dto", pattern: ["src/modules/**/dto/**"] }, // 요청/응답 DTO
@@ -140,6 +141,10 @@ export const baseStructureAnnotations = {
                 note: "Inbound-port implementation (business logic)",
               },
               { name: "controller", note: "Driving Adapter (HTTP)" },
+              {
+                name: "strategy",
+                note: "Inbound Adapter (Passport 인증 전략 등) 또는 가변 알고리즘 (Strategy 패턴)",
+              },
               {
                 name: "provider",
                 note: "Outbound Adapter (DB, external services)",
@@ -290,6 +295,35 @@ export const baseLayerSemantics = {
       "  async create(@Body() dto: CreateOrderRequestDto): Promise<OrderResponseDto> {",
       "    const order = await this.createOrder.execute(dto);",
       "    return toOrderResponseDto(order);",
+      "  }",
+      "}",
+    ].join("\n"),
+  },
+
+  strategy: {
+    role: "Inbound 어댑터의 한 변종. Passport 인증 전략(JWT/Local/OAuth)이나 교체 가능한 알고리즘(Strategy 패턴) 등 controller와는 다른 진입 경로/변형을 담는다.",
+    contains: [
+      "Passport Strategy (extends PassportStrategy) — `*.strategy.ts`",
+      "그 외 교체 가능한 도메인 알고리즘 (@Injectable) — `*.strategy.ts`",
+    ],
+    forbids: [
+      "service/controller/provider 직접 import (DI 컨테이너로 Port 통해 위임)",
+      "ORM 엔티티 직접 사용 (→ Port를 통해 추상화)",
+    ],
+    scope:
+      "controller와 동일하게 NestJS 생태계 자유 사용. 비즈니스 로직은 Port 호출로 위임 (validate() 안에서 service 직접 호출 금지).",
+    example: [
+      "// strategy/jwt.strategy.ts",
+      "@Injectable()",
+      "export class JwtStrategy extends PassportStrategy(Strategy) {",
+      "  constructor(",
+      "    @Inject(VALIDATE_USER_PORT)",
+      "    private readonly validateUser: ValidateUserPort,",
+      "  ) {",
+      "    super({ jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: process.env.JWT_SECRET });",
+      "  }",
+      "  async validate(payload: JwtPayload): Promise<AuthenticatedUserDto> {",
+      "    return this.validateUser.execute(payload.sub);",
       "  }",
       "}",
     ].join("\n"),
@@ -468,6 +502,15 @@ export const baseBoundaryRules = [
       },
     },
   },
+  // strategy — Inbound 어댑터 변종 (Passport/알고리즘). controller와 동일한 import 정책
+  {
+    from: { type: "strategy" },
+    allow: {
+      to: {
+        type: ["port", "dto", "model", "exception", "common", "common-pure", "libs"],
+      },
+    },
+  },
   // provider — Port 구현체. ORM 엔티티 간 상호 참조로 provider→provider 허용
   {
     from: { type: "provider" },
@@ -508,6 +551,7 @@ export const baseBoundaryRules = [
           "port",
           "service",
           "controller",
+          "strategy",
           "provider",
           "exception",
           "dto",
@@ -793,11 +837,12 @@ export function buildLayerRestrictions(
                 group: [
                   "**/service/**",
                   "**/controller/**",
+                  "**/strategy/**",
                   "**/provider/**",
                   "**/dto/**",
                 ],
                 message:
-                  "model/ must not import from other layers (service, controller, provider, dto).",
+                  "model/ must not import from other layers (service, controller, strategy, provider, dto).",
               },
             ],
           },
@@ -854,9 +899,9 @@ export function buildLayerRestrictions(
                 : []),
               {
                 // 역방향 의존 차단
-                group: ["**/controller/**", "**/provider/**"],
+                group: ["**/controller/**", "**/strategy/**", "**/provider/**"],
                 message:
-                  "service/ must not import from controller/ or provider/.",
+                  "service/ must not import from controller/, strategy/, or provider/.",
               },
             ],
           },
@@ -883,11 +928,12 @@ export function buildLayerRestrictions(
                 group: [
                   "**/service/**",
                   "**/controller/**",
+                  "**/strategy/**",
                   "**/provider/**",
                   "**/dto/**",
                 ],
                 message:
-                  "port/ must not import from service/, controller/, provider/, or dto/.",
+                  "port/ must not import from service/, controller/, strategy/, provider/, or dto/.",
               },
             ],
           },
@@ -944,6 +990,21 @@ export function buildLayerRestrictions(
     // NestJS 데코레이터/가드/파이프 자유 사용 — path alias만 강제
     {
       files: ["src/modules/**/controller/**/*.ts"],
+      ignores: ["**/*.spec.ts"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [pathAliasPattern],
+          },
+        ],
+      },
+    },
+
+    // ─── strategy/ : Inbound 어댑터 변종 (Passport/알고리즘) ─────────────
+    // @nestjs/passport, passport-* 자유 사용 — path alias만 강제
+    {
+      files: ["src/modules/**/strategy/**/*.ts"],
       ignores: ["**/*.spec.ts"],
       rules: {
         "no-restricted-imports": [

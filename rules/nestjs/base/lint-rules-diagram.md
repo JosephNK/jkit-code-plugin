@@ -21,6 +21,7 @@ graph LR
   controller["controller"]
   dto["dto"]
   libs["libs"]
+  strategy["strategy"]
   provider["provider"]
   model --> common_pure
   exception --> common
@@ -41,6 +42,13 @@ graph LR
   controller --> common
   controller --> common_pure
   controller --> libs
+  strategy --> port
+  strategy --> dto
+  strategy --> model
+  strategy --> exception
+  strategy --> common
+  strategy --> common_pure
+  strategy --> libs
   provider --> port
   provider --> model
   provider --> common
@@ -56,6 +64,7 @@ graph LR
   libs --> port
   libs --> service
   libs --> controller
+  libs --> strategy
   libs --> provider
   libs --> exception
   libs --> dto

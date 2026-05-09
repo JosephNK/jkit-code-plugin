@@ -10,6 +10,7 @@
 //   port/       : *.port.ts, port-tokens.ts
 //   service/    : *.service.ts, *.listener.ts
 //   controller/ : *.controller.ts
+//   strategy/   : *.strategy.ts
 //   provider/   : *.adapter.ts, *.orm-entity.ts
 //   dto/        : *.dto.ts (create-*.dto.ts, *.request.dto.ts 포함)
 //   exception/  : *.error.ts
@@ -34,6 +35,10 @@ const LAYER_ALLOWED = {
     suffixes: ['.controller.ts'],
     exact: [],
   },
+  strategy: {
+    suffixes: ['.strategy.ts'],
+    exact: [],
+  },
   provider: {
     suffixes: ['.adapter.ts', '.orm-entity.ts'],
     exact: [],
@@ -48,7 +53,7 @@ const LAYER_ALLOWED = {
   },
 };
 
-const LAYER_PATTERN = /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(port|service|controller|provider|dto|exception)\/[^/]*$/;
+const LAYER_PATTERN = /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(port|service|controller|strategy|provider|dto|exception)\/[^/]*$/;
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {

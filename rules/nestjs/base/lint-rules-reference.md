@@ -126,6 +126,38 @@ export class OrderController {
 }
 ```
 
+### `strategy`
+
+**Role** — Inbound 어댑터의 한 변종. Passport 인증 전략(JWT/Local/OAuth)이나 교체 가능한 알고리즘(Strategy 패턴) 등 controller와는 다른 진입 경로/변형을 담는다.
+
+**Contains**
+
+- Passport Strategy (extends PassportStrategy) — `*.strategy.ts`
+- 그 외 교체 가능한 도메인 알고리즘 (@Injectable) — `*.strategy.ts`
+
+**Forbids**
+
+- service/controller/provider 직접 import (DI 컨테이너로 Port 통해 위임)
+- ORM 엔티티 직접 사용 (→ Port를 통해 추상화)
+
+**Scope** — controller와 동일하게 NestJS 생태계 자유 사용. 비즈니스 로직은 Port 호출로 위임 (validate() 안에서 service 직접 호출 금지).
+
+```ts
+// strategy/jwt.strategy.ts
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    @Inject(VALIDATE_USER_PORT)
+    private readonly validateUser: ValidateUserPort,
+  ) {
+    super({ jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), secretOrKey: process.env.JWT_SECRET });
+  }
+  async validate(payload: JwtPayload): Promise<AuthenticatedUserDto> {
+    return this.validateUser.execute(payload.sub);
+  }
+}
+```
+
 ### `provider`
 
 **Role** — Outbound Port 구현체. Port 인터페이스를 실제 ORM·외부 SDK·HTTP client로 구현.
@@ -290,12 +322,13 @@ export class CreateOrderRequestDto {
 | `port` | `model`, `common`, `common-pure` |
 | `service` | `model`, `port`, `exception`, `common`, `common-pure`, `infrastructure` |
 | `controller` | `port`, `dto`, `model`, `exception`, `common`, `common-pure`, `libs` |
+| `strategy` | `port`, `dto`, `model`, `exception`, `common`, `common-pure`, `libs` |
 | `provider` | `port`, `model`, `common`, `common-pure`, `infrastructure`, `provider` |
 | `dto` | `model`, `common`, `common-pure`, `dto` |
 | `common` | `common`, `common-pure` |
 | `common-pure` | `common-pure` |
 | `infrastructure` | `infrastructure`, `common`, `common-pure` |
-| `libs` | `model`, `port`, `service`, `controller`, `provider`, `exception`, `dto`, `common`, `common-pure`, `infrastructure`, `libs` |
+| `libs` | `model`, `port`, `service`, `controller`, `strategy`, `provider`, `exception`, `dto`, `common`, `common-pure`, `infrastructure`, `libs` |
 
 ## Framework 금지 패키지 (순수 레이어 차단)
 

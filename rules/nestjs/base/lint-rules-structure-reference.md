@@ -22,6 +22,7 @@
     │           ├── port/               # All Port interfaces (inbound + outbound)
     │           ├── service/            # Inbound-port implementation (business logic)
     │           ├── controller/         # Driving Adapter (HTTP)
+    │           ├── strategy/           # Inbound Adapter (Passport 인증 전략 등) 또는 가변 알고리즘 (Strategy 패턴)
     │           ├── provider/           # Outbound Adapter (DB, external services)
     │           ├── dto/                # Input/output DTOs
     │           ├── exception/          # Domain-specific exceptions
@@ -59,6 +60,7 @@
 | `port` | `src/modules/**/port/**` | — | 도메인 Port 인터페이스 |
 | `service` | `src/modules/**/service/**` | — | UseCase |
 | `controller` | `src/modules/**/controller/**` | — | HTTP 컨트롤러 |
+| `strategy` | `src/modules/**/strategy/**` | — | Inbound 어댑터 (Passport 등 인증 전략) 또는 가변 알고리즘 |
 | `provider` | `src/modules/**/provider/**` | — | Port 구현체 |
 | `exception` | `src/modules/**/exception/**` | — | 도메인 예외 |
 | `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
