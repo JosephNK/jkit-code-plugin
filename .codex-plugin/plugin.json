@@ -1,6 +1,6 @@
 {
   "name": "jkit",
-  "version": "0.3.24",
+  "version": "0.3.25",
   "description": "Personal Codex toolkit for jkit workflows, project scaffolding, conventions, and commit support",
   "author": {
     "name": "josephnk",
