@@ -796,9 +796,10 @@ export const baseCustomRules = defineConfig(
   },
 
   // Domain folder allow-list — <domain>/ 직속 하위 폴더는 known layer만 허용
+  // *.module.ts는 anchor로 활용해 빈 폴더도 fs.readdirSync로 검사하므로 ignore에서 제외
   {
     files: ["src/modules/**/*.ts"],
-    ignores: ["**/*.spec.ts", "**/*.test.ts", "**/*.module.ts"],
+    ignores: ["**/*.spec.ts", "**/*.test.ts"],
     rules: {
       "local/no-unknown-domain-folder": "error",
     },
