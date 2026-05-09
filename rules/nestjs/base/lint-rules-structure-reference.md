@@ -29,7 +29,8 @@
     │           ├── common/             # (선택) 도메인 내부 공용 — boundary 검사 제외 (escape hatch)
     │           └── <domain>.module.ts  # NestJS module (DI assembly) — lint ignored via **/*.module.ts
     ├── common/
-    │   ├── authentication/             # Guards, auth-related
+    │   ├── authentication/             # Auth-related (Passport strategies, auth utils)
+    │   ├── guards/                     # Route Guards (@UseGuards 대상)
     │   ├── exceptions/                 # Exception Filters, domain exception base
     │   ├── interfaces/                 # Shared interfaces
     │   ├── middlewares/                # Global middlewares
@@ -66,6 +67,6 @@
 | `exception` | `src/modules/**/exception/**` | — | 도메인 예외 |
 | `dto` | `src/modules/**/dto/**` | — | 요청/응답 DTO |
 | `common-pure` | `src/common/constants/**` | — | — |
-| `common` | `src/common/authentication/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/interceptors/**` / `src/common/decorators/**` / `src/common/events/**` / `src/common/dtos/**` / `src/common/config/**` / `src/common/utils/**` | — | 전역 공용 (허용 하위 폴더만) |
+| `common` | `src/common/authentication/**` / `src/common/guards/**` / `src/common/exceptions/**` / `src/common/interfaces/**` / `src/common/middlewares/**` / `src/common/pipes/**` / `src/common/interceptors/**` / `src/common/decorators/**` / `src/common/events/**` / `src/common/dtos/**` / `src/common/config/**` / `src/common/utils/**` | — | 전역 공용 (허용 하위 폴더만) |
 | `infrastructure` | `src/infrastructure/database/**` / `src/infrastructure/i18n/**` / `src/infrastructure/logger/**` / `src/infrastructure/cache/**` / `src/infrastructure/email/**` / `src/infrastructure/transaction/**` / `src/infrastructure/external/**` | — | 인프라 수평 관심사 (허용 하위 폴더만) |
 | `libs` | `src/libs/**` | — | 독립 라이브러리 |

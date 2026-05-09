@@ -259,7 +259,8 @@ export class CreateOrderRequestDto {
 
 **Contains**
 
-- Guards·인증 유틸 — `authentication/**`
+- 인증 유틸 (Passport strategy 등) — `authentication/**`
+- Route Guard — `guards/**`
 - Exception Filter·도메인 예외 베이스 — `exceptions/**`
 - 공용 인터페이스 — `interfaces/**`
 - Global Middleware — `middlewares/**`

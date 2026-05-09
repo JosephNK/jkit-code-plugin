@@ -84,6 +84,7 @@ export const baseBoundaryElements = [
     type: "common",
     pattern: [
       "src/common/authentication/**",
+      "src/common/guards/**",
       "src/common/exceptions/**",
       "src/common/interfaces/**",
       "src/common/middlewares/**",
@@ -168,7 +169,8 @@ export const baseStructureAnnotations = {
   },
   "src/common": {
     override: [
-      { name: "authentication", note: "Guards, auth-related" },
+      { name: "authentication", note: "Auth-related (Passport strategies, auth utils)" },
+      { name: "guards", note: "Route Guards (@UseGuards 대상)" },
       { name: "exceptions", note: "Exception Filters, domain exception base" },
       { name: "interfaces", note: "Shared interfaces" },
       { name: "middlewares", note: "Global middlewares" },
@@ -407,7 +409,8 @@ export const baseLayerSemantics = {
   common: {
     role: "전역 공용 — 모듈 로직 밖의 수평 관심사. 최하위 계층이라 상향 의존 금지.",
     contains: [
-      "Guards·인증 유틸 — `authentication/**`",
+      "인증 유틸 (Passport strategy 등) — `authentication/**`",
+      "Route Guard — `guards/**`",
       "Exception Filter·도메인 예외 베이스 — `exceptions/**`",
       "공용 인터페이스 — `interfaces/**`",
       "Global Middleware — `middlewares/**`",
