@@ -165,6 +165,24 @@ rules/<framework>/<stack-name>/
 └── tsconfig.patch.json     # TSConfig 패치 (필요 시)
 ```
 
+## Project Preferences (NestJS)
+
+NestJS 소비 프로젝트의 `package.json`에 `jkit-rules` 객체를 두면 일부 lint 동작을 토글할 수 있습니다. 값은 ESLint config 로드 시점에 평가되므로 **`/jkit:nestjs-sync` 재실행 없이** 다음 ESLint 실행부터 반영됩니다.
+
+```json
+{
+  "jkit-rules": {
+    "pathAliasCheck": false
+  }
+}
+```
+
+| Key | 기본값 | 효과 (`false` 시) |
+|---|---|---|
+| `pathAliasCheck` | `true` | 모든 레이어에서 상대 parent import(`../**`) 차단 룰 OFF — `@/*` path alias 강제 해제 |
+
+> 옵션을 추가하지 않거나 객체 자체를 두지 않으면 모든 검사가 활성된 기본값으로 동작합니다. 옛 `jkit.pathAliasCheck` 키는 더 이상 인식되지 않으니 `jkit-rules.pathAliasCheck`로 옮겨주세요.
+
 ## ESLint 메시지 포매터 (Next.js / NestJS)
 
 `boundaries/no-unknown-files`, `boundaries/no-unknown` 등 일부 룰의 기본 에러 메시지를

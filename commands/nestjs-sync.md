@@ -125,7 +125,25 @@ case "$PM" in
 esac
 ```
 
-### 6. 보고
+### 6. Project Preferences 안내 (선택)
+
+사용자에게 lint 토글 옵션을 환기합니다 (선택 — 이미 설정돼 있으면 생략):
+
+> NestJS 프로젝트의 `package.json`에 `jkit-rules` 객체를 추가하면 lint 동작 일부를 토글할 수 있습니다. ESLint config 로드 시점에 평가되므로 `package.json` 수정 후 sync 재실행 없이 다음 ESLint 실행부터 반영됩니다.
+>
+> ```json
+> {
+>   "jkit-rules": {
+>     "pathAliasCheck": false
+>   }
+> }
+> ```
+>
+> - `pathAliasCheck` (기본 `true`): 상대 parent import(`../**`) 차단 룰. `false`면 모든 레이어에서 OFF.
+>
+> 옛 `jkit.pathAliasCheck` 키를 쓰던 프로젝트는 `jkit-rules.pathAliasCheck`로 마이그레이션 필요.
+
+### 7. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
 

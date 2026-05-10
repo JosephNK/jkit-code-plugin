@@ -198,7 +198,23 @@ esac
 > esac
 > ```
 
-### 9. 보고
+### 9. Project Preferences 안내 (선택)
+
+사용자에게 다음 옵션을 안내합니다 (선택 — 필요할 때만 추가):
+
+> NestJS 프로젝트의 `package.json`에 `jkit-rules` 객체를 추가하면 lint 동작 일부를 토글할 수 있습니다. ESLint config 로드 시점에 평가되므로 `package.json` 수정 후 sync 재실행 없이 다음 ESLint 실행부터 반영됩니다.
+>
+> ```json
+> {
+>   "jkit-rules": {
+>     "pathAliasCheck": false
+>   }
+> }
+> ```
+>
+> - `pathAliasCheck` (기본 `true`): 상대 parent import(`../**`) 차단 룰. `false`면 모든 레이어에서 OFF — `@/*` path alias 강제 해제.
+
+### 10. 보고
 
 사용자에게 생성된 항목을 보고합니다:
 - `AGENTS.md` — AI 에이전트 엔트리 포인트

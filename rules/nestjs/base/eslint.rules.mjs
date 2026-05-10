@@ -19,6 +19,7 @@
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 export { basePathAliasPattern } from "./eslint-rules/settings/path-alias-pattern.mjs";
+export { resolvePathAliasPattern } from "./eslint-rules/settings/resolve-path-alias.mjs";
 export { baseImportResolverSettings } from "./eslint-rules/settings/import-resolver-settings.mjs";
 export { baseFrameworkPackages } from "./eslint-rules/settings/framework-packages.mjs";
 

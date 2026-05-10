@@ -13,9 +13,10 @@
 //   {{BOUNDARY_RULES}}       — 추가 boundary from/allow 규칙
 //   {{BOUNDARY_IGNORES}}     — boundary 검사 제외 경로 추가분
 //   {{CUSTOM_CONFIG}}        — 커스텀 룰(custom-lint 플러그인) 주입 지점
-//   {{PATH_ALIAS_PATTERN}}   — `basePathAliasPattern` 또는 `null`. 사용자 package.json의
-//                              `jkit.pathAliasCheck` 값을 gen-eslint.mjs가 읽어 치환.
-//                              null이면 path alias 검사(`../**` 차단) OFF.
+//
+// Path alias 검사(`../**` 차단)는 ESLint 로드 시점에 `resolvePathAliasPattern`이
+// 소비 프로젝트의 `package.json` → `jkit-rules.pathAliasCheck`를 읽어 토글한다.
+// (`false`로 설정하면 OFF — sync/init 재실행 불필요, ESLint 재시작만으로 반영)
 // =============================================================================
 
 import {
@@ -29,9 +30,9 @@ import {
   baseFrameworkPackages,
   baseIgnores,
   baseImmutabilityRules,
-  basePathAliasPattern,
   buildArchitectureBoundaries,
   buildLayerRestrictions,
+  resolvePathAliasPattern,
 } from '@jkit/code-plugin/nestjs/base/eslint.rules.mjs';
 // {{STACK_IMPORTS}}
 
@@ -65,8 +66,13 @@ const eslintConfig = [
   },
 
   // [3] 헥사고날 레이어별 import 제한 (model/service/port/exception/dto/controller/provider)
-  //     3번째 인자는 gen-eslint.mjs가 package.json.jkit.pathAliasCheck로 치환
-  ...buildLayerRestrictions(allFrameworkPackages, allInfraPackages, {{PATH_ALIAS_PATTERN}}),
+  //     3번째 인자는 ESLint 로드 시점에 package.json `jkit-rules.pathAliasCheck`를
+  //     읽어 결정 — `false`면 path alias(`../**`) 검사 OFF
+  ...buildLayerRestrictions(
+    allFrameworkPackages,
+    allInfraPackages,
+    resolvePathAliasPattern(import.meta.dirname),
+  ),
 
   // [4] 불변성 — Entity와 DTO 필드에 readonly 강제
   ...baseImmutabilityRules,
