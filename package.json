@@ -1,6 +1,6 @@
 {
   "name": "@jkit/code-plugin",
-  "version": "0.3.32",
+  "version": "0.3.33",
   "description": "Shared ESLint/Stylelint rules, formatters, and CLI for jkit-code-plugin",
   "type": "module",
   "exports": {
@@ -37,7 +37,11 @@
     "eslint-plugin-unused-imports": "^4.0.0"
   },
   "peerDependenciesMeta": {
-    "eslint-plugin-prettier": { "optional": true },
-    "eslint-plugin-sonarjs": { "optional": true }
+    "eslint-plugin-prettier": {
+      "optional": true
+    },
+    "eslint-plugin-sonarjs": {
+      "optional": true
+    }
   }
 }
