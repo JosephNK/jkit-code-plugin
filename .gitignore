@@ -4,8 +4,7 @@ node_modules/
 .pytest_cache/
 __pycache__/
 .venv/
-example_flutter/*
-!example_flutter/analysis_options.yaml
+example/*
 settings.local.json
 code-harness/
 docs/
