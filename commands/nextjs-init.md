@@ -223,12 +223,15 @@ esac
 > - `eslint-plugin-simple-import-sort` — import 순서 자동 정렬
 > - `eslint-plugin-unused-imports` — 미사용 import 제거
 > - `eslint-plugin-sonarjs` — 코드 스멜 / 복잡도 검사 (optional peer; nextjs base에서 사용)
+> - `typescript-eslint` — TypeScript 룰셋 (`tseslint.configs.*`)
+> - `eslint-config-prettier` — prettier와 충돌하는 ESLint 룰 비활성화 (optional peer; nextjs base에서 사용)
+> - `eslint-config-next` — Next.js core-web-vitals / typescript 프리셋 (optional peer; Next.js 스캐폴드가 기본 포함)
 >
 > 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
 >
 > ```bash
 > cd "$PROJECT_ROOT"
-> NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs"
+> NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs typescript-eslint eslint-config-prettier eslint-config-next"
 > case "$PM" in
 >   npm)  npm install -D $NEXTJS_PEERS ;;
 >   yarn) yarn add -D $NEXTJS_PEERS ;;

@@ -130,7 +130,7 @@ esac
 
 ```bash
 cd "$PROJECT_ROOT"
-NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs"
+NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs typescript-eslint eslint-config-prettier eslint-config-next"
 case "$PM" in
   npm)  npm install -D $NEXTJS_PEERS ;;
   yarn) yarn add -D $NEXTJS_PEERS ;;

@@ -116,7 +116,7 @@ esac
 
 ```bash
 cd "$PROJECT_ROOT"
-NESTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-prettier"
+NESTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-prettier typescript-eslint"
 case "$PM" in
   npm)  npm install -D $NESTJS_PEERS ;;
   yarn) yarn add -D $NESTJS_PEERS ;;

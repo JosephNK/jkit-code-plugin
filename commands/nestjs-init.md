@@ -184,12 +184,15 @@ esac
 > - `eslint-plugin-simple-import-sort` — import 순서 자동 정렬
 > - `eslint-plugin-unused-imports` — 미사용 import 제거
 > - `eslint-plugin-prettier` — prettier 포맷 룰 통합 (optional peer; nestjs base에서 사용)
+> - `typescript-eslint` — TypeScript 룰셋 (`tseslint.configs.*`)
 >
 > 프로젝트에 없으면 Step 6에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
 >
+> 참고: nestjs base는 `globals`, `@eslint/js`도 직접 import하지만 `nest new` 스캐폴드가 기본 포함하므로 별도 보강하지 않습니다. 누락 시 동일 매니저로 추가 설치하세요.
+>
 > ```bash
 > cd "$PROJECT_ROOT"
-> NESTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-prettier"
+> NESTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-prettier typescript-eslint"
 > case "$PM" in
 >   npm)  npm install -D $NESTJS_PEERS ;;
 >   yarn) yarn add -D $NESTJS_PEERS ;;
