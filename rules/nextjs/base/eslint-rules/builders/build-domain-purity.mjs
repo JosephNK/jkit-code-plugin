@@ -7,7 +7,7 @@ import { baseRestrictedPatterns } from '../settings/restricted-patterns.mjs';
  * 프레임워크 import + 브라우저 글로벌(fetch/window/document/storage) 차단.
  * 데이터는 domain-port를 통해 repository에서 주입.
  */
-export function buildDomainPurity(bannedPackages, restrictedPatterns = baseRestrictedPatterns) {
+export function buildDomainPurity(domainBannedPackages, restrictedPatterns = baseRestrictedPatterns) {
   return defineConfig([
     {
       files: ['src/lib/domain/**/*.ts'],
@@ -18,7 +18,7 @@ export function buildDomainPurity(bannedPackages, restrictedPatterns = baseRestr
             patterns: [
               ...restrictedPatterns,
               {
-                group: bannedPackages,
+                group: domainBannedPackages,
                 message: 'Domain layer must be pure TypeScript. No framework dependencies allowed.',
               },
             ],
