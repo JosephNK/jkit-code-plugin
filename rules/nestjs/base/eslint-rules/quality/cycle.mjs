@@ -1,7 +1,7 @@
 import { defineConfig } from "eslint/config";
 import importPlugin from "eslint-plugin-import";
 
-import { baseImportResolverSettings } from "./import-resolver-settings.mjs";
+import { baseImportResolverSettings } from "../settings/import-resolver-settings.mjs";
 
 /**
  * import/no-cycle — 순환 의존성 감지 (warn).

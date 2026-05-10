@@ -1,6 +1,6 @@
 import { defineConfig } from "eslint/config";
 
-import { basePathAliasPattern } from "./path-alias-pattern.mjs";
+import { basePathAliasPattern } from "../settings/path-alias-pattern.mjs";
 
 /**
  * 레이어별 import 제한 생성기. 스택별 framework/infra 패키지를 받아

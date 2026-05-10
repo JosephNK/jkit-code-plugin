@@ -1,6 +1,6 @@
 import { defineConfig } from 'eslint/config';
 
-import { baseRestrictedPatterns } from './restricted-patterns.mjs';
+import { baseRestrictedPatterns } from '../settings/restricted-patterns.mjs';
 
 /**
  * 도메인 순수성 룰 생성기 (`src/lib/domain/**`).
