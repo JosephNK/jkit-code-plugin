@@ -7,7 +7,7 @@
  * 도메인은 순수 타입 유지, TypeORM 엔티티는 provider/ 에 별도 배치.
  * 사용 가능 위치: provider/ (Port 구현체), infrastructure/ (커넥션).
  */
-export const typeormFrameworkPackages = [
+export const typeormFrameworkBannedPackages = [
   'typeorm',
   'typeorm/*',
 ];

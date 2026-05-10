@@ -3,17 +3,24 @@
 // -----------------------------------------------------------------------------
 // `<domain>/` 직속 하위 폴더는 다음만 허용:
 //   model, port, service, controller, strategy, provider, dto, exception, common
+// `<group>/` 직속 하위 폴더는 *도메인 폴더만* 허용
+// (도메인 = 안에 layer 폴더나 *.module.ts가 있는 폴더).
 //
 // 허용 구조:
 //   src/modules/<domain>/<layer>/...           ✅
 //   src/modules/<group>/<domain>/<layer>/...   ✅
 //
-// 검사 방식 (두 단계):
+// 검사 방식 (세 단계):
 //   1) 경로 검사 — lint 대상 파일 경로 자체가 위 구조를 벗어나면 즉시 보고
 //      (예: src/modules/oauth/modules/email/service/x.service.ts)
-//   2) 디렉토리 스캔 — 도메인을 찾으면 fs.readdirSync로 직속 하위 폴더 전체를
-//      훑어 화이트리스트 외 폴더가 있으면 보고. 빈 폴더 / `.ts` 없는 폴더도
-//      잡을 수 있게 anchor에 `<domain>.module.ts`도 포함한다.
+//   2) <domain>/ 디렉토리 스캔 — fs.readdirSync로 직속 하위 폴더 전체를
+//      훑어 LAYERS 외 폴더가 있으면 보고.
+//   3) <group>/ 디렉토리 스캔 — group/domain 구조(domainSegments.length === 2)
+//      일 때 group 절대 경로도 readdirSync로 스캔. 직속 하위 폴더 중 도메인
+//      판정(layer 폴더 or *.module.ts 보유)에 실패한 폴더는 unknownGroupFolder
+//      로 보고.
+//   빈 폴더 / `.ts` 없는 폴더도 잡을 수 있게 anchor에 `<domain>.module.ts`도
+//   포함한다.
 //
 // 보완 룰:
 //   - no-nested-layer-dir: 레이어 폴더 *내부*에 하위 폴더 금지
@@ -26,17 +33,12 @@
 
 import fs from "node:fs";
 
-const LAYERS = [
-  "model",
-  "port",
-  "service",
-  "controller",
-  "strategy",
-  "provider",
-  "exception",
-  "dto",
-  "common",
-];
+import { MODULE_LAYERS } from "../eslint-rules/settings/boundary-module-layers.mjs";
+
+// MODULE_LAYERS(8개 헥사고날 레이어) + `common` (일부 도메인이 자체 common 폴더를
+// 두는 패턴 허용). boundary-elements에는 `<domain>/common/` pattern이 없어 파일을
+// 두면 boundaries/no-unknown-files가 거부하지만, 빈 폴더는 이 룰이 통과시킨다.
+const LAYERS = [...MODULE_LAYERS.map((l) => l.type), "common"];
 
 const PATH_PREFIX = "/src/modules/";
 
@@ -45,17 +47,37 @@ const PATH_PREFIX = "/src/modules/";
 // stale 캐시도 false-positive를 만들지 않는다.
 const reportedUnknownFolders = new Set();
 
+/**
+ * 폴더 안에 layer 폴더 또는 *.module.ts가 있으면 도메인으로 간주.
+ * group 직속 unknown 폴더와 도메인 폴더를 구분하는 데 사용.
+ */
+function isLikelyDomainFolder(absPath) {
+  let entries;
+  try {
+    entries = fs.readdirSync(absPath, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+  for (const entry of entries) {
+    if (entry.isDirectory() && LAYERS.includes(entry.name)) return true;
+    if (entry.isFile() && entry.name.endsWith(".module.ts")) return true;
+  }
+  return false;
+}
+
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
     type: "problem",
     docs: {
       description:
-        "Only model/port/service/controller/strategy/provider/dto/exception/common folders are allowed under <domain>/",
+        "Only model/port/service/controller/strategy/provider/dto/exception/common folders are allowed under <domain>/, and only domain folders (containing a layer folder or *.module.ts) under <group>/",
     },
     messages: {
       unknownFolder:
         'Unknown folder under <domain>/ at "{{ path }}". Only model, port, service, controller, strategy, provider, dto, exception, common are allowed directly under <domain>/. (conventions.md: domain layout)',
+      unknownGroupFolder:
+        'Unknown folder under <group>/ at "{{ path }}". Only domain folders (containing a layer folder or *.module.ts) are allowed directly under <group>/. (conventions.md: domain layout)',
     },
     schema: [],
   },
@@ -125,23 +147,55 @@ export default {
         try {
           entries = fs.readdirSync(domainAbsPath, { withFileTypes: true });
         } catch {
-          return;
+          entries = null;
         }
 
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          if (LAYERS.includes(entry.name)) continue;
+        if (entries) {
+          for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            if (LAYERS.includes(entry.name)) continue;
 
-          const unknownAbsPath = `${domainAbsPath}/${entry.name}`;
-          if (reportedUnknownFolders.has(unknownAbsPath)) continue;
-          reportedUnknownFolders.add(unknownAbsPath);
+            const unknownAbsPath = `${domainAbsPath}/${entry.name}`;
+            if (reportedUnknownFolders.has(unknownAbsPath)) continue;
+            reportedUnknownFolders.add(unknownAbsPath);
 
-          const violatingPath = `src/modules/${domainSegments.join("/")}/${entry.name}/`;
-          context.report({
-            node,
-            messageId: "unknownFolder",
-            data: { path: violatingPath },
-          });
+            const violatingPath = `src/modules/${domainSegments.join("/")}/${entry.name}/`;
+            context.report({
+              node,
+              messageId: "unknownFolder",
+              data: { path: violatingPath },
+            });
+          }
+        }
+
+        // group/domain 구조 — group 직속 unknown 폴더 스캔
+        // group 직속에는 도메인 폴더(layer 보유 or *.module.ts)만 허용
+        if (domainSegments.length === 2) {
+          const groupAbsPath = prefix + domainSegments[0];
+          let groupEntries;
+          try {
+            groupEntries = fs.readdirSync(groupAbsPath, {
+              withFileTypes: true,
+            });
+          } catch {
+            groupEntries = null;
+          }
+          if (groupEntries) {
+            for (const entry of groupEntries) {
+              if (!entry.isDirectory()) continue;
+              const childAbsPath = `${groupAbsPath}/${entry.name}`;
+              if (reportedUnknownFolders.has(childAbsPath)) continue;
+              if (isLikelyDomainFolder(childAbsPath)) continue;
+
+              reportedUnknownFolders.add(childAbsPath);
+              const violatingPath = `src/modules/${domainSegments[0]}/${entry.name}/`;
+              context.report({
+                node,
+                messageId: "unknownGroupFolder",
+                data: { path: violatingPath },
+              });
+            }
+          }
         }
       },
     };

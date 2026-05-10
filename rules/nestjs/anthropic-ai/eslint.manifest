@@ -1,10 +1,10 @@
 --- import ---
 import {
-  anthropicFrameworkPackages,
+  anthropicFrameworkBannedPackages,
   anthropicInfraPackages,
 } from '@jkit/code-plugin/nestjs/anthropic-ai/eslint.rules.mjs';
---- framework ---
-    ...anthropicFrameworkPackages,
+--- framework-banned ---
+    ...anthropicFrameworkBannedPackages,
 --- infra ---
     ...anthropicInfraPackages,
 --- elements ---

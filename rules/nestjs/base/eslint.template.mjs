@@ -7,7 +7,7 @@
 //
 // 플레이스홀더:
 //   {{STACK_IMPORTS}}        — 스택별 export import 구문
-//   {{FRAMEWORK_PACKAGES}}   — 순수 레이어(model/port/exception)에서 금지할 패키지
+//   {{FRAMEWORK_BANNED_PACKAGES}}   — 순수 레이어(model/port/exception)에서 금지할 패키지
 //   {{INFRA_PACKAGES}}       — service/에서 직접 import 금지할 인프라 SDK
 //   {{BOUNDARY_ELEMENTS}}    — 추가 boundary element 정의
 //   {{BOUNDARY_RULES}}       — 추가 boundary from/allow 규칙
@@ -27,7 +27,7 @@ import {
   baseCustomRules,
   baseCycleRules,
   baseFileSizeRules,
-  baseFrameworkPackages,
+  baseFrameworkBannedPackages,
   baseIgnores,
   baseImmutabilityRules,
   buildArchitectureBoundaries,
@@ -38,9 +38,9 @@ import {
 
 // ─── Merged framework packages (base + stacks) ────────────────────────────────
 // 모든 순수 레이어(model/, port/, exception/)에서 import 차단할 패키지 총합
-const allFrameworkPackages = [
-  ...baseFrameworkPackages,
-// {{FRAMEWORK_PACKAGES}}
+const allFrameworkBannedPackages = [
+  ...baseFrameworkBannedPackages,
+// {{FRAMEWORK_BANNED_PACKAGES}}
 ];
 
 // ─── Merged infra SDK packages (stacks only — banned from service/exception) ──
@@ -69,7 +69,7 @@ const eslintConfig = [
   //     3번째 인자는 ESLint 로드 시점에 package.json `jkit-rules.pathAliasCheck`를
   //     읽어 결정 — `false`면 path alias(`../**`) 검사 OFF
   ...buildLayerRestrictions(
-    allFrameworkPackages,
+    allFrameworkBannedPackages,
     allInfraPackages,
     resolvePathAliasPattern(import.meta.dirname),
   ),

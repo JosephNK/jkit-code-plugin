@@ -5,7 +5,7 @@
 // =============================================================================
 
 /** Framework 차단 — 도메인이 특정 클라우드 벤더 타입에 의존 금지. */
-export const gcpFrameworkPackages = [
+export const gcpFrameworkBannedPackages = [
   '@google-cloud/*',
 ];
 

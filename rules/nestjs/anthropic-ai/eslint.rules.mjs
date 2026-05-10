@@ -5,7 +5,7 @@
 // =============================================================================
 
 /** Framework 차단 — model/port/exception에서 Anthropic 타입 노출 금지. */
-export const anthropicFrameworkPackages = [
+export const anthropicFrameworkBannedPackages = [
   '@anthropic-ai/*',
 ];
 

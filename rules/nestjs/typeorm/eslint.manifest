@@ -1,9 +1,9 @@
 --- import ---
 import {
-  typeormFrameworkPackages,
+  typeormFrameworkBannedPackages,
 } from '@jkit/code-plugin/nestjs/typeorm/eslint.rules.mjs';
---- framework ---
-    ...typeormFrameworkPackages,
+--- framework-banned ---
+    ...typeormFrameworkBannedPackages,
 --- infra ---
 --- elements ---
 --- rules ---

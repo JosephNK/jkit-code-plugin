@@ -111,8 +111,25 @@ function nodeToValue(node, localConsts) {
       }
       return parts.join('');
     }
-    case 'ArrayExpression':
-      return node.elements.map((el) => (el ? nodeToValue(el, localConsts) : null));
+    case 'ArrayExpression': {
+      const result = [];
+      for (const el of node.elements) {
+        if (!el) {
+          result.push(null);
+          continue;
+        }
+        if (el.type === 'SpreadElement') {
+          const v = nodeToValue(el.argument, localConsts);
+          if (!Array.isArray(v)) {
+            throw new Error('SpreadElement argument is not an array');
+          }
+          result.push(...v);
+          continue;
+        }
+        result.push(nodeToValue(el, localConsts));
+      }
+      return result;
+    }
     case 'ObjectExpression': {
       const obj = {};
       for (const prop of node.properties) {
@@ -203,11 +220,18 @@ function collectTopLevelExports(program) {
 
 /**
  * 단일 파일을 파싱해 export/JSDoc/localConsts/comments 컨텍스트를 빌드.
+ * 상대경로 `import { X } from './sub.mjs'`를 따라가서 sub-file의 export 값을
+ * nodeToValue로 평가해 localConsts에 주입한다 (X를 일반 const처럼 사용 가능).
+ * cross-file inline comment 추적을 위해 `localImports`(localName → sub-file
+ * 컨텍스트 + exportedName)도 함께 빌드한다.
  *
  * @param {string} filePath
- * @returns {{ filePath, source, program, comments, exportsMap, localConsts, jsdocMap }}
+ * @param {Map<string, object>} [fileCache] 같은 파일 중복 파싱 방지
+ * @returns {{ filePath, source, program, comments, exportsMap, localConsts,
+ *            localImports, jsdocMap }}
  */
-function parseFile(filePath) {
+function parseFile(filePath, fileCache) {
+  if (fileCache && fileCache.has(filePath)) return fileCache.get(filePath);
   const source = fs.readFileSync(filePath, 'utf8');
   const comments = [];
   const program = acorn.parse(source, {
@@ -218,8 +242,46 @@ function parseFile(filePath) {
   });
   const exportsMap = collectTopLevelExports(program);
   const localConsts = collectTopLevelConsts(program);
-  const jsdocMap = buildJSDocMap(source, exportsMap, comments);
-  return { filePath, source, program, comments, exportsMap, localConsts, jsdocMap };
+  const localImports = new Map();
+  const file = {
+    filePath,
+    source,
+    program,
+    comments,
+    exportsMap,
+    localConsts,
+    localImports,
+    jsdocMap: null,
+  };
+  if (fileCache) fileCache.set(filePath, file);
+
+  // 상대경로 named import만 따라감 — npm/scoped 패키지는 무시.
+  // 순환 import이 있어도 fileCache가 미완성 file을 이미 가지고 있어 무한 재귀를 차단.
+  for (const stmt of program.body) {
+    if (stmt.type !== 'ImportDeclaration') continue;
+    const src = stmt.source.value;
+    if (typeof src !== 'string' || !src.startsWith('.')) continue;
+    const subPath = path.resolve(path.dirname(filePath), src);
+    if (!fs.existsSync(subPath)) continue;
+    const subFile = parseFile(subPath, fileCache);
+    for (const spec of stmt.specifiers) {
+      if (spec.type !== 'ImportSpecifier') continue;
+      const importedName = spec.imported.name;
+      const localName = spec.local.name;
+      const subInfo = subFile.exportsMap.get(importedName);
+      if (!subInfo) continue;
+      try {
+        const value = nodeToValue(subInfo.declarator.init, subFile.localConsts);
+        localConsts.set(localName, value);
+        localImports.set(localName, { sourceFile: subFile, exportedName: importedName });
+      } catch {
+        // 평가 실패 시 skip — Identifier resolve 실패는 nodeToValue가 throw
+      }
+    }
+  }
+
+  file.jsdocMap = buildJSDocMap(source, exportsMap, comments);
+  return file;
 }
 
 /**
@@ -231,11 +293,10 @@ function parseFile(filePath) {
  * @returns {{ entry, exportsMap: Map<string, {declarator, exportNode, file}>, jsdocMap: Record<string, string> }}
  */
 function parseAndResolveExports(entryPath) {
-  const entry = parseFile(entryPath);
+  const fileCache = new Map();
+  const entry = parseFile(entryPath, fileCache);
   const merged = new Map();
   const mergedJsdoc = {};
-  const fileCache = new Map();
-  fileCache.set(entry.filePath, entry);
 
   // 진입 파일의 직접 export
   for (const [name, info] of entry.exportsMap) {
@@ -254,11 +315,7 @@ function parseAndResolveExports(entryPath) {
       console.warn(`[warn] re-export 대상을 찾을 수 없음: ${sourcePath}`);
       continue;
     }
-    let subFile = fileCache.get(sourcePath);
-    if (!subFile) {
-      subFile = parseFile(sourcePath);
-      fileCache.set(sourcePath, subFile);
-    }
+    const subFile = parseFile(sourcePath, fileCache);
     for (const spec of stmt.specifiers) {
       if (spec.type !== 'ExportSpecifier') continue;
       const localName = spec.local?.name;
@@ -307,13 +364,41 @@ function buildJSDocMap(source, exportsMap, comments) {
 /**
  * 배열 엘리먼트(ObjectExpression) 중 `type: '<key>'` 프로퍼티를 가진 것에 대해,
  * 같은 줄의 라인 주석을 { [typeValue]: commentText } 로 매핑.
+ * SpreadElement는 import된 식별자를 따라가 sub-file의 ArrayExpression + 그
+ * 파일의 comments로 같은 매핑을 재귀 수행 — cross-file 코멘트도 surface.
+ *
+ * @param {object} arrayNode  ArrayExpression 노드
+ * @param {object} file       arrayNode가 속한 파일 컨텍스트(comments + localImports)
  */
-function mapInlineTypeCommentsOnArray(arrayNode, comments) {
+function mapInlineTypeCommentsOnArray(arrayNode, file) {
   const map = {};
   if (!arrayNode || arrayNode.type !== 'ArrayExpression') return map;
-  const lineComments = comments.filter((c) => c.type === 'Line');
+  const visited = new Set();
+  collectInlineTypeComments(arrayNode, file, map, visited);
+  return map;
+}
+
+function collectInlineTypeComments(arrayNode, file, map, visited) {
+  if (visited.has(arrayNode)) return;
+  visited.add(arrayNode);
+  const lineComments = file.comments.filter((c) => c.type === 'Line');
   for (const el of arrayNode.elements) {
-    if (!el || el.type !== 'ObjectExpression') continue;
+    if (!el) continue;
+    if (el.type === 'SpreadElement') {
+      // import된 배열 식별자만 follow — 다른 표현식은 skip
+      if (el.argument.type !== 'Identifier') continue;
+      const importInfo = file.localImports?.get(el.argument.name);
+      if (!importInfo) continue;
+      const subFile = importInfo.sourceFile;
+      const subInfo = subFile.exportsMap.get(importInfo.exportedName);
+      if (!subInfo) continue;
+      const subInit = subInfo.declarator.init;
+      if (subInit && subInit.type === 'ArrayExpression') {
+        collectInlineTypeComments(subInit, subFile, map, visited);
+      }
+      continue;
+    }
+    if (el.type !== 'ObjectExpression') continue;
     const typeProp = el.properties.find(
       (p) => p.type === 'Property' && !p.computed && (
         (p.key.type === 'Identifier' && p.key.name === 'type') ||
@@ -326,7 +411,6 @@ function mapInlineTypeCommentsOnArray(arrayNode, comments) {
     const sameLineComment = lineComments.find((c) => c.loc.start.line === endLine);
     if (sameLineComment) map[typeValue] = sameLineComment.value.trim();
   }
-  return map;
 }
 
 /**
@@ -1002,7 +1086,7 @@ function renderReference({
   restrictedPatterns,
   restrictedSyntax,
   domainBannedPackages,
-  frameworkPackages,
+  frameworkBannedPackages,
   infraPackages,
   ruleOverrides,
   ignoredPaths,
@@ -1098,15 +1182,15 @@ function renderReference({
     sections.push(body.join('\n'));
   }
 
-  if (frameworkPackages?.length) {
+  if (frameworkBannedPackages?.length) {
     const body = [];
     body.push('## Framework 금지 패키지 (순수 레이어 차단)');
     body.push('');
-    if (jsdocMap.frameworkPackages) {
-      body.push(jsdocMap.frameworkPackages);
+    if (jsdocMap.frameworkBannedPackages) {
+      body.push(jsdocMap.frameworkBannedPackages);
       body.push('');
     }
-    body.push(renderPackageBulletList(frameworkPackages));
+    body.push(renderPackageBulletList(frameworkBannedPackages));
     sections.push(body.join('\n'));
   }
 
@@ -1166,7 +1250,7 @@ function tryValue(declarator, localConsts) {
 /**
  * suffix(PascalCase)로 끝나는 top-level export를 찾는다.
  * - `base<Suffix>` 를 우선 (base 파일 legacy 호환), 없으면 `<prefix><Suffix>` 중 첫 매치.
- * - 매칭 대상 export 이름 규칙: 첫 글자 소문자 + 이후 PascalCase (e.g. `gcpFrameworkPackages`).
+ * - 매칭 대상 export 이름 규칙: 첫 글자 소문자 + 이후 PascalCase (e.g. `gcpFrameworkBannedPackages`).
  */
 function findExportBySuffix(exportsMap, suffix) {
   const baseKey = `base${suffix}`;
@@ -1180,8 +1264,8 @@ function findExportBySuffix(exportsMap, suffix) {
 
 /**
  * export 이름에서 suffix를 제외한 prefix를 추출 후, suffix 기준 key로 JSDoc 재매핑.
- * 예: { baseBoundaryRules: '...' } / { gcpFrameworkPackages: '...' }
- *  → { boundaryRules: '...', frameworkPackages: '...' }
+ * 예: { baseBoundaryRules: '...' } / { gcpFrameworkBannedPackages: '...' }
+ *  → { boundaryRules: '...', frameworkBannedPackages: '...' }
  */
 function normalizeJsdocBySuffix(rawJsdocMap, resolved) {
   const out = {};
@@ -1214,7 +1298,7 @@ function main() {
     restrictedPatterns: findExportBySuffix(exportsMap, 'RestrictedPatterns'),
     restrictedSyntax: findExportBySuffix(exportsMap, 'RestrictedSyntax'),
     domainBannedPackages: findExportBySuffix(exportsMap, 'DomainBannedPackages'),
-    frameworkPackages: findExportBySuffix(exportsMap, 'FrameworkPackages'),
+    frameworkBannedPackages: findExportBySuffix(exportsMap, 'FrameworkBannedPackages'),
     infraPackages: findExportBySuffix(exportsMap, 'InfraPackages'),
     boundaryIgnores: findExportBySuffix(exportsMap, 'BoundaryIgnores'),
     ignores: findExportBySuffix(exportsMap, 'Ignores'),
@@ -1233,7 +1317,7 @@ function main() {
   const inlineComments = resolved.boundaryElements?.declarator
     ? mapInlineTypeCommentsOnArray(
         resolved.boundaryElements.declarator.init,
-        resolved.boundaryElements.file.comments,
+        resolved.boundaryElements.file,
       )
     : {};
   const annotations = evalObj(resolved.structureAnnotations);
@@ -1243,7 +1327,7 @@ function main() {
   const restrictedPatterns = evalArr(resolved.restrictedPatterns);
   const restrictedSyntax = evalArr(resolved.restrictedSyntax);
   const domainBannedPackages = evalArr(resolved.domainBannedPackages);
-  const frameworkPackages = evalArr(resolved.frameworkPackages);
+  const frameworkBannedPackages = evalArr(resolved.frameworkBannedPackages);
   const infraPackages = evalArr(resolved.infraPackages);
 
   let ignoredPaths = [];
@@ -1318,7 +1402,7 @@ function main() {
     restrictedPatterns,
     restrictedSyntax,
     domainBannedPackages,
-    frameworkPackages,
+    frameworkBannedPackages,
     infraPackages,
     ruleOverrides,
     ignoredPaths,
@@ -1334,7 +1418,7 @@ function main() {
     restrictedPatterns.length ||
     restrictedSyntax.length ||
     domainBannedPackages.length ||
-    frameworkPackages.length ||
+    frameworkBannedPackages.length ||
     infraPackages.length ||
     ruleOverrides.unscoped.length + ruleOverrides.scoped.length ||
     ignoredPaths.length;

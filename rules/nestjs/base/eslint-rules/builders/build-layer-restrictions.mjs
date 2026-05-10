@@ -7,7 +7,7 @@ import { basePathAliasPattern } from "../settings/path-alias-pattern.mjs";
  * 각 레이어의 no-restricted-imports를 구성. 레이어별 제한은 인라인 주석 참조.
  */
 export function buildLayerRestrictions(
-  frameworkPackages,
+  frameworkBannedPackages,
   infraPackages = [],
   pathAliasPattern = basePathAliasPattern,
 ) {
@@ -27,7 +27,7 @@ export function buildLayerRestrictions(
             patterns: [
               ...aliasPart,
               {
-                group: frameworkPackages,
+                group: frameworkBannedPackages,
                 message:
                   "model/ must not import frameworks or external libraries.",
               },
@@ -118,7 +118,7 @@ export function buildLayerRestrictions(
             patterns: [
               ...aliasPart,
               {
-                group: frameworkPackages,
+                group: frameworkBannedPackages,
                 message:
                   "port/ must not import frameworks — use domain types instead.",
               },

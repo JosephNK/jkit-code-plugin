@@ -1,10 +1,10 @@
 --- import ---
 import {
-  gcpFrameworkPackages,
+  gcpFrameworkBannedPackages,
   gcpInfraPackages,
 } from '@jkit/code-plugin/nestjs/gcp/eslint.rules.mjs';
---- framework ---
-    ...gcpFrameworkPackages,
+--- framework-banned ---
+    ...gcpFrameworkBannedPackages,
 --- infra ---
     ...gcpInfraPackages,
 --- elements ---

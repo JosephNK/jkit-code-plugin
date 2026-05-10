@@ -22,7 +22,7 @@
 //   rules      -> {{BOUNDARY_RULES}}
 //   patches    -> {{BOUNDARY_PATCHES}}
 //   ignores    -> {{BOUNDARY_IGNORES}}
-//   framework  -> {{FRAMEWORK_PACKAGES}}
+//   framework-banned -> {{FRAMEWORK_BANNED_PACKAGES}}
 //   infra      -> {{INFRA_PACKAGES}}
 //   custom     -> {{CUSTOM_CONFIG}}
 //
@@ -144,7 +144,7 @@ const MARKERS = [
   { section: 'rules', marker: '// {{BOUNDARY_RULES}}' },
   { section: 'patches', marker: '// {{BOUNDARY_PATCHES}}' },
   { section: 'ignores', marker: '// {{BOUNDARY_IGNORES}}' },
-  { section: 'framework', marker: '// {{FRAMEWORK_PACKAGES}}' },
+  { section: 'framework-banned', marker: '// {{FRAMEWORK_BANNED_PACKAGES}}' },
   { section: 'infra', marker: '// {{INFRA_PACKAGES}}' },
   { section: 'custom', marker: '// {{CUSTOM_CONFIG}}' },
 ];

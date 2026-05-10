@@ -3,9 +3,10 @@
 // -----------------------------------------------------------------------------
 // 헥사고날 레이어 폴더 직속 파일만 허용 (flat-only).
 //
-// 각 레이어(model/port/service/controller/strategy/provider/exception/dto) 안에
-// 하위 디렉토리를 두면 enforce-file-suffix가 적용되지 않는 사각지대가 생기고
-// (LAYER_PATTERN이 직속 파일만 매치), 잘못된 위치/명명을 감지할 수 없게 된다.
+// 각 레이어(MODULE_LAYERS — model/port/service/controller/strategy/provider/
+// exception/dto) 안에 하위 디렉토리를 두면 enforce-file-suffix가 적용되지 않는
+// 사각지대가 생기고(LAYER_PATTERN이 직속 파일만 매치), 잘못된 위치/명명을
+// 감지할 수 없게 된다.
 //
 // 위반 예:
 //   src/modules/order/provider/entities/order.orm-entity.ts  ❌
@@ -19,8 +20,11 @@
 //   - *.spec.ts / *.test.ts / *.module.ts (테스트·DI 조립)
 // =============================================================================
 
-const NESTED_PATTERN =
-  /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(model|port|service|controller|strategy|provider|exception|dto)\/([^/]+)\/[^/]+$/;
+import { MODULE_LAYERS } from "../eslint-rules/settings/boundary-module-layers.mjs";
+
+const NESTED_PATTERN = new RegExp(
+  `/src/modules/[^/]+(?:/[^/]+)*/(${MODULE_LAYERS.map((l) => l.type).join("|")})/([^/]+)/[^/]+$`,
+);
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
