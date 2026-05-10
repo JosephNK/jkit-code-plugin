@@ -177,19 +177,24 @@ esac
 
 > 설치 후 `node_modules/@jkit/code-plugin/`에 `rules/nestjs/` 디렉토리가 배치됩니다 (플러그인 repo의 `files` 필드로 nestjs 규칙만 포함).
 
-> **peerDependencies**: `@jkit/code-plugin`는 다음을 peer로 요구합니다:
-> - `eslint-plugin-import` — 순환 의존성 감지(`import/no-cycle`)
+> **peerDependencies**: `@jkit/code-plugin`는 다음을 peer로 요구합니다 (rules가 직접 import):
+> - `eslint-plugin-boundaries` — 아키텍처 레이어 boundary 검사
+> - `eslint-plugin-import` — 순환 의존성 감지(`import/no-cycle`) + resolver 기반 동작
 > - `eslint-import-resolver-typescript` — `@/*` path alias 및 NodeNext `.js` import 해석 (boundaries/no-unknown 오발화 방지)
+> - `eslint-plugin-simple-import-sort` — import 순서 자동 정렬
+> - `eslint-plugin-unused-imports` — 미사용 import 제거
+> - `eslint-plugin-prettier` — prettier 포맷 룰 통합 (optional peer; nestjs base에서 사용)
 >
-> 프로젝트에 없으면 Step 6에서 결정된 `PM`에 맞춰 추가 설치합니다. 대부분의 패키지 매니저는 peerDep 누락 시 경고 또는 자동 설치로 대응합니다.
+> 프로젝트에 없으면 Step 6에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
 >
 > ```bash
 > cd "$PROJECT_ROOT"
+> NESTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-prettier"
 > case "$PM" in
->   npm)  npm install -D eslint-plugin-import eslint-import-resolver-typescript ;;
->   yarn) yarn add -D eslint-plugin-import eslint-import-resolver-typescript ;;
->   pnpm) pnpm add -D eslint-plugin-import eslint-import-resolver-typescript ;;
->   bun)  bun add -d eslint-plugin-import eslint-import-resolver-typescript ;;
+>   npm)  npm install -D $NESTJS_PEERS ;;
+>   yarn) yarn add -D $NESTJS_PEERS ;;
+>   pnpm) pnpm add -D $NESTJS_PEERS ;;
+>   bun)  bun add -d $NESTJS_PEERS ;;
 > esac
 > ```
 

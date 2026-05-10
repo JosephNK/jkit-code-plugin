@@ -124,6 +124,21 @@ case "$PM" in
 esac
 ```
 
+#### peer 누락 보강
+
+기존 프로젝트가 구버전 `@jkit/code-plugin`로 설치되어 신규 peer가 누락된 경우 보강합니다. 이미 있으면 매니저가 skip합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs"
+case "$PM" in
+  npm)  npm install -D $NEXTJS_PEERS ;;
+  yarn) yarn add -D $NEXTJS_PEERS ;;
+  pnpm) pnpm add -D $NEXTJS_PEERS ;;
+  bun)  bun add -d $NEXTJS_PEERS ;;
+esac
+```
+
 ### 6. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
