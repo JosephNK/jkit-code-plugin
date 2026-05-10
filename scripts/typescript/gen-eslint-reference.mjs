@@ -1087,7 +1087,7 @@ function renderReference({
   restrictedSyntax,
   domainBannedPackages,
   frameworkBannedPackages,
-  infraPackages,
+  infraBannedPackages,
   ruleOverrides,
   ignoredPaths,
   stackLabel,
@@ -1194,15 +1194,15 @@ function renderReference({
     sections.push(body.join('\n'));
   }
 
-  if (infraPackages?.length) {
+  if (infraBannedPackages?.length) {
     const body = [];
     body.push('## Infra 금지 패키지 (service 레이어 차단)');
     body.push('');
-    if (jsdocMap.infraPackages) {
-      body.push(jsdocMap.infraPackages);
+    if (jsdocMap.infraBannedPackages) {
+      body.push(jsdocMap.infraBannedPackages);
       body.push('');
     }
-    body.push(renderPackageBulletList(infraPackages));
+    body.push(renderPackageBulletList(infraBannedPackages));
     sections.push(body.join('\n'));
   }
 
@@ -1299,7 +1299,7 @@ function main() {
     restrictedSyntax: findExportBySuffix(exportsMap, 'RestrictedSyntax'),
     domainBannedPackages: findExportBySuffix(exportsMap, 'DomainBannedPackages'),
     frameworkBannedPackages: findExportBySuffix(exportsMap, 'FrameworkBannedPackages'),
-    infraPackages: findExportBySuffix(exportsMap, 'InfraPackages'),
+    infraBannedPackages: findExportBySuffix(exportsMap, 'InfraBannedPackages'),
     boundaryIgnores: findExportBySuffix(exportsMap, 'BoundaryIgnores'),
     ignores: findExportBySuffix(exportsMap, 'Ignores'),
     config: findExportBySuffix(exportsMap, 'Config'),
@@ -1328,7 +1328,7 @@ function main() {
   const restrictedSyntax = evalArr(resolved.restrictedSyntax);
   const domainBannedPackages = evalArr(resolved.domainBannedPackages);
   const frameworkBannedPackages = evalArr(resolved.frameworkBannedPackages);
-  const infraPackages = evalArr(resolved.infraPackages);
+  const infraBannedPackages = evalArr(resolved.infraBannedPackages);
 
   let ignoredPaths = [];
   if (resolved.boundaryIgnores) {
@@ -1403,7 +1403,7 @@ function main() {
     restrictedSyntax,
     domainBannedPackages,
     frameworkBannedPackages,
-    infraPackages,
+    infraBannedPackages,
     ruleOverrides,
     ignoredPaths,
     stackLabel,
@@ -1419,7 +1419,7 @@ function main() {
     restrictedSyntax.length ||
     domainBannedPackages.length ||
     frameworkBannedPackages.length ||
-    infraPackages.length ||
+    infraBannedPackages.length ||
     ruleOverrides.unscoped.length + ruleOverrides.scoped.length ||
     ignoredPaths.length;
 

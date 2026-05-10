@@ -8,7 +8,7 @@
 // 플레이스홀더:
 //   {{STACK_IMPORTS}}        — 스택별 export import 구문
 //   {{FRAMEWORK_BANNED_PACKAGES}}   — 순수 레이어(model/port/exception)에서 금지할 패키지
-//   {{INFRA_PACKAGES}}       — service/에서 직접 import 금지할 인프라 SDK
+//   {{INFRA_BANNED_PACKAGES}} — service/에서 직접 import 금지할 인프라 SDK
 //   {{BOUNDARY_ELEMENTS}}    — 추가 boundary element 정의
 //   {{BOUNDARY_RULES}}       — 추가 boundary from/allow 규칙
 //   {{BOUNDARY_IGNORES}}     — boundary 검사 제외 경로 추가분
@@ -25,7 +25,7 @@ import {
   baseBoundaryRules,
   baseConfig,
   baseCustomRules,
-  baseCycleRules,
+  baseImportCycleRules,
   baseFileSizeRules,
   baseFrameworkBannedPackages,
   baseIgnores,
@@ -45,8 +45,8 @@ const allFrameworkBannedPackages = [
 
 // ─── Merged infra SDK packages (stacks only — banned from service/exception) ──
 // service/ 계층에서 직접 import 금지되는 인프라 SDK 목록 (Port로 추상화 강제)
-const allInfraPackages = [
-// {{INFRA_PACKAGES}}
+const allInfraBannedPackages = [
+// {{INFRA_BANNED_PACKAGES}}
 ];
 
 // ─── Final config assembly ────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ const eslintConfig = [
   //     읽어 결정 — `false`면 path alias(`../**`) 검사 OFF
   ...buildLayerRestrictions(
     allFrameworkBannedPackages,
-    allInfraPackages,
+    allInfraBannedPackages,
     resolvePathAliasPattern(import.meta.dirname),
   ),
 
@@ -101,7 +101,7 @@ const eslintConfig = [
   ...baseCustomRules,
 
   // [7-1] 순환 의존성 감지 (warn — 실제 프로젝트 검증 후 error 승격 권장)
-  ...baseCycleRules,
+  ...baseImportCycleRules,
 
 // {{CUSTOM_CONFIG}}
 

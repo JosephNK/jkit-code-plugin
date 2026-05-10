@@ -8,7 +8,7 @@ import { basePathAliasPattern } from "../settings/path-alias-pattern.mjs";
  */
 export function buildLayerRestrictions(
   frameworkBannedPackages,
-  infraPackages = [],
+  infraBannedPackages = [],
   pathAliasPattern = basePathAliasPattern,
 ) {
   // null/false 주입 시 path alias 검사 비활성 — patterns 배열에서 제외
@@ -86,10 +86,10 @@ export function buildLayerRestrictions(
                   "service/ must not import from @nestjs/* (except @nestjs/common and @nestjs/event-emitter).",
               },
               // 인프라 SDK(GCP/Anthropic 등) 직접 사용 금지 — Port를 통해 추상화
-              ...(infraPackages.length > 0
+              ...(infraBannedPackages.length > 0
                 ? [
                     {
-                      group: infraPackages,
+                      group: infraBannedPackages,
                       message:
                         "service/ must not import infrastructure SDKs directly.",
                     },
@@ -160,7 +160,7 @@ export function buildLayerRestrictions(
             patterns: [
               ...aliasPart,
               {
-                group: ["@nestjs/*", ...infraPackages],
+                group: ["@nestjs/*", ...infraBannedPackages],
                 message: "exception/ must not import frameworks.",
               },
             ],

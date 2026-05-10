@@ -107,7 +107,7 @@ class AlN1PortNamingLint extends DartLint { ... }
 surface되는 export
 
 - `baseBoundaryElements` (인라인 `//` → 구조 reference 설명 컬럼)
-- `baseLayerSemantics`, `baseBoundaryRules`, `baseBoundaryAllowPatches`, `baseRestrictedPatterns`, `baseRestrictedSyntax`, `baseDomainBannedPackages`, `baseFrameworkPackages`, `baseInfraPackages`, `baseBoundaryIgnores` (또는 `baseIgnores`) → 각 섹션 preface
+- `baseLayerSemantics`, `baseBoundaryRules`, `baseBoundaryAllowPatches`, `baseRestrictedPatterns`, `baseRestrictedSyntax`, `baseDomainBannedPackages`, `baseFrameworkBannedPackages`, `baseBoundaryIgnores` (또는 `baseIgnores`) → 각 섹션 preface (스택 파일은 `<stack>FrameworkBannedPackages` / `<stack>InfraBannedPackages` 형태)
 
 예시
 

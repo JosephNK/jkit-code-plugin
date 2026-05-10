@@ -19,7 +19,7 @@
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 export { basePathAliasPattern } from "./eslint-rules/settings/path-alias-pattern.mjs";
-export { resolvePathAliasPattern } from "./eslint-rules/settings/resolve-path-alias.mjs";
+export { resolvePathAliasPattern } from "./eslint-rules/settings/resolve-path-alias-pattern.mjs";
 export { baseImportResolverSettings } from "./eslint-rules/settings/import-resolver-settings.mjs";
 export { baseFrameworkBannedPackages } from "./eslint-rules/settings/framework-banned-packages.mjs";
 
@@ -32,7 +32,7 @@ export { baseBoundaryIgnores } from "./eslint-rules/boundaries/boundary-ignores.
 export { baseConfig } from "./eslint-rules/quality/base-config.mjs";
 export { baseImmutabilityRules } from "./eslint-rules/quality/immutability.mjs";
 export { baseFileSizeRules } from "./eslint-rules/quality/file-size.mjs";
-export { baseCycleRules } from "./eslint-rules/quality/cycle.mjs";
+export { baseImportCycleRules } from "./eslint-rules/quality/import-cycle.mjs";
 export { baseCustomRules } from "./eslint-rules/quality/custom-rules.mjs";
 export { baseIgnores } from "./eslint-rules/quality/ignores.mjs";
 

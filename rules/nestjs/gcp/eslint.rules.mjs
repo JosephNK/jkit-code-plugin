@@ -10,6 +10,6 @@ export const gcpFrameworkBannedPackages = [
 ];
 
 /** Infra 차단 — service에서 직접 호출 금지, provider Port 구현체에서만 사용. */
-export const gcpInfraPackages = [
+export const gcpInfraBannedPackages = [
   '@google-cloud/*',
 ];
