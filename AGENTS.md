@@ -8,7 +8,13 @@
 
 원본 (수정 대상)
 
-- Next.js / NestJS: `rules/<framework>/<stack>/eslint.rules.mjs`, `rules/nextjs/base/stylelint.rules.mjs`
+- Next.js:
+  - 베이스: `rules/nextjs/base/eslint-rules/*.mjs` — 관심사별 단일 파일 (`boundary-elements.mjs`, `layer-semantics.mjs`, `base-config.mjs` 등). `rules/nextjs/base/eslint.rules.mjs`는 re-export 전용 barrel이라 직접 편집 X.
+  - 스택: `rules/nextjs/<stack>/eslint.rules.mjs`
+  - Stylelint: `rules/nextjs/base/stylelint.rules.mjs`
+- NestJS:
+  - 베이스: `rules/nestjs/base/eslint-rules/*.mjs` — 관심사별 단일 파일 (`boundary-elements.mjs`, `layer-semantics.mjs`, `immutability.mjs` 등). `rules/nestjs/base/eslint.rules.mjs`는 re-export 전용 barrel이라 직접 편집 X.
+  - 스택: `rules/nestjs/<stack>/eslint.rules.mjs`
 - Flutter (`architecture_lint` Dart 패키지): `rules/flutter/base/custom-lint/architecture_lint/lib/src/`
   - `lints/*.dart` (11개 룰 클래스), `constants.dart` (패키지 화이트/블랙리스트·임계값), `classification.dart` (경로 → 레이어 매핑), `layer_semantics.dart` (Role/Contains/Example)
 
@@ -71,9 +77,15 @@ class AlS1FileSizeLint extends DartLint { ... }
 class AlN1PortNamingLint extends DartLint { ... }
 ```
 
-### Next.js / NestJS ESLint (`rules/<framework>/<stack>/eslint.rules.mjs`)
+### Next.js / NestJS ESLint
 
-각 `export const` 직전의 JSDoc은 해당 데이터를 렌더하는 md 섹션의 preface로 surface된다. 룰 데이터(boundary elements 등)에 라인 끝 `//` 코멘트를 적으면 boundary element 표의 "설명" 컬럼으로 surface된다.
+대상 파일:
+- Next.js 베이스: `rules/nextjs/base/eslint-rules/*.mjs` (관심사별 단일 파일)
+- Next.js 스택: `rules/nextjs/<stack>/eslint.rules.mjs`
+- NestJS 베이스: `rules/nestjs/base/eslint-rules/*.mjs` (관심사별 단일 파일)
+- NestJS 스택: `rules/nestjs/<stack>/eslint.rules.mjs`
+
+각 `export const` 직전의 JSDoc은 해당 데이터를 렌더하는 md 섹션의 preface로 surface된다. 룰 데이터(boundary elements 등)에 라인 끝 `//` 코멘트를 적으면 boundary element 표의 "설명" 컬럼으로 surface된다. base 폴더는 barrel(`eslint.rules.mjs`)이 sub-파일을 re-export하며, generator(`gen-eslint-reference.mjs`)가 re-export를 따라가 sub-파일의 JSDoc과 inline 코멘트를 그대로 surface한다.
 
 규칙
 

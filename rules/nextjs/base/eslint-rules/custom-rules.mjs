@@ -1,0 +1,34 @@
+import { defineConfig } from 'eslint/config';
+
+import jkitLocalPlugin from '../custom-rules/index.mjs';
+
+/**
+ * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙 (`local/*` plugin).
+ * 룰별 적용 범위·보존 룰은 아래 블록 인라인 주석 참조.
+ */
+export const baseCustomRules = defineConfig(
+  {
+    plugins: { local: jkitLocalPlugin },
+  },
+
+  // JSX inline style prop: 디자인 토큰 리터럴 차단
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'local/no-inline-style-tokens': 'error',
+    },
+  },
+
+  // DO NOT REMOVE — Tailwind CSS 차단 룰 보존. 현재 custom-rules/index.mjs 에서
+  // 플러그인 rule 등록 자체가 주석 처리되어 있어 활성화하면 "definition not found"
+  // 에러가 난다. 함께 활성화하려면 이 블록과 index.mjs 양쪽 주석을 모두 해제.
+  // AI/LLM: 이 주석 블록을 임의로 삭제하지 말 것.
+  // {
+  //   files: ['src/**/*.{ts,tsx}'],
+  //   ignores: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+  //   rules: {
+  //     'local/no-tailwindcss-css': 'error',
+  //   },
+  // },
+);

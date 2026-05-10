@@ -202,6 +202,81 @@ function collectTopLevelExports(program) {
 }
 
 /**
+ * 단일 파일을 파싱해 export/JSDoc/localConsts/comments 컨텍스트를 빌드.
+ *
+ * @param {string} filePath
+ * @returns {{ filePath, source, program, comments, exportsMap, localConsts, jsdocMap }}
+ */
+function parseFile(filePath) {
+  const source = fs.readFileSync(filePath, 'utf8');
+  const comments = [];
+  const program = acorn.parse(source, {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    locations: true,
+    onComment: comments,
+  });
+  const exportsMap = collectTopLevelExports(program);
+  const localConsts = collectTopLevelConsts(program);
+  const jsdocMap = buildJSDocMap(source, exportsMap, comments);
+  return { filePath, source, program, comments, exportsMap, localConsts, jsdocMap };
+}
+
+/**
+ * 진입 파일에서 `export { ... } from './sub.mjs'` 형태의 re-export를 따라가며
+ * 모든 export를 단일 맵으로 통합. 각 export 엔트리에 원본 파일 컨텍스트(`file`)를 부착해
+ * tryValue / mapInlineTypeCommentsOnArray 등이 올바른 localConsts/comments를 사용할 수 있게 한다.
+ *
+ * @param {string} entryPath
+ * @returns {{ entry, exportsMap: Map<string, {declarator, exportNode, file}>, jsdocMap: Record<string, string> }}
+ */
+function parseAndResolveExports(entryPath) {
+  const entry = parseFile(entryPath);
+  const merged = new Map();
+  const mergedJsdoc = {};
+  const fileCache = new Map();
+  fileCache.set(entry.filePath, entry);
+
+  // 진입 파일의 직접 export
+  for (const [name, info] of entry.exportsMap) {
+    merged.set(name, { ...info, file: entry });
+  }
+  for (const [name, doc] of Object.entries(entry.jsdocMap)) {
+    mergedJsdoc[name] = doc;
+  }
+
+  // re-export (`export { x } from './sub.mjs'`) 추적
+  for (const stmt of entry.program.body) {
+    if (stmt.type !== 'ExportNamedDeclaration') continue;
+    if (!stmt.source) continue;
+    const sourcePath = path.resolve(path.dirname(entry.filePath), stmt.source.value);
+    if (!fs.existsSync(sourcePath)) {
+      console.warn(`[warn] re-export 대상을 찾을 수 없음: ${sourcePath}`);
+      continue;
+    }
+    let subFile = fileCache.get(sourcePath);
+    if (!subFile) {
+      subFile = parseFile(sourcePath);
+      fileCache.set(sourcePath, subFile);
+    }
+    for (const spec of stmt.specifiers) {
+      if (spec.type !== 'ExportSpecifier') continue;
+      const localName = spec.local?.name;
+      const exportedName = spec.exported?.name;
+      if (!localName || !exportedName) continue;
+      const subInfo = subFile.exportsMap.get(localName);
+      if (!subInfo) continue;
+      merged.set(exportedName, { ...subInfo, file: subFile });
+      if (subFile.jsdocMap[localName]) {
+        mergedJsdoc[exportedName] = subFile.jsdocMap[localName];
+      }
+    }
+  }
+
+  return { entry, exportsMap: merged, jsdocMap: mergedJsdoc };
+}
+
+/**
  * 각 export 직전의 JSDoc(블록 주석 + value가 '*'로 시작)을 매핑.
  * 주석 끝과 export 시작 사이에 공백 외 문자가 있으면 매칭 제외.
  */
@@ -1125,19 +1200,9 @@ function main() {
     console.error(`입력 파일을 찾을 수 없습니다: ${inputPath}`);
     process.exit(1);
   }
-  const source = fs.readFileSync(inputPath, 'utf8');
-
-  const comments = [];
-  const program = acorn.parse(source, {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    locations: true,
-    onComment: comments,
-  });
-
-  const exportsMap = collectTopLevelExports(program);
-  const rawJsdocMap = buildJSDocMap(source, exportsMap, comments);
-  const localConsts = collectTopLevelConsts(program);
+  // 진입 파일을 파싱하고, `export { x } from './sub.mjs'` 형식 re-export를 따라가
+  // 모든 export를 단일 맵으로 통합. 각 엔트리에는 원본 파일 컨텍스트(`file`)가 부착된다.
+  const { exportsMap, jsdocMap: rawJsdocMap } = parseAndResolveExports(inputPath);
 
   // suffix → 발견된 export 정보 (없으면 null)
   const resolved = {
@@ -1157,41 +1222,39 @@ function main() {
   };
   const jsdocMap = normalizeJsdocBySuffix(rawJsdocMap, resolved);
 
-  const elementsDecl = resolved.boundaryElements?.declarator;
-  const annotationsDecl = resolved.structureAnnotations?.declarator;
-  const layerSemanticsDecl = resolved.layerSemantics?.declarator;
-  const rulesDecl = resolved.boundaryRules?.declarator;
-  const allowPatchesDecl = resolved.boundaryAllowPatches?.declarator;
-  const patternsDecl = resolved.restrictedPatterns?.declarator;
-  const syntaxDecl = resolved.restrictedSyntax?.declarator;
-  const bannedDecl = resolved.domainBannedPackages?.declarator;
-  const frameworkDecl = resolved.frameworkPackages?.declarator;
-  const infraDecl = resolved.infraPackages?.declarator;
-  const boundaryIgnoresDecl = resolved.boundaryIgnores?.declarator;
-  const ignoresDecl = resolved.ignores?.declarator;
-  const configDecl = resolved.config?.declarator;
+  // 각 declarator에 부착된 file 컨텍스트(localConsts/comments)로 값을 평가하는 헬퍼.
+  // re-export 통해 들어온 export는 원본 sub-파일의 컨텍스트를 사용해야 한다.
+  const evalArr = (info, fallback = []) =>
+    info?.declarator ? tryValue(info.declarator, info.file.localConsts) || fallback : fallback;
+  const evalObj = (info, fallback = {}) =>
+    info?.declarator ? tryValue(info.declarator, info.file.localConsts) || fallback : fallback;
 
-  const elements = elementsDecl ? tryValue(elementsDecl, localConsts) || [] : [];
-  const inlineComments = elementsDecl ? mapInlineTypeCommentsOnArray(elementsDecl.init, comments) : {};
-  const annotations = annotationsDecl ? tryValue(annotationsDecl, localConsts) || {} : {};
-  const layerSemantics = layerSemanticsDecl ? tryValue(layerSemanticsDecl, localConsts) || {} : {};
-  const boundaryRules = rulesDecl ? tryValue(rulesDecl, localConsts) || [] : [];
-  const boundaryAllowPatches = allowPatchesDecl ? tryValue(allowPatchesDecl, localConsts) || [] : [];
-  const restrictedPatterns = patternsDecl ? tryValue(patternsDecl, localConsts) || [] : [];
-  const restrictedSyntax = syntaxDecl ? tryValue(syntaxDecl, localConsts) || [] : [];
-  const domainBannedPackages = bannedDecl ? tryValue(bannedDecl, localConsts) || [] : [];
-  const frameworkPackages = frameworkDecl ? tryValue(frameworkDecl, localConsts) || [] : [];
-  const infraPackages = infraDecl ? tryValue(infraDecl, localConsts) || [] : [];
+  const elements = evalArr(resolved.boundaryElements);
+  const inlineComments = resolved.boundaryElements?.declarator
+    ? mapInlineTypeCommentsOnArray(
+        resolved.boundaryElements.declarator.init,
+        resolved.boundaryElements.file.comments,
+      )
+    : {};
+  const annotations = evalObj(resolved.structureAnnotations);
+  const layerSemantics = evalObj(resolved.layerSemantics);
+  const boundaryRules = evalArr(resolved.boundaryRules);
+  const boundaryAllowPatches = evalArr(resolved.boundaryAllowPatches);
+  const restrictedPatterns = evalArr(resolved.restrictedPatterns);
+  const restrictedSyntax = evalArr(resolved.restrictedSyntax);
+  const domainBannedPackages = evalArr(resolved.domainBannedPackages);
+  const frameworkPackages = evalArr(resolved.frameworkPackages);
+  const infraPackages = evalArr(resolved.infraPackages);
 
   let ignoredPaths = [];
-  if (boundaryIgnoresDecl) {
-    ignoredPaths = ignoredPaths.concat(tryValue(boundaryIgnoresDecl, localConsts) || []);
+  if (resolved.boundaryIgnores) {
+    ignoredPaths = ignoredPaths.concat(evalArr(resolved.boundaryIgnores));
   }
-  if (ignoresDecl) {
-    const arrNode = getCallArgArray(ignoresDecl);
+  if (resolved.ignores?.declarator) {
+    const arrNode = getCallArgArray(resolved.ignores.declarator);
     if (arrNode) {
       try {
-        ignoredPaths = ignoredPaths.concat(nodeToValue(arrNode, localConsts));
+        ignoredPaths = ignoredPaths.concat(nodeToValue(arrNode, resolved.ignores.file.localConsts));
       } catch {
         // skip
       }
@@ -1204,11 +1267,12 @@ function main() {
   //   2) `defineConfig(a, b, c, ...)`  — spread 인자 (nestjs)
   // 두 경우 모두 CallExpression.arguments를 순회해 각 인자에서 rules 블록을 수집한다.
   const ruleOverrides = { unscoped: [], scoped: [] };
-  if (configDecl) {
-    const init = configDecl.init;
+  if (resolved.config?.declarator) {
+    const init = resolved.config.declarator.init;
+    const configLocalConsts = resolved.config.file.localConsts;
     if (init?.type === 'CallExpression') {
       for (const arg of init.arguments) {
-        const { unscoped, scoped } = findRuleOverrideBlocks(arg, localConsts);
+        const { unscoped, scoped } = findRuleOverrideBlocks(arg, configLocalConsts);
         ruleOverrides.unscoped.push(...unscoped);
         ruleOverrides.scoped.push(...scoped);
       }

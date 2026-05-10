@@ -1,0 +1,12 @@
+import { globalIgnores } from "eslint/config";
+
+/**
+ * ESLint가 아예 읽지 않을 경로 (자체 설정, jkit 주입 룰, 빌드 산출물).
+ */
+export const baseIgnores = globalIgnores([
+  "eslint.config.mjs",
+  "eslint-rules/**",
+  "dist/**",
+  "coverage/**",
+  ".jkit/**",
+]);
