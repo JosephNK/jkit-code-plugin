@@ -8,10 +8,12 @@
 // 폴더 구조:
 //   - settings/   : 공유 설정/raw 데이터 (resolver, restricted patterns/syntax,
 //                   domain banned packages)
-//   - boundaries/ : eslint-plugin-boundaries 데이터 (elements/rules/ignores 등)
+//   - boundaries/ : eslint-plugin-boundaries 데이터 (elements/rules/ignores)
 //   - quality/    : 즉시 적용 가능한 defineConfig 룰 (base/server-component/
 //                   custom/ignores)
 //   - builders/   : 스택별 데이터를 받아 config를 생성하는 팩토리
+//   - docs/       : ESLint 미참조 — generator가 md 보강용으로만 읽음
+//                   (structure-annotations, layer-semantics)
 //
 // 룰을 추가/수정하려면 해당 sub-파일을 직접 편집하고
 // `node scripts/typescript/gen-eslint-reference.mjs` 로 md를 재생성한다.
@@ -25,8 +27,6 @@ export { baseRestrictedSyntax } from './eslint-rules/settings/restricted-syntax.
 
 // ─── Boundaries ──────────────────────────────────────────────────────────────
 export { baseBoundaryElements } from './eslint-rules/boundaries/boundary-elements.mjs';
-export { baseStructureAnnotations } from './eslint-rules/boundaries/structure-annotations.mjs';
-export { baseLayerSemantics } from './eslint-rules/boundaries/layer-semantics.mjs';
 export { baseBoundaryRules } from './eslint-rules/boundaries/boundary-rules.mjs';
 export { baseBoundaryIgnores } from './eslint-rules/boundaries/boundary-ignores.mjs';
 
@@ -40,3 +40,7 @@ export { baseIgnores } from './eslint-rules/quality/ignores.mjs';
 export { buildRestrictedImports } from './eslint-rules/builders/build-restricted-imports.mjs';
 export { buildDomainPurity } from './eslint-rules/builders/build-domain-purity.mjs';
 export { buildArchitectureBoundaries } from './eslint-rules/builders/build-architecture-boundaries.mjs';
+
+// ─── Docs (ESLint 미참조, generator 전용) ─────────────────────────────────────
+export { baseStructureAnnotations } from './eslint-rules/docs/structure-annotations.mjs';
+export { baseLayerSemantics } from './eslint-rules/docs/layer-semantics.mjs';
