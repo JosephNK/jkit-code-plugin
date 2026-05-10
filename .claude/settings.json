@@ -10,7 +10,6 @@
       "Skill(commit:*)",
       "Skill(jkit:commit)",
       "Skill(jkit:commit:*)"
-    ],
-    "defaultMode": "acceptEdits"
+    ]
   }
 }
