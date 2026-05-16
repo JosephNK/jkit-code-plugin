@@ -22,6 +22,12 @@ if [ "$TOOL_NAME" != "Bash" ]; then
   exit 0
 fi
 
+# 의도적 우회: 명령에 "# DESTRUCTIVE-OK" 주석이 있으면 통과
+# 사용 예: git reset --hard <SHA>  # DESTRUCTIVE-OK
+if echo "$COMMAND" | grep -qE '#\s*DESTRUCTIVE-OK\b'; then
+  exit 0
+fi
+
 # 헬퍼: 차단 메시지 출력 후 exit 2
 block() {
   local reason="$1"
