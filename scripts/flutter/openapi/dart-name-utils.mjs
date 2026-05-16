@@ -155,6 +155,10 @@ export function sanitizeFieldName(name) {
   if (BUILT_VALUE_RESERVED_FIELDS.has(name)) {
     return `${name}Field`;
   }
+  // sanitizeFieldName에 DART_RESERVED_WORDS 체크 추가
+  if (DART_RESERVED_WORDS.has(name.toLowerCase())) {
+    return `${name}Field`;
+  }
   return name;
 }
 
