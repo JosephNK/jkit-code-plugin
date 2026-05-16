@@ -867,7 +867,7 @@ function categorizeIgnorePattern(p) {
   // - `eslint.config.mjs`는 `.config.`지만 ESLint 자체 설정 → build
   if (p === 'next-env.d.ts' || p === 'eslint.config.mjs') return 'build';
   if (
-    /^(?:dist|build|coverage|\.next|out|\.jkit|scripts|e2e|node_modules|eslint-rules)(?:\/|$)/.test(p)
+    /^(?:dist|build|coverage|\.next|out|\.jkit|scripts|e2e|node_modules|eslint-rules|migrations)(?:\/|$)/.test(p)
   )
     return 'build';
   if (/\.(?:spec|test)\.(?:ts|tsx|js|jsx)$/.test(p)) return 'test';

@@ -363,4 +363,4 @@ Boundary 검사 제외 — 테스트, DI 조립(*.module.ts), 부트스트랩(ma
 - **NestJS DI 조립**: `**/*.module.ts`
 - **앱 부트스트랩**: `src/main.ts`, `src/app.*.ts`
 - **특수 경로**: `src/modules/health/**`, `src/modules/**/common/**`
-- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `eslint.config.mjs`, `eslint-rules/**`, `dist/**`, `coverage/**`
+- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `eslint.config.mjs`, `eslint-rules/**`, `dist/**`, `coverage/**`, `migrations/**`
