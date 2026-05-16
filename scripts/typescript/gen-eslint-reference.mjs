@@ -985,7 +985,7 @@ const RULE_OVERRIDE_HINTS = {
   'no-console':
     '`console.warn` / `console.error`만 허용. `console.log` / `console.debug` 금지.',
   'no-warning-comments':
-    'TODO / FIXME / HACK 주석을 코드에 남기지 말 것 — 이슈 트래커 사용.',
+    'TODO / FIXME / HACK 주석 추적 (warn) — 차단하지 않음, 장기 방치 금지.',
   'sonarjs/no-nested-conditional':
     '중첩 삼항 연산자 금지 — `if/else` 블록 또는 함수 추출.',
   'unused-imports/no-unused-vars':

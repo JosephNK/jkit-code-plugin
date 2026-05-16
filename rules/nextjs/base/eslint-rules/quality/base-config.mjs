@@ -90,6 +90,8 @@ export const baseConfig = defineConfig([
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',           // any 명시 사용 시 경고 (완전 금지는 과도)
+      // TODO/FIXME/HACK 추적 (warn, 차단하지 않음)
+      'no-warning-comments': ['warn', { terms: ['TODO', 'FIXME', 'HACK'] }],
       'react/function-component-definition': [                // 컴포넌트 선언 스타일 통일
         'error',
         {

@@ -349,7 +349,7 @@ ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 
 - `@typescript-eslint/consistent-type-imports` — type-only import은 `import type { X } from "..."` 인라인 형식으로 작성.
 - `@typescript-eslint/no-floating-promises` — Promise는 반드시 `await` 또는 `.catch()` 체이닝 (방치 금지).
 - `@typescript-eslint/no-unsafe-argument` — `any` 값을 타입된 파라미터에 전달 금지 — 타입 가드/단언으로 좁힌 뒤 전달.
-- `no-warning-comments` — TODO / FIXME / HACK 주석을 코드에 남기지 말 것 — 이슈 트래커 사용.
+- `no-warning-comments` — TODO / FIXME / HACK 주석 추적 (warn) — 차단하지 않음, 장기 방치 금지.
 - `unused-imports/no-unused-vars` — 사용 안 하는 변수/파라미터는 `_` prefix (예: `_unused`, `_ctx`).
 
 ## Ignored Paths (무시 경로)
