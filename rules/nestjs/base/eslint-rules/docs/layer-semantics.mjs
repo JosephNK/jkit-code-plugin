@@ -247,6 +247,7 @@ export const baseLayerSemantics = {
       "DB 설정·커넥션 — `database/**`",
       "I18n 설정 — `i18n/**`",
       "Logger 설정 — `logger/**`",
+      "Prometheus 메트릭 수집 — `metrics/**`",
       "Cache 설정 — `cache/**`",
       "메일 발송 인프라 — `email/**`",
       "트랜잭션 관리 — `transaction/**`",

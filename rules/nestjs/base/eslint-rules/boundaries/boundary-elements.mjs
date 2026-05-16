@@ -33,6 +33,7 @@ export const baseBoundaryElements = [
       "src/infrastructure/database/**",
       "src/infrastructure/i18n/**",
       "src/infrastructure/logger/**",
+      "src/infrastructure/metrics/**",
       "src/infrastructure/cache/**",
       "src/infrastructure/email/**",
       "src/infrastructure/transaction/**",

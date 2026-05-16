@@ -75,6 +75,7 @@ export const baseStructureAnnotations = {
       { name: "database", note: "Database configuration" },
       { name: "i18n", note: "Internationalization" },
       { name: "logger", note: "Logging" },
+      { name: "metrics", note: "Prometheus metrics" },
       { name: "cache", note: "Cache configuration" },
       { name: "email", note: "Email delivery infrastructure" },
       { name: "transaction", note: "Transaction management" },
