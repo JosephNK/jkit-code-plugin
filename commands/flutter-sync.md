@@ -4,9 +4,9 @@ description: Sync JKit docs and lint config in Flutter project
 
 # JKit Flutter Sync
 
-Flutter 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`)와 `architecture_lint` pin을 플러그인 최신 버전과 동기화합니다.
+Flutter 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`), `architecture_lint` pin, `.husky/` 훅을 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`는 건드리지 않습니다. 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `commitlint.config.mjs`는 건드리지 않습니다. (`package.json`의 husky/@commitlint devDeps와 `scripts.prepare`, `.husky/` 훅은 sync 대상.) 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -101,7 +101,47 @@ ref가 바뀌어 pubspec이 갱신된 경우, 엔트리 디렉토리에서 `dart
 cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
-### 6. 보고
+### 6. Husky 훅 sync
+
+플러그인의 husky 훅 템플릿(`rules/flutter/base/husky/`)을 프로젝트 `.husky/`에 **무조건 덮어쓰고**, `package.json`에 husky/@commitlint devDeps와 `scripts.prepare`를 패치합니다. 사용자 수정 훅은 덮어쓰여지므로 프로젝트별 커스터마이즈는 jkit 체크아웃의 템플릿 파일을 fork해야 합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+$JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
+```
+
+> `package.json`이 없으면 스크립트가 fail합니다 — Flutter 프로젝트에 husky를 처음 적용하려면 `/jkit-flutter-init`을 먼저 실행하세요.
+
+`package.json` devDeps가 갱신되었으면 install을 실행해 새 husky/@commitlint 버전을 설치하고 `scripts.prepare` → `husky`로 git 훅을 활성화합니다:
+
+```bash
+cd "$PROJECT_ROOT"
+
+detect_pm() {
+  [ -f pnpm-lock.yaml ]    && echo "pnpm" && return
+  [ -f yarn.lock ]         && echo "yarn" && return
+  [ -f bun.lockb ]         && echo "bun"  && return
+  [ -f package-lock.json ] && echo "npm"  && return
+  if [ -f package.json ]; then
+    pm_field=$(jq -r '.packageManager // empty' package.json | cut -d@ -f1)
+    [ -n "$pm_field" ] && echo "$pm_field" && return
+  fi
+  command -v pnpm >/dev/null && echo "pnpm" && return
+  command -v yarn >/dev/null && echo "yarn" && return
+  command -v bun  >/dev/null && echo "bun"  && return
+  echo "npm"
+}
+
+PM=$(detect_pm)
+case "$PM" in
+  npm)  npm install ;;
+  yarn) yarn ;;
+  pnpm) pnpm install ;;
+  bun)  bun install ;;
+esac
+```
+
+### 7. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
 
@@ -111,5 +151,7 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 - `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.PROJECT.md` 링크 포함)
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
 - `pubspec.yaml` — `architecture_lint` (base) + 선택한 stack lint 패키지(예: `leaf_kit_lint`) git ref (변경/추가 시에만 갱신)
+- `.husky/pre-commit`, `.husky/commit-msg` — husky 훅 (덮어쓰기, 엔트리 디렉토리 인라인 치환)
+- `package.json` — `devDependencies`(`husky`, `@commitlint/cli`, `@commitlint/config-conventional`)와 `scripts.prepare` 패치 (그 외 필드는 보존)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `package.json`, `.husky/`, `commitlint.config.mjs`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `commitlint.config.mjs`.
