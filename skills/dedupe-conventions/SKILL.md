@@ -162,6 +162,9 @@ Skip (lint-rules-reference 없음):
 # conventions.md 라인 수 변화
 for f in <변경된 파일들>; do echo "$f: $(wc -l < "$f")"; done
 
+# 플러그인 npm 의존성 체크 (gen-eslint-reference.mjs는 acorn 필요)
+(cd ${CLAUDE_PLUGIN_ROOT} && [ -d node_modules/acorn ] || npm install)
+
 # generator 산출물 무결성 — conventions.md는 generator 입력이 아니지만,
 # 경로상 같이 묶이므로 lint-ref drift 검증을 함께 실행
 node scripts/typescript/gen-eslint-reference.mjs <eslint.rules.mjs> --check

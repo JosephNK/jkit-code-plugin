@@ -17,7 +17,17 @@ Ask the user what they want to do:
 - **Include major updates**: include major version updates (`--include-major`)
 - **Exclude prefixes**: exclude packages with specific prefixes (`--exclude <prefix1> <prefix2>`)
 
-### 2. Run script
+### 2. Check/install npm dependencies
+
+`update-dependencies.mjs` requires the `yaml` npm package. Install plugin deps if missing:
+
+```bash
+(cd ${CLAUDE_PLUGIN_ROOT} && [ -d node_modules/yaml ] || npm install)
+```
+
+`${CLAUDE_PLUGIN_ROOT}` may be a fresh `~/.pub-cache/git/...` checkout without `node_modules`.
+
+### 3. Run script
 
 Run the script with the selected options:
 
@@ -32,7 +42,7 @@ cd ${CLAUDE_PLUGIN_ROOT} && node scripts/flutter/dependencies/update-dependencie
   - `--include-major` to include major updates
   - `--exclude <prefix1> <prefix2>` to exclude packages by prefix
 
-### 3. Report
+### 4. Report
 
 Show the analysis result to the user.
 If updating, confirm before proceeding by passing without `--report`.
