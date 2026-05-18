@@ -22,7 +22,7 @@ All UI components **MUST** use shadcn/ui (Tailwind CSS **v4 or higher** + Base U
 npx shadcn@latest init --defaults
 
 # 2. 전체 컴포넌트 일괄 설치 — 이후 CLI 재호출 불필요
-npx shadcn@latest add --all -y
+npx shadcn@latest add --all -y -o
 ```
 
 `init`은 `components.json` (alias + style config), `src/lib/utils/cn.ts` (`cn()` helper), `globals.css`의 CSS variable 토큰을 생성한다. Tailwind v4은 별도 config 파일 없이 `@import "tailwindcss"` 한 줄로 동작한다.
