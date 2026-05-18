@@ -463,5 +463,5 @@ Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
 
 - **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`
 - **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/lib/types/**`
-- **특수 경로**: `specs/**`
+- **특수 경로**: `specs/**`, `src/http/_generated/**`
 - **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`
