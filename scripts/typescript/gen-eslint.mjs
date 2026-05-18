@@ -30,10 +30,10 @@
 //   gen-eslint.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 const HELP = `Usage: gen-eslint.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 
@@ -56,32 +56,32 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', stacks: '' };
+  const args = { framework: "", outputDir: "", stacks: "" };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '--with':
+      case "--with":
         if (!rest.length) {
-          process.stderr.write('--with requires a stack list\n');
+          process.stderr.write("--with requires a stack list\n");
           usage();
         }
         args.stacks = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -91,11 +91,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -105,7 +105,7 @@ function parseArgs(argv) {
 function splitStacks(raw) {
   if (!raw) return [];
   return raw
-    .split(',')
+    .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
@@ -113,8 +113,8 @@ function splitStacks(raw) {
 // Parse a manifest into a map of { section → content }.
 // Content is all lines between `--- <section> ---` headers.
 function parseManifest(manifestPath) {
-  const text = fs.readFileSync(manifestPath, 'utf8');
-  const lines = text.split('\n');
+  const text = fs.readFileSync(manifestPath, "utf8");
+  const lines = text.split("\n");
   const sections = {};
   let current = null;
   const headerRe = /^--- (.+) ---$/;
@@ -136,17 +136,17 @@ function parseManifest(manifestPath) {
 
 // Marker order matches the bash script's replace_marker invocation order.
 const MARKERS = [
-  { section: 'import', marker: '// {{STACK_IMPORTS}}' },
-  { section: 'restricted', marker: '// {{RESTRICTED_PATTERNS}}' },
-  { section: 'domain', marker: '// {{DOMAIN_BANNED}}' },
-  { section: 'syntax', marker: '// {{RESTRICTED_SYNTAX}}' },
-  { section: 'elements', marker: '// {{BOUNDARY_ELEMENTS}}' },
-  { section: 'rules', marker: '// {{BOUNDARY_RULES}}' },
-  { section: 'patches', marker: '// {{BOUNDARY_PATCHES}}' },
-  { section: 'ignores', marker: '// {{BOUNDARY_IGNORES}}' },
-  { section: 'framework-banned', marker: '// {{FRAMEWORK_BANNED_PACKAGES}}' },
-  { section: 'infra-banned', marker: '// {{INFRA_BANNED_PACKAGES}}' },
-  { section: 'custom', marker: '// {{CUSTOM_CONFIG}}' },
+  { section: "import", marker: "// {{STACK_IMPORTS}}" },
+  { section: "restricted", marker: "// {{RESTRICTED_PATTERNS}}" },
+  { section: "domain", marker: "// {{DOMAIN_BANNED}}" },
+  { section: "syntax", marker: "// {{RESTRICTED_SYNTAX}}" },
+  { section: "elements", marker: "// {{BOUNDARY_ELEMENTS}}" },
+  { section: "rules", marker: "// {{BOUNDARY_RULES}}" },
+  { section: "patches", marker: "// {{BOUNDARY_PATCHES}}" },
+  { section: "ignores", marker: "// {{BOUNDARY_IGNORES}}" },
+  { section: "framework-banned", marker: "// {{FRAMEWORK_BANNED_PACKAGES}}" },
+  { section: "infra-banned", marker: "// {{INFRA_BANNED_PACKAGES}}" },
+  { section: "custom", marker: "// {{CUSTOM_CONFIG}}" },
 ];
 
 // Reproduce the bash-side behavior:
@@ -163,11 +163,11 @@ const MARKERS = [
 function replaceMarker(content, marker, rawValue) {
   // sed '/^$/d' — strip empty lines from the value.
   const cleaned = rawValue
-    .split('\n')
-    .filter((line) => line !== '')
-    .join('\n');
+    .split("\n")
+    .filter((line) => line !== "")
+    .join("\n");
 
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const out = [];
 
   if (cleaned.length > 0) {
@@ -184,16 +184,16 @@ function replaceMarker(content, marker, rawValue) {
     }
   }
 
-  return out.join('\n');
+  return out.join("\n");
 }
 
 function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..');
-  const rulesDir = path.join(pluginRoot, 'rules', args.framework);
-  const template = path.join(rulesDir, 'base', 'eslint.template.mjs');
+  const pluginRoot = path.resolve(scriptDir, "..", "..");
+  const rulesDir = path.join(pluginRoot, "rules", args.framework);
+  const template = path.join(rulesDir, "base", "eslint.template.mjs");
 
   if (!fs.existsSync(template)) {
     process.stderr.write(`Error: Template not found: ${template}\n`);
@@ -202,10 +202,10 @@ function main() {
 
   // Collect snippets, sorted stack order (matches bash `sort`).
   const stacks = splitStacks(args.stacks).sort();
-  const buckets = Object.fromEntries(MARKERS.map((m) => [m.section, '']));
+  const buckets = Object.fromEntries(MARKERS.map((m) => [m.section, ""]));
 
   for (const stack of stacks) {
-    const manifest = path.join(rulesDir, stack, 'eslint.manifest');
+    const manifest = path.join(rulesDir, stack, "eslint.manifest");
     if (!fs.existsSync(manifest)) {
       process.stderr.write(
         `Warning: Manifest not found for stack '${stack}': ${manifest}\n`,
@@ -219,18 +219,18 @@ function main() {
       // Bash appended `$'\n'` only when the captured content was non-empty,
       // where "content" is the result of awk across all lines after the header
       // until the next one. Any non-empty line survives — match that.
-      const nonEmpty = raw.filter((line) => line !== '');
+      const nonEmpty = raw.filter((line) => line !== "");
       if (nonEmpty.length === 0) continue;
       // bash path: `section_content=$(parse_section ...)` then
       // `BUCKET="${BUCKET}${section_content}"$'\n'`.
       // `$( ... )` strips trailing newlines; joining non-empty lines with \n
       // reproduces that, then we append a single newline.
-      buckets[section] += nonEmpty.join('\n') + '\n';
+      buckets[section] += nonEmpty.join("\n") + "\n";
     }
   }
 
   // Render template.
-  let content = fs.readFileSync(template, 'utf8');
+  let content = fs.readFileSync(template, "utf8");
   for (const { section, marker } of MARKERS) {
     content = replaceMarker(content, marker, buckets[section]);
   }
@@ -239,30 +239,30 @@ function main() {
   //   while [[ "$content" == *$'\n'$'\n' ]]; do content="${content%$'\n'}"; done
   //   echo "$content" > file      # echo appends exactly one extra \n
   // After the trim, content ends with at most one \n; echo tacks on another.
-  while (content.endsWith('\n\n')) {
+  while (content.endsWith("\n\n")) {
     content = content.slice(0, -1);
   }
-  content += '\n';
+  content += "\n";
 
   fs.mkdirSync(args.outputDir, { recursive: true });
-  const outputFile = path.join(args.outputDir, 'eslint.config.mjs');
+  const outputFile = path.join(args.outputDir, "eslint.config.mjs");
   fs.writeFileSync(outputFile, content);
   process.stdout.write(`Generated: ${outputFile}\n`);
 
   // ── Patch user's package.json with git dependency ───────────────────────
-  const pluginJson = path.join(pluginRoot, '.claude-plugin', 'plugin.json');
+  const pluginJson = path.join(pluginRoot, ".claude-plugin", "plugin.json");
   if (!fs.existsSync(pluginJson)) {
     process.stderr.write(`Error: plugin.json not found at ${pluginJson}\n`);
     process.exit(1);
   }
-  const pluginMeta = JSON.parse(fs.readFileSync(pluginJson, 'utf8'));
+  const pluginMeta = JSON.parse(fs.readFileSync(pluginJson, "utf8"));
   if (!pluginMeta.version) {
     process.stderr.write(`Error: version missing in ${pluginJson}\n`);
     process.exit(1);
   }
   const gitDep = `github:JosephNK/jkit-code-plugin#v${pluginMeta.version}`;
 
-  const userPkgPath = path.join(args.outputDir, 'package.json');
+  const userPkgPath = path.join(args.outputDir, "package.json");
   if (!fs.existsSync(userPkgPath)) {
     process.stderr.write(`Error: package.json not found at ${userPkgPath}\n`);
     process.stderr.write(
@@ -271,17 +271,17 @@ function main() {
     process.exit(1);
   }
 
-  const pkg = JSON.parse(fs.readFileSync(userPkgPath, 'utf8'));
+  const pkg = JSON.parse(fs.readFileSync(userPkgPath, "utf8"));
   const dev = pkg.devDependencies || {};
-  const old = dev['@jkit/code-plugin'];
-  dev['@jkit/code-plugin'] = gitDep;
+  const old = dev["@jkit/code-plugin"];
+  dev["@jkit/code-plugin"] = gitDep;
 
   // Sort devDependencies alphabetically to keep diffs minimal.
   const sortedDev = {};
   for (const k of Object.keys(dev).sort()) sortedDev[k] = dev[k];
   pkg.devDependencies = sortedDev;
 
-  fs.writeFileSync(userPkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  fs.writeFileSync(userPkgPath, JSON.stringify(pkg, null, 2) + "\n");
 
   if (old === gitDep) {
     process.stdout.write(`  Unchanged: @jkit/code-plugin (${gitDep})\n`);
@@ -291,7 +291,7 @@ function main() {
     process.stdout.write(`  Added:     @jkit/code-plugin → ${gitDep}\n`);
   }
 
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   process.stdout.write(`Next step: run 'npm install' in ${args.outputDir}\n`);
   if (args.stacks) {
     process.stdout.write(`Stacks: ${args.stacks}\n`);

@@ -4,7 +4,7 @@
  */
 export const baseRestrictedPatterns = [
   {
-    group: ['../../**'],
-    message: 'Use @/* path alias instead of deep relative parent imports.',
+    group: ["../../**"],
+    message: "Use @/* path alias instead of deep relative parent imports.",
   },
 ];

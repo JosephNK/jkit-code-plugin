@@ -3,12 +3,12 @@
 // flavor별 xcscheme 파일을 생성합니다.
 // 기본 Runner.xcscheme의 buildConfiguration 값을 flavor에 맞게 변경합니다.
 
-import process from 'node:process';
+import process from "node:process";
 
-const RUNNER_BLUEPRINT_ID = '97C146ED1CF9000F007C117D';
-const RUNNER_TESTS_BLUEPRINT_ID = '331C8080294A63A400263BE5';
+const RUNNER_BLUEPRINT_ID = "97C146ED1CF9000F007C117D";
+const RUNNER_TESTS_BLUEPRINT_ID = "331C8080294A63A400263BE5";
 
-const VALID_FLAVORS = ['production', 'development', 'staging', 'qa'];
+const VALID_FLAVORS = ["production", "development", "staging", "qa"];
 
 function generateXcscheme(flavor) {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -117,15 +117,15 @@ function generateXcscheme(flavor) {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 1) {
-    process.stderr.write('Usage: flutter-ios-xcscheme-template.mjs <flavor>\n');
-    process.stderr.write(`  flavor: ${VALID_FLAVORS.join(', ')}\n`);
+    process.stderr.write("Usage: flutter-ios-xcscheme-template.mjs <flavor>\n");
+    process.stderr.write(`  flavor: ${VALID_FLAVORS.join(", ")}\n`);
     process.exit(1);
   }
 
   const flavor = argv[0];
   if (!VALID_FLAVORS.includes(flavor)) {
     process.stderr.write(
-      `Error: Invalid flavor '${flavor}'. Must be one of: ${VALID_FLAVORS.join(', ')}\n`,
+      `Error: Invalid flavor '${flavor}'. Must be one of: ${VALID_FLAVORS.join(", ")}\n`,
     );
     process.exit(1);
   }

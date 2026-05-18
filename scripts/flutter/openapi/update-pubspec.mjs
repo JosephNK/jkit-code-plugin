@@ -11,17 +11,17 @@
 //   update-pubspec.mjs <pubspec_path> [--dry-run]
 // =============================================================================
 
-import fs from 'node:fs';
-import process from 'node:process';
+import fs from "node:fs";
+import process from "node:process";
 
 const DEPENDENCIES = {
-  built_value: '^8.12.3',
-  built_collection: '^5.1.1',
+  built_value: "^8.12.3",
+  built_collection: "^5.1.1",
 };
 
 const DEV_DEPENDENCIES = {
-  build_runner: '^2.4.15',
-  built_value_generator: '^8.12.3',
+  build_runner: "^2.4.15",
+  built_value_generator: "^8.12.3",
 };
 
 const HELP = `Usage: update-pubspec.mjs <pubspec_path> [--dry-run]
@@ -43,20 +43,20 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const rest = argv.slice(2);
-  const args = { pubspecPath: '', dryRun: false };
+  const args = { pubspecPath: "", dryRun: false };
 
   for (const a of rest) {
-    if (a === '-h' || a === '--help') usage(0);
+    if (a === "-h" || a === "--help") usage(0);
   }
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.pubspecPath = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--dry-run':
+      case "--dry-run":
         args.dryRun = true;
         break;
       default:
@@ -66,7 +66,9 @@ function parseArgs(argv) {
   }
 
   if (!args.pubspecPath) {
-    process.stderr.write('Usage: update-pubspec.mjs <pubspec_path> [--dry-run]\n');
+    process.stderr.write(
+      "Usage: update-pubspec.mjs <pubspec_path> [--dry-run]\n",
+    );
     process.exit(1);
   }
 
@@ -74,11 +76,11 @@ function parseArgs(argv) {
 }
 
 function escapeRegExp(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function findBlockLastEntry(content, blockName) {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   let inBlock = false;
   let lastEntryIdx = -1;
 
@@ -91,9 +93,9 @@ function findBlockLastEntry(content, blockName) {
       continue;
     }
     if (inBlock) {
-      if (line.startsWith('  ')) {
+      if (line.startsWith("  ")) {
         lastEntryIdx = i;
-      } else if (line.trim() && !line.startsWith(' ')) {
+      } else if (line.trim() && !line.startsWith(" ")) {
         break;
       }
     }
@@ -103,7 +105,7 @@ function findBlockLastEntry(content, blockName) {
 }
 
 function hasDependency(content, depName) {
-  const re = new RegExp(`^\\s+${escapeRegExp(depName)}:`, 'm');
+  const re = new RegExp(`^\\s+${escapeRegExp(depName)}:`, "m");
   return re.test(content);
 }
 
@@ -111,9 +113,9 @@ function addDependency(content, blockName, depName, version) {
   const lastIdx = findBlockLastEntry(content, blockName);
   if (lastIdx === -1) return content;
 
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   lines.splice(lastIdx + 1, 0, `  ${depName}: ${version}`);
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function updatePubspec(pubspecPath, dryRun) {
@@ -122,7 +124,7 @@ function updatePubspec(pubspecPath, dryRun) {
     return false;
   }
 
-  let content = fs.readFileSync(pubspecPath, 'utf8');
+  let content = fs.readFileSync(pubspecPath, "utf8");
   const original = content;
   const added = [];
 
@@ -132,10 +134,12 @@ function updatePubspec(pubspecPath, dryRun) {
       continue;
     }
     if (dryRun) {
-      process.stdout.write(`  [dry-run] Would add ${dep}: ${version} to dependencies\n`);
+      process.stdout.write(
+        `  [dry-run] Would add ${dep}: ${version} to dependencies\n`,
+      );
       added.push(dep);
     } else {
-      content = addDependency(content, 'dependencies', dep, version);
+      content = addDependency(content, "dependencies", dep, version);
       added.push(dep);
     }
   }
@@ -146,22 +150,26 @@ function updatePubspec(pubspecPath, dryRun) {
       continue;
     }
     if (dryRun) {
-      process.stdout.write(`  [dry-run] Would add ${dep}: ${version} to dev_dependencies\n`);
+      process.stdout.write(
+        `  [dry-run] Would add ${dep}: ${version} to dev_dependencies\n`,
+      );
       added.push(dep);
     } else {
-      content = addDependency(content, 'dev_dependencies', dep, version);
+      content = addDependency(content, "dev_dependencies", dep, version);
       added.push(dep);
     }
   }
 
   if (added.length === 0) {
-    process.stdout.write('  All dependencies already present.\n');
+    process.stdout.write("  All dependencies already present.\n");
     return false;
   }
 
   if (!dryRun && content !== original) {
-    fs.writeFileSync(pubspecPath, content, 'utf8');
-    process.stdout.write(`  Added ${added.length} dependencies: ${added.join(', ')}\n`);
+    fs.writeFileSync(pubspecPath, content, "utf8");
+    process.stdout.write(
+      `  Added ${added.length} dependencies: ${added.join(", ")}\n`,
+    );
   }
 
   return true;

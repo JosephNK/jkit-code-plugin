@@ -32,9 +32,9 @@
 //   1 : 누락 또는 구성 오류
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
 const USAGE = `Usage: check-i18n.mjs [-p <project-root>] [--locales-dir <dir>] [--modules-dir <dir>]
 
@@ -66,11 +66,11 @@ function extractErrorCodes(content) {
   return codes;
 }
 
-function flattenKeys(obj, prefix = '', out = new Set()) {
-  if (!obj || typeof obj !== 'object') return out;
+function flattenKeys(obj, prefix = "", out = new Set()) {
+  if (!obj || typeof obj !== "object") return out;
   for (const [k, v] of Object.entries(obj)) {
     const full = prefix ? `${prefix}.${k}` : k;
-    if (v && typeof v === 'object' && !Array.isArray(v)) {
+    if (v && typeof v === "object" && !Array.isArray(v)) {
       flattenKeys(v, full, out);
     } else {
       out.add(full);
@@ -82,7 +82,7 @@ function flattenKeys(obj, prefix = '', out = new Set()) {
 function hasCode(code, flatKeys) {
   if (flatKeys.has(code)) return true;
   for (const key of flatKeys) {
-    if (key === code || key.endsWith('.' + code)) return true;
+    if (key === code || key.endsWith("." + code)) return true;
   }
   return false;
 }
@@ -90,23 +90,23 @@ function hasCode(code, flatKeys) {
 function parseArgs(argv) {
   const opts = {
     projectRoot: process.cwd(),
-    localesDir: 'src/infrastructure/i18n/locales',
-    modulesDir: 'src/modules',
+    localesDir: "src/infrastructure/i18n/locales",
+    modulesDir: "src/modules",
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     switch (a) {
-      case '-p':
+      case "-p":
         opts.projectRoot = argv[++i];
         break;
-      case '--locales-dir':
+      case "--locales-dir":
         opts.localesDir = argv[++i];
         break;
-      case '--modules-dir':
+      case "--modules-dir":
         opts.modulesDir = argv[++i];
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         console.log(USAGE);
         process.exit(0);
       default:
@@ -139,7 +139,7 @@ function main() {
   const allCodes = new Set();
   const codeSources = new Map();
   for (const file of errorFiles) {
-    const codes = extractErrorCodes(fs.readFileSync(file, 'utf8'));
+    const codes = extractErrorCodes(fs.readFileSync(file, "utf8"));
     for (const code of codes) {
       allCodes.add(code);
       if (!codeSources.has(code)) codeSources.set(code, file);
@@ -147,7 +147,7 @@ function main() {
   }
 
   if (allCodes.size === 0) {
-    console.log('No error codes found — nothing to verify.');
+    console.log("No error codes found — nothing to verify.");
     process.exit(0);
   }
 
@@ -155,13 +155,15 @@ function main() {
   for (const entry of fs.readdirSync(localesAbs, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const lang = entry.name;
-    const errorJson = path.join(localesAbs, lang, 'error.json');
+    const errorJson = path.join(localesAbs, lang, "error.json");
     if (!fs.existsSync(errorJson)) {
       console.warn(`Warning: ${lang}/error.json missing — skipping locale.`);
       continue;
     }
     try {
-      localeFlat[lang] = flattenKeys(JSON.parse(fs.readFileSync(errorJson, 'utf8')));
+      localeFlat[lang] = flattenKeys(
+        JSON.parse(fs.readFileSync(errorJson, "utf8")),
+      );
     } catch (e) {
       console.error(`Error: invalid JSON in ${errorJson}: ${e.message}`);
       process.exit(1);
@@ -170,7 +172,7 @@ function main() {
 
   const locales = Object.keys(localeFlat);
   if (locales.length === 0) {
-    console.error('Error: no valid locale directories found.');
+    console.error("Error: no valid locale directories found.");
     process.exit(1);
   }
 
@@ -189,7 +191,7 @@ function main() {
 
   if (missing.length === 0) {
     console.log(
-      `OK — ${allCodes.size} error code(s) registered in ${locales.length} locale(s): ${locales.join(', ')}`,
+      `OK — ${allCodes.size} error code(s) registered in ${locales.length} locale(s): ${locales.join(", ")}`,
     );
     process.exit(0);
   }

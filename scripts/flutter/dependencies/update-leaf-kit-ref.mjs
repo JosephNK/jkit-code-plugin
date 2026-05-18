@@ -9,9 +9,9 @@
 //   update-leaf-kit-ref.mjs <ref> --project-dir <dir> [--dry-run]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
 const HELP = `Usage: update-leaf-kit-ref.mjs <ref> --project-dir <dir> [--dry-run]
 
@@ -32,29 +32,29 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { ref: '', projectDir: '', dryRun: false };
+  const args = { ref: "", projectDir: "", dryRun: false };
   const positional = [];
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--project-dir':
+      case "--project-dir":
         if (!rest.length) {
-          process.stderr.write('--project-dir requires a value\n');
+          process.stderr.write("--project-dir requires a value\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '--dry-run':
+      case "--dry-run":
         args.dryRun = true;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -63,17 +63,19 @@ function parseArgs(argv) {
   }
 
   if (positional.length === 0) {
-    process.stderr.write('Error: <ref> is required\n');
+    process.stderr.write("Error: <ref> is required\n");
     usage();
   }
   if (positional.length > 1) {
-    process.stderr.write(`Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`);
+    process.stderr.write(
+      `Error: unexpected extra arguments: ${positional.slice(1).join(" ")}\n`,
+    );
     usage();
   }
   args.ref = positional[0];
 
   if (!args.projectDir) {
-    process.stderr.write('Error: --project-dir is required\n');
+    process.stderr.write("Error: --project-dir is required\n");
     usage();
   }
 
@@ -81,7 +83,7 @@ function parseArgs(argv) {
 }
 
 function normalizeRef(ref) {
-  if (ref.startsWith('v') || !/^[0-9]/.test(ref[0])) {
+  if (ref.startsWith("v") || !/^[0-9]/.test(ref[0])) {
     return ref;
   }
   return `v${ref}`;
@@ -97,11 +99,11 @@ function findPubspecFiles(projectRoot) {
       return;
     }
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'build') continue;
+      if (entry.name.startsWith(".") || entry.name === "build") continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(full);
-      } else if (entry.isFile() && entry.name === 'pubspec.yaml') {
+      } else if (entry.isFile() && entry.name === "pubspec.yaml") {
         results.push(full);
       }
     }
@@ -114,7 +116,7 @@ const LEAF_KIT_RE =
   /(flutter_leaf_kit:\s*\n\s*git:\s*\n\s*url:[^\n]+\n\s*ref:\s*)['"]?([^'"\n]+)['"]?/;
 
 function updateLeafKitRef(pubspecPath, newRef, dryRun) {
-  const content = fs.readFileSync(pubspecPath, 'utf-8');
+  const content = fs.readFileSync(pubspecPath, "utf-8");
   const match = content.match(LEAF_KIT_RE);
   if (!match) return false;
 
@@ -127,7 +129,9 @@ function updateLeafKitRef(pubspecPath, newRef, dryRun) {
   const newContent = content.replace(LEAF_KIT_RE, `$1'${newRef}'`);
 
   if (dryRun) {
-    process.stdout.write(`  🔍 ${pubspecPath}: ${oldRef} → ${newRef} (dry-run)\n`);
+    process.stdout.write(
+      `  🔍 ${pubspecPath}: ${oldRef} → ${newRef} (dry-run)\n`,
+    );
   } else {
     fs.writeFileSync(pubspecPath, newContent);
     process.stdout.write(`  ✅ ${pubspecPath}: ${oldRef} → ${newRef}\n`);
@@ -143,8 +147,8 @@ function main() {
 
   process.stdout.write(`프로젝트 루트: ${projectRoot}\n`);
   process.stdout.write(`새 ref: ${ref}\n`);
-  if (args.dryRun) process.stdout.write('(dry-run 모드)\n');
-  process.stdout.write('\n');
+  if (args.dryRun) process.stdout.write("(dry-run 모드)\n");
+  process.stdout.write("\n");
 
   const pubspecFiles = findPubspecFiles(projectRoot);
   process.stdout.write(`발견된 pubspec.yaml: ${pubspecFiles.length}개\n\n`);
@@ -156,11 +160,11 @@ function main() {
     }
   }
 
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   if (updatedCount === 0) {
-    process.stdout.write('변경된 파일이 없습니다.\n');
+    process.stdout.write("변경된 파일이 없습니다.\n");
   } else {
-    const action = args.dryRun ? '변경 예정' : '업데이트 완료';
+    const action = args.dryRun ? "변경 예정" : "업데이트 완료";
     process.stdout.write(`${updatedCount}개 파일 ${action}\n`);
   }
 }

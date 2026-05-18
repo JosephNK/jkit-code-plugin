@@ -7,12 +7,12 @@
 //   gen-agents.mjs <framework> -p <output-dir> [-n <project-name>] [--docs-dir <dir>]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { ensureGitRepo, normalizePath } from './common.mjs';
+import { ensureGitRepo, normalizePath } from "./common.mjs";
 
 const HELP = `Usage: gen-agents.mjs <framework> -p <output-dir> [-n <project-name>] [--docs-dir <dir>]
 
@@ -41,43 +41,43 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    framework: '',
-    outputDir: '',
-    projectName: '',
-    docsDir: '',
+    framework: "",
+    outputDir: "",
+    projectName: "",
+    docsDir: "",
   };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '-n':
+      case "-n":
         if (!rest.length) {
-          process.stderr.write('-n requires a project name\n');
+          process.stderr.write("-n requires a project name\n");
           usage();
         }
         args.projectName = rest.shift();
         break;
-      case '--docs-dir':
+      case "--docs-dir":
         if (!rest.length) {
-          process.stderr.write('--docs-dir requires a directory\n');
+          process.stderr.write("--docs-dir requires a directory\n");
           usage();
         }
         args.docsDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -87,11 +87,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -100,8 +100,8 @@ function parseArgs(argv) {
 
 function renderTemplate(template, { projectName, docsDir }) {
   return template
-    .replaceAll('{{PROJECT_NAME}}', projectName)
-    .replaceAll('{{DOCS_DIR}}', docsDir);
+    .replaceAll("{{PROJECT_NAME}}", projectName)
+    .replaceAll("{{DOCS_DIR}}", docsDir);
 }
 
 function renderProjectTemplate({ projectName }) {
@@ -118,7 +118,10 @@ function renderProjectTemplate({ projectName }) {
 }
 
 function writeSymlink(target, linkPath) {
-  if (fs.existsSync(linkPath) || fs.lstatSync(linkPath, { throwIfNoEntry: false })) {
+  if (
+    fs.existsSync(linkPath) ||
+    fs.lstatSync(linkPath, { throwIfNoEntry: false })
+  ) {
     fs.rmSync(linkPath, { force: true });
   }
   fs.symlinkSync(target, linkPath);
@@ -144,17 +147,17 @@ function main() {
     process.exit(1);
   }
 
-  const docsDir = args.docsDir ? `${args.docsDir.replace(/\/+$/, '')}/` : '';
+  const docsDir = args.docsDir ? `${args.docsDir.replace(/\/+$/, "")}/` : "";
   const projectName = args.projectName || path.basename(outputDir);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..');
+  const pluginRoot = path.resolve(scriptDir, "..");
   const templatePath = path.join(
     pluginRoot,
-    'rules',
+    "rules",
     args.framework,
-    'base',
-    'agents.template.md',
+    "base",
+    "agents.template.md",
   );
 
   if (!fs.existsSync(templatePath)) {
@@ -164,20 +167,20 @@ function main() {
 
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const outputFile = path.join(outputDir, 'AGENTS.md');
-  const template = fs.readFileSync(templatePath, 'utf8');
+  const outputFile = path.join(outputDir, "AGENTS.md");
+  const template = fs.readFileSync(templatePath, "utf8");
   const rendered = renderTemplate(template, { projectName, docsDir });
   fs.writeFileSync(outputFile, rendered);
 
-  const symlink = path.join(outputDir, 'CLAUDE.md');
-  writeSymlink('AGENTS.md', symlink);
+  const symlink = path.join(outputDir, "CLAUDE.md");
+  writeSymlink("AGENTS.md", symlink);
 
   process.stdout.write(`Generated: ${outputFile}\n`);
   process.stdout.write(`Symlink: ${symlink} -> AGENTS.md\n`);
 
   // AGENTS.PROJECT.md is user-owned. Create it only when missing so subsequent
   // runs preserve user edits.
-  const projectFile = path.join(outputDir, 'AGENTS.PROJECT.md');
+  const projectFile = path.join(outputDir, "AGENTS.PROJECT.md");
   if (fs.existsSync(projectFile)) {
     process.stdout.write(`Preserved: ${projectFile} (user-owned, untouched)\n`);
   } else {

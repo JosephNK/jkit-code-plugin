@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Flutter Screen 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function toSnakeCase(name) {
-  let out = '';
+  let out = "";
   for (let i = 0; i < name.length; i++) {
     const ch = name[i];
-    if (ch >= 'A' && ch <= 'Z' && i > 0) {
-      out += '_';
+    if (ch >= "A" && ch <= "Z" && i > 0) {
+      out += "_";
     }
     out += ch.toLowerCase();
   }
@@ -17,7 +17,7 @@ function toSnakeCase(name) {
 
 function generateScreen(screenNameIn, options = {}) {
   let screenName = screenNameIn;
-  if (!screenName.endsWith('Screen')) {
+  if (!screenName.endsWith("Screen")) {
     screenName = `${screenName}Screen`;
   }
 
@@ -76,18 +76,18 @@ class _${screenName}State extends LeafScreenState<${screenName}> {
 }
 
 function parseArgs(argv) {
-  const opts = { screenName: '', pkg: '', featureDir: '' };
+  const opts = { screenName: "", pkg: "", featureDir: "" };
   const rest = [...argv];
   while (rest.length > 0) {
     const a = rest.shift();
-    if (a === '--package' || a === '-p') {
-      opts.pkg = rest.shift() ?? '';
-    } else if (a === '--feature-dir' || a === '-f') {
-      opts.featureDir = rest.shift() ?? '';
-    } else if (a === '-h' || a === '--help') {
+    if (a === "--package" || a === "-p") {
+      opts.pkg = rest.shift() ?? "";
+    } else if (a === "--feature-dir" || a === "-f") {
+      opts.featureDir = rest.shift() ?? "";
+    } else if (a === "-h" || a === "--help") {
       printUsage();
       process.exit(0);
-    } else if (a.startsWith('-')) {
+    } else if (a.startsWith("-")) {
       process.stderr.write(`Unknown option: ${a}\n`);
       process.exit(2);
     } else if (!opts.screenName) {
@@ -101,8 +101,12 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  process.stderr.write('Usage: flutter-screen-template.mjs <ScreenName> [--package <pkg>] [--feature-dir <dir>]\n');
-  process.stderr.write('Example: flutter-screen-template.mjs Login --package vocabit_app --feature-dir login\n');
+  process.stderr.write(
+    "Usage: flutter-screen-template.mjs <ScreenName> [--package <pkg>] [--feature-dir <dir>]\n",
+  );
+  process.stderr.write(
+    "Example: flutter-screen-template.mjs Login --package vocabit_app --feature-dir login\n",
+  );
 }
 
 function main() {
@@ -111,7 +115,12 @@ function main() {
     printUsage();
     process.exit(1);
   }
-  console.log(generateScreen(opts.screenName, { pkg: opts.pkg, featureDir: opts.featureDir }));
+  console.log(
+    generateScreen(opts.screenName, {
+      pkg: opts.pkg,
+      featureDir: opts.featureDir,
+    }),
+  );
 }
 
 main();

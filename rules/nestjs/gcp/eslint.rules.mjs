@@ -5,11 +5,7 @@
 // =============================================================================
 
 /** Framework 차단 — 도메인이 특정 클라우드 벤더 타입에 의존 금지. */
-export const gcpFrameworkBannedPackages = [
-  '@google-cloud/*',
-];
+export const gcpFrameworkBannedPackages = ["@google-cloud/*"];
 
 /** Infra 차단 — service에서 직접 호출 금지, provider Port 구현체에서만 사용. */
-export const gcpInfraBannedPackages = [
-  '@google-cloud/*',
-];
+export const gcpInfraBannedPackages = ["@google-cloud/*"];

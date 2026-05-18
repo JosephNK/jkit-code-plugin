@@ -17,8 +17,8 @@
 //   flutter-android-manifest-setup.mjs <manifest_path>
 // =============================================================================
 
-import fs from 'node:fs';
-import process from 'node:process';
+import fs from "node:fs";
+import process from "node:process";
 
 const HELP = `Usage: flutter-android-manifest-setup.mjs <manifest_path>
 
@@ -46,12 +46,12 @@ function parseArgs(argv) {
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -60,11 +60,13 @@ function parseArgs(argv) {
   }
 
   if (positional.length === 0) {
-    process.stderr.write('Error: <manifest_path> is required\n');
+    process.stderr.write("Error: <manifest_path> is required\n");
     usage();
   }
   if (positional.length > 1) {
-    process.stderr.write(`Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`);
+    process.stderr.write(
+      `Error: unexpected extra arguments: ${positional.slice(1).join(" ")}\n`,
+    );
     usage();
   }
 
@@ -89,14 +91,16 @@ const APP_ATTRIBUTES =
 function replaceOnce(content, pattern, replacement) {
   const idx = content.indexOf(pattern);
   if (idx === -1) return content;
-  return content.slice(0, idx) + replacement + content.slice(idx + pattern.length);
+  return (
+    content.slice(0, idx) + replacement + content.slice(idx + pattern.length)
+  );
 }
 
 function patchManifest(input) {
   let content = input;
 
   // 1. xmlns:tools 네임스페이스 추가
-  if (!content.includes('xmlns:tools')) {
+  if (!content.includes("xmlns:tools")) {
     content = replaceOnce(
       content,
       'xmlns:android="http://schemas.android.com/apk/res/android"',
@@ -106,21 +110,24 @@ function patchManifest(input) {
   }
 
   // 2. INTERNET 퍼미션 추가
-  if (!content.includes('android.permission.INTERNET')) {
+  if (!content.includes("android.permission.INTERNET")) {
     content = replaceOnce(
       content,
-      '\n    <application',
+      "\n    <application",
       '\n    <uses-permission android:name="android.permission.INTERNET"/>\n\n    <application',
     );
   }
 
   // 3. android:label → @string/app_name
-  if (!content.includes('@string/app_name')) {
-    content = content.replace(/android:label="[^"]*"/, 'android:label="@string/app_name"');
+  if (!content.includes("@string/app_name")) {
+    content = content.replace(
+      /android:label="[^"]*"/,
+      'android:label="@string/app_name"',
+    );
   }
 
   // 4. application 속성 추가 (icon 다음에 삽입)
-  if (!content.includes('requestLegacyExternalStorage')) {
+  if (!content.includes("requestLegacyExternalStorage")) {
     content = replaceOnce(
       content,
       'android:icon="@mipmap/ic_launcher">',
@@ -129,7 +136,7 @@ function patchManifest(input) {
   }
 
   // 5. launchMode → singleTask
-  if (content.includes('singleTop')) {
+  if (content.includes("singleTop")) {
     content = content.replace(
       'android:launchMode="singleTop"',
       'android:launchMode="singleTask"',
@@ -137,15 +144,18 @@ function patchManifest(input) {
   }
 
   // 6. Deep link intent-filter 추가
-  if (!content.includes('android.intent.action.VIEW')) {
-    const launcherEnd = 'android.intent.category.LAUNCHER';
+  if (!content.includes("android.intent.action.VIEW")) {
+    const launcherEnd = "android.intent.category.LAUNCHER";
     const pos = content.indexOf(launcherEnd);
     if (pos !== -1) {
-      const filterClose = '</intent-filter>';
+      const filterClose = "</intent-filter>";
       const closePos = content.indexOf(filterClose, pos);
       if (closePos !== -1) {
         const insertPos = closePos + filterClose.length;
-        content = content.slice(0, insertPos) + DEEP_LINK_INTENT_FILTER + content.slice(insertPos);
+        content =
+          content.slice(0, insertPos) +
+          DEEP_LINK_INTENT_FILTER +
+          content.slice(insertPos);
       }
     }
   }
@@ -158,14 +168,16 @@ function main() {
 
   let content;
   try {
-    content = fs.readFileSync(args.manifestPath, 'utf-8');
+    content = fs.readFileSync(args.manifestPath, "utf-8");
   } catch (err) {
-    process.stderr.write(`Error reading ${args.manifestPath}: ${err.message}\n`);
+    process.stderr.write(
+      `Error reading ${args.manifestPath}: ${err.message}\n`,
+    );
     process.exit(1);
   }
 
   const patched = patchManifest(content);
-  process.stdout.write(patched.replace(/\n+$/, '') + '\n');
+  process.stdout.write(patched.replace(/\n+$/, "") + "\n");
 }
 
 main();

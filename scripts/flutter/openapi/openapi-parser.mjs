@@ -6,10 +6,10 @@
 // openapi_parser.py; preserves public API surface and field names.
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import YAML from 'yaml';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import YAML from "yaml";
 
 import {
   sanitizeFieldName,
@@ -18,7 +18,7 @@ import {
   toCamelCase,
   toPascalCase,
   toSnakeCase,
-} from './dart-name-utils.mjs';
+} from "./dart-name-utils.mjs";
 
 // ──────────────────────────────────────────────
 // Python-style helpers
@@ -28,9 +28,9 @@ import {
 // numbers → same as JS default, strings → unchanged.
 // Matters for enum-value coercion from arbitrary YAML/JSON types.
 function pyStr(v) {
-  if (v === null || v === undefined) return 'None';
-  if (v === true) return 'True';
-  if (v === false) return 'False';
+  if (v === null || v === undefined) return "None";
+  if (v === true) return "True";
+  if (v === false) return "False";
   return String(v);
 }
 
@@ -44,21 +44,21 @@ function dedupe(arr) {
 // ──────────────────────────────────────────────
 
 function isUrl(specPath) {
-  return specPath.startsWith('http://') || specPath.startsWith('https://');
+  return specPath.startsWith("http://") || specPath.startsWith("https://");
 }
 
 function isHtml(content) {
   const stripped = content.trim().slice(0, 500).toLowerCase();
   return (
-    stripped.startsWith('<!doctype html') ||
-    stripped.startsWith('<html') ||
-    stripped.includes('<!doctype html')
+    stripped.startsWith("<!doctype html") ||
+    stripped.startsWith("<html") ||
+    stripped.includes("<!doctype html")
   );
 }
 
 async function fetchUrl(url) {
   const res = await fetch(url, {
-    headers: { Accept: 'application/json, application/yaml, text/yaml' },
+    headers: { Accept: "application/json, application/yaml, text/yaml" },
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) {
@@ -79,7 +79,7 @@ function extractBalancedJson(text, start) {
       escapeNext = false;
       continue;
     }
-    if (ch === '\\') {
+    if (ch === "\\") {
       escapeNext = true;
       continue;
     }
@@ -89,9 +89,9 @@ function extractBalancedJson(text, start) {
     }
     if (inString) continue;
 
-    if (ch === '{') {
+    if (ch === "{") {
       depth += 1;
-    } else if (ch === '}') {
+    } else if (ch === "}") {
       depth -= 1;
       if (depth === 0) {
         return text.slice(start, i + 1);
@@ -103,12 +103,12 @@ function extractBalancedJson(text, start) {
 
 async function extractSpecFromSwaggerUi(html, baseUrl) {
   // Strategy 1: {baseUrl}-json (NestJS default)
-  const jsonUrl = baseUrl.replace(/\/+$/, '') + '-json';
+  const jsonUrl = baseUrl.replace(/\/+$/, "") + "-json";
   try {
     const content = await fetchUrl(jsonUrl);
     if (!isHtml(content)) {
       const parsed = JSON.parse(content);
-      if ('openapi' in parsed || 'swagger' in parsed) {
+      if ("openapi" in parsed || "swagger" in parsed) {
         process.stdout.write(`  Resolved Swagger UI → ${jsonUrl}\n`);
         return content;
       }
@@ -121,12 +121,12 @@ async function extractSpecFromSwaggerUi(html, baseUrl) {
   const initJsMatch = html.match(/src=["']([^"']*swagger-ui-init\.js)["']/);
   if (initJsMatch) {
     const initJsPath = initJsMatch[1];
-    const initJsUrl = new URL(initJsPath, baseUrl + '/').href;
+    const initJsUrl = new URL(initJsPath, baseUrl + "/").href;
     try {
       const jsContent = await fetchUrl(initJsUrl);
       const docMatch = jsContent.match(/"swaggerDoc"\s*:\s*(\{)/);
       if (docMatch) {
-        const start = docMatch.index + docMatch[0].indexOf('{');
+        const start = docMatch.index + docMatch[0].indexOf("{");
         const specJson = extractBalancedJson(jsContent, start);
         if (specJson) {
           process.stdout.write(
@@ -146,9 +146,9 @@ async function extractSpecFromSwaggerUi(html, baseUrl) {
 function detectContentFormat(content) {
   try {
     JSON.parse(content);
-    return 'json';
+    return "json";
   } catch {
-    return 'yaml';
+    return "yaml";
   }
 }
 
@@ -168,8 +168,8 @@ async function downloadSpec(url, savePath) {
           `\n` +
           `Hint: Use the direct JSON/YAML spec URL instead. Common patterns:\n` +
           `  - ${url}-json\n` +
-          `  - ${url.replace(/\/+$/, '')}/swagger.json\n` +
-          `  - ${url.replace(/\/+$/, '')}/openapi.json\n`,
+          `  - ${url.replace(/\/+$/, "")}/swagger.json\n` +
+          `  - ${url.replace(/\/+$/, "")}/openapi.json\n`,
       );
       process.exit(1);
     }
@@ -180,7 +180,7 @@ async function downloadSpec(url, savePath) {
   const { dir, name } = path.parse(savePath);
   const finalPath = path.join(dir, `${name}.${fmt}`);
 
-  fs.writeFileSync(finalPath, content, 'utf8');
+  fs.writeFileSync(finalPath, content, "utf8");
   process.stdout.write(`  Downloaded spec to ${finalPath}\n`);
   return finalPath;
 }
@@ -198,7 +198,7 @@ async function loadSpec(specPath, apiName, specsDir) {
     process.exit(1);
   }
 
-  const content = fs.readFileSync(localPath, 'utf8');
+  const content = fs.readFileSync(localPath, "utf8");
 
   try {
     return JSON.parse(content);
@@ -212,9 +212,9 @@ async function loadSpec(specPath, apiName, specsDir) {
 // ──────────────────────────────────────────────
 
 function resolveRef(spec, ref) {
-  if (!ref.startsWith('#/')) return {};
+  if (!ref.startsWith("#/")) return {};
 
-  const parts = ref.slice(2).split('/');
+  const parts = ref.slice(2).split("/");
   let current = spec;
   for (const part of parts) {
     current = (current && current[part]) || {};
@@ -223,10 +223,10 @@ function resolveRef(spec, ref) {
 }
 
 function resolveSchema(spec, schema) {
-  if (schema && '$ref' in schema) {
+  if (schema && "$ref" in schema) {
     return resolveRef(spec, schema.$ref);
   }
-  if (schema && 'allOf' in schema) {
+  if (schema && "allOf" in schema) {
     return mergeAllOf(spec, schema.allOf);
   }
   return schema || {};
@@ -234,7 +234,7 @@ function resolveSchema(spec, schema) {
 
 function mergeAllOf(spec, allOfList) {
   const merged = {
-    type: 'object',
+    type: "object",
     properties: {},
     required: [],
   };
@@ -248,7 +248,7 @@ function mergeAllOf(spec, allOfList) {
     if (resolved.required) {
       merged.required.push(...resolved.required);
     }
-    if (resolved.description && !('description' in merged)) {
+    if (resolved.description && !("description" in merged)) {
       merged.description = resolved.description;
     }
   }
@@ -262,15 +262,15 @@ function mergeAllOf(spec, allOfList) {
 // ──────────────────────────────────────────────
 
 const OPENAPI_TO_DART = {
-  string: 'String',
-  integer: 'int',
-  number: 'double',
-  boolean: 'bool',
+  string: "String",
+  integer: "int",
+  number: "double",
+  boolean: "bool",
 };
 
 function resolveDartType(spec, schema, visited = new Set()) {
-  if (schema && '$ref' in schema) {
-    const refName = schema.$ref.split('/').pop();
+  if (schema && "$ref" in schema) {
+    const refName = schema.$ref.split("/").pop();
 
     if (visited.has(refName)) {
       return [schemaToDartClass(refName), false];
@@ -279,61 +279,61 @@ function resolveDartType(spec, schema, visited = new Set()) {
     const resolved = resolveRef(spec, schema.$ref);
     const newVisited = new Set([...visited, refName]);
 
-    if ('enum' in resolved) {
+    if ("enum" in resolved) {
       return [schemaToEnumClass(refName), true];
     }
-    if ('allOf' in resolved) {
+    if ("allOf" in resolved) {
       return [schemaToDartClass(refName), false];
     }
-    if (resolved.type === 'object' || 'properties' in resolved) {
+    if (resolved.type === "object" || "properties" in resolved) {
       return [schemaToDartClass(refName), false];
     }
 
     return resolveDartType(spec, resolved, newVisited);
   }
 
-  if (schema && 'allOf' in schema) {
-    const refs = schema.allOf.filter((item) => item && '$ref' in item);
+  if (schema && "allOf" in schema) {
+    const refs = schema.allOf.filter((item) => item && "$ref" in item);
     if (refs.length === 1) {
       return resolveDartType(spec, refs[0], visited);
     }
-    return ['Object', false];
+    return ["Object", false];
   }
 
-  const schemaType = (schema && schema.type) || '';
-  const schemaFormat = (schema && schema.format) || '';
+  const schemaType = (schema && schema.type) || "";
+  const schemaFormat = (schema && schema.format) || "";
 
-  if (schemaType === 'array') {
+  if (schemaType === "array") {
     const items = (schema && schema.items) || {};
     const [itemType, isItemEnum] = resolveDartType(spec, items, visited);
     return [`BuiltList<${itemType}>`, isItemEnum];
   }
 
-  if (schemaType === 'string') {
-    if ('enum' in (schema || {})) return ['String', true];
-    if (schemaFormat === 'date-time') return ['String', false];
-    if (schemaFormat === 'date') return ['String', false];
-    if (schemaFormat === 'binary') return ['String', false];
-    return ['String', false];
+  if (schemaType === "string") {
+    if ("enum" in (schema || {})) return ["String", true];
+    if (schemaFormat === "date-time") return ["String", false];
+    if (schemaFormat === "date") return ["String", false];
+    if (schemaFormat === "binary") return ["String", false];
+    return ["String", false];
   }
 
-  if (schemaType === 'integer') {
-    return ['int', false];
+  if (schemaType === "integer") {
+    return ["int", false];
   }
 
-  if (schemaType === 'number') {
-    return ['double', false];
+  if (schemaType === "number") {
+    return ["double", false];
   }
 
   if (schemaType in OPENAPI_TO_DART) {
     return [OPENAPI_TO_DART[schemaType], false];
   }
 
-  if (schemaType === 'object') {
-    return ['Object', false];
+  if (schemaType === "object") {
+    return ["Object", false];
   }
 
-  return ['Object', false];
+  return ["Object", false];
 }
 
 // ──────────────────────────────────────────────
@@ -356,16 +356,16 @@ function collectInlineEnums(spec) {
     const properties = resolved.properties || {};
 
     for (const [propName, propSchema] of Object.entries(properties)) {
-      if (propSchema && propSchema.type === 'string' && 'enum' in propSchema) {
+      if (propSchema && propSchema.type === "string" && "enum" in propSchema) {
         const values = propSchema.enum.map(pyStr);
         const key = `${propName}|${JSON.stringify(values)}`;
         if (!enumGroups.has(key)) {
           enumGroups.set(key, { propName, values, usages: [] });
         }
         enumGroups.get(key).usages.push([schemaName, propName]);
-      } else if (propSchema && propSchema.type === 'array') {
+      } else if (propSchema && propSchema.type === "array") {
         const items = propSchema.items || {};
-        if (items.type === 'string' && 'enum' in items) {
+        if (items.type === "string" && "enum" in items) {
           const values = items.enum.map(pyStr);
           const key = `${propName}|${JSON.stringify(values)}`;
           if (!enumGroups.has(key)) {
@@ -413,7 +413,7 @@ function collectInlineEnums(spec) {
 // ──────────────────────────────────────────────
 
 function parseSchema(spec, name, schema, inlineEnumMap = null) {
-  if ('enum' in schema) {
+  if ("enum" in schema) {
     return {
       name,
       dart_class_name: schemaToEnumClass(name),
@@ -437,9 +437,9 @@ function parseSchema(spec, name, schema, inlineEnumMap = null) {
       const enumName = inlineEnumMap.get(`${name}\0${propName}`);
       if (enumName) {
         const enumClass = schemaToEnumClass(enumName);
-        if (dartType === 'String') {
+        if (dartType === "String") {
           dartType = enumClass;
-        } else if (dartType === 'BuiltList<String>') {
+        } else if (dartType === "BuiltList<String>") {
           dartType = `BuiltList<${enumClass}>`;
         }
       }
@@ -447,7 +447,7 @@ function parseSchema(spec, name, schema, inlineEnumMap = null) {
 
     const isNullable =
       !requiredFields.has(propName) || propSchema.nullable === true;
-    const fixme = dartType.includes('Object')
+    const fixme = dartType.includes("Object")
       ? `Object type detected for '${propName}'. Replace with a specific type.`
       : null;
 
@@ -490,7 +490,7 @@ function parseSchemas(spec, inlineEnumMap = null) {
 function parseParameter(spec, param) {
   const paramSchema = param.schema || {};
   const [dartType, isEnum] = resolveDartType(spec, paramSchema);
-  const fixme = dartType.includes('Object')
+  const fixme = dartType.includes("Object")
     ? `Object type detected for '${param.name}'. Replace with a specific type.`
     : null;
 
@@ -512,37 +512,37 @@ function parseParameter(spec, param) {
 function extractResponseSchema(spec, responses, statusRange) {
   for (const code of Object.keys(responses)) {
     const codeStr = String(code);
-    if (statusRange === '2xx' && codeStr.startsWith('2')) {
+    if (statusRange === "2xx" && codeStr.startsWith("2")) {
       let response = responses[code];
-      if (response && '$ref' in response) {
+      if (response && "$ref" in response) {
         response = resolveRef(spec, response.$ref);
       }
       const content = (response && response.content) || {};
-      const jsonContent = content['application/json'] || {};
+      const jsonContent = content["application/json"] || {};
       const schema = jsonContent.schema || {};
 
-      if ('$ref' in schema) {
-        return schema.$ref.split('/').pop();
+      if ("$ref" in schema) {
+        return schema.$ref.split("/").pop();
       }
-      if ('allOf' in schema) {
+      if ("allOf" in schema) {
         for (const item of schema.allOf) {
-          if (item && '$ref' in item) {
-            return item.$ref.split('/').pop();
+          if (item && "$ref" in item) {
+            return item.$ref.split("/").pop();
           }
         }
       }
-      if (schema.type === 'array') {
+      if (schema.type === "array") {
         const items = schema.items || {};
-        if ('$ref' in items) {
-          return items.$ref.split('/').pop();
+        if ("$ref" in items) {
+          return items.$ref.split("/").pop();
         }
       }
       const props = schema.properties || {};
       const dataProp = props.data || {};
-      if ('$ref' in dataProp) {
+      if ("$ref" in dataProp) {
         const title = schema.title;
         if (title) return title;
-        return dataProp.$ref.split('/').pop();
+        return dataProp.$ref.split("/").pop();
       }
       return null;
     }
@@ -555,19 +555,19 @@ function extractErrorSchemas(spec, responses) {
 
   for (const [code, rawResponse] of Object.entries(responses)) {
     const codeStr = String(code);
-    if (!(codeStr.startsWith('4') || codeStr.startsWith('5'))) continue;
+    if (!(codeStr.startsWith("4") || codeStr.startsWith("5"))) continue;
 
     let response = rawResponse;
-    if (response && '$ref' in response) {
+    if (response && "$ref" in response) {
       response = resolveRef(spec, response.$ref);
     }
 
     const content = (response && response.content) || {};
-    const jsonContent = content['application/json'] || {};
+    const jsonContent = content["application/json"] || {};
     const schema = jsonContent.schema || {};
 
-    if ('$ref' in schema) {
-      const schemaName = schema.$ref.split('/').pop();
+    if ("$ref" in schema) {
+      const schemaName = schema.$ref.split("/").pop();
       errorSchemas.push({
         status_code: parseInt(codeStr, 10),
         schema_name: schemaName,
@@ -580,28 +580,28 @@ function extractErrorSchemas(spec, responses) {
 
 function extractRequestBodySchema(spec, operation) {
   let requestBody = operation.requestBody || {};
-  if ('$ref' in requestBody) {
+  if ("$ref" in requestBody) {
     requestBody = resolveRef(spec, requestBody.$ref);
   }
 
   const content = requestBody.content || {};
-  const jsonContent = content['application/json'] || {};
+  const jsonContent = content["application/json"] || {};
   const schema = jsonContent.schema || {};
 
-  if ('$ref' in schema) {
-    return schema.$ref.split('/').pop();
+  if ("$ref" in schema) {
+    return schema.$ref.split("/").pop();
   }
   return null;
 }
 
 function extractMultipartFields(spec, operation) {
   let requestBody = operation.requestBody || {};
-  if ('$ref' in requestBody) {
+  if ("$ref" in requestBody) {
     requestBody = resolveRef(spec, requestBody.$ref);
   }
 
   const content = requestBody.content || {};
-  const multipartContent = content['multipart/form-data'];
+  const multipartContent = content["multipart/form-data"];
   if (!multipartContent) return [false, []];
 
   let schema = multipartContent.schema || {};
@@ -614,23 +614,23 @@ function extractMultipartFields(spec, operation) {
 
   const fields = [];
   for (const [propName, propSchema] of Object.entries(properties)) {
-    const propType = propSchema.type || '';
-    const propFormat = propSchema.format || '';
-    let isFile = propType === 'string' && propFormat === 'binary';
-    const isArray = propType === 'array';
+    const propType = propSchema.type || "";
+    const propFormat = propSchema.format || "";
+    let isFile = propType === "string" && propFormat === "binary";
+    const isArray = propType === "array";
 
     if (isArray) {
       const items = propSchema.items || {};
-      if (items.type === 'string' && items.format === 'binary') {
+      if (items.type === "string" && items.format === "binary") {
         isFile = true;
       }
     }
 
     let dartType;
-    if (isFile && isArray) dartType = 'List<LeafMultipartFile>';
-    else if (isFile) dartType = 'LeafMultipartFile';
-    else if (isArray) dartType = 'List<String>';
-    else dartType = 'String';
+    if (isFile && isArray) dartType = "List<LeafMultipartFile>";
+    else if (isFile) dartType = "LeafMultipartFile";
+    else if (isArray) dartType = "List<String>";
+    else dartType = "String";
 
     fields.push({
       name: propName,
@@ -650,21 +650,21 @@ function collectInlineResponseSchemas(spec) {
   const schemas = new Map();
 
   for (const pathItem of Object.values(spec.paths || {})) {
-    for (const method of ['get', 'post', 'put', 'delete', 'patch']) {
+    for (const method of ["get", "post", "put", "delete", "patch"]) {
       const operation = pathItem[method];
       if (!operation) continue;
 
       const responses = operation.responses || {};
       for (const [code, rawResponse] of Object.entries(responses)) {
-        if (!String(code).startsWith('2')) continue;
+        if (!String(code).startsWith("2")) continue;
 
         let response = rawResponse;
-        if (response && '$ref' in response) {
+        if (response && "$ref" in response) {
           response = resolveRef(spec, response.$ref);
         }
 
         const content = (response && response.content) || {};
-        const jsonContent = content['application/json'] || {};
+        const jsonContent = content["application/json"] || {};
         const schema = jsonContent.schema || {};
 
         const title = schema.title;
@@ -672,7 +672,7 @@ function collectInlineResponseSchemas(spec) {
 
         const props = schema.properties || {};
         const dataProp = props.data || {};
-        if (!('$ref' in dataProp)) continue;
+        if (!("$ref" in dataProp)) continue;
 
         if (schemas.has(title)) continue;
 
@@ -691,30 +691,33 @@ function parseEndpoints(spec) {
   for (const [pth, pathItem] of Object.entries(paths)) {
     const pathLevelParams = pathItem.parameters || [];
 
-    for (const method of ['get', 'post', 'put', 'delete', 'patch']) {
+    for (const method of ["get", "post", "put", "delete", "patch"]) {
       const operation = pathItem[method];
       if (operation == null) continue;
 
-      const tags = operation.tags || ['default'];
-      const tag = tags.length > 0 ? tags[0] : 'default';
+      const tags = operation.tags || ["default"];
+      const tag = tags.length > 0 ? tags[0] : "default";
 
       const allParams = [...pathLevelParams, ...(operation.parameters || [])];
       const resolvedParams = allParams.map((p) =>
-        '$ref' in p ? resolveRef(spec, p.$ref) : p,
+        "$ref" in p ? resolveRef(spec, p.$ref) : p,
       );
 
       const pathParams = resolvedParams
-        .filter((p) => p.in === 'path')
+        .filter((p) => p.in === "path")
         .map((p) => parseParameter(spec, p));
       const queryParams = resolvedParams
-        .filter((p) => p.in === 'query')
+        .filter((p) => p.in === "query")
         .map((p) => parseParameter(spec, p));
 
       const responses = operation.responses || {};
-      const responseSchema = extractResponseSchema(spec, responses, '2xx');
+      const responseSchema = extractResponseSchema(spec, responses, "2xx");
       const errorSchemas = extractErrorSchemas(spec, responses);
       const requestBodySchema = extractRequestBodySchema(spec, operation);
-      const [isMultipart, multipartFields] = extractMultipartFields(spec, operation);
+      const [isMultipart, multipartFields] = extractMultipartFields(
+        spec,
+        operation,
+      );
 
       endpoints.push({
         path: pth,
@@ -756,15 +759,15 @@ function parseServers(spec, sourceUrl = null) {
   }
 
   if (servers.length === 0) {
-    const url = origin ?? '/';
-    return [{ url, description: 'Default' }];
+    const url = origin ?? "/";
+    return [{ url, description: "Default" }];
   }
 
   const result = [];
   for (const s of servers) {
-    let url = s.url ?? '/';
-    if (origin && !(url.startsWith('http://') || url.startsWith('https://'))) {
-      url = origin + (url.startsWith('/') ? url : `/${url}`);
+    let url = s.url ?? "/";
+    if (origin && !(url.startsWith("http://") || url.startsWith("https://"))) {
+      url = origin + (url.startsWith("/") ? url : `/${url}`);
     }
     result.push({ url, description: s.description ?? null });
   }
@@ -796,7 +799,7 @@ function extractTags(spec, endpoints) {
 // ──────────────────────────────────────────────
 
 export async function parseOpenapi(specPath, apiName, specsDir = null) {
-  const resolvedSpecsDir = specsDir ?? 'specs';
+  const resolvedSpecsDir = specsDir ?? "specs";
 
   const spec = await loadSpec(specPath, apiName, resolvedSpecsDir);
 

@@ -6,12 +6,12 @@
 //   android-signing-verify-apk.mjs [apk] --project-dir <dir>
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { spawnSync } from 'node:child_process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { spawnSync } from "node:child_process";
 
-const DEFAULT_APK = 'build/app/outputs/flutter-apk/app.apk';
+const DEFAULT_APK = "build/app/outputs/flutter-apk/app.apk";
 
 const HELP = `Usage: android-signing-verify-apk.mjs [apk] --project-dir <dir>
 
@@ -31,26 +31,26 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { apk: DEFAULT_APK, projectDir: '' };
+  const args = { apk: DEFAULT_APK, projectDir: "" };
   const positional = [];
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--project-dir':
+      case "--project-dir":
         if (!rest.length) {
-          process.stderr.write('--project-dir requires a value\n');
+          process.stderr.write("--project-dir requires a value\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -63,7 +63,7 @@ function parseArgs(argv) {
   }
 
   if (!args.projectDir) {
-    process.stderr.write('Error: --project-dir is required\n');
+    process.stderr.write("Error: --project-dir is required\n");
     usage();
   }
 
@@ -71,7 +71,7 @@ function parseArgs(argv) {
 }
 
 function findFlutterProjectDir(projectRoot) {
-  const directPubspec = path.join(projectRoot, 'pubspec.yaml');
+  const directPubspec = path.join(projectRoot, "pubspec.yaml");
   if (fs.existsSync(directPubspec) && fs.statSync(directPubspec).isFile()) {
     return projectRoot;
   }
@@ -85,7 +85,7 @@ function findFlutterProjectDir(projectRoot) {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const pubspec = path.join(projectRoot, entry.name, 'pubspec.yaml');
+    const pubspec = path.join(projectRoot, entry.name, "pubspec.yaml");
     if (fs.existsSync(pubspec) && fs.statSync(pubspec).isFile()) {
       return path.join(projectRoot, entry.name);
     }
@@ -102,7 +102,7 @@ function main() {
     const projectRoot = path.resolve(args.projectDir);
     const flutterDir = findFlutterProjectDir(projectRoot);
     if (flutterDir === null) {
-      process.stderr.write('Error: Flutter project not found\n');
+      process.stderr.write("Error: Flutter project not found\n");
       process.exit(1);
     }
     apkPath = path.join(flutterDir, args.apk);
@@ -113,13 +113,13 @@ function main() {
     process.exit(1);
   }
 
-  const cmd = ['apksigner', 'verify', '--print-certs', apkPath];
-  const result = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
+  const cmd = ["apksigner", "verify", "--print-certs", apkPath];
+  const result = spawnSync(cmd[0], cmd.slice(1), { stdio: "inherit" });
 
   if (result.error) {
-    if (result.error.code === 'ENOENT') {
+    if (result.error.code === "ENOENT") {
       process.stderr.write(
-        'Error: apksigner command not found. Please ensure Android SDK build-tools is installed.\n',
+        "Error: apksigner command not found. Please ensure Android SDK build-tools is installed.\n",
       );
       process.exit(1);
     }

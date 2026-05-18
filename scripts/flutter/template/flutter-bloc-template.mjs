@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Flutter BLoC 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function toSnakeCase(name) {
-  let out = '';
+  let out = "";
   for (let i = 0; i < name.length; i++) {
     const ch = name[i];
-    if (ch >= 'A' && ch <= 'Z' && i > 0) {
-      out += '_';
+    if (ch >= "A" && ch <= "Z" && i > 0) {
+      out += "_";
     }
     out += ch.toLowerCase();
   }
@@ -91,26 +91,28 @@ sealed class ${blocName}State with _$${blocName}State {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 1) {
-    process.stderr.write('Usage: bloc_template.py <BlocName> [bloc|event|state]\n');
-    process.stderr.write('Example: bloc_template.py Home\n');
-    process.stderr.write('Example: bloc_template.py Home bloc\n');
-    process.stderr.write('Example: bloc_template.py Home event\n');
-    process.stderr.write('Example: bloc_template.py Home state\n');
+    process.stderr.write(
+      "Usage: bloc_template.py <BlocName> [bloc|event|state]\n",
+    );
+    process.stderr.write("Example: bloc_template.py Home\n");
+    process.stderr.write("Example: bloc_template.py Home bloc\n");
+    process.stderr.write("Example: bloc_template.py Home event\n");
+    process.stderr.write("Example: bloc_template.py Home state\n");
     process.exit(1);
   }
 
   let blocName = argv[0];
-  if (blocName.endsWith('Bloc')) {
+  if (blocName.endsWith("Bloc")) {
     blocName = blocName.slice(0, -4);
   }
 
-  const fileType = argv[1] ?? 'bloc';
+  const fileType = argv[1] ?? "bloc";
 
-  if (fileType === 'bloc') {
+  if (fileType === "bloc") {
     console.log(generateBloc(blocName));
-  } else if (fileType === 'event') {
+  } else if (fileType === "event") {
     console.log(generateEvent(blocName));
-  } else if (fileType === 'state') {
+  } else if (fileType === "state") {
     console.log(generateState(blocName));
   } else {
     process.stderr.write(`Unknown file type: ${fileType}\n`);

@@ -6,11 +6,11 @@
 //   flutter-route-setup.mjs [-entry <dir>]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
-const DEFAULT_ROUTER_PATH = 'lib/router/router.dart';
+const DEFAULT_ROUTER_PATH = "lib/router/router.dart";
 
 const HELP = `Usage: flutter-route-setup.mjs [-entry <dir>]
 
@@ -27,21 +27,21 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { entry: '' };
+  const args = { entry: "" };
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a value\n');
+          process.stderr.write("-entry requires a value\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -72,7 +72,7 @@ class AppRouter {
 
 function setupRouter(outputPath) {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, generateRouter(), 'utf-8');
+  fs.writeFileSync(outputPath, generateRouter(), "utf-8");
   return outputPath;
 }
 

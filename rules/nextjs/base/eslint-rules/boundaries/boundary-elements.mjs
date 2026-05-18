@@ -5,32 +5,48 @@
  */
 export const baseBoundaryElements = [
   // Domain layer — 프레임워크 비의존 순수 TS. feature-first (`src/domain/<feature>/...`)
-  { type: 'domain-model', mode: 'full', pattern: ['src/domain/*/model.ts'] },     // Entity·VO
-  { type: 'domain-error', mode: 'full', pattern: ['src/domain/*/errors.ts'] },    // 도메인 에러
-  { type: 'domain-port', mode: 'full', pattern: ['src/domain/*/port.ts'] },       // Repository 인터페이스
-  { type: 'domain-service', mode: 'full', pattern: ['src/domain/*/service.ts'] }, // UseCase/서비스
+  { type: "domain-model", mode: "full", pattern: ["src/domain/*/model.ts"] }, // Entity·VO
+  { type: "domain-error", mode: "full", pattern: ["src/domain/*/errors.ts"] }, // 도메인 에러
+  { type: "domain-port", mode: "full", pattern: ["src/domain/*/port.ts"] }, // Repository 인터페이스
+  {
+    type: "domain-service",
+    mode: "full",
+    pattern: ["src/domain/*/service.ts"],
+  }, // UseCase/서비스
   // HTTP adapter layer — feature-first, transport 명시. `src/http/<feature>/...`
-  { type: 'http-client', mode: 'full', pattern: ['src/http/client.ts'] },                 // HTTP 클라이언트
-  { type: 'http-endpoint', mode: 'full', pattern: ['src/http/_generated/endpoints.ts'] }, // (generated) URL 헬퍼
-  { type: 'http-dto', mode: 'full', pattern: ['src/http/_generated/types.ts'] },          // (generated) DTO 타입
-  { type: 'http-mapper', mode: 'full', pattern: ['src/http/*/mapper.ts'] },               // DTO ↔ Domain 변환
-  { type: 'http-repository', mode: 'full', pattern: ['src/http/*/repository.ts'] },       // Port 구현체
-  { type: 'http-hook', mode: 'full', pattern: ['src/http/*/hook.ts'] },                   // TanStack Query 훅
+  { type: "http-client", mode: "full", pattern: ["src/http/client.ts"] }, // HTTP 클라이언트
+  {
+    type: "http-endpoint",
+    mode: "full",
+    pattern: ["src/http/_generated/endpoints.ts"],
+  }, // (generated) URL 헬퍼
+  { type: "http-dto", mode: "full", pattern: ["src/http/_generated/types.ts"] }, // (generated) DTO 타입
+  { type: "http-mapper", mode: "full", pattern: ["src/http/*/mapper.ts"] }, // DTO ↔ Domain 변환
+  {
+    type: "http-repository",
+    mode: "full",
+    pattern: ["src/http/*/repository.ts"],
+  }, // Port 구현체
+  { type: "http-hook", mode: "full", pattern: ["src/http/*/hook.ts"] }, // TanStack Query 훅
   // Shared lib — layered code(domain/http)는 더 이상 lib 아래 두지 않고, lib는 공용 리소스 전담.
-  { type: 'lib-shared', mode: 'full', pattern: ['src/lib/utils/*.ts'] },         // 공용 유틸 함수
-  { type: 'dictionary', mode: 'full', pattern: ['src/lib/dictionaries/*', 'src/app/\\[locale\\]/dictionaries.ts'] }, // i18n 사전
-  { type: 'shared-type', pattern: ['src/lib/types'] },                           // 전역 타입
+  { type: "lib-shared", mode: "full", pattern: ["src/lib/utils/*.ts"] }, // 공용 유틸 함수
+  {
+    type: "dictionary",
+    mode: "full",
+    pattern: ["src/lib/dictionaries/*", "src/app/\\[locale\\]/dictionaries.ts"],
+  }, // i18n 사전
+  { type: "shared-type", pattern: ["src/lib/types"] }, // 전역 타입
   // DB driver wrapper — 클라이언트 초기화·커넥션 풀·트랜잭션 관리 등 DB 인프라 전담
   // (MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관. 실제 드라이버 선택은 프로젝트 재량)
-  { type: 'db', pattern: ['src/db'] },                                           // DB 드라이버 래퍼
+  { type: "db", pattern: ["src/db"] }, // DB 드라이버 래퍼
   // UI layer
-  { type: 'shared-ui', pattern: ['src/components'] },                            // 전역 재사용 컴포넌트
-  { type: 'page-component', pattern: ['src/app/\\[locale\\]/**/_components'] }, // 페이지 전용 컴포넌트 ([locale] 아래)
-  { type: 'page-provider', pattern: ['src/app/\\[locale\\]/**/_providers'] },   // 페이지 전용 Provider ([locale] 아래)
+  { type: "shared-ui", pattern: ["src/components"] }, // 전역 재사용 컴포넌트
+  { type: "page-component", pattern: ["src/app/\\[locale\\]/**/_components"] }, // 페이지 전용 컴포넌트 ([locale] 아래)
+  { type: "page-provider", pattern: ["src/app/\\[locale\\]/**/_providers"] }, // 페이지 전용 Provider ([locale] 아래)
   // Server-rendered templates — 이메일 전송 시 서버에서 렌더링되는 템플릿 전용 공간
-  { type: 'email-template', pattern: ['src/email-templates'] },                  // React Email 등 이메일 템플릿
+  { type: "email-template", pattern: ["src/email-templates"] }, // React Email 등 이메일 템플릿
   // Route Handler — Next.js App Router HTTP 엔드포인트 (GET/POST 등 export)
-  { type: 'route-handler', mode: 'full', pattern: ['src/app/**/route.ts'] },     // API 진입점 (얇은 HTTP 어댑터)
+  { type: "route-handler", mode: "full", pattern: ["src/app/**/route.ts"] }, // API 진입점 (얇은 HTTP 어댑터)
   // Page (catch-all) — 위 패턴에 매칭 안 된 src/app 전부
-  { type: 'page', pattern: ['src/app'] },                                        // 최상위 페이지 catch-all
+  { type: "page", pattern: ["src/app"] }, // 최상위 페이지 catch-all
 ];

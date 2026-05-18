@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Flutter AppBar 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function generateAppBar(appBarNameIn) {
   let appBarName = appBarNameIn;
-  if (!appBarName.endsWith('AppBar')) {
+  if (!appBarName.endsWith("AppBar")) {
     appBarName = `${appBarName}AppBar`;
   }
 
@@ -69,9 +69,9 @@ class ${appBarName} extends StatelessWidget implements PreferredSizeWidget {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 1) {
-    process.stderr.write('Usage: flutter-app-bar-template.mjs <AppBarName>\n');
-    process.stderr.write('Example: flutter-app-bar-template.mjs Home\n');
-    process.stderr.write('Example: flutter-app-bar-template.mjs Settings\n');
+    process.stderr.write("Usage: flutter-app-bar-template.mjs <AppBarName>\n");
+    process.stderr.write("Example: flutter-app-bar-template.mjs Home\n");
+    process.stderr.write("Example: flutter-app-bar-template.mjs Settings\n");
     process.exit(1);
   }
 

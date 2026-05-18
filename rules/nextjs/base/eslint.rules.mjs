@@ -20,27 +20,27 @@
 // =============================================================================
 
 // ─── Settings ────────────────────────────────────────────────────────────────
-export { baseRestrictedPatterns } from './eslint-rules/settings/restricted-patterns.mjs';
-export { baseImportResolverSettings } from './eslint-rules/settings/import-resolver-settings.mjs';
-export { baseDomainBannedPackages } from './eslint-rules/settings/domain-banned-packages.mjs';
-export { baseRestrictedSyntax } from './eslint-rules/settings/restricted-syntax.mjs';
+export { baseRestrictedPatterns } from "./eslint-rules/settings/restricted-patterns.mjs";
+export { baseImportResolverSettings } from "./eslint-rules/settings/import-resolver-settings.mjs";
+export { baseDomainBannedPackages } from "./eslint-rules/settings/domain-banned-packages.mjs";
+export { baseRestrictedSyntax } from "./eslint-rules/settings/restricted-syntax.mjs";
 
 // ─── Boundaries ──────────────────────────────────────────────────────────────
-export { baseBoundaryElements } from './eslint-rules/boundaries/boundary-elements.mjs';
-export { baseBoundaryRules } from './eslint-rules/boundaries/boundary-rules.mjs';
-export { baseBoundaryIgnores } from './eslint-rules/boundaries/boundary-ignores.mjs';
+export { baseBoundaryElements } from "./eslint-rules/boundaries/boundary-elements.mjs";
+export { baseBoundaryRules } from "./eslint-rules/boundaries/boundary-rules.mjs";
+export { baseBoundaryIgnores } from "./eslint-rules/boundaries/boundary-ignores.mjs";
 
 // ─── Quality ─────────────────────────────────────────────────────────────────
-export { baseConfig } from './eslint-rules/quality/base-config.mjs';
-export { baseServerComponentRules } from './eslint-rules/quality/server-component.mjs';
-export { baseCustomRules } from './eslint-rules/quality/custom-rules.mjs';
-export { baseIgnores } from './eslint-rules/quality/ignores.mjs';
+export { baseConfig } from "./eslint-rules/quality/base-config.mjs";
+export { baseServerComponentRules } from "./eslint-rules/quality/server-component.mjs";
+export { baseCustomRules } from "./eslint-rules/quality/custom-rules.mjs";
+export { baseIgnores } from "./eslint-rules/quality/ignores.mjs";
 
 // ─── Builders ────────────────────────────────────────────────────────────────
-export { buildRestrictedImports } from './eslint-rules/builders/build-restricted-imports.mjs';
-export { buildDomainPurity } from './eslint-rules/builders/build-domain-purity.mjs';
-export { buildArchitectureBoundaries } from './eslint-rules/builders/build-architecture-boundaries.mjs';
+export { buildRestrictedImports } from "./eslint-rules/builders/build-restricted-imports.mjs";
+export { buildDomainPurity } from "./eslint-rules/builders/build-domain-purity.mjs";
+export { buildArchitectureBoundaries } from "./eslint-rules/builders/build-architecture-boundaries.mjs";
 
 // ─── Docs (ESLint 미참조, generator 전용) ─────────────────────────────────────
-export { baseStructureAnnotations } from './eslint-rules/docs/structure-annotations.mjs';
-export { baseLayerSemantics } from './eslint-rules/docs/layer-semantics.mjs';
+export { baseStructureAnnotations } from "./eslint-rules/docs/structure-annotations.mjs";
+export { baseLayerSemantics } from "./eslint-rules/docs/layer-semantics.mjs";

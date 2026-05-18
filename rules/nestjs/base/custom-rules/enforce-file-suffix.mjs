@@ -24,44 +24,45 @@
 
 const LAYER_ALLOWED = {
   port: {
-    suffixes: ['.port.ts'],
-    exact: ['port-tokens.ts'],
+    suffixes: [".port.ts"],
+    exact: ["port-tokens.ts"],
   },
   service: {
-    suffixes: ['.service.ts', '.listener.ts'],
+    suffixes: [".service.ts", ".listener.ts"],
     exact: [],
   },
   controller: {
-    suffixes: ['.controller.ts'],
+    suffixes: [".controller.ts"],
     exact: [],
   },
   strategy: {
-    suffixes: ['.strategy.ts'],
+    suffixes: [".strategy.ts"],
     exact: [],
   },
   provider: {
-    suffixes: ['.adapter.ts', '.orm-entity.ts'],
+    suffixes: [".adapter.ts", ".orm-entity.ts"],
     exact: [],
   },
   dto: {
-    suffixes: ['.dto.ts'],
+    suffixes: [".dto.ts"],
     exact: [],
   },
   exception: {
-    suffixes: ['.error.ts'],
+    suffixes: [".error.ts"],
     exact: [],
   },
 };
 
-const LAYER_PATTERN = /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(port|service|controller|strategy|provider|dto|exception)\/[^/]*$/;
+const LAYER_PATTERN =
+  /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(port|service|controller|strategy|provider|dto|exception)\/[^/]*$/;
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Enforce layer-specific filename suffixes (e.g., *.service.ts in service/)',
+        "Enforce layer-specific filename suffixes (e.g., *.service.ts in service/)",
     },
     messages: {
       wrongSuffix:
@@ -72,15 +73,15 @@ export default {
   create(context) {
     return {
       Program(node) {
-        const filename = context.filename ?? context.getFilename?.() ?? '';
+        const filename = context.filename ?? context.getFilename?.() ?? "";
         if (!filename) return;
 
-        const basename = filename.split('/').pop() ?? '';
+        const basename = filename.split("/").pop() ?? "";
         if (
-          basename.endsWith('.spec.ts') ||
-          basename.endsWith('.test.ts') ||
-          basename.endsWith('.module.ts') ||
-          basename === 'index.ts'
+          basename.endsWith(".spec.ts") ||
+          basename.endsWith(".test.ts") ||
+          basename.endsWith(".module.ts") ||
+          basename === "index.ts"
         ) {
           return;
         }
@@ -99,11 +100,11 @@ export default {
         const allowedLabels = [
           ...rules.suffixes.map((s) => `*${s}`),
           ...rules.exact,
-        ].join(', ');
+        ].join(", ");
 
         context.report({
           node,
-          messageId: 'wrongSuffix',
+          messageId: "wrongSuffix",
           data: { basename, layer, allowed: allowedLabels },
         });
       },

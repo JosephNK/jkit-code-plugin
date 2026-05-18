@@ -20,10 +20,10 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Restrict union types in DTO fields: no T | undefined, no class unions',
+        "Restrict union types in DTO fields: no T | undefined, no class unions",
     },
     messages: {
       noUndefined:
@@ -37,18 +37,18 @@ export default {
     return {
       PropertyDefinition(node) {
         const ann = node.typeAnnotation?.typeAnnotation;
-        if (!ann || ann.type !== 'TSUnionType') return;
+        if (!ann || ann.type !== "TSUnionType") return;
 
-        const fieldName = node.key?.name ?? node.key?.value ?? 'unknown';
+        const fieldName = node.key?.name ?? node.key?.value ?? "unknown";
 
         // Case 1: T | undefined 금지
         const hasUndefined = ann.types.some(
-          (t) => t.type === 'TSUndefinedKeyword',
+          (t) => t.type === "TSUndefinedKeyword",
         );
         if (hasUndefined) {
           context.report({
             node: node.key,
-            messageId: 'noUndefined',
+            messageId: "noUndefined",
             data: { name: fieldName },
           });
           return;
@@ -57,12 +57,12 @@ export default {
         // Case 2: 클래스 유니온 금지 (TSTypeReference가 2개 이상)
         // 원시 타입/literal/null은 TSTypeReference가 아니므로 카운트되지 않음
         const nonNullRefs = ann.types.filter(
-          (t) => t.type === 'TSTypeReference',
+          (t) => t.type === "TSTypeReference",
         );
         if (nonNullRefs.length >= 2) {
           context.report({
             node: node.key,
-            messageId: 'noClassUnion',
+            messageId: "noClassUnion",
             data: { name: fieldName },
           });
         }

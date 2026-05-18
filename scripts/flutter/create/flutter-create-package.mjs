@@ -14,11 +14,11 @@
 //                              [--no-app-dep] [--dry-run]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 // ──────────────────────────────────────────────
 // Constants
@@ -27,18 +27,73 @@ import { fileURLToPath } from 'node:url';
 const PACKAGE_NAME_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 const DART_RESERVED_WORDS = new Set([
-  'abstract', 'as', 'assert', 'async', 'await', 'break', 'case', 'catch',
-  'class', 'const', 'continue', 'covariant', 'default', 'deferred', 'do',
-  'dynamic', 'else', 'enum', 'export', 'extends', 'extension', 'external',
-  'factory', 'false', 'final', 'finally', 'for', 'function', 'get', 'hide',
-  'if', 'implements', 'import', 'in', 'interface', 'is', 'late', 'library',
-  'mixin', 'new', 'null', 'on', 'operator', 'part', 'required', 'rethrow',
-  'return', 'set', 'show', 'static', 'super', 'switch', 'sync', 'this',
-  'throw', 'true', 'try', 'typedef', 'var', 'void', 'while', 'with', 'yield',
+  "abstract",
+  "as",
+  "assert",
+  "async",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "covariant",
+  "default",
+  "deferred",
+  "do",
+  "dynamic",
+  "else",
+  "enum",
+  "export",
+  "extends",
+  "extension",
+  "external",
+  "factory",
+  "false",
+  "final",
+  "finally",
+  "for",
+  "function",
+  "get",
+  "hide",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "interface",
+  "is",
+  "late",
+  "library",
+  "mixin",
+  "new",
+  "null",
+  "on",
+  "operator",
+  "part",
+  "required",
+  "rethrow",
+  "return",
+  "set",
+  "show",
+  "static",
+  "super",
+  "switch",
+  "sync",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typedef",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
 ]);
 
-const LEAF_KIT_GIT_URL = 'https://github.com/JosephNK/flutter_leaf_kit.git';
-const LEAF_KIT_GIT_PATH = './packages/leaf';
+const LEAF_KIT_GIT_URL = "https://github.com/JosephNK/flutter_leaf_kit.git";
+const LEAF_KIT_GIT_PATH = "./packages/leaf";
 
 const LEAF_KIT_REF_PATTERN =
   /flutter_leaf_kit:\s*\n\s*git:\s*\n\s*url:[^\n]+\n\s*ref:\s*['"]?([^'"\n]+)['"]?/;
@@ -70,8 +125,8 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    packageName: '',
-    entry: 'app',
+    packageName: "",
+    entry: "app",
     noAppDep: false,
     withLeafKit: false,
     leafKitRef: null,
@@ -83,35 +138,35 @@ function parseArgs(argv) {
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a value\n');
+          process.stderr.write("-entry requires a value\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '--no-app-dep':
+      case "--no-app-dep":
         args.noAppDep = true;
         break;
-      case '--with-leaf-kit':
+      case "--with-leaf-kit":
         args.withLeafKit = true;
         break;
-      case '--leaf-kit-ref':
+      case "--leaf-kit-ref":
         if (!rest.length) {
-          process.stderr.write('--leaf-kit-ref requires a value\n');
+          process.stderr.write("--leaf-kit-ref requires a value\n");
           usage();
         }
         args.leafKitRef = rest.shift();
         break;
-      case '--dry-run':
+      case "--dry-run":
         args.dryRun = true;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -120,12 +175,12 @@ function parseArgs(argv) {
   }
 
   if (positional.length === 0) {
-    process.stderr.write('Error: <package_name> is required\n');
+    process.stderr.write("Error: <package_name> is required\n");
     usage();
   }
   if (positional.length > 1) {
     process.stderr.write(
-      `Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`,
+      `Error: unexpected extra arguments: ${positional.slice(1).join(" ")}\n`,
     );
     usage();
   }
@@ -142,7 +197,7 @@ function validatePackageName(name) {
   if (!PACKAGE_NAME_PATTERN.test(name)) {
     process.stderr.write(
       `❌ 유효하지 않은 패키지명: '${name}'\n` +
-        '   → snake_case (소문자 + 숫자 + 언더스코어, 소문자로 시작)\n',
+        "   → snake_case (소문자 + 숫자 + 언더스코어, 소문자로 시작)\n",
     );
     process.exit(1);
   }
@@ -160,14 +215,14 @@ function validatePackageName(name) {
 // ──────────────────────────────────────────────
 
 function normalizeRef(ref) {
-  if (ref.startsWith('v') || !/^[0-9]$/.test(ref[0])) {
+  if (ref.startsWith("v") || !/^[0-9]$/.test(ref[0])) {
     return ref;
   }
   return `v${ref}`;
 }
 
 function extractLeafKitRef(projectRoot, entry) {
-  const entryPubspec = path.join(projectRoot, entry, 'pubspec.yaml');
+  const entryPubspec = path.join(projectRoot, entry, "pubspec.yaml");
 
   if (!fs.existsSync(entryPubspec)) {
     process.stderr.write(
@@ -176,7 +231,7 @@ function extractLeafKitRef(projectRoot, entry) {
     process.exit(1);
   }
 
-  const content = fs.readFileSync(entryPubspec, 'utf-8');
+  const content = fs.readFileSync(entryPubspec, "utf-8");
   const match = content.match(LEAF_KIT_REF_PATTERN);
 
   if (!match) {
@@ -194,7 +249,7 @@ function extractLeafKitRef(projectRoot, entry) {
 // ──────────────────────────────────────────────
 
 function insertLineAfter(content, anchorPattern, newLine) {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   let insertIdx = -1;
 
   for (let i = 0; i < lines.length; i += 1) {
@@ -208,11 +263,11 @@ function insertLineAfter(content, anchorPattern, newLine) {
   }
 
   lines.splice(insertIdx + 1, 0, newLine);
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function findLastWorkspaceEntry(content) {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   let inWorkspace = false;
   let lastEntryIdx = -1;
 
@@ -225,7 +280,7 @@ function findLastWorkspaceEntry(content) {
     if (inWorkspace) {
       if (/^ {2}- /.test(line)) {
         lastEntryIdx = i;
-      } else if (line.trim() && !line.startsWith(' ')) {
+      } else if (line.trim() && !line.startsWith(" ")) {
         break;
       }
     }
@@ -235,7 +290,7 @@ function findLastWorkspaceEntry(content) {
 }
 
 function findLastDependencyEntry(content) {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   let inDeps = false;
   let lastEntryIdx = -1;
 
@@ -246,9 +301,9 @@ function findLastDependencyEntry(content) {
       continue;
     }
     if (inDeps) {
-      if (line.startsWith('  ')) {
+      if (line.startsWith("  ")) {
         lastEntryIdx = i;
-      } else if (line.trim() && !line.startsWith(' ')) {
+      } else if (line.trim() && !line.startsWith(" ")) {
         break;
       }
     }
@@ -262,7 +317,7 @@ function findLastDependencyEntry(content) {
 // ──────────────────────────────────────────────
 
 function createFlutterPackage(projectRoot, packageName, dryRun) {
-  const packagesDir = path.join(projectRoot, 'packages');
+  const packagesDir = path.join(projectRoot, "packages");
   const packageDir = path.join(packagesDir, packageName);
 
   if (fs.existsSync(packageDir)) {
@@ -278,14 +333,14 @@ function createFlutterPackage(projectRoot, packageName, dryRun) {
   fs.mkdirSync(packagesDir, { recursive: true });
 
   const result = spawnSync(
-    'flutter',
-    ['create', '--template=package', packageName],
-    { cwd: packagesDir, encoding: 'utf-8' },
+    "flutter",
+    ["create", "--template=package", packageName],
+    { cwd: packagesDir, encoding: "utf-8" },
   );
 
   if (result.error) {
-    if (result.error.code === 'ENOENT') {
-      process.stderr.write('❌ flutter 명령을 찾을 수 없습니다.\n');
+    if (result.error.code === "ENOENT") {
+      process.stderr.write("❌ flutter 명령을 찾을 수 없습니다.\n");
     } else {
       process.stderr.write(`❌ flutter create 실패: ${result.error.message}\n`);
     }
@@ -293,7 +348,7 @@ function createFlutterPackage(projectRoot, packageName, dryRun) {
   }
 
   if (result.status !== 0) {
-    process.stderr.write(`❌ flutter create 실패:\n${result.stderr ?? ''}`);
+    process.stderr.write(`❌ flutter create 실패:\n${result.stderr ?? ""}`);
     process.exit(1);
   }
 
@@ -304,15 +359,15 @@ function createFlutterPackage(projectRoot, packageName, dryRun) {
 function setupPackagePubspec(projectRoot, packageName, dryRun) {
   const pubspecPath = path.join(
     projectRoot,
-    'packages',
+    "packages",
     packageName,
-    'pubspec.yaml',
+    "pubspec.yaml",
   );
 
   if (!fs.existsSync(pubspecPath)) {
     if (dryRun) {
       process.stdout.write(
-        '  🔍 publish_to + resolution: workspace 추가 예정 (dry-run)\n',
+        "  🔍 publish_to + resolution: workspace 추가 예정 (dry-run)\n",
       );
       return true;
     }
@@ -320,13 +375,13 @@ function setupPackagePubspec(projectRoot, packageName, dryRun) {
     process.exit(1);
   }
 
-  let content = fs.readFileSync(pubspecPath, 'utf-8');
+  let content = fs.readFileSync(pubspecPath, "utf-8");
   const hasPublishTo = /^publish_to:/m.test(content);
   const hasResolution = /^resolution:\s*workspace\s*$/m.test(content);
 
   if (hasPublishTo && hasResolution) {
     process.stdout.write(
-      '  ⏭️  publish_to + resolution: workspace 이미 설정됨 (스킵)\n',
+      "  ⏭️  publish_to + resolution: workspace 이미 설정됨 (스킵)\n",
     );
     return false;
   }
@@ -334,17 +389,21 @@ function setupPackagePubspec(projectRoot, packageName, dryRun) {
   if (dryRun) {
     const missing = [];
     if (!hasPublishTo) missing.push("publish_to: 'none'");
-    if (!hasResolution) missing.push('resolution: workspace');
-    process.stdout.write(`  🔍 ${missing.join(' + ')} 추가 예정 (dry-run)\n`);
+    if (!hasResolution) missing.push("resolution: workspace");
+    process.stdout.write(`  🔍 ${missing.join(" + ")} 추가 예정 (dry-run)\n`);
     return true;
   }
 
   // publish_to: 'none' 추가 (description: 뒤에 삽입)
   if (!hasPublishTo) {
     try {
-      content = insertLineAfter(content, /^description:.*/, "publish_to: 'none'");
+      content = insertLineAfter(
+        content,
+        /^description:.*/,
+        "publish_to: 'none'",
+      );
     } catch {
-      content = content.replace('version:', "publish_to: 'none'\nversion:");
+      content = content.replace("version:", "publish_to: 'none'\nversion:");
     }
   }
 
@@ -353,7 +412,7 @@ function setupPackagePubspec(projectRoot, packageName, dryRun) {
     let inserted = false;
     for (const anchor of [/^homepage:.*/, /^publish_to:.*/, /^version:.*/]) {
       try {
-        content = insertLineAfter(content, anchor, 'resolution: workspace');
+        content = insertLineAfter(content, anchor, "resolution: workspace");
         inserted = true;
         break;
       } catch {
@@ -362,28 +421,28 @@ function setupPackagePubspec(projectRoot, packageName, dryRun) {
     }
     if (!inserted) {
       content = content.replace(
-        'environment:',
-        'resolution: workspace\n\nenvironment:',
+        "environment:",
+        "resolution: workspace\n\nenvironment:",
       );
     }
   }
 
-  fs.writeFileSync(pubspecPath, content, 'utf-8');
+  fs.writeFileSync(pubspecPath, content, "utf-8");
 
   const added = [];
   if (!hasPublishTo) added.push("publish_to: 'none'");
-  if (!hasResolution) added.push('resolution: workspace');
-  process.stdout.write(`  ✅ ${added.join(' + ')} 추가\n`);
+  if (!hasResolution) added.push("resolution: workspace");
+  process.stdout.write(`  ✅ ${added.join(" + ")} 추가\n`);
   return true;
 }
 
 function addToRootWorkspace(projectRoot, packageName, dryRun) {
-  const rootPubspec = path.join(projectRoot, 'pubspec.yaml');
-  const content = fs.readFileSync(rootPubspec, 'utf-8');
+  const rootPubspec = path.join(projectRoot, "pubspec.yaml");
+  const content = fs.readFileSync(rootPubspec, "utf-8");
   const workspaceEntry = `packages/${packageName}`;
 
   if (content.includes(`  - ${workspaceEntry}`)) {
-    process.stdout.write('  ⏭️  루트 workspace에 이미 등록됨 (스킵)\n');
+    process.stdout.write("  ⏭️  루트 workspace에 이미 등록됨 (스킵)\n");
     return false;
   }
 
@@ -397,30 +456,32 @@ function addToRootWorkspace(projectRoot, packageName, dryRun) {
   const lastIdx = findLastWorkspaceEntry(content);
   if (lastIdx === -1) {
     process.stderr.write(
-      '❌ 루트 pubspec.yaml에서 workspace 블록을 찾을 수 없습니다.\n',
+      "❌ 루트 pubspec.yaml에서 workspace 블록을 찾을 수 없습니다.\n",
     );
     process.exit(1);
   }
 
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   lines.splice(lastIdx + 1, 0, `  - ${workspaceEntry}`);
-  fs.writeFileSync(rootPubspec, lines.join('\n'), 'utf-8');
-  process.stdout.write('  ✅ 루트 workspace에 등록\n');
+  fs.writeFileSync(rootPubspec, lines.join("\n"), "utf-8");
+  process.stdout.write("  ✅ 루트 workspace에 등록\n");
   return true;
 }
 
 function addToEntryDependencies(projectRoot, packageName, entry, dryRun) {
-  const entryPubspec = path.join(projectRoot, entry, 'pubspec.yaml');
+  const entryPubspec = path.join(projectRoot, entry, "pubspec.yaml");
 
   if (!fs.existsSync(entryPubspec)) {
-    process.stdout.write(`  ⚠️  ${entry}/pubspec.yaml을 찾을 수 없습니다 (스킵)\n`);
+    process.stdout.write(
+      `  ⚠️  ${entry}/pubspec.yaml을 찾을 수 없습니다 (스킵)\n`,
+    );
     return false;
   }
 
-  const content = fs.readFileSync(entryPubspec, 'utf-8');
+  const content = fs.readFileSync(entryPubspec, "utf-8");
 
-  const escaped = packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (new RegExp(`^\\s+${escaped}:`, 'm').test(content)) {
+  const escaped = packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`^\\s+${escaped}:`, "m").test(content)) {
     process.stdout.write(`  ⏭️  ${entry} dependencies에 이미 등록됨 (스킵)\n`);
     return false;
   }
@@ -440,9 +501,9 @@ function addToEntryDependencies(projectRoot, packageName, entry, dryRun) {
     process.exit(1);
   }
 
-  const lines = content.split('\n');
-  lines.splice(lastIdx + 1, 0, '', `  ${packageName}: any`);
-  fs.writeFileSync(entryPubspec, lines.join('\n'), 'utf-8');
+  const lines = content.split("\n");
+  lines.splice(lastIdx + 1, 0, "", `  ${packageName}: any`);
+  fs.writeFileSync(entryPubspec, lines.join("\n"), "utf-8");
   process.stdout.write(`  ✅ ${entry} dependencies에 등록\n`);
   return true;
 }
@@ -450,24 +511,26 @@ function addToEntryDependencies(projectRoot, packageName, entry, dryRun) {
 function addLeafKitDependency(projectRoot, packageName, ref, dryRun) {
   const pubspecPath = path.join(
     projectRoot,
-    'packages',
+    "packages",
     packageName,
-    'pubspec.yaml',
+    "pubspec.yaml",
   );
 
   if (!fs.existsSync(pubspecPath)) {
     if (dryRun) {
-      process.stdout.write('  🔍 flutter_leaf_kit 의존성 추가 예정 (dry-run)\n');
+      process.stdout.write(
+        "  🔍 flutter_leaf_kit 의존성 추가 예정 (dry-run)\n",
+      );
       return true;
     }
     process.stderr.write(`❌ ${pubspecPath} 파일을 찾을 수 없습니다.\n`);
     process.exit(1);
   }
 
-  const content = fs.readFileSync(pubspecPath, 'utf-8');
+  const content = fs.readFileSync(pubspecPath, "utf-8");
 
   if (/^\s+flutter_leaf_kit:/m.test(content)) {
-    process.stdout.write('  ⏭️  flutter_leaf_kit 의존성 이미 존재 (스킵)\n');
+    process.stdout.write("  ⏭️  flutter_leaf_kit 의존성 이미 존재 (스킵)\n");
     return false;
   }
 
@@ -481,46 +544,46 @@ function addLeafKitDependency(projectRoot, packageName, ref, dryRun) {
   const lastIdx = findLastDependencyEntry(content);
   if (lastIdx === -1) {
     process.stderr.write(
-      '❌ 패키지 pubspec.yaml에서 dependencies 블록을 찾을 수 없습니다.\n',
+      "❌ 패키지 pubspec.yaml에서 dependencies 블록을 찾을 수 없습니다.\n",
     );
     process.exit(1);
   }
 
   const leafKitBlock = [
-    '',
-    '  # flutter_leaf_kit',
-    '  flutter_leaf_kit:',
-    '    git:',
+    "",
+    "  # flutter_leaf_kit",
+    "  flutter_leaf_kit:",
+    "    git:",
     `      url: ${LEAF_KIT_GIT_URL}`,
     `      ref: '${ref}'`,
     `      path: ${LEAF_KIT_GIT_PATH}`,
   ];
 
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   lines.splice(lastIdx + 1, 0, ...leafKitBlock);
-  fs.writeFileSync(pubspecPath, lines.join('\n'), 'utf-8');
+  fs.writeFileSync(pubspecPath, lines.join("\n"), "utf-8");
   process.stdout.write(`  ✅ flutter_leaf_kit (ref: '${ref}') 의존성 추가\n`);
   return true;
 }
 
 function runPubGet(projectRoot, dryRun) {
   if (dryRun) {
-    process.stdout.write('  🔍 flutter pub get 실행 예정 (dry-run)\n');
+    process.stdout.write("  🔍 flutter pub get 실행 예정 (dry-run)\n");
     return false;
   }
 
-  const result = spawnSync('flutter', ['pub', 'get'], {
+  const result = spawnSync("flutter", ["pub", "get"], {
     cwd: projectRoot,
-    encoding: 'utf-8',
+    encoding: "utf-8",
   });
 
   if (result.error || result.status !== 0) {
-    const msg = result.error ? result.error.message : result.stderr ?? '';
+    const msg = result.error ? result.error.message : (result.stderr ?? "");
     process.stderr.write(`⚠️  flutter pub get 경고:\n${msg}`);
     return false;
   }
 
-  process.stdout.write('  ✅ flutter pub get 완료\n');
+  process.stdout.write("  ✅ flutter pub get 완료\n");
   return true;
 }
 
@@ -541,7 +604,7 @@ function main() {
 
   // 프로젝트 루트 경로 결정 (.claude/scripts/flutter/create/ → 4단계 상위)
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const projectRoot = path.resolve(scriptDir, '..', '..', '..', '..');
+  const projectRoot = path.resolve(scriptDir, "..", "..", "..", "..");
 
   validatePackageName(packageName);
 
@@ -559,9 +622,9 @@ function main() {
     process.stdout.write(`   leaf-kit ref: ${leafKitRef}\n`);
   }
   if (dryRun) {
-    process.stdout.write('   (dry-run 모드)\n\n');
+    process.stdout.write("   (dry-run 모드)\n\n");
   } else {
-    process.stdout.write('\n');
+    process.stdout.write("\n");
   }
 
   const changes = [];
@@ -570,8 +633,13 @@ function main() {
   changes.push(createFlutterPackage(projectRoot, packageName, dryRun));
 
   // Step 2: publish_to + resolution: workspace 추가
-  if (!dryRun && !fs.existsSync(path.join(projectRoot, 'packages', packageName))) {
-    process.stderr.write('❌ 패키지 디렉토리가 없어 설정을 진행할 수 없습니다.\n');
+  if (
+    !dryRun &&
+    !fs.existsSync(path.join(projectRoot, "packages", packageName))
+  ) {
+    process.stderr.write(
+      "❌ 패키지 디렉토리가 없어 설정을 진행할 수 없습니다.\n",
+    );
     process.exit(1);
   }
   changes.push(setupPackagePubspec(projectRoot, packageName, dryRun));
@@ -585,27 +653,33 @@ function main() {
       addLeafKitDependency(projectRoot, packageName, leafKitRef, dryRun),
     );
   } else {
-    process.stdout.write('  ⏭️  flutter_leaf_kit 의존성 생략 (--with-leaf-kit 없음)\n');
+    process.stdout.write(
+      "  ⏭️  flutter_leaf_kit 의존성 생략 (--with-leaf-kit 없음)\n",
+    );
   }
 
   // Step 5: 엔트리 dependencies 등록
   if (noAppDep) {
-    process.stdout.write(`  ⏭️  ${entry} dependencies 등록 생략 (--no-app-dep)\n`);
+    process.stdout.write(
+      `  ⏭️  ${entry} dependencies 등록 생략 (--no-app-dep)\n`,
+    );
   } else {
-    changes.push(addToEntryDependencies(projectRoot, packageName, entry, dryRun));
+    changes.push(
+      addToEntryDependencies(projectRoot, packageName, entry, dryRun),
+    );
   }
 
   // Step 6: flutter pub get (변경 사항이 있을 때만)
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   const hasChanges = changes.some(Boolean);
 
   if (hasChanges) {
     runPubGet(projectRoot, dryRun);
     const changeCount = changes.filter(Boolean).length;
-    const action = dryRun ? '변경 예정' : '설정 완료';
+    const action = dryRun ? "변경 예정" : "설정 완료";
     process.stdout.write(`\n${changeCount}개 ${action}\n`);
   } else {
-    process.stdout.write('이미 설정 완료 상태입니다.\n');
+    process.stdout.write("이미 설정 완료 상태입니다.\n");
   }
 
   process.exit(0);

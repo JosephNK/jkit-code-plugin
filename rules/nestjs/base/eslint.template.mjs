@@ -33,20 +33,20 @@ import {
   buildArchitectureBoundaries,
   buildLayerRestrictions,
   resolvePathAliasPattern,
-} from '@jkit/code-plugin/nestjs/base/eslint.rules.mjs';
+} from "@jkit/code-plugin/nestjs/base/eslint.rules.mjs";
 // {{STACK_IMPORTS}}
 
 // ─── Merged framework packages (base + stacks) ────────────────────────────────
 // 모든 순수 레이어(model/, port/, exception/)에서 import 차단할 패키지 총합
 const allFrameworkBannedPackages = [
   ...baseFrameworkBannedPackages,
-// {{FRAMEWORK_BANNED_PACKAGES}}
+  // {{FRAMEWORK_BANNED_PACKAGES}}
 ];
 
 // ─── Merged infra SDK packages (stacks only — banned from service/exception) ──
 // service/ 계층에서 직접 import 금지되는 인프라 SDK 목록 (Port로 추상화 강제)
 const allInfraBannedPackages = [
-// {{INFRA_BANNED_PACKAGES}}
+  // {{INFRA_BANNED_PACKAGES}}
 ];
 
 // ─── Final config assembly ────────────────────────────────────────────────────
@@ -81,15 +81,15 @@ const eslintConfig = [
   ...buildArchitectureBoundaries(
     [
       ...baseBoundaryElements,
-// {{BOUNDARY_ELEMENTS}}
+      // {{BOUNDARY_ELEMENTS}}
     ],
     [
       ...baseBoundaryRules,
-// {{BOUNDARY_RULES}}
+      // {{BOUNDARY_RULES}}
     ],
     [
       ...baseBoundaryIgnores,
-// {{BOUNDARY_IGNORES}}
+      // {{BOUNDARY_IGNORES}}
     ],
   ),
 
@@ -103,7 +103,7 @@ const eslintConfig = [
   // [7-1] 순환 의존성 감지 (warn — 실제 프로젝트 검증 후 error 승격 권장)
   ...baseImportCycleRules,
 
-// {{CUSTOM_CONFIG}}
+  // {{CUSTOM_CONFIG}}
 
   // ─── Project-specific rules below ───
   // 프로젝트 개별 override는 이 아래에 추가한다.

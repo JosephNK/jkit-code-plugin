@@ -29,10 +29,10 @@ const NESTED_PATTERN = new RegExp(
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Disallow subdirectories inside layer folders (model/port/service/controller/strategy/provider/exception/dto)',
+        "Disallow subdirectories inside layer folders (model/port/service/controller/strategy/provider/exception/dto)",
     },
     messages: {
       nestedDir:
@@ -43,14 +43,14 @@ export default {
   create(context) {
     return {
       Program(node) {
-        const filename = context.filename ?? context.getFilename?.() ?? '';
+        const filename = context.filename ?? context.getFilename?.() ?? "";
         if (!filename) return;
 
-        const basename = filename.split('/').pop() ?? '';
+        const basename = filename.split("/").pop() ?? "";
         if (
-          basename.endsWith('.spec.ts') ||
-          basename.endsWith('.test.ts') ||
-          basename.endsWith('.module.ts')
+          basename.endsWith(".spec.ts") ||
+          basename.endsWith(".test.ts") ||
+          basename.endsWith(".module.ts")
         ) {
           return;
         }
@@ -61,7 +61,7 @@ export default {
         const [, layer, subdir] = match;
         context.report({
           node,
-          messageId: 'nestedDir',
+          messageId: "nestedDir",
           data: { layer, subdir },
         });
       },

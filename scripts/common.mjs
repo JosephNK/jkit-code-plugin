@@ -12,11 +12,11 @@
 //   setDep(dev, name, version)    → upsert a devDep and return a log line
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 export function normalizePath(p) {
-  if (!p) throw new Error('normalizePath requires a path');
+  if (!p) throw new Error("normalizePath requires a path");
   if (!fs.existsSync(p)) {
     throw new Error(`path does not exist: ${p}`);
   }
@@ -31,15 +31,15 @@ export function normalizePath(p) {
 // We deliberately do not treat "inside a git work tree" as sufficient — the
 // guardrail's purpose is to reject cases like running from `app/` when the
 // script should run at the repo root.
-export function ensureGitRepo(p = '.') {
+export function ensureGitRepo(p = ".") {
   if (!fs.existsSync(p)) {
     throw new Error(`path does not exist: ${p}`);
   }
-  if (!fs.existsSync(path.join(p, '.git'))) {
+  if (!fs.existsSync(path.join(p, ".git"))) {
     const msg = [
       `${p} is not a git repository root (missing ${p}/.git)`,
-      'Hint: pass -p <project-root> or cd into the project root first.',
-    ].join('\n');
+      "Hint: pass -p <project-root> or cd into the project root first.",
+    ].join("\n");
     throw new Error(msg);
   }
 }
@@ -63,14 +63,14 @@ export function setDep(dev, name, version) {
 }
 
 export function ensureFlutterRoot(root, entry) {
-  if (!root) throw new Error('ensureFlutterRoot requires a project root');
-  if (!entry) throw new Error('ensureFlutterRoot requires an entry dir');
-  const pubspec = path.join(root, entry, 'pubspec.yaml');
+  if (!root) throw new Error("ensureFlutterRoot requires a project root");
+  if (!entry) throw new Error("ensureFlutterRoot requires an entry dir");
+  const pubspec = path.join(root, entry, "pubspec.yaml");
   if (!fs.existsSync(pubspec)) {
     const msg = [
       `${root} is not a Flutter project root (missing ${entry}/pubspec.yaml)`,
       "Hint: pass -p <project-root> (and -entry <dir> if different from 'app').",
-    ].join('\n');
+    ].join("\n");
     throw new Error(msg);
   }
 }

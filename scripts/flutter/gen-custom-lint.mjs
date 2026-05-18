@@ -16,16 +16,16 @@
 //   gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--ref <git-ref>]
 // =============================================================================
 
-import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import YAML from 'yaml';
+import YAML from "yaml";
 
-import { ensureFlutterRoot, normalizePath } from '../common.mjs';
+import { ensureFlutterRoot, normalizePath } from "../common.mjs";
 
 // `--ref` and the legacy git URL are accepted for CLI backward compatibility
 // but no longer used: plugins: now resolve via `path:` to the local plugin
@@ -38,20 +38,20 @@ import { ensureFlutterRoot, normalizePath } from '../common.mjs';
  * the workspace root, so the entry's analysis_options.yaml is the wrong place.
  */
 function isWorkspaceMember(projectDir, entry) {
-  const rootPubspec = path.join(projectDir, 'pubspec.yaml');
+  const rootPubspec = path.join(projectDir, "pubspec.yaml");
   if (!fs.existsSync(rootPubspec) || !fs.statSync(rootPubspec).isFile()) {
     return false;
   }
   let doc;
   try {
-    doc = YAML.parseDocument(fs.readFileSync(rootPubspec, 'utf-8'));
+    doc = YAML.parseDocument(fs.readFileSync(rootPubspec, "utf-8"));
   } catch {
     return false;
   }
-  const ws = doc.get('workspace');
+  const ws = doc.get("workspace");
   if (!YAML.isSeq(ws)) return false;
-  const entries = ws.toJSON().map((s) => String(s).replace(/\/+$/, ''));
-  return entries.includes(entry.replace(/\/+$/, ''));
+  const entries = ws.toJSON().map((s) => String(s).replace(/\/+$/, ""));
+  return entries.includes(entry.replace(/\/+$/, ""));
 }
 
 const HELP = `Usage: gen-custom-lint.mjs flutter -p <project-dir> [-entry <dir>] [--stacks <stacks>]
@@ -94,51 +94,51 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    framework: '',
-    projectDir: '',
-    entry: 'app',
-    ref: '',
-    stacks: '',
+    framework: "",
+    projectDir: "",
+    entry: "app",
+    ref: "",
+    stacks: "",
   };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a directory\n');
+          process.stderr.write("-entry requires a directory\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '--ref':
+      case "--ref":
         if (!rest.length) {
-          process.stderr.write('--ref requires a value\n');
+          process.stderr.write("--ref requires a value\n");
           usage();
         }
         args.ref = rest.shift();
         break;
-      case '--stacks':
+      case "--stacks":
         if (!rest.length) {
-          process.stderr.write('--stacks requires a value\n');
+          process.stderr.write("--stacks requires a value\n");
           usage();
         }
         args.stacks = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -148,11 +148,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.projectDir) {
-    process.stderr.write('Error: -p <project-dir> is required\n');
+    process.stderr.write("Error: -p <project-dir> is required\n");
     usage();
   }
 
@@ -163,7 +163,7 @@ function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..');
+  const pluginRoot = path.resolve(scriptDir, "..", "..");
 
   try {
     ensureFlutterRoot(args.projectDir, args.entry);
@@ -182,8 +182,8 @@ function main() {
 
   const injectScript = path.join(
     scriptDir,
-    'custom_lint',
-    'inject-custom-lint.mjs',
+    "custom_lint",
+    "inject-custom-lint.mjs",
   );
 
   // In a Dart pub workspace, the analyzer doesn't auto-inherit options from
@@ -194,10 +194,10 @@ function main() {
   // Non-workspace projects get plugins: directly in the entry's options.
   const inWorkspace = isWorkspaceMember(projectDir, args.entry);
   const analysisOptionsPath = inWorkspace
-    ? 'analysis_options.yaml'
-    : path.join(args.entry, 'analysis_options.yaml');
+    ? "analysis_options.yaml"
+    : path.join(args.entry, "analysis_options.yaml");
   const stalePath = inWorkspace
-    ? path.join(args.entry, 'analysis_options.yaml')
+    ? path.join(args.entry, "analysis_options.yaml")
     : null;
 
   if (inWorkspace) {
@@ -213,25 +213,25 @@ function main() {
   // plugin load failure on Dart 3.10–3.12.
   const injectArgs = [
     injectScript,
-    '--pubspec',
-    path.join(args.entry, 'pubspec.yaml'),
-    '--analysis-options',
+    "--pubspec",
+    path.join(args.entry, "pubspec.yaml"),
+    "--analysis-options",
     analysisOptionsPath,
-    '--plugin-root',
+    "--plugin-root",
     pluginRoot,
   ];
   if (stalePath) {
-    injectArgs.push('--strip-stale-from', stalePath);
+    injectArgs.push("--strip-stale-from", stalePath);
   }
   if (args.stacks) {
-    injectArgs.push('--stacks', args.stacks);
+    injectArgs.push("--stacks", args.stacks);
   }
 
   const result = spawnSync(process.execPath, injectArgs, {
     cwd: projectDir,
     // Preserve bash-style logical cwd semantics (matches `(cd && pwd)`).
     env: { ...process.env, PWD: projectDir },
-    stdio: 'inherit',
+    stdio: "inherit",
   });
 
   if (result.error) {
@@ -250,8 +250,8 @@ function main() {
   // is required after plugin changes (per Dart docs); clearing both legacy and
   // new cache directories also helps surface fresh sources on next analyze.
   for (const cacheDir of [
-    path.join(os.homedir(), '.dartServer', '.plugin_manager'),
-    path.join(os.homedir(), '.dartServer', '.analysis_server_plugin'),
+    path.join(os.homedir(), ".dartServer", ".plugin_manager"),
+    path.join(os.homedir(), ".dartServer", ".analysis_server_plugin"),
   ]) {
     if (fs.existsSync(cacheDir)) {
       fs.rmSync(cacheDir, { recursive: true, force: true });
@@ -259,7 +259,7 @@ function main() {
     }
   }
   process.stdout.write(
-    '  Note: restart the Dart Analysis Server (or your IDE) to apply changes.\n',
+    "  Note: restart the Dart Analysis Server (or your IDE) to apply changes.\n",
   );
 }
 

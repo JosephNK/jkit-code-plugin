@@ -6,14 +6,14 @@
 //   flutter-assets-lang-setup.mjs [-entry <dir>]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
-const DEFAULT_LANGS = ['en-US', 'ja-JP', 'ko-KR'];
-const DEFAULT_LANGS_DIR = 'assets/langs';
-const DEFAULT_PUBSPEC_FILE = 'pubspec.yaml';
-const ASSETS_ENTRY = 'assets/langs/';
+const DEFAULT_LANGS = ["en-US", "ja-JP", "ko-KR"];
+const DEFAULT_LANGS_DIR = "assets/langs";
+const DEFAULT_PUBSPEC_FILE = "pubspec.yaml";
+const ASSETS_ENTRY = "assets/langs/";
 
 const HELP = `Usage: flutter-assets-lang-setup.mjs [-entry <dir>]
 
@@ -31,21 +31,21 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { entry: '' };
+  const args = { entry: "" };
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a value\n');
+          process.stderr.write("-entry requires a value\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -63,7 +63,7 @@ function generateLangFiles(outputDir) {
   const created = [];
   for (const lang of DEFAULT_LANGS) {
     const filePath = path.join(outputDir, `${lang}.json`);
-    fs.writeFileSync(filePath, '{}\n', 'utf-8');
+    fs.writeFileSync(filePath, "{}\n", "utf-8");
     created.push(filePath);
   }
   return created;
@@ -75,7 +75,7 @@ function updatePubspecAssets(pubspecPath) {
     return false;
   }
 
-  const content = fs.readFileSync(pubspecPath, 'utf-8');
+  const content = fs.readFileSync(pubspecPath, "utf-8");
 
   if (content.includes(ASSETS_ENTRY)) {
     return false;
@@ -86,11 +86,13 @@ function updatePubspecAssets(pubspecPath) {
 
   const updated = content.replace(pattern, replacement);
   if (updated === content) {
-    process.stderr.write('Warning: could not find insertion point in pubspec.yaml\n');
+    process.stderr.write(
+      "Warning: could not find insertion point in pubspec.yaml\n",
+    );
     return false;
   }
 
-  fs.writeFileSync(pubspecPath, updated, 'utf-8');
+  fs.writeFileSync(pubspecPath, updated, "utf-8");
   return true;
 }
 
@@ -112,7 +114,9 @@ function main() {
   if (updatePubspecAssets(pubspecPath)) {
     process.stdout.write(`Updated ${pubspecPath}: added assets entry\n`);
   } else {
-    process.stdout.write(`Skipped ${pubspecPath}: assets entry already exists\n`);
+    process.stdout.write(
+      `Skipped ${pubspecPath}: assets entry already exists\n`,
+    );
   }
 }
 

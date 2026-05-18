@@ -4,12 +4,12 @@
 // Allowed types mirror rules/common/git.md. Update the source file and
 // re-run gen-commitlint.mjs; do not edit the generated copy.
 export default {
-  extends: ['@commitlint/config-conventional'],
+  extends: ["@commitlint/config-conventional"],
   rules: {
-    'type-enum': [
+    "type-enum": [
       2,
-      'always',
-      ['feat', 'fix', 'refactor', 'docs', 'test', 'chore', 'perf', 'ci'],
+      "always",
+      ["feat", "fix", "refactor", "docs", "test", "chore", "perf", "ci"],
     ],
   },
 };

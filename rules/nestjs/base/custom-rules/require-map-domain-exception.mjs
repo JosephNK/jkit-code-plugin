@@ -18,22 +18,22 @@
  * 노드 또는 그 자손 중에 mapDomainException 호출이 있는지 재귀 검사.
  */
 function containsMapDomainException(node) {
-  if (!node || typeof node !== 'object') return false;
+  if (!node || typeof node !== "object") return false;
 
   if (
-    node.type === 'CallExpression' &&
-    node.callee?.type === 'Identifier' &&
-    node.callee.name === 'mapDomainException'
+    node.type === "CallExpression" &&
+    node.callee?.type === "Identifier" &&
+    node.callee.name === "mapDomainException"
   ) {
     return true;
   }
 
   for (const key of Object.keys(node)) {
-    if (key === 'parent') continue;
+    if (key === "parent") continue;
     const child = node[key];
     if (Array.isArray(child)) {
       if (child.some((c) => containsMapDomainException(c))) return true;
-    } else if (child && typeof child.type === 'string') {
+    } else if (child && typeof child.type === "string") {
       if (containsMapDomainException(child)) return true;
     }
   }
@@ -44,14 +44,13 @@ function containsMapDomainException(node) {
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
-      description:
-        'Require mapDomainException() in controller catch blocks',
+      description: "Require mapDomainException() in controller catch blocks",
     },
     messages: {
       missingMapper:
-        'Controller catch blocks must call mapDomainException(). (conventions.md: Error Handling)',
+        "Controller catch blocks must call mapDomainException(). (conventions.md: Error Handling)",
     },
     schema: [],
   },
@@ -61,7 +60,7 @@ export default {
         if (!containsMapDomainException(node.body)) {
           context.report({
             node,
-            messageId: 'missingMapper',
+            messageId: "missingMapper",
           });
         }
       },

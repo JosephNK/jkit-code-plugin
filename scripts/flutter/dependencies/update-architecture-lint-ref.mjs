@@ -11,14 +11,18 @@
 //   update-architecture-lint-ref.mjs <ref> --project-dir <dir> [--dry-run]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import YAML from 'yaml';
+import YAML from "yaml";
 
-const LINT_PACKAGE_NAMES = ['architecture_lint', 'leaf_kit_lint', 'freezed_lint'];
+const LINT_PACKAGE_NAMES = [
+  "architecture_lint",
+  "leaf_kit_lint",
+  "freezed_lint",
+];
 
 const HELP = `Usage: update-architecture-lint-ref.mjs [<ref>] --project-dir <dir> [--dry-run]
 
@@ -41,29 +45,29 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { ref: null, projectDir: '', dryRun: false };
+  const args = { ref: null, projectDir: "", dryRun: false };
   const positional = [];
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--project-dir':
+      case "--project-dir":
         if (!rest.length) {
-          process.stderr.write('--project-dir requires a value\n');
+          process.stderr.write("--project-dir requires a value\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '--dry-run':
+      case "--dry-run":
         args.dryRun = true;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -72,7 +76,9 @@ function parseArgs(argv) {
   }
 
   if (positional.length > 1) {
-    process.stderr.write(`Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`);
+    process.stderr.write(
+      `Error: unexpected extra arguments: ${positional.slice(1).join(" ")}\n`,
+    );
     usage();
   }
   if (positional.length === 1) {
@@ -80,7 +86,7 @@ function parseArgs(argv) {
   }
 
   if (!args.projectDir) {
-    process.stderr.write('Error: --project-dir is required\n');
+    process.stderr.write("Error: --project-dir is required\n");
     usage();
   }
 
@@ -88,7 +94,7 @@ function parseArgs(argv) {
 }
 
 function normalizeRef(ref) {
-  if (ref.startsWith('v') || !/^[0-9]/.test(ref[0])) {
+  if (ref.startsWith("v") || !/^[0-9]/.test(ref[0])) {
     return ref;
   }
   return `v${ref}`;
@@ -96,8 +102,8 @@ function normalizeRef(ref) {
 
 function resolvePluginVersion() {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..', '..');
-  const pluginJson = path.join(pluginRoot, '.claude-plugin', 'plugin.json');
+  const pluginRoot = path.resolve(scriptDir, "..", "..", "..");
+  const pluginJson = path.join(pluginRoot, ".claude-plugin", "plugin.json");
 
   if (!fs.existsSync(pluginJson) || !fs.statSync(pluginJson).isFile()) {
     process.stderr.write(`plugin.json을 찾을 수 없습니다: ${pluginJson}\n`);
@@ -106,15 +112,15 @@ function resolvePluginVersion() {
 
   let data;
   try {
-    data = JSON.parse(fs.readFileSync(pluginJson, 'utf-8'));
+    data = JSON.parse(fs.readFileSync(pluginJson, "utf-8"));
   } catch (exc) {
     process.stderr.write(`plugin.json 파싱 실패: ${exc.message}\n`);
     process.exit(1);
   }
 
   const version = data.version;
-  if (typeof version !== 'string' || !version) {
-    process.stderr.write('plugin.json의 version 필드가 비어 있습니다.\n');
+  if (typeof version !== "string" || !version) {
+    process.stderr.write("plugin.json의 version 필드가 비어 있습니다.\n");
     process.exit(1);
   }
   return normalizeRef(version);
@@ -130,13 +136,17 @@ function findAnalysisOptionsFiles(projectRoot) {
       return;
     }
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'build' || entry.name === 'node_modules') {
+      if (
+        entry.name.startsWith(".") ||
+        entry.name === "build" ||
+        entry.name === "node_modules"
+      ) {
         continue;
       }
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(full);
-      } else if (entry.isFile() && entry.name === 'analysis_options.yaml') {
+      } else if (entry.isFile() && entry.name === "analysis_options.yaml") {
         results.push(full);
       }
     }
@@ -146,11 +156,11 @@ function findAnalysisOptionsFiles(projectRoot) {
 }
 
 function updateLintPluginRefs(analysisPath, newRef, dryRun) {
-  const raw = fs.readFileSync(analysisPath, 'utf-8');
+  const raw = fs.readFileSync(analysisPath, "utf-8");
   const doc = YAML.parseDocument(raw);
   if (doc.contents === null) return 0;
 
-  const plugins = doc.get('plugins');
+  const plugins = doc.get("plugins");
   if (!YAML.isMap(plugins)) return 0;
 
   let updated = 0;
@@ -159,29 +169,31 @@ function updateLintPluginRefs(analysisPath, newRef, dryRun) {
     const pluginEntry = plugins.get(pkgName);
     if (!YAML.isMap(pluginEntry)) continue;
 
-    const gitNode = pluginEntry.get('git');
+    const gitNode = pluginEntry.get("git");
     if (!YAML.isMap(gitNode)) continue;
 
-    const refNode = gitNode.get('ref', true);
+    const refNode = gitNode.get("ref", true);
     const oldRef = YAML.isScalar(refNode) ? String(refNode.value) : null;
     if (oldRef === newRef) {
-      process.stdout.write(`  ⏭️  ${analysisPath} [${pkgName}]: 이미 동일한 ref (${oldRef})\n`);
+      process.stdout.write(
+        `  ⏭️  ${analysisPath} [${pkgName}]: 이미 동일한 ref (${oldRef})\n`,
+      );
       continue;
     }
 
     if (YAML.isScalar(refNode)) {
       refNode.value = newRef;
     } else {
-      gitNode.set('ref', newRef);
+      gitNode.set("ref", newRef);
     }
 
     if (dryRun) {
       process.stdout.write(
-        `  🔍 ${analysisPath} [${pkgName}]: ${oldRef ?? '(없음)'} → ${newRef} (dry-run)\n`,
+        `  🔍 ${analysisPath} [${pkgName}]: ${oldRef ?? "(없음)"} → ${newRef} (dry-run)\n`,
       );
     } else {
       process.stdout.write(
-        `  ✅ ${analysisPath} [${pkgName}]: ${oldRef ?? '(없음)'} → ${newRef}\n`,
+        `  ✅ ${analysisPath} [${pkgName}]: ${oldRef ?? "(없음)"} → ${newRef}\n`,
       );
     }
     updated += 1;
@@ -200,17 +212,17 @@ function main() {
   let refSource;
   if (args.ref === null) {
     ref = resolvePluginVersion();
-    refSource = 'plugin.json 자동 감지';
+    refSource = "plugin.json 자동 감지";
   } else {
     ref = normalizeRef(args.ref);
-    refSource = 'CLI 인자';
+    refSource = "CLI 인자";
   }
   const projectRoot = path.resolve(args.projectDir);
 
   process.stdout.write(`프로젝트 루트: ${projectRoot}\n`);
   process.stdout.write(`새 ref: ${ref} (${refSource})\n`);
-  if (args.dryRun) process.stdout.write('(dry-run 모드)\n');
-  process.stdout.write('\n');
+  if (args.dryRun) process.stdout.write("(dry-run 모드)\n");
+  process.stdout.write("\n");
 
   const files = findAnalysisOptionsFiles(projectRoot);
   process.stdout.write(`발견된 analysis_options.yaml: ${files.length}개\n\n`);
@@ -220,11 +232,11 @@ function main() {
     updatedCount += updateLintPluginRefs(file, ref, args.dryRun);
   }
 
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   if (updatedCount === 0) {
-    process.stdout.write('변경된 항목이 없습니다.\n');
+    process.stdout.write("변경된 항목이 없습니다.\n");
   } else {
-    const action = args.dryRun ? '변경 예정' : '업데이트 완료';
+    const action = args.dryRun ? "변경 예정" : "업데이트 완료";
     process.stdout.write(`${updatedCount}개 항목 ${action}\n`);
   }
 }

@@ -1,4 +1,4 @@
-import { defineConfig } from 'eslint/config';
+import { defineConfig } from "eslint/config";
 
 /**
  * Server Component(`src/app/**`)에서 React Hook 호출 금지 — 런타임 에러 차단.
@@ -6,18 +6,20 @@ import { defineConfig } from 'eslint/config';
  */
 export const baseServerComponentRules = defineConfig([
   {
-    files: ['src/app/**/*.{ts,tsx}'],
-    ignores: ['src/app/**/_components/**', 'src/app/**/_providers/**'],
+    files: ["src/app/**/*.{ts,tsx}"],
+    ignores: ["src/app/**/_components/**", "src/app/**/_providers/**"],
     rules: {
-      'no-restricted-syntax': [
-        'error',
+      "no-restricted-syntax": [
+        "error",
         {
-          selector: 'CallExpression[callee.name=/^use[A-Z]/]',
-          message: 'Page/layout files are Server Components and must not call Hooks. Move Hook calls to _components/.',
+          selector: "CallExpression[callee.name=/^use[A-Z]/]",
+          message:
+            "Page/layout files are Server Components and must not call Hooks. Move Hook calls to _components/.",
         },
         {
-          selector: 'CallExpression[callee.property.name=/^use[A-Z]/]',
-          message: 'Page/layout files are Server Components and must not call Hooks. Move Hook calls to _components/.',
+          selector: "CallExpression[callee.property.name=/^use[A-Z]/]",
+          message:
+            "Page/layout files are Server Components and must not call Hooks. Move Hook calls to _components/.",
         },
       ],
     },

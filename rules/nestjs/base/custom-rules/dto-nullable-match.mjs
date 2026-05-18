@@ -23,39 +23,39 @@
 //     방어적으로 스킵.
 // =============================================================================
 
-const TARGET_DECORATORS = new Set(['ApiProperty', 'ApiPropertyOptional']);
+const TARGET_DECORATORS = new Set(["ApiProperty", "ApiPropertyOptional"]);
 
 function unionHasNull(typeAnn) {
-  return typeAnn.types.some((t) => t.type === 'TSNullKeyword');
+  return typeAnn.types.some((t) => t.type === "TSNullKeyword");
 }
 
 function unionHasDate(typeAnn) {
   return typeAnn.types.some(
-    (t) => t.type === 'TSTypeReference' && t.typeName?.name === 'Date',
+    (t) => t.type === "TSTypeReference" && t.typeName?.name === "Date",
   );
 }
 
 function findApiPropertyDecorator(decorators) {
   return decorators.find((d) => {
     const expr = d.expression;
-    if (!expr || expr.type !== 'CallExpression') return false;
+    if (!expr || expr.type !== "CallExpression") return false;
     return TARGET_DECORATORS.has(expr.callee?.name);
   });
 }
 
 function getOptionsObject(decorator) {
   const firstArg = decorator.expression.arguments?.[0];
-  return firstArg && firstArg.type === 'ObjectExpression' ? firstArg : null;
+  return firstArg && firstArg.type === "ObjectExpression" ? firstArg : null;
 }
 
 function findProperty(objExpr, keyName) {
   if (!objExpr) return null;
   return objExpr.properties.find((prop) => {
-    if (prop.type !== 'Property') return false;
+    if (prop.type !== "Property") return false;
     const k = prop.key;
     return (
-      (k.type === 'Identifier' && k.name === keyName) ||
-      (k.type === 'Literal' && k.value === keyName)
+      (k.type === "Identifier" && k.name === keyName) ||
+      (k.type === "Literal" && k.value === keyName)
     );
   });
 }
@@ -69,18 +69,18 @@ function findProperty(objExpr, keyName) {
 function propertyValue(prop) {
   if (!prop) return undefined;
   const v = prop.value;
-  if (v.type === 'Literal') return v.value;
-  if (v.type === 'Identifier') return v.name;
+  if (v.type === "Literal") return v.value;
+  if (v.type === "Identifier") return v.name;
   return undefined;
 }
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Require @ApiProperty options (nullable, type, format) to match DTO field null/Date union types',
+        "Require @ApiProperty options (nullable, type, format) to match DTO field null/Date union types",
     },
     messages: {
       missingNullable:
@@ -88,7 +88,7 @@ export default {
       missingDateType:
         'DTO field "{{ name }}" is `Date | null` but @{{ decorator }} is missing `type: String`. (conventions.md: Union type rules)',
       missingDateFormat:
-        'DTO field "{{ name }}" is `Date | null` but @{{ decorator }} is missing `format: \'date-time\'`. (conventions.md: Union type rules)',
+        "DTO field \"{{ name }}\" is `Date | null` but @{{ decorator }} is missing `format: 'date-time'`. (conventions.md: Union type rules)",
     },
     schema: [],
   },
@@ -96,10 +96,10 @@ export default {
     return {
       PropertyDefinition(node) {
         const typeAnn = node.typeAnnotation?.typeAnnotation;
-        if (!typeAnn || typeAnn.type !== 'TSUnionType') return;
+        if (!typeAnn || typeAnn.type !== "TSUnionType") return;
         if (!unionHasNull(typeAnn)) return;
 
-        const fieldName = node.key?.name ?? node.key?.value ?? 'unknown';
+        const fieldName = node.key?.name ?? node.key?.value ?? "unknown";
         const decorator = findApiPropertyDecorator(node.decorators ?? []);
         // 데코레이터 자체 누락은 require-api-property 가 담당 — 중복 경고 방지
         if (!decorator) return;
@@ -108,31 +108,31 @@ export default {
         const options = getOptionsObject(decorator);
 
         // [1] nullable: true 필수
-        const nullableProp = findProperty(options, 'nullable');
+        const nullableProp = findProperty(options, "nullable");
         if (propertyValue(nullableProp) !== true) {
           context.report({
             node: decorator,
-            messageId: 'missingNullable',
+            messageId: "missingNullable",
             data: { name: fieldName, decorator: decoratorName },
           });
         }
 
         // [2] Date | null 인 경우 type/format 도 검사
         if (unionHasDate(typeAnn)) {
-          const typeProp = findProperty(options, 'type');
-          if (propertyValue(typeProp) !== 'String') {
+          const typeProp = findProperty(options, "type");
+          if (propertyValue(typeProp) !== "String") {
             context.report({
               node: decorator,
-              messageId: 'missingDateType',
+              messageId: "missingDateType",
               data: { name: fieldName, decorator: decoratorName },
             });
           }
 
-          const formatProp = findProperty(options, 'format');
-          if (propertyValue(formatProp) !== 'date-time') {
+          const formatProp = findProperty(options, "format");
+          if (propertyValue(formatProp) !== "date-time") {
             context.report({
               node: decorator,
-              messageId: 'missingDateFormat',
+              messageId: "missingDateFormat",
               data: { name: fieldName, decorator: decoratorName },
             });
           }

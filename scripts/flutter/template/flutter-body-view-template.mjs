@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Flutter BodyView 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function generateBodyView(viewNameIn) {
   let viewName = viewNameIn;
-  if (!viewName.endsWith('BodyView')) {
+  if (!viewName.endsWith("BodyView")) {
     viewName = `${viewName}BodyView`;
   }
 
@@ -30,9 +30,9 @@ class ${viewName} extends StatelessWidget {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 1) {
-    process.stderr.write('Usage: flutter-body-view-template.mjs <ViewName>\n');
-    process.stderr.write('Example: flutter-body-view-template.mjs Home\n');
-    process.stderr.write('Example: flutter-body-view-template.mjs Settings\n');
+    process.stderr.write("Usage: flutter-body-view-template.mjs <ViewName>\n");
+    process.stderr.write("Example: flutter-body-view-template.mjs Home\n");
+    process.stderr.write("Example: flutter-body-view-template.mjs Settings\n");
     process.exit(1);
   }
 

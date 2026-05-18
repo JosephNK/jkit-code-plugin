@@ -7,41 +7,41 @@
 
 /** Accessibility-critical 속성 목록 — `var()` 값에 fallback 필수인 대상. */
 const FALLBACK_REQUIRED_PROPS = [
-  'outline',
-  'outline-color',
-  'box-shadow',
-  'color',
-  'background',
-  'background-color',
-  'border',
-  'border-color',
-  'border-top',
-  'border-right',
-  'border-bottom',
-  'border-left',
-].join('|');
+  "outline",
+  "outline-color",
+  "box-shadow",
+  "color",
+  "background",
+  "background-color",
+  "border",
+  "border-color",
+  "border-top",
+  "border-right",
+  "border-bottom",
+  "border-left",
+].join("|");
 
 /** 디자인 토큰 하드코딩 금지 속성 (컨벤션 C13 대상). */
 const STRICT_VALUE_PROPS = [
-  '/color$/',
-  'fill',
-  'stroke',
-  'font-family',
-  'border-radius',
-  'box-shadow',
+  "/color$/",
+  "fill",
+  "stroke",
+  "font-family",
+  "border-radius",
+  "box-shadow",
 ];
 
 /** strict-value 리터럴 허용 예외 — `var()`, CSS 키워드, 기본값 해제. */
 const STRICT_VALUE_IGNORES = [
-  '/^var\\(/',
-  'transparent',
-  'inherit',
-  'currentColor',
-  'unset',
-  'initial',
-  'none',
-  '0',
-  'auto',
+  "/^var\\(/",
+  "transparent",
+  "inherit",
+  "currentColor",
+  "unset",
+  "initial",
+  "none",
+  "0",
+  "auto",
 ];
 
 /**
@@ -50,8 +50,8 @@ const STRICT_VALUE_IGNORES = [
  * 사용자 프로젝트는 `stylelint.config.mjs`에서 spread + 추가 rules로 override.
  */
 export const stylelintBaseConfig = {
-  extends: ['stylelint-config-standard'],
-  plugins: ['stylelint-declaration-strict-value'],
+  extends: ["stylelint-config-standard"],
+  plugins: ["stylelint-declaration-strict-value"],
   rules: {
     /**
      * Accessibility-critical 속성의 `var()` 값은 fallback 필수 (severity: warning).
@@ -63,16 +63,16 @@ export const stylelintBaseConfig = {
      * Bad: `outline: 2px solid var(--mantine-primary-color-filled);`
      * Good: `outline: 2px solid var(--mantine-primary-color-filled, #005da7);`
      */
-    'declaration-property-value-disallowed-list': [
+    "declaration-property-value-disallowed-list": [
       {
-        [`/^(${FALLBACK_REQUIRED_PROPS})$/`]: ['/var\\(--[^,)]+\\)$/'],
+        [`/^(${FALLBACK_REQUIRED_PROPS})$/`]: ["/var\\(--[^,)]+\\)$/"],
       },
       {
         message:
-          'CSS variables in accessibility-critical declarations must include a fallback value. ' +
-          'Use `var(--token, <fallback>)`. A single undefined var() invalidates the entire ' +
-          'declaration, removing browser default focus rings and causing FOUC on pre-hydration paths.',
-        severity: 'warning',
+          "CSS variables in accessibility-critical declarations must include a fallback value. " +
+          "Use `var(--token, <fallback>)`. A single undefined var() invalidates the entire " +
+          "declaration, removing browser default focus rings and causing FOUC on pre-hydration paths.",
+        severity: "warning",
       },
     ],
     /**
@@ -85,14 +85,14 @@ export const stylelintBaseConfig = {
      * Bad: `color: #ff0000; border-radius: 12px;`
      * Good: `color: var(--mantine-color-text, #1a1a1a); border-radius: var(--mantine-radius-md, 8px);`
      */
-    'scale-unlimited/declaration-strict-value': [
+    "scale-unlimited/declaration-strict-value": [
       STRICT_VALUE_PROPS,
       {
         ignoreValues: STRICT_VALUE_IGNORES,
-        ignoreFunctions: ['var'],
+        ignoreFunctions: ["var"],
         message: (property) =>
           `Expected \`var(--token, <fallback>)\` or design-token reference for \`${property}\`. ` +
-          'Hardcoded values bypass theme tokens (src/theme.ts) and break dark/light switching.',
+          "Hardcoded values bypass theme tokens (src/theme.ts) and break dark/light switching.",
       },
     ],
   },

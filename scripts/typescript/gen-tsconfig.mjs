@@ -11,10 +11,10 @@
 //   gen-tsconfig.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 const HELP = `Usage: gen-tsconfig.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 
@@ -40,32 +40,32 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', stacks: '' };
+  const args = { framework: "", outputDir: "", stacks: "" };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '--with':
+      case "--with":
         if (!rest.length) {
-          process.stderr.write('--with requires a stack list\n');
+          process.stderr.write("--with requires a stack list\n");
           usage();
         }
         args.stacks = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -75,11 +75,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -89,7 +89,7 @@ function parseArgs(argv) {
 function splitStacks(raw) {
   if (!raw) return [];
   return raw
-    .split(',')
+    .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
@@ -98,7 +98,11 @@ function applyPatch(tsconfig, patch, dir) {
   if (patch.compilerOptions) {
     tsconfig.compilerOptions = tsconfig.compilerOptions || {};
     for (const [key, value] of Object.entries(patch.compilerOptions)) {
-      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         tsconfig.compilerOptions[key] = {
           ...tsconfig.compilerOptions[key],
           ...value,
@@ -122,7 +126,7 @@ function applyPatch(tsconfig, patch, dir) {
     for (const [filename, content] of Object.entries(patch.extraFiles)) {
       const filePath = path.join(dir, filename);
       if (!fs.existsSync(filePath)) {
-        fs.writeFileSync(filePath, JSON.stringify(content, null, 2) + '\n');
+        fs.writeFileSync(filePath, JSON.stringify(content, null, 2) + "\n");
         process.stdout.write(`Created: ${filePath}\n`);
       } else {
         process.stdout.write(`Skipped (exists): ${filePath}\n`);
@@ -135,15 +139,15 @@ function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..');
+  const pluginRoot = path.resolve(scriptDir, "..", "..");
   const patchFile = path.join(
     pluginRoot,
-    'rules',
+    "rules",
     args.framework,
-    'base',
-    'tsconfig.patch.json',
+    "base",
+    "tsconfig.patch.json",
   );
-  const tsconfigPath = path.join(args.outputDir, 'tsconfig.json');
+  const tsconfigPath = path.join(args.outputDir, "tsconfig.json");
 
   if (!fs.existsSync(patchFile)) {
     process.stderr.write(`Error: Patch file not found: ${patchFile}\n`);
@@ -162,10 +166,10 @@ function main() {
   for (const stack of splitStacks(args.stacks)) {
     const stackPatch = path.join(
       pluginRoot,
-      'rules',
+      "rules",
       args.framework,
       stack,
-      'tsconfig.patch.json',
+      "tsconfig.patch.json",
     );
     if (fs.existsSync(stackPatch)) {
       patchFiles.push(stackPatch);
@@ -176,15 +180,15 @@ function main() {
     }
   }
 
-  const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
+  const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, "utf8"));
   const dir = path.dirname(tsconfigPath);
 
   for (const pf of patchFiles) {
-    const patch = JSON.parse(fs.readFileSync(pf, 'utf8'));
+    const patch = JSON.parse(fs.readFileSync(pf, "utf8"));
     applyPatch(tsconfig, patch, dir);
   }
 
-  fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n');
+  fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + "\n");
   process.stdout.write(`Patched: ${tsconfigPath}\n`);
 }
 

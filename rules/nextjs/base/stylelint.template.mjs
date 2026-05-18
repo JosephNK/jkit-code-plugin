@@ -6,7 +6,7 @@
 // 같은 manifest 기반 템플릿 구조로 확장할 것.
 // =============================================================================
 
-import { stylelintBaseConfig } from '@jkit/code-plugin/nextjs/base/stylelint.rules.mjs';
+import { stylelintBaseConfig } from "@jkit/code-plugin/nextjs/base/stylelint.rules.mjs";
 
 /** @type {import('stylelint').Config} */
 const config = {
@@ -19,12 +19,12 @@ const config = {
     // 'no-descending-specificity': null,
   },
   ignoreFiles: [
-    '**/node_modules/**',
-    '**/.next/**',
-    '**/dist/**',
-    '**/build/**',
-    '**/coverage/**',
-    '**/public/**',
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/public/**",
   ],
 };
 

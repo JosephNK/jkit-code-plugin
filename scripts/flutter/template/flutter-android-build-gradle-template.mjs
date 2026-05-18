@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Flutter Android build.gradle.kts 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function toScheme(appName) {
   return appName.toLowerCase();
@@ -112,8 +112,12 @@ flutter {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 2) {
-    process.stderr.write('Usage: flutter-android-build-gradle-template.mjs <AppName> <package_name>\n');
-    process.stderr.write('Example: flutter-android-build-gradle-template.mjs MyApp com.example.myapp\n');
+    process.stderr.write(
+      "Usage: flutter-android-build-gradle-template.mjs <AppName> <package_name>\n",
+    );
+    process.stderr.write(
+      "Example: flutter-android-build-gradle-template.mjs MyApp com.example.myapp\n",
+    );
     process.exit(1);
   }
 

@@ -9,12 +9,12 @@
 //   gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { ensureGitRepo, normalizePath } from './common.mjs';
+import { ensureGitRepo, normalizePath } from "./common.mjs";
 
 const HELP = `Usage: gen-conventions.mjs <framework> -p <output-dir> [--with stack1,stack2,...] [--no-project-init]
 
@@ -41,35 +41,40 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', stacks: '', noProjectInit: false };
+  const args = {
+    framework: "",
+    outputDir: "",
+    stacks: "",
+    noProjectInit: false,
+  };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '--with':
+      case "--with":
         if (!rest.length) {
-          process.stderr.write('--with requires a stack list\n');
+          process.stderr.write("--with requires a stack list\n");
           usage();
         }
         args.stacks = rest.shift();
         break;
-      case '--no-project-init':
+      case "--no-project-init":
         args.noProjectInit = true;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -79,11 +84,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -93,7 +98,7 @@ function parseArgs(argv) {
 function splitStacks(raw) {
   if (!raw) return [];
   return raw
-    .split(',')
+    .split(",")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
@@ -127,7 +132,7 @@ function main() {
   const args = parseArgs(process.argv);
 
   try {
-    ensureGitRepo('.');
+    ensureGitRepo(".");
   } catch (err) {
     process.stderr.write(`Error: ${err.message}\n`);
     process.exit(1);
@@ -144,27 +149,27 @@ function main() {
   }
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..');
-  const rulesDir = path.join(pluginRoot, 'rules', args.framework);
-  const baseConv = path.join(rulesDir, 'base', 'conventions.md');
+  const pluginRoot = path.resolve(scriptDir, "..");
+  const rulesDir = path.join(pluginRoot, "rules", args.framework);
+  const baseConv = path.join(rulesDir, "base", "conventions.md");
 
   if (!fs.existsSync(baseConv)) {
     process.stderr.write(`Error: Base conventions not found: ${baseConv}\n`);
     process.exit(1);
   }
 
-  const outputFile = path.join(outputDir, 'CONVENTIONS.md');
+  const outputFile = path.join(outputDir, "CONVENTIONS.md");
   fs.copyFileSync(baseConv, outputFile);
 
   for (const stack of splitStacks(args.stacks)) {
-    const stackConv = path.join(rulesDir, stack, 'conventions.md');
+    const stackConv = path.join(rulesDir, stack, "conventions.md");
     if (!fs.existsSync(stackConv)) {
       process.stderr.write(
         `Warning: conventions.md not found for stack '${stack}': ${stackConv}\n`,
       );
       continue;
     }
-    fs.appendFileSync(outputFile, '\n');
+    fs.appendFileSync(outputFile, "\n");
     fs.appendFileSync(outputFile, fs.readFileSync(stackConv));
   }
 
@@ -178,14 +183,19 @@ function main() {
   // CONVENTIONS.PROJECT.md is user-owned. Create it only when missing so
   // subsequent runs preserve user edits. With --no-project-init (sync mode),
   // skip creation entirely so a deliberately-deleted file stays deleted.
-  const projectFile = path.join(outputDir, 'CONVENTIONS.PROJECT.md');
-  const projectName = path.basename(path.resolve('.'));
+  const projectFile = path.join(outputDir, "CONVENTIONS.PROJECT.md");
+  const projectName = path.basename(path.resolve("."));
   if (fs.existsSync(projectFile)) {
     process.stdout.write(`Preserved: ${projectFile} (user-owned, untouched)\n`);
   } else if (args.noProjectInit) {
-    process.stdout.write(`Skipped: ${projectFile} (not created, --no-project-init)\n`);
+    process.stdout.write(
+      `Skipped: ${projectFile} (not created, --no-project-init)\n`,
+    );
   } else {
-    fs.writeFileSync(projectFile, renderProjectConventionsTemplate({ projectName }));
+    fs.writeFileSync(
+      projectFile,
+      renderProjectConventionsTemplate({ projectName }),
+    );
     process.stdout.write(`Generated: ${projectFile} (user-owned)\n`);
   }
 }

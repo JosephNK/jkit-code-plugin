@@ -30,7 +30,7 @@ import {
   buildArchitectureBoundaries,
   buildDomainPurity,
   buildRestrictedImports,
-} from '@jkit/code-plugin/nextjs/base/eslint.rules.mjs';
+} from "@jkit/code-plugin/nextjs/base/eslint.rules.mjs";
 // {{STACK_IMPORTS}}
 
 // ─── Helper: patch additional allow rules into base boundary rules ────────────
@@ -57,7 +57,7 @@ function patchBoundaryRules(rules, patches) {
 // 전역 + 도메인 순수성 양쪽에서 공통으로 사용되는 import 금지 패턴 목록
 const allRestrictedPatterns = [
   ...baseRestrictedPatterns,
-// {{RESTRICTED_PATTERNS}}
+  // {{RESTRICTED_PATTERNS}}
 ];
 
 // ─── Final config assembly ────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ const eslintConfig = [
   // [2] tsconfigRootDir를 프로젝트 루트로 재지정
   //     (base에서는 이 템플릿의 dirname을 가리키므로, 소비 프로젝트 루트로 override)
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
@@ -84,7 +84,7 @@ const eslintConfig = [
   ...buildDomainPurity(
     [
       ...baseDomainBannedPackages,
-// {{DOMAIN_BANNED}}
+      // {{DOMAIN_BANNED}}
     ],
     allRestrictedPatterns,
   ),
@@ -93,10 +93,10 @@ const eslintConfig = [
   //     (같은 룰을 뒤의 block에서 error로 override하기 위해 여기는 warn)
   {
     rules: {
-      'no-restricted-syntax': [
-        'warn',
+      "no-restricted-syntax": [
+        "warn",
         ...baseRestrictedSyntax,
-// {{RESTRICTED_SYNTAX}}
+        // {{RESTRICTED_SYNTAX}}
       ],
     },
   },
@@ -108,20 +108,20 @@ const eslintConfig = [
   ...buildArchitectureBoundaries(
     [
       ...baseBoundaryElements,
-// {{BOUNDARY_ELEMENTS}}
+      // {{BOUNDARY_ELEMENTS}}
     ],
     patchBoundaryRules(
       [
         ...baseBoundaryRules,
-// {{BOUNDARY_RULES}}
+        // {{BOUNDARY_RULES}}
       ],
       [
-// {{BOUNDARY_PATCHES}}
+        // {{BOUNDARY_PATCHES}}
       ],
     ),
     [
       ...baseBoundaryIgnores,
-// {{BOUNDARY_IGNORES}}
+      // {{BOUNDARY_IGNORES}}
     ],
   ),
 

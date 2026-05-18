@@ -24,10 +24,10 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'suggestion',
+    type: "suggestion",
     docs: {
       description:
-        'Enforce DTO naming: use *DataResponseDto or *ItemDto instead of bare *ResponseDto / *DataDto, and match file name to class suffix',
+        "Enforce DTO naming: use *DataResponseDto or *ItemDto instead of bare *ResponseDto / *DataDto, and match file name to class suffix",
     },
     messages: {
       noResponseDto:
@@ -42,11 +42,11 @@ export default {
     schema: [],
   },
   create(context) {
-    const filename = context.filename ?? context.getFilename?.() ?? '';
-    const basename = filename.split('/').pop() ?? '';
-    const isResponseFile = basename.endsWith('.response.dto.ts');
+    const filename = context.filename ?? context.getFilename?.() ?? "";
+    const basename = filename.split("/").pop() ?? "";
+    const isResponseFile = basename.endsWith(".response.dto.ts");
     const isItemFile =
-      basename.endsWith('-item.dto.ts') || basename.endsWith('.item.dto.ts');
+      basename.endsWith("-item.dto.ts") || basename.endsWith(".item.dto.ts");
 
     return {
       ClassDeclaration(node) {
@@ -56,13 +56,10 @@ export default {
         // 파일-클래스 짝: *.response.dto.ts → *DataResponseDto (같은 파일 내
         // 보조 *ItemDto 선언은 허용)
         if (isResponseFile) {
-          if (
-            !name.endsWith('DataResponseDto') &&
-            !name.endsWith('ItemDto')
-          ) {
+          if (!name.endsWith("DataResponseDto") && !name.endsWith("ItemDto")) {
             context.report({
               node: node.id,
-              messageId: 'responseFileSuffix',
+              messageId: "responseFileSuffix",
               data: { name },
             });
           }
@@ -71,10 +68,10 @@ export default {
 
         // 파일-클래스 짝: *-item.dto.ts → *ItemDto
         if (isItemFile) {
-          if (!name.endsWith('ItemDto')) {
+          if (!name.endsWith("ItemDto")) {
             context.report({
               node: node.id,
-              messageId: 'itemFileSuffix',
+              messageId: "itemFileSuffix",
               data: { name },
             });
           }
@@ -84,22 +81,22 @@ export default {
         // 그 외 .dto.ts 파일 — 기존 네이밍 가드 유지
         //   허용: *DataResponseDto, *ItemDto
         //   경고: bare *ResponseDto, *DataDto
-        if (name.endsWith('DataResponseDto')) return;
-        if (name.endsWith('ItemDto')) return;
+        if (name.endsWith("DataResponseDto")) return;
+        if (name.endsWith("ItemDto")) return;
 
-        if (name.endsWith('ResponseDto')) {
+        if (name.endsWith("ResponseDto")) {
           context.report({
             node: node.id,
-            messageId: 'noResponseDto',
+            messageId: "noResponseDto",
             data: { name },
           });
           return;
         }
 
-        if (name.endsWith('DataDto')) {
+        if (name.endsWith("DataDto")) {
           context.report({
             node: node.id,
-            messageId: 'noDataDto',
+            messageId: "noDataDto",
             data: { name },
           });
         }

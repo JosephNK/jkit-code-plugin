@@ -15,10 +15,10 @@
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Require @ApiProperty or @ApiPropertyOptional on all public DTO fields',
+        "Require @ApiProperty or @ApiPropertyOptional on all public DTO fields",
     },
     messages: {
       missing:
@@ -31,8 +31,8 @@ export default {
       PropertyDefinition(node) {
         // static/private/protected 필드는 API 계약과 무관하므로 검사 제외
         if (node.static) return;
-        if (node.accessibility === 'private') return;
-        if (node.accessibility === 'protected') return;
+        if (node.accessibility === "private") return;
+        if (node.accessibility === "protected") return;
 
         // readonly가 아닌 필드는 baseImmutabilityRules에서 이미 에러 처리 — 중복 경고 방지
         if (!node.readonly) return;
@@ -42,15 +42,15 @@ export default {
           const expr = d.expression;
           // @ApiProperty() 호출 형태와 @ApiProperty 식별자 형태 양쪽 지원
           const name =
-            expr.type === 'CallExpression' ? expr.callee?.name : expr?.name;
-          return name === 'ApiProperty' || name === 'ApiPropertyOptional';
+            expr.type === "CallExpression" ? expr.callee?.name : expr?.name;
+          return name === "ApiProperty" || name === "ApiPropertyOptional";
         });
 
         if (!hasApiDecorator) {
           context.report({
             node: node.key,
-            messageId: 'missing',
-            data: { name: node.key.name ?? node.key.value ?? 'unknown' },
+            messageId: "missing",
+            data: { name: node.key.name ?? node.key.value ?? "unknown" },
           });
         }
       },

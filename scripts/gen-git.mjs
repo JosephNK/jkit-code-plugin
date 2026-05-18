@@ -6,12 +6,12 @@
 //   gen-git.mjs -p <output-dir>
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { ensureGitRepo, normalizePath } from './common.mjs';
+import { ensureGitRepo, normalizePath } from "./common.mjs";
 
 const HELP = `Usage: gen-git.mjs -p <output-dir>
 
@@ -31,20 +31,20 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { outputDir: '' };
+  const args = { outputDir: "" };
   const rest = argv.slice(2);
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -53,7 +53,7 @@ function parseArgs(argv) {
     }
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
   return args;
@@ -63,7 +63,7 @@ function main() {
   const args = parseArgs(process.argv);
 
   try {
-    ensureGitRepo('.');
+    ensureGitRepo(".");
   } catch (err) {
     process.stderr.write(`Error: ${err.message}\n`);
     process.exit(1);
@@ -80,15 +80,15 @@ function main() {
   }
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..');
-  const source = path.join(pluginRoot, 'rules', 'common', 'git.md');
+  const pluginRoot = path.resolve(scriptDir, "..");
+  const source = path.join(pluginRoot, "rules", "common", "git.md");
 
   if (!fs.existsSync(source)) {
     process.stderr.write(`Error: git.md not found: ${source}\n`);
     process.exit(1);
   }
 
-  const outputFile = path.join(outputDir, 'GIT.md');
+  const outputFile = path.join(outputDir, "GIT.md");
   fs.copyFileSync(source, outputFile);
 
   process.stdout.write(`Generated: ${outputFile}\n`);

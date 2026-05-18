@@ -11,9 +11,9 @@
  */
 export const shadcnRestrictedPatterns = [
   {
-    group: ['@emotion/*', 'styled-components', 'styled-jsx', 'styled-jsx/**'],
+    group: ["@emotion/*", "styled-components", "styled-jsx", "styled-jsx/**"],
     message:
-      'CSS-in-JS libraries are not allowed. shadcn/ui composes Tailwind utility classes — use the cn() helper from @/lib/utils or CSS Modules instead.',
+      "CSS-in-JS libraries are not allowed. shadcn/ui composes Tailwind utility classes — use the cn() helper from @/lib/utils or CSS Modules instead.",
   },
 ];
 
@@ -23,9 +23,9 @@ export const shadcnRestrictedPatterns = [
  * presentation 레이어 전용. 도메인이 className/variant 조립을 시도하면 UI 책임이 누수된다.
  */
 export const shadcnDomainBannedPackages = [
-  '@radix-ui/**',
-  'lucide-react',
-  'class-variance-authority',
-  'clsx',
-  'tailwind-merge',
+  "@radix-ui/**",
+  "lucide-react",
+  "class-variance-authority",
+  "clsx",
+  "tailwind-merge",
 ];

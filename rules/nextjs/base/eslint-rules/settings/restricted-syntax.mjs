@@ -5,12 +5,14 @@
  */
 export const baseRestrictedSyntax = [
   {
-    selector: "TSTypeReference[typeName.object.name='React'][typeName.property.name='FC']",
-    message: 'Use explicit props typing instead of React.FC.',
+    selector:
+      "TSTypeReference[typeName.object.name='React'][typeName.property.name='FC']",
+    message: "Use explicit props typing instead of React.FC.",
   },
   {
-    selector: "TSTypeReference[typeName.object.name='React'][typeName.property.name='FunctionComponent']",
-    message: 'Use explicit props typing instead of React.FunctionComponent.',
+    selector:
+      "TSTypeReference[typeName.object.name='React'][typeName.property.name='FunctionComponent']",
+    message: "Use explicit props typing instead of React.FunctionComponent.",
   },
   {
     selector: "JSXAttribute[name.name='component'][value.value='a']",

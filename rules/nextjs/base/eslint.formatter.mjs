@@ -16,23 +16,23 @@
 // 미등록 룰은 원본 메시지 그대로 통과한다.
 // =============================================================================
 
-import { ESLint } from 'eslint';
+import { ESLint } from "eslint";
 
 const MESSAGE_OVERRIDES = {
-  'boundaries/no-unknown-files': () =>
+  "boundaries/no-unknown-files": () =>
     [
-      '[구조 위반] baseBoundaryElements에 등록되지 않은 파일입니다.',
-      '  대응 순서:',
-      '    1. lint-rules-structure-reference.md에 정의된 레이어인지 확인',
-      '    2. 프로젝트 고유 레이어라면 eslint.config.mjs의 BOUNDARY_ELEMENTS에 추가',
-      '    3. 소스가 아닌 보조 파일이라면 BOUNDARY_IGNORES에 추가',
-    ].join('\n'),
+      "[구조 위반] baseBoundaryElements에 등록되지 않은 파일입니다.",
+      "  대응 순서:",
+      "    1. lint-rules-structure-reference.md에 정의된 레이어인지 확인",
+      "    2. 프로젝트 고유 레이어라면 eslint.config.mjs의 BOUNDARY_ELEMENTS에 추가",
+      "    3. 소스가 아닌 보조 파일이라면 BOUNDARY_IGNORES에 추가",
+    ].join("\n"),
 
-  'boundaries/no-unknown': () =>
+  "boundaries/no-unknown": () =>
     [
-      '[import 위반] 등록되지 않은 레이어에서 import 했습니다.',
-      '  → lint-rules-reference.md의 의존성 규칙 표 참고',
-    ].join('\n'),
+      "[import 위반] 등록되지 않은 레이어에서 import 했습니다.",
+      "  → lint-rules-reference.md의 의존성 규칙 표 참고",
+    ].join("\n"),
 };
 
 export default async function jkitEslintFormatter(results) {
@@ -45,6 +45,6 @@ export default async function jkitEslintFormatter(results) {
     }
   }
   const eslint = new ESLint();
-  const stylish = await eslint.loadFormatter('stylish');
+  const stylish = await eslint.loadFormatter("stylish");
   return stylish.format(results);
 }

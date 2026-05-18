@@ -25,7 +25,14 @@ export const baseBoundaryRules = [
     from: { type: "service" },
     allow: {
       to: {
-        type: ["model", "port", "exception", "common", "common-pure", "infrastructure"],
+        type: [
+          "model",
+          "port",
+          "exception",
+          "common",
+          "common-pure",
+          "infrastructure",
+        ],
       },
     },
   },
@@ -35,7 +42,15 @@ export const baseBoundaryRules = [
     from: { type: "controller" },
     allow: {
       to: {
-        type: ["port", "dto", "model", "exception", "common", "common-pure", "libs"],
+        type: [
+          "port",
+          "dto",
+          "model",
+          "exception",
+          "common",
+          "common-pure",
+          "libs",
+        ],
       },
     },
   },
@@ -44,7 +59,15 @@ export const baseBoundaryRules = [
     from: { type: "strategy" },
     allow: {
       to: {
-        type: ["port", "dto", "model", "exception", "common", "common-pure", "libs"],
+        type: [
+          "port",
+          "dto",
+          "model",
+          "exception",
+          "common",
+          "common-pure",
+          "libs",
+        ],
       },
     },
   },
@@ -53,7 +76,14 @@ export const baseBoundaryRules = [
     from: { type: "provider" },
     allow: {
       to: {
-        type: ["port", "model", "common", "common-pure", "infrastructure", "provider"],
+        type: [
+          "port",
+          "model",
+          "common",
+          "common-pure",
+          "infrastructure",
+          "provider",
+        ],
       },
     },
   },

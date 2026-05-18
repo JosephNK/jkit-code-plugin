@@ -23,10 +23,10 @@
 // script when the source has changed.
 // =============================================================================
 
-import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
 const HELP = `Usage: slice-tasks.mjs --mode full|compact <input-md> <output-dir>
 
@@ -57,24 +57,24 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const rest = argv.slice(2);
-  let mode = '';
+  let mode = "";
 
-  if (rest[0] === '--mode') {
+  if (rest[0] === "--mode") {
     if (rest.length !== 4) usage();
     mode = rest[1];
     rest.splice(0, 2);
-  } else if (rest[0] === '--full') {
-    mode = 'full';
+  } else if (rest[0] === "--full") {
+    mode = "full";
     rest.shift();
-  } else if (rest[0] === '--compact') {
-    mode = 'compact';
+  } else if (rest[0] === "--compact") {
+    mode = "compact";
     rest.shift();
   }
 
   if (rest.length !== 2) usage();
   const [input, outputDir] = rest;
 
-  if (mode !== 'full' && mode !== 'compact') {
+  if (mode !== "full" && mode !== "compact") {
     process.stderr.write(`Error: invalid mode: ${mode}\n`);
     usage();
   }
@@ -83,19 +83,19 @@ function parseArgs(argv) {
 }
 
 function readLines(filePath) {
-  const raw = fs.readFileSync(filePath, 'utf8');
-  const lines = raw.split('\n');
-  if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  const raw = fs.readFileSync(filePath, "utf8");
+  const lines = raw.split("\n");
+  if (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
   return lines;
 }
 
 function sha1Prefix(filePath) {
   const buf = fs.readFileSync(filePath);
-  return crypto.createHash('sha1').update(buf).digest('hex').slice(0, 12);
+  return crypto.createHash("sha1").update(buf).digest("hex").slice(0, 12);
 }
 
 function utcNowIso() {
-  return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
 const TASK_HEADER_RE = /^### Task [0-9]+/;
@@ -104,146 +104,146 @@ const H1_RE = /^# /;
 const TASK_ID_RE = /Task [0-9]+/;
 
 function sliceBuffers(lines) {
-  let state = 'header';
-  let preambleBuf = '';
-  let headerBuf = '';
-  let footerBuf = '';
-  let currentH2 = '';
-  let currentH2Buf = '';
+  let state = "header";
+  let preambleBuf = "";
+  let headerBuf = "";
+  let footerBuf = "";
+  let currentH2 = "";
+  let currentH2Buf = "";
   const headerSections = {};
   const headerOrder = [];
-  let footerH2 = '';
-  let footerH2Buf = '';
+  let footerH2 = "";
+  let footerH2Buf = "";
   const footerSections = {};
   const footerOrder = [];
-  let footerTaskNote = '';
-  let footerTaskNoteBuf = '';
+  let footerTaskNote = "";
+  let footerTaskNoteBuf = "";
   const footerTaskNotes = {};
-  let currentTask = '';
-  let currentBuf = '';
+  let currentTask = "";
+  let currentBuf = "";
   const tasks = {};
   const taskOrder = [];
 
   const storeHeaderSection = () => {
-    if (currentH2 !== '') {
+    if (currentH2 !== "") {
       headerSections[currentH2] = currentH2Buf;
       headerOrder.push(currentH2);
-      currentH2 = '';
-      currentH2Buf = '';
+      currentH2 = "";
+      currentH2Buf = "";
     }
   };
   const storeFooterTaskNote = () => {
-    if (footerTaskNote !== '') {
+    if (footerTaskNote !== "") {
       const m = footerTaskNote.match(TASK_ID_RE);
       if (m) {
         const tid = m[0];
-        footerTaskNotes[tid] = (footerTaskNotes[tid] || '') + footerTaskNoteBuf;
+        footerTaskNotes[tid] = (footerTaskNotes[tid] || "") + footerTaskNoteBuf;
       }
-      footerTaskNote = '';
-      footerTaskNoteBuf = '';
+      footerTaskNote = "";
+      footerTaskNoteBuf = "";
     }
   };
   const storeFooterSection = () => {
     storeFooterTaskNote();
-    if (footerH2 !== '') {
+    if (footerH2 !== "") {
       footerSections[footerH2] = footerH2Buf;
       footerOrder.push(footerH2);
-      footerH2 = '';
-      footerH2Buf = '';
+      footerH2 = "";
+      footerH2Buf = "";
     }
   };
 
   for (const line of lines) {
     // Rule 1: In footer, `### Task N` becomes a per-task note, not a new slice.
-    if (state === 'footer' && TASK_HEADER_RE.test(line)) {
-      footerBuf += line + '\n';
-      if (footerH2 !== '') {
-        footerH2Buf += line + '\n';
+    if (state === "footer" && TASK_HEADER_RE.test(line)) {
+      footerBuf += line + "\n";
+      if (footerH2 !== "") {
+        footerH2Buf += line + "\n";
       }
       storeFooterTaskNote();
       footerTaskNote = line;
-      footerTaskNoteBuf = line + '\n';
+      footerTaskNoteBuf = line + "\n";
       continue;
     }
 
     // Rule 2: General Task header (header/task states only, since Rule 1
     // already consumed footer-state hits).
     if (TASK_HEADER_RE.test(line)) {
-      if (state === 'header') {
+      if (state === "header") {
         storeHeaderSection();
       }
       const m = line.match(TASK_ID_RE);
       const taskId = m[0];
 
-      if (state === 'task' && currentTask !== '') {
+      if (state === "task" && currentTask !== "") {
         tasks[currentTask] = currentBuf;
         taskOrder.push(currentTask);
       }
 
-      state = 'task';
+      state = "task";
       currentTask = taskId;
-      currentBuf = line + '\n';
+      currentBuf = line + "\n";
       continue;
     }
 
     // Rule 3: h2 while in task -> close task, open footer.
-    if (state === 'task' && H2_RE.test(line)) {
-      if (currentTask !== '') {
+    if (state === "task" && H2_RE.test(line)) {
+      if (currentTask !== "") {
         tasks[currentTask] = currentBuf;
         taskOrder.push(currentTask);
-        currentTask = '';
+        currentTask = "";
       }
-      state = 'footer';
+      state = "footer";
       footerH2 = line;
-      footerBuf += line + '\n';
-      footerH2Buf = line + '\n';
+      footerBuf += line + "\n";
+      footerH2Buf = line + "\n";
       continue;
     }
 
     // Rule 4: header fallback.
-    if (state === 'header') {
-      headerBuf += line + '\n';
+    if (state === "header") {
+      headerBuf += line + "\n";
       if (H2_RE.test(line)) {
         storeHeaderSection();
         currentH2 = line;
-        currentH2Buf = line + '\n';
-      } else if (currentH2 !== '') {
-        currentH2Buf += line + '\n';
+        currentH2Buf = line + "\n";
+      } else if (currentH2 !== "") {
+        currentH2Buf += line + "\n";
       } else {
-        preambleBuf += line + '\n';
+        preambleBuf += line + "\n";
       }
       continue;
     }
 
     // Rule 5: task body.
-    if (state === 'task') {
-      currentBuf += line + '\n';
+    if (state === "task") {
+      currentBuf += line + "\n";
       continue;
     }
 
     // Rule 6: footer body.
-    if (state === 'footer') {
-      footerBuf += line + '\n';
+    if (state === "footer") {
+      footerBuf += line + "\n";
       if (H2_RE.test(line)) {
         storeFooterSection();
         footerH2 = line;
-        footerH2Buf = line + '\n';
-      } else if (footerH2 !== '') {
-        footerH2Buf += line + '\n';
+        footerH2Buf = line + "\n";
+      } else if (footerH2 !== "") {
+        footerH2Buf += line + "\n";
       }
-      if (footerTaskNote !== '') {
-        footerTaskNoteBuf += line + '\n';
+      if (footerTaskNote !== "") {
+        footerTaskNoteBuf += line + "\n";
       }
       continue;
     }
   }
 
-  if (state === 'header') {
+  if (state === "header") {
     storeHeaderSection();
-  } else if (state === 'footer') {
+  } else if (state === "footer") {
     storeFooterSection();
   }
-  if (state === 'task' && currentTask !== '') {
+  if (state === "task" && currentTask !== "") {
     tasks[currentTask] = currentBuf;
     taskOrder.push(currentTask);
   }
@@ -266,14 +266,14 @@ function sectionWithPrefix(sections, order, prefix) {
   for (const key of order) {
     if (key.startsWith(prefix)) return sections[key];
   }
-  return '';
+  return "";
 }
 
 function h1FromPreamble(buf) {
-  for (const line of buf.split('\n')) {
+  for (const line of buf.split("\n")) {
     if (H1_RE.test(line)) return line;
   }
-  return '# Task Slice';
+  return "# Task Slice";
 }
 
 // Find all convention IDs (C1, C23, C5a, ...) in the text.
@@ -291,7 +291,7 @@ function extractConventionIds(text) {
 
 function filteredConventions(section, taskText) {
   const { ids, order } = extractConventionIds(taskText);
-  if (section === '' || order.length === 0) return '';
+  if (section === "" || order.length === 0) return "";
 
   const idPatterns = [];
   for (const id of ids) {
@@ -299,94 +299,98 @@ function filteredConventions(section, taskText) {
   }
   const hasAnyId = (line) => idPatterns.some((re) => re.test(line));
 
-  let out = '## 적용 컨벤션 (This Task)\n\n';
-  for (const line of section.split('\n')) {
+  let out = "## 적용 컨벤션 (This Task)\n\n";
+  for (const line of section.split("\n")) {
     if (
       /^\| # \|/.test(line) ||
       /^\|---/.test(line) ||
       /^`docs\/CONVENTIONS\.md`/.test(line) ||
-      line === ''
+      line === ""
     ) {
-      out += line + '\n';
+      out += line + "\n";
     } else if (/^\|/.test(line) && hasAnyId(line)) {
-      out += line + '\n';
+      out += line + "\n";
     }
   }
-  out += '\n';
+  out += "\n";
   return out;
 }
 
 function taskTableRow(section, tid) {
-  if (section === '') return '';
-  const num = tid.replace(/^Task /, '');
+  if (section === "") return "";
+  const num = tid.replace(/^Task /, "");
   const pattern = new RegExp(`^\\|\\s*${num}\\s*\\|`);
-  let out = '## 현재 Task 위치\n\n';
-  for (const line of section.split('\n')) {
+  let out = "## 현재 Task 위치\n\n";
+  for (const line of section.split("\n")) {
     if (/^\| # \|/.test(line) || /^\|---/.test(line)) {
-      out += line + '\n';
+      out += line + "\n";
     } else if (pattern.test(line)) {
-      out += line + '\n';
+      out += line + "\n";
     }
   }
-  out += '\n';
+  out += "\n";
   return out;
 }
 
 function relatedRisks(section, tid) {
-  if (section === '') return '';
-  let out = '## 관련 리스크\n\n';
+  if (section === "") return "";
+  let out = "## 관련 리스크\n\n";
   let added = false;
-  for (const line of section.split('\n')) {
+  for (const line of section.split("\n")) {
     if (/^\| # \|/.test(line) || /^\|---/.test(line)) {
-      out += line + '\n';
+      out += line + "\n";
     } else if (/^\|/.test(line) && line.includes(tid)) {
-      out += line + '\n';
+      out += line + "\n";
       added = true;
     }
   }
-  if (!added) return '';
-  return out + '\n';
+  if (!added) return "";
+  return out + "\n";
 }
 
 function maybeSection(buffers, prefix) {
-  const s = sectionWithPrefix(buffers.headerSections, buffers.headerOrder, prefix);
-  if (s !== '') return s + '\n';
-  return '';
+  const s = sectionWithPrefix(
+    buffers.headerSections,
+    buffers.headerOrder,
+    prefix,
+  );
+  if (s !== "") return s + "\n";
+  return "";
 }
 
 function writeFull(outPath, tid, meta, buffers) {
-  let out = '';
+  let out = "";
   out += `<!-- sliced from ${meta.input} @ sha ${meta.sha} at ${meta.ts} -->\n`;
   out += `<!-- task-id: ${tid} -->\n\n`;
-  if (buffers.headerBuf !== '') {
-    out += buffers.headerBuf + '\n';
+  if (buffers.headerBuf !== "") {
+    out += buffers.headerBuf + "\n";
   }
   out += buffers.tasks[tid];
-  if (buffers.footerBuf !== '') {
-    out += '\n' + buffers.footerBuf;
+  if (buffers.footerBuf !== "") {
+    out += "\n" + buffers.footerBuf;
   }
   fs.writeFileSync(outPath, out);
 }
 
 function writeCompact(outPath, tid, meta, buffers) {
-  const overview = maybeSection(buffers, '## 1.');
-  const tech = maybeSection(buffers, '## 2.');
-  const arch = maybeSection(buffers, '## 3.');
+  const overview = maybeSection(buffers, "## 1.");
+  const tech = maybeSection(buffers, "## 2.");
+  const arch = maybeSection(buffers, "## 3.");
   const conv = filteredConventions(
-    sectionWithPrefix(buffers.headerSections, buffers.headerOrder, '## 4.'),
+    sectionWithPrefix(buffers.headerSections, buffers.headerOrder, "## 4."),
     buffers.tasks[tid],
   );
   const taskList = taskTableRow(
-    sectionWithPrefix(buffers.headerSections, buffers.headerOrder, '## 6.'),
+    sectionWithPrefix(buffers.headerSections, buffers.headerOrder, "## 6."),
     tid,
   );
   const risks = relatedRisks(
-    sectionWithPrefix(buffers.footerSections, buffers.footerOrder, '## 9.'),
+    sectionWithPrefix(buffers.footerSections, buffers.footerOrder, "## 9."),
     tid,
   );
-  const taskNote = buffers.footerTaskNotes[tid] || '';
+  const taskNote = buffers.footerTaskNotes[tid] || "";
 
-  let out = '';
+  let out = "";
   out += `<!-- sliced from ${meta.input} @ sha ${meta.sha} at ${meta.ts} -->\n`;
   out += `<!-- task-id: ${tid} -->\n`;
   out += `<!-- slice-mode: compact -->\n\n`;
@@ -398,11 +402,11 @@ function writeCompact(outPath, tid, meta, buffers) {
   out += taskList;
   out += `## Task 상세\n\n`;
   out += buffers.tasks[tid];
-  if (taskNote !== '') {
+  if (taskNote !== "") {
     out += `\n## Task별 추가 사항\n\n${taskNote}`;
   }
-  if (risks !== '') {
-    out += '\n' + risks;
+  if (risks !== "") {
+    out += "\n" + risks;
   }
   fs.writeFileSync(outPath, out);
 }
@@ -427,15 +431,17 @@ function main() {
   const buffers = sliceBuffers(lines);
 
   if (buffers.taskOrder.length === 0) {
-    process.stderr.write(`ERROR: no \`### Task N\` headers found in ${args.input}\n`);
+    process.stderr.write(
+      `ERROR: no \`### Task N\` headers found in ${args.input}\n`,
+    );
     process.exit(1);
   }
 
   const emittedBasenames = new Set();
   for (const tid of buffers.taskOrder) {
-    const fname = tid.replaceAll(' ', '-');
+    const fname = tid.replaceAll(" ", "-");
     const outPath = path.join(args.outputDir, `${fname}.md`);
-    if (args.mode === 'compact') {
+    if (args.mode === "compact") {
       writeCompact(outPath, tid, meta, buffers);
     } else {
       writeFull(outPath, tid, meta, buffers);
@@ -443,7 +449,9 @@ function main() {
     emittedBasenames.add(`${fname}.md`);
   }
 
-  process.stdout.write(`Slicing complete: ${args.input} -> ${args.outputDir}/\n`);
+  process.stdout.write(
+    `Slicing complete: ${args.input} -> ${args.outputDir}/\n`,
+  );
   process.stdout.write(`  Mode:          ${args.mode}\n`);
 
   let removed = 0;

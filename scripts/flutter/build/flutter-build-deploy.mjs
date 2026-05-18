@@ -10,18 +10,18 @@
 // flavor가 생략되면 --flavor 인자 없이 빌드 (flavor를 사용하지 않는 단일-flavor 프로젝트용).
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { spawnSync } from 'node:child_process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { spawnSync } from "node:child_process";
 
-const SUPPORTED_OS = ['aos', 'ios'];
+const SUPPORTED_OS = ["aos", "ios"];
 const SUPPORTED_FLAVORS = [
-  'appbundle',
-  'production',
-  'staging',
-  'development',
-  'qa',
+  "appbundle",
+  "production",
+  "staging",
+  "development",
+  "qa",
 ];
 
 const HELP = `Usage: flutter-build-deploy.mjs <os> [<flavor>] [options] --project-dir <dir>
@@ -29,8 +29,8 @@ const HELP = `Usage: flutter-build-deploy.mjs <os> [<flavor>] [options] --projec
 Flutter 앱 빌드 (Android APK/AppBundle, iOS IPA).
 
 Arguments:
-  <os>      타겟 OS: ${SUPPORTED_OS.join(' | ')}
-  <flavor>  (옵션) 빌드 flavor (예: ${SUPPORTED_FLAVORS.join(', ')})
+  <os>      타겟 OS: ${SUPPORTED_OS.join(" | ")}
+  <flavor>  (옵션) 빌드 flavor (예: ${SUPPORTED_FLAVORS.join(", ")})
             생략 시 --flavor 없이 빌드 (단일-flavor 프로젝트용).
 
 Options:
@@ -47,11 +47,11 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    os: '',
-    flavor: '',
+    os: "",
+    flavor: "",
     noTreeShakeIcons: true,
     exportOptionsPlist: null,
-    projectDir: '',
+    projectDir: "",
   };
   const positional = [];
   const rest = argv.slice(2);
@@ -59,29 +59,29 @@ function parseArgs(argv) {
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--no-tree-shake-icons':
+      case "--no-tree-shake-icons":
         args.noTreeShakeIcons = true;
         break;
-      case '--export-options-plist':
+      case "--export-options-plist":
         if (!rest.length) {
-          process.stderr.write('--export-options-plist requires a value\n');
+          process.stderr.write("--export-options-plist requires a value\n");
           usage();
         }
         args.exportOptionsPlist = rest.shift();
         break;
-      case '--project-dir':
+      case "--project-dir":
         if (!rest.length) {
-          process.stderr.write('--project-dir requires a value\n');
+          process.stderr.write("--project-dir requires a value\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -90,20 +90,20 @@ function parseArgs(argv) {
   }
 
   if (positional.length < 1) {
-    process.stderr.write('Error: <os> is required\n');
+    process.stderr.write("Error: <os> is required\n");
     usage();
   }
   args.os = positional[0];
-  args.flavor = positional[1] ?? '';
+  args.flavor = positional[1] ?? "";
 
   if (!SUPPORTED_OS.includes(args.os)) {
     process.stderr.write(
-      `Error: invalid os '${args.os}' (expected: ${SUPPORTED_OS.join(', ')})\n`,
+      `Error: invalid os '${args.os}' (expected: ${SUPPORTED_OS.join(", ")})\n`,
     );
     usage();
   }
   if (!args.projectDir) {
-    process.stderr.write('Error: --project-dir is required\n');
+    process.stderr.write("Error: --project-dir is required\n");
     usage();
   }
 
@@ -111,8 +111,8 @@ function parseArgs(argv) {
 }
 
 function findFlutterProjectDir(projectRoot) {
-  const directPubspec = path.join(projectRoot, 'pubspec.yaml');
-  const directLib = path.join(projectRoot, 'lib');
+  const directPubspec = path.join(projectRoot, "pubspec.yaml");
+  const directLib = path.join(projectRoot, "lib");
   if (
     fs.existsSync(directPubspec) &&
     fs.statSync(directPubspec).isFile() &&
@@ -132,8 +132,8 @@ function findFlutterProjectDir(projectRoot) {
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     const child = path.join(projectRoot, entry.name);
-    const pubspec = path.join(child, 'pubspec.yaml');
-    const lib = path.join(child, 'lib');
+    const pubspec = path.join(child, "pubspec.yaml");
+    const lib = path.join(child, "lib");
     if (
       fs.existsSync(pubspec) &&
       fs.statSync(pubspec).isFile() &&
@@ -148,10 +148,10 @@ function findFlutterProjectDir(projectRoot) {
 }
 
 function runCommand(cmd, cwd) {
-  const result = spawnSync(cmd[0], cmd.slice(1), { cwd, stdio: 'inherit' });
+  const result = spawnSync(cmd[0], cmd.slice(1), { cwd, stdio: "inherit" });
   if (result.error) {
-    if (result.error.code === 'ENOENT') {
-      process.stderr.write('Error: flutter command not found.\n');
+    if (result.error.code === "ENOENT") {
+      process.stderr.write("Error: flutter command not found.\n");
       return 1;
     }
     process.stderr.write(`Error: ${result.error.message}\n`);
@@ -161,34 +161,34 @@ function runCommand(cmd, cwd) {
 }
 
 function buildAndroid(flavor, treeShakeIcons, cwd) {
-  const treeShakeFlag = treeShakeIcons ? [] : ['--no-tree-shake-icons'];
+  const treeShakeFlag = treeShakeIcons ? [] : ["--no-tree-shake-icons"];
   let cmd;
-  if (flavor === 'appbundle') {
-    process.stdout.write('Android AppBundle Production Building..\n');
+  if (flavor === "appbundle") {
+    process.stdout.write("Android AppBundle Production Building..\n");
     cmd = [
-      'flutter',
-      'build',
-      'appbundle',
+      "flutter",
+      "build",
+      "appbundle",
       ...treeShakeFlag,
-      '--flavor',
-      'production',
+      "--flavor",
+      "production",
     ];
   } else if (flavor) {
     const pretty = flavor.charAt(0).toUpperCase() + flavor.slice(1);
     process.stdout.write(`Android ${pretty} Building..\n`);
-    cmd = ['flutter', 'build', 'apk', ...treeShakeFlag, '--flavor', flavor];
+    cmd = ["flutter", "build", "apk", ...treeShakeFlag, "--flavor", flavor];
   } else {
-    process.stdout.write('Android APK Building..\n');
-    cmd = ['flutter', 'build', 'apk', ...treeShakeFlag];
+    process.stdout.write("Android APK Building..\n");
+    cmd = ["flutter", "build", "apk", ...treeShakeFlag];
   }
   return runCommand(cmd, cwd);
 }
 
 function buildIos(flavor, treeShakeIcons, cwd, exportOptionsPlist) {
-  const treeShakeFlag = treeShakeIcons ? [] : ['--no-tree-shake-icons'];
+  const treeShakeFlag = treeShakeIcons ? [] : ["--no-tree-shake-icons"];
 
-  if (flavor === 'appbundle') {
-    process.stdout.write('iOS AppBundle Production Not Support..\n');
+  if (flavor === "appbundle") {
+    process.stdout.write("iOS AppBundle Production Not Support..\n");
     return 1;
   }
 
@@ -196,14 +196,14 @@ function buildIos(flavor, treeShakeIcons, cwd, exportOptionsPlist) {
   if (flavor) {
     const pretty = flavor.charAt(0).toUpperCase() + flavor.slice(1);
     process.stdout.write(`iOS ${pretty} Building..\n`);
-    cmd = ['flutter', 'build', 'ipa', ...treeShakeFlag, '--flavor', flavor];
+    cmd = ["flutter", "build", "ipa", ...treeShakeFlag, "--flavor", flavor];
   } else {
-    process.stdout.write('iOS IPA Building..\n');
-    cmd = ['flutter', 'build', 'ipa', ...treeShakeFlag];
+    process.stdout.write("iOS IPA Building..\n");
+    cmd = ["flutter", "build", "ipa", ...treeShakeFlag];
   }
 
   if (exportOptionsPlist) {
-    cmd.push('--export-options-plist', exportOptionsPlist);
+    cmd.push("--export-options-plist", exportOptionsPlist);
   }
 
   return runCommand(cmd, cwd);
@@ -216,7 +216,7 @@ function main() {
   const flutterDir = findFlutterProjectDir(projectRoot);
 
   if (flutterDir === null) {
-    process.stderr.write('Error: Flutter project not found\n');
+    process.stderr.write("Error: Flutter project not found\n");
     process.exit(1);
   }
 
@@ -226,7 +226,7 @@ function main() {
   const treeShakeIcons = !args.noTreeShakeIcons;
 
   let result;
-  if (args.os === 'aos') {
+  if (args.os === "aos") {
     result = buildAndroid(args.flavor, treeShakeIcons, flutterDir);
   } else {
     result = buildIos(
@@ -238,7 +238,7 @@ function main() {
   }
 
   if (result === 0) {
-    process.stdout.write('Build Done\n');
+    process.stdout.write("Build Done\n");
   }
 
   process.exit(result);

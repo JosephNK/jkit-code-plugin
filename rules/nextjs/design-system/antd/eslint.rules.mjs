@@ -10,11 +10,11 @@
  */
 export const antdRestrictedPatterns = [
   {
-    group: ['@emotion/*', 'styled-components', 'styled-jsx', 'styled-jsx/**'],
+    group: ["@emotion/*", "styled-components", "styled-jsx", "styled-jsx/**"],
     message:
-      'CSS-in-JS libraries are not allowed. antd uses @ant-design/cssinjs internally — use ConfigProvider tokens, component className/style props, or CSS Modules.',
+      "CSS-in-JS libraries are not allowed. antd uses @ant-design/cssinjs internally — use ConfigProvider tokens, component className/style props, or CSS Modules.",
   },
 ];
 
 /** 도메인 레이어에서 antd 계열 전체 차단 — 도메인은 UI 프레임워크 비의존. */
-export const antdDomainBannedPackages = ['antd', 'antd/**', '@ant-design/**'];
+export const antdDomainBannedPackages = ["antd", "antd/**", "@ant-design/**"];

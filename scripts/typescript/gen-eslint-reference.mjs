@@ -25,10 +25,10 @@
 //   - 미지원 노드(스프레드·변수 참조·메타 프로퍼티 등)는 해당 항목만 건너뜀
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import * as acorn from 'acorn';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import * as acorn from "acorn";
 
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
@@ -37,14 +37,14 @@ function parseArgs(argv) {
   const rest = argv.slice(2);
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
-    if (a === '-h' || a === '--help') {
+    if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
-    } else if (a === '--out-dir') {
+    } else if (a === "--out-dir") {
       args.outDir = rest[++i];
-    } else if (a === '--check') {
+    } else if (a === "--check") {
       args.check = true;
-    } else if (a.startsWith('-')) {
+    } else if (a.startsWith("-")) {
       console.error(`알 수 없는 옵션: ${a}`);
       printHelp();
       process.exit(1);
@@ -56,7 +56,7 @@ function parseArgs(argv) {
     }
   }
   if (!args.input) {
-    console.error('입력 파일 경로가 필요합니다.');
+    console.error("입력 파일 경로가 필요합니다.");
     printHelp();
     process.exit(1);
   }
@@ -91,11 +91,11 @@ function printHelp() {
 function nodeToValue(node, localConsts) {
   if (!node) return undefined;
   switch (node.type) {
-    case 'Literal':
+    case "Literal":
       return node.value;
-    case 'TemplateLiteral': {
+    case "TemplateLiteral": {
       if (node.expressions.length === 0) {
-        return node.quasis.map((q) => q.value.cooked).join('');
+        return node.quasis.map((q) => q.value.cooked).join("");
       }
       // expression이 있으면 각각 nodeToValue로 해결한 후 quasi와 interleave
       const parts = [];
@@ -103,25 +103,27 @@ function nodeToValue(node, localConsts) {
         parts.push(node.quasis[i].value.cooked);
         if (i < node.expressions.length) {
           const v = nodeToValue(node.expressions[i], localConsts);
-          if (typeof v !== 'string' && typeof v !== 'number') {
-            throw new Error('TemplateLiteral expression did not resolve to a primitive');
+          if (typeof v !== "string" && typeof v !== "number") {
+            throw new Error(
+              "TemplateLiteral expression did not resolve to a primitive",
+            );
           }
           parts.push(String(v));
         }
       }
-      return parts.join('');
+      return parts.join("");
     }
-    case 'ArrayExpression': {
+    case "ArrayExpression": {
       const result = [];
       for (const el of node.elements) {
         if (!el) {
           result.push(null);
           continue;
         }
-        if (el.type === 'SpreadElement') {
+        if (el.type === "SpreadElement") {
           const v = nodeToValue(el.argument, localConsts);
           if (!Array.isArray(v)) {
-            throw new Error('SpreadElement argument is not an array');
+            throw new Error("SpreadElement argument is not an array");
           }
           result.push(...v);
           continue;
@@ -130,48 +132,52 @@ function nodeToValue(node, localConsts) {
       }
       return result;
     }
-    case 'ObjectExpression': {
+    case "ObjectExpression": {
       const obj = {};
       for (const prop of node.properties) {
-        if (prop.type !== 'Property') {
+        if (prop.type !== "Property") {
           throw new Error(`Unsupported property kind: ${prop.type}`);
         }
-        const key = prop.key.type === 'Identifier' ? prop.key.name : prop.key.value;
+        const key =
+          prop.key.type === "Identifier" ? prop.key.name : prop.key.value;
         obj[key] = nodeToValue(prop.value, localConsts);
       }
       return obj;
     }
-    case 'UnaryExpression':
-      if (node.operator === '-' && node.argument.type === 'Literal') {
+    case "UnaryExpression":
+      if (node.operator === "-" && node.argument.type === "Literal") {
         return -node.argument.value;
       }
       throw new Error(`Unsupported UnaryExpression: ${node.operator}`);
-    case 'BinaryExpression': {
-      if (node.operator !== '+') {
-        throw new Error(`Unsupported BinaryExpression operator: ${node.operator}`);
+    case "BinaryExpression": {
+      if (node.operator !== "+") {
+        throw new Error(
+          `Unsupported BinaryExpression operator: ${node.operator}`,
+        );
       }
       const l = nodeToValue(node.left, localConsts);
       const r = nodeToValue(node.right, localConsts);
       return l + r;
     }
-    case 'Identifier': {
-      if (localConsts && localConsts.has(node.name)) return localConsts.get(node.name);
+    case "Identifier": {
+      if (localConsts && localConsts.has(node.name))
+        return localConsts.get(node.name);
       throw new Error(`Unresolved identifier: ${node.name}`);
     }
-    case 'CallExpression': {
+    case "CallExpression": {
       // `[literal, literal, ...].join(separator)` 만 지원 — baseLayerSemantics.example 용
       if (
-        node.callee.type === 'MemberExpression' &&
+        node.callee.type === "MemberExpression" &&
         !node.callee.computed &&
-        node.callee.property.type === 'Identifier' &&
-        node.callee.property.name === 'join'
+        node.callee.property.type === "Identifier" &&
+        node.callee.property.name === "join"
       ) {
         const target = nodeToValue(node.callee.object, localConsts);
         if (!Array.isArray(target)) {
-          throw new Error('join() target is not an array');
+          throw new Error("join() target is not an array");
         }
         const arg = node.arguments[0];
-        const sep = arg != null ? nodeToValue(arg, localConsts) : ',';
+        const sep = arg != null ? nodeToValue(arg, localConsts) : ",";
         return target.join(sep);
       }
       throw new Error(`Unsupported CallExpression`);
@@ -188,9 +194,9 @@ function nodeToValue(node, localConsts) {
 function collectTopLevelConsts(program) {
   const out = new Map();
   for (const stmt of program.body) {
-    if (stmt.type !== 'VariableDeclaration' || stmt.kind !== 'const') continue;
+    if (stmt.type !== "VariableDeclaration" || stmt.kind !== "const") continue;
     for (const d of stmt.declarations) {
-      if (d.id.type !== 'Identifier' || !d.init) continue;
+      if (d.id.type !== "Identifier" || !d.init) continue;
       try {
         out.set(d.id.name, nodeToValue(d.init, out));
       } catch {
@@ -208,10 +214,11 @@ function collectTopLevelConsts(program) {
 function collectTopLevelExports(program) {
   const map = new Map();
   for (const stmt of program.body) {
-    if (stmt.type !== 'ExportNamedDeclaration') continue;
-    if (!stmt.declaration || stmt.declaration.type !== 'VariableDeclaration') continue;
+    if (stmt.type !== "ExportNamedDeclaration") continue;
+    if (!stmt.declaration || stmt.declaration.type !== "VariableDeclaration")
+      continue;
     for (const d of stmt.declaration.declarations) {
-      if (d.id.type !== 'Identifier') continue;
+      if (d.id.type !== "Identifier") continue;
       map.set(d.id.name, { declarator: d, exportNode: stmt });
     }
   }
@@ -232,11 +239,11 @@ function collectTopLevelExports(program) {
  */
 function parseFile(filePath, fileCache) {
   if (fileCache && fileCache.has(filePath)) return fileCache.get(filePath);
-  const source = fs.readFileSync(filePath, 'utf8');
+  const source = fs.readFileSync(filePath, "utf8");
   const comments = [];
   const program = acorn.parse(source, {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
+    ecmaVersion: "latest",
+    sourceType: "module",
     locations: true,
     onComment: comments,
   });
@@ -258,14 +265,14 @@ function parseFile(filePath, fileCache) {
   // 상대경로 named import만 따라감 — npm/scoped 패키지는 무시.
   // 순환 import이 있어도 fileCache가 미완성 file을 이미 가지고 있어 무한 재귀를 차단.
   for (const stmt of program.body) {
-    if (stmt.type !== 'ImportDeclaration') continue;
+    if (stmt.type !== "ImportDeclaration") continue;
     const src = stmt.source.value;
-    if (typeof src !== 'string' || !src.startsWith('.')) continue;
+    if (typeof src !== "string" || !src.startsWith(".")) continue;
     const subPath = path.resolve(path.dirname(filePath), src);
     if (!fs.existsSync(subPath)) continue;
     const subFile = parseFile(subPath, fileCache);
     for (const spec of stmt.specifiers) {
-      if (spec.type !== 'ImportSpecifier') continue;
+      if (spec.type !== "ImportSpecifier") continue;
       const importedName = spec.imported.name;
       const localName = spec.local.name;
       const subInfo = subFile.exportsMap.get(importedName);
@@ -273,7 +280,10 @@ function parseFile(filePath, fileCache) {
       try {
         const value = nodeToValue(subInfo.declarator.init, subFile.localConsts);
         localConsts.set(localName, value);
-        localImports.set(localName, { sourceFile: subFile, exportedName: importedName });
+        localImports.set(localName, {
+          sourceFile: subFile,
+          exportedName: importedName,
+        });
       } catch {
         // 평가 실패 시 skip — Identifier resolve 실패는 nodeToValue가 throw
       }
@@ -308,16 +318,19 @@ function parseAndResolveExports(entryPath) {
 
   // re-export (`export { x } from './sub.mjs'`) 추적
   for (const stmt of entry.program.body) {
-    if (stmt.type !== 'ExportNamedDeclaration') continue;
+    if (stmt.type !== "ExportNamedDeclaration") continue;
     if (!stmt.source) continue;
-    const sourcePath = path.resolve(path.dirname(entry.filePath), stmt.source.value);
+    const sourcePath = path.resolve(
+      path.dirname(entry.filePath),
+      stmt.source.value,
+    );
     if (!fs.existsSync(sourcePath)) {
       console.warn(`[warn] re-export 대상을 찾을 수 없음: ${sourcePath}`);
       continue;
     }
     const subFile = parseFile(sourcePath, fileCache);
     for (const spec of stmt.specifiers) {
-      if (spec.type !== 'ExportSpecifier') continue;
+      if (spec.type !== "ExportSpecifier") continue;
       const localName = spec.local?.name;
       const exportedName = spec.exported?.name;
       if (!localName || !exportedName) continue;
@@ -338,7 +351,9 @@ function parseAndResolveExports(entryPath) {
  * 주석 끝과 export 시작 사이에 공백 외 문자가 있으면 매칭 제외.
  */
 function buildJSDocMap(source, exportsMap, comments) {
-  const jsdocs = comments.filter((c) => c.type === 'Block' && c.value.startsWith('*'));
+  const jsdocs = comments.filter(
+    (c) => c.type === "Block" && c.value.startsWith("*"),
+  );
   const result = {};
   for (const [name, { exportNode }] of exportsMap) {
     const exportStart = exportNode.start;
@@ -351,10 +366,10 @@ function buildJSDocMap(source, exportsMap, comments) {
     const between = source.slice(best.end, exportStart);
     if (!/^\s*$/.test(between)) continue;
     const body = best.value
-      .replace(/^\*/, '')
-      .split('\n')
-      .map((l) => l.replace(/^\s*\*\s?/, '').trimEnd())
-      .join('\n')
+      .replace(/^\*/, "")
+      .split("\n")
+      .map((l) => l.replace(/^\s*\*\s?/, "").trimEnd())
+      .join("\n")
       .trim();
     if (body) result[name] = body;
   }
@@ -372,7 +387,7 @@ function buildJSDocMap(source, exportsMap, comments) {
  */
 function mapInlineTypeCommentsOnArray(arrayNode, file) {
   const map = {};
-  if (!arrayNode || arrayNode.type !== 'ArrayExpression') return map;
+  if (!arrayNode || arrayNode.type !== "ArrayExpression") return map;
   const visited = new Set();
   collectInlineTypeComments(arrayNode, file, map, visited);
   return map;
@@ -381,34 +396,37 @@ function mapInlineTypeCommentsOnArray(arrayNode, file) {
 function collectInlineTypeComments(arrayNode, file, map, visited) {
   if (visited.has(arrayNode)) return;
   visited.add(arrayNode);
-  const lineComments = file.comments.filter((c) => c.type === 'Line');
+  const lineComments = file.comments.filter((c) => c.type === "Line");
   for (const el of arrayNode.elements) {
     if (!el) continue;
-    if (el.type === 'SpreadElement') {
+    if (el.type === "SpreadElement") {
       // import된 배열 식별자만 follow — 다른 표현식은 skip
-      if (el.argument.type !== 'Identifier') continue;
+      if (el.argument.type !== "Identifier") continue;
       const importInfo = file.localImports?.get(el.argument.name);
       if (!importInfo) continue;
       const subFile = importInfo.sourceFile;
       const subInfo = subFile.exportsMap.get(importInfo.exportedName);
       if (!subInfo) continue;
       const subInit = subInfo.declarator.init;
-      if (subInit && subInit.type === 'ArrayExpression') {
+      if (subInit && subInit.type === "ArrayExpression") {
         collectInlineTypeComments(subInit, subFile, map, visited);
       }
       continue;
     }
-    if (el.type !== 'ObjectExpression') continue;
+    if (el.type !== "ObjectExpression") continue;
     const typeProp = el.properties.find(
-      (p) => p.type === 'Property' && !p.computed && (
-        (p.key.type === 'Identifier' && p.key.name === 'type') ||
-        (p.key.type === 'Literal' && p.key.value === 'type')
-      ),
+      (p) =>
+        p.type === "Property" &&
+        !p.computed &&
+        ((p.key.type === "Identifier" && p.key.name === "type") ||
+          (p.key.type === "Literal" && p.key.value === "type")),
     );
-    if (!typeProp || typeProp.value.type !== 'Literal') continue;
+    if (!typeProp || typeProp.value.type !== "Literal") continue;
     const typeValue = typeProp.value.value;
     const endLine = el.loc.end.line;
-    const sameLineComment = lineComments.find((c) => c.loc.start.line === endLine);
+    const sameLineComment = lineComments.find(
+      (c) => c.loc.start.line === endLine,
+    );
     if (sameLineComment) map[typeValue] = sameLineComment.value.trim();
   }
 }
@@ -419,13 +437,13 @@ function collectInlineTypeComments(arrayNode, file, map, visited) {
  * 의도하지 않게 base 설정을 가리므로 메인 테이블 집계에서 제외한다.
  */
 function hasFilesProperty(objExpr) {
-  if (!objExpr || objExpr.type !== 'ObjectExpression') return false;
+  if (!objExpr || objExpr.type !== "ObjectExpression") return false;
   return objExpr.properties.some(
     (p) =>
-      p.type === 'Property' &&
+      p.type === "Property" &&
       !p.computed &&
-      ((p.key.type === 'Identifier' && p.key.name === 'files') ||
-        (p.key.type === 'Literal' && p.key.value === 'files')),
+      ((p.key.type === "Identifier" && p.key.name === "files") ||
+        (p.key.type === "Literal" && p.key.value === "files")),
   );
 }
 
@@ -443,16 +461,20 @@ function findRuleOverrideBlocks(node, localConsts) {
   const unscoped = [];
   const scoped = [];
   const visit = (n, parentBlock) => {
-    if (!n || typeof n !== 'object') return;
+    if (!n || typeof n !== "object") return;
     if (Array.isArray(n)) {
       for (const x of n) visit(x, parentBlock);
       return;
     }
-    const nextParent = n.type === 'ObjectExpression' ? n : parentBlock;
-    if (n.type === 'Property' && !n.computed) {
+    const nextParent = n.type === "ObjectExpression" ? n : parentBlock;
+    if (n.type === "Property" && !n.computed) {
       const keyName =
-        n.key.type === 'Identifier' ? n.key.name : n.key.type === 'Literal' ? n.key.value : null;
-      if (keyName === 'rules' && n.value.type === 'ObjectExpression') {
+        n.key.type === "Identifier"
+          ? n.key.name
+          : n.key.type === "Literal"
+            ? n.key.value
+            : null;
+      if (keyName === "rules" && n.value.type === "ObjectExpression") {
         const target = hasFilesProperty(parentBlock) ? scoped : unscoped;
         try {
           target.push(nodeToValue(n.value, localConsts));
@@ -461,11 +483,11 @@ function findRuleOverrideBlocks(node, localConsts) {
           const partial = {};
           let anySuccess = false;
           for (const prop of n.value.properties) {
-            if (prop.type !== 'Property' || prop.computed) continue;
+            if (prop.type !== "Property" || prop.computed) continue;
             const k =
-              prop.key.type === 'Identifier'
+              prop.key.type === "Identifier"
                 ? prop.key.name
-                : prop.key.type === 'Literal'
+                : prop.key.type === "Literal"
                   ? prop.key.value
                   : null;
             if (k == null) continue;
@@ -473,7 +495,7 @@ function findRuleOverrideBlocks(node, localConsts) {
               partial[k] = nodeToValue(prop.value, localConsts);
               anySuccess = true;
             } catch {
-              partial[k] = '(동적 값)';
+              partial[k] = "(동적 값)";
               anySuccess = true;
             }
           }
@@ -482,7 +504,7 @@ function findRuleOverrideBlocks(node, localConsts) {
       }
     }
     for (const key of Object.keys(n)) {
-      if (key === 'loc' || key === 'start' || key === 'end') continue;
+      if (key === "loc" || key === "start" || key === "end") continue;
       visit(n[key], nextParent);
     }
   };
@@ -495,16 +517,16 @@ function findRuleOverrideBlocks(node, localConsts) {
  */
 function getCallArgArray(declarator) {
   const init = declarator.init;
-  if (!init || init.type !== 'CallExpression') return null;
+  if (!init || init.type !== "CallExpression") return null;
   const arg0 = init.arguments[0];
-  if (!arg0 || arg0.type !== 'ArrayExpression') return null;
+  if (!arg0 || arg0.type !== "ArrayExpression") return null;
   return arg0;
 }
 
 // ─── 렌더러 ─────────────────────────────────────────────────────────────────
 
 function escapePipe(s) {
-  return String(s).replace(/\|/g, '\\|');
+  return String(s).replace(/\|/g, "\\|");
 }
 
 /**
@@ -513,11 +535,11 @@ function escapePipe(s) {
  * 같은 경로에 여러 엘리먼트가 매핑되면 마지막 것이 덮어씀 (실제 충돌은 드묾).
  */
 function buildPathTree(elements) {
-  const root = { name: '', children: [] };
+  const root = { name: "", children: [] };
   for (const el of elements) {
     const patterns = Array.isArray(el.pattern) ? el.pattern : [el.pattern];
     for (const p of patterns) {
-      const segments = p.split('/').filter((s) => s.length > 0);
+      const segments = p.split("/").filter((s) => s.length > 0);
       let cur = root;
       for (let i = 0; i < segments.length; i++) {
         const seg = segments[i];
@@ -540,11 +562,11 @@ function buildPathTree(elements) {
  * Next.js dynamic/group/catch-all 세그먼트(`[x]`, `[...x]`, `(x)`)는 디렉토리로 취급.
  */
 function formatSegment(name) {
-  const clean = name.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
-  if (clean === '*' || clean === '**') return clean;
-  if (clean.startsWith('[') || clean.startsWith('(')) return clean + '/';
+  const clean = name.replace(/\\\[/g, "[").replace(/\\\]/g, "]");
+  if (clean === "*" || clean === "**") return clean;
+  if (clean.startsWith("[") || clean.startsWith("(")) return clean + "/";
   if (/\.[a-z0-9]+$/i.test(clean)) return clean; // 확장자 있으면 파일
-  return clean + '/';
+  return clean + "/";
 }
 
 /**
@@ -552,7 +574,7 @@ function formatSegment(name) {
  * 없으면 null.
  */
 function findNodeByPath(root, pathStr) {
-  const segs = pathStr.split('/').filter(Boolean);
+  const segs = pathStr.split("/").filter(Boolean);
   let cur = root;
   for (const s of segs) {
     const child = cur.children.find((c) => c.name === s);
@@ -571,7 +593,7 @@ function annotationToTreeNode(a, lintElementByName) {
   const node = { name: a.name, children: [] };
   if (a.note) node._note = a.note;
   if (a.placeholder) node._placeholder = true;
-  const cleanName = a.name.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+  const cleanName = a.name.replace(/\\\[/g, "[").replace(/\\\]/g, "]");
   const matched = lintElementByName.get(cleanName);
   if (matched) node.element = matched;
   if (Array.isArray(a.children)) {
@@ -589,28 +611,31 @@ function annotationToTreeNode(a, lintElementByName) {
  * - annotation name이 boundary element 마지막 세그먼트와 일치하면 type 자동 부착
  */
 function mergeAnnotations(tree, annotations, boundaryElements) {
-  if (!annotations || typeof annotations !== 'object') return;
+  if (!annotations || typeof annotations !== "object") return;
   const byName = new Map();
   for (const el of boundaryElements) {
     const patterns = Array.isArray(el.pattern) ? el.pattern : [el.pattern];
     for (const p of patterns) {
-      const segs = p.split('/').filter(Boolean);
+      const segs = p.split("/").filter(Boolean);
       const last = segs[segs.length - 1];
       if (!last) continue;
-      const clean = last.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+      const clean = last.replace(/\\\[/g, "[").replace(/\\\]/g, "]");
       if (!byName.has(clean)) byName.set(clean, el);
     }
   }
   // bracket escape를 제거한 정규화된 이름으로 비교 (tree 세그먼트는 `\[locale\]`,
   // annotation name은 `[locale]` 형태라 직접 비교하면 어긋남)
-  const unescape = (s) => s.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+  const unescape = (s) => s.replace(/\\\[/g, "[").replace(/\\\]/g, "]");
   for (const [parentPath, spec] of Object.entries(annotations)) {
     if (!spec || !Array.isArray(spec.override)) continue;
     const node = findNodeByPath(tree, parentPath);
     if (!node) continue;
     const overrideNames = new Set(spec.override.map((a) => unescape(a.name)));
     node.children = node.children.filter(
-      (c) => c.name !== '*' && c.name !== '**' && !overrideNames.has(unescape(c.name)),
+      (c) =>
+        c.name !== "*" &&
+        c.name !== "**" &&
+        !overrideNames.has(unescape(c.name)),
     );
     for (const a of spec.override) {
       node.children.push(annotationToTreeNode(a, byName));
@@ -626,7 +651,7 @@ function renderPathTree(root, inlineComments) {
   const rows = []; // { display, comment|null }
   const walk = (node, prefix, isLast, isRoot) => {
     if (!isRoot) {
-      const connector = isLast ? '└── ' : '├── ';
+      const connector = isLast ? "└── " : "├── ";
       const display = prefix + connector + formatSegment(node.name);
       let comment = null;
       if (node.element) {
@@ -639,70 +664,87 @@ function renderPathTree(root, inlineComments) {
       }
       rows.push({ display, comment });
     }
-    const childPrefix = isRoot ? '' : prefix + (isLast ? '    ' : '│   ');
-    const sorted = [...node.children].sort((a, b) => a.name.localeCompare(b.name));
+    const childPrefix = isRoot ? "" : prefix + (isLast ? "    " : "│   ");
+    const sorted = [...node.children].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
     sorted.forEach((c, i) => {
       walk(c, childPrefix, i === sorted.length - 1, false);
     });
   };
-  walk(root, '', true, true);
+  walk(root, "", true, true);
 
   const maxDisplay = Math.max(0, ...rows.map((r) => r.display.length));
-  const lines = ['```'];
+  const lines = ["```"];
   for (const r of rows) {
     if (r.comment) {
-      const pad = ' '.repeat(maxDisplay - r.display.length + 2);
+      const pad = " ".repeat(maxDisplay - r.display.length + 2);
       lines.push(`${r.display}${pad}# ${r.comment}`);
     } else {
       lines.push(r.display);
     }
   }
-  lines.push('```');
-  return lines.join('\n');
+  lines.push("```");
+  return lines.join("\n");
 }
 
-function renderStructure({ jsdocMap, elements, inlineComments, annotations, stackLabel, inputRelPath, elementsExportName, annotationsExportName }) {
+function renderStructure({
+  jsdocMap,
+  elements,
+  inlineComments,
+  annotations,
+  stackLabel,
+  inputRelPath,
+  elementsExportName,
+  annotationsExportName,
+}) {
   const lines = [];
-  const sourceExports = [elementsExportName, annotationsExportName].filter(Boolean).join(', ');
-  lines.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  lines.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
-  lines.push(`<!-- Source: ${inputRelPath}${sourceExports ? ` (${sourceExports})` : ''} -->`);
-  lines.push('');
+  const sourceExports = [elementsExportName, annotationsExportName]
+    .filter(Boolean)
+    .join(", ");
+  lines.push("<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->");
+  lines.push("<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->");
+  lines.push(
+    `<!-- Source: ${inputRelPath}${sourceExports ? ` (${sourceExports})` : ""} -->`,
+  );
+  lines.push("");
   lines.push(`# Lint Rules — Structure Reference (${stackLabel})`);
-  lines.push('');
+  lines.push("");
 
   if (jsdocMap.boundaryElements) {
-    lines.push('## 개요');
-    lines.push('');
+    lines.push("## 개요");
+    lines.push("");
     lines.push(jsdocMap.boundaryElements);
-    lines.push('');
+    lines.push("");
   }
 
-  lines.push('## 프로젝트 구조');
-  lines.push('');
+  lines.push("## 프로젝트 구조");
+  lines.push("");
   lines.push(
-    '> 아래 트리는 **대표 구조 예시**입니다. 표기 컨벤션: `<name>` = doc placeholder (실제 폴더는 구체 이름, 예: `<feature>` → `users/`/`products/`). `[name]`/`[...name]`/`(name)` = Next.js 라우팅 컨벤션 (브래킷/괄호가 진짜 폴더명의 일부). lint는 glob(`**`, `*`)로 유연 매칭, `[locale]`처럼 명시된 literal bracket은 그대로 강제합니다.',
+    "> 아래 트리는 **대표 구조 예시**입니다. 표기 컨벤션: `<name>` = doc placeholder (실제 폴더는 구체 이름, 예: `<feature>` → `users/`/`products/`). `[name]`/`[...name]`/`(name)` = Next.js 라우팅 컨벤션 (브래킷/괄호가 진짜 폴더명의 일부). lint는 glob(`**`, `*`)로 유연 매칭, `[locale]`처럼 명시된 literal bracket은 그대로 강제합니다.",
   );
-  lines.push('');
+  lines.push("");
   const tree = buildPathTree(elements);
   mergeAnnotations(tree, annotations, elements);
   lines.push(renderPathTree(tree, inlineComments));
-  lines.push('');
+  lines.push("");
 
-  lines.push('## 레이어별 경로 매핑');
-  lines.push('');
-  lines.push('| 타입 | 경로 패턴 | 모드 | 설명 |');
-  lines.push('| --- | --- | --- | --- |');
+  lines.push("## 레이어별 경로 매핑");
+  lines.push("");
+  lines.push("| 타입 | 경로 패턴 | 모드 | 설명 |");
+  lines.push("| --- | --- | --- | --- |");
   for (const el of elements) {
     const type = el.type;
     const patterns = Array.isArray(el.pattern) ? el.pattern : [el.pattern];
-    const patternStr = patterns.map((p) => `\`${p}\``).join(' / ');
-    const mode = el.mode ? `\`${el.mode}\`` : '—';
-    const desc = inlineComments[type] || '—';
-    lines.push(`| \`${type}\` | ${patternStr} | ${mode} | ${escapePipe(desc)} |`);
+    const patternStr = patterns.map((p) => `\`${p}\``).join(" / ");
+    const mode = el.mode ? `\`${el.mode}\`` : "—";
+    const desc = inlineComments[type] || "—";
+    lines.push(
+      `| \`${type}\` | ${patternStr} | ${mode} | ${escapePipe(desc)} |`,
+    );
   }
-  lines.push('');
-  return lines.join('\n');
+  lines.push("");
+  return lines.join("\n");
 }
 
 /**
@@ -746,9 +788,9 @@ function renderMermaid(rules) {
     }
   }
 
-  const sanitize = (s) => s.replace(/-/g, '_');
+  const sanitize = (s) => s.replace(/-/g, "_");
   const prefixOf = (t) => {
-    const idx = t.indexOf('-');
+    const idx = t.indexOf("-");
     return idx === -1 ? t : t.slice(0, idx);
   };
 
@@ -767,56 +809,60 @@ function renderMermaid(rules) {
   }
 
   const lines = [];
-  lines.push('```mermaid');
-  lines.push('graph LR');
+  lines.push("```mermaid");
+  lines.push("graph LR");
   // subgraph ID는 노드 ID와 충돌하지 않도록 `g_` 접두사를 붙이고, 표시명은 대괄호로 지정
   for (const [prefix, members] of groups) {
     lines.push(`  subgraph g_${prefix} [${prefix}]`);
     for (const m of members) lines.push(`    ${sanitize(m)}["${m}"]`);
-    lines.push('  end');
+    lines.push("  end");
   }
   for (const n of ungrouped) lines.push(`  ${sanitize(n)}["${n}"]`);
   for (const [f, t] of edges) lines.push(`  ${sanitize(f)} --> ${sanitize(t)}`);
-  lines.push('```');
-  return lines.join('\n');
+  lines.push("```");
+  return lines.join("\n");
 }
 
 function renderMatrix(rules) {
   const lines = [];
-  lines.push('| From | Allow → To |');
-  lines.push('| --- | --- |');
+  lines.push("| From | Allow → To |");
+  lines.push("| --- | --- |");
   for (const r of rules) {
-    const from = r.from?.type || '—';
+    const from = r.from?.type || "—";
     const allows = normalizeAllows(r).map((a) => `\`${a.to.type}\``);
-    lines.push(`| \`${from}\` | ${allows.length ? allows.join(', ') : '_(no layer imports)_'} |`);
+    lines.push(
+      `| \`${from}\` | ${allows.length ? allows.join(", ") : "_(no layer imports)_"} |`,
+    );
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function renderPatterns(patterns) {
   const lines = [];
-  lines.push('| 패턴 | 메시지 |');
-  lines.push('| --- | --- |');
+  lines.push("| 패턴 | 메시지 |");
+  lines.push("| --- | --- |");
   for (const p of patterns) {
     const groups = Array.isArray(p.group) ? p.group : [p.group];
-    const groupStr = groups.map((g) => `\`${g}\``).join(', ');
-    lines.push(`| ${groupStr} | ${escapePipe(p.message || '')} |`);
+    const groupStr = groups.map((g) => `\`${g}\``).join(", ");
+    lines.push(`| ${groupStr} | ${escapePipe(p.message || "")} |`);
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function renderSyntax(entries) {
   const lines = [];
-  lines.push('| Selector | 메시지 |');
-  lines.push('| --- | --- |');
+  lines.push("| Selector | 메시지 |");
+  lines.push("| --- | --- |");
   for (const e of entries) {
-    lines.push(`| \`${escapePipe(e.selector || '')}\` | ${escapePipe(e.message || '')} |`);
+    lines.push(
+      `| \`${escapePipe(e.selector || "")}\` | ${escapePipe(e.message || "")} |`,
+    );
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function renderBulletList(items) {
-  return items.map((i) => `- \`${i}\``).join('\n');
+  return items.map((i) => `- \`${i}\``).join("\n");
 }
 
 function collapsePackagePairs(items) {
@@ -825,12 +871,14 @@ function collapsePackagePairs(items) {
     const match = p.match(/^(.+?)\/(\*{1,2})$/);
     if (match) {
       const base = match[1];
-      if (!info.has(base)) info.set(base, { hasRoot: false, hasWild: false, wildcard: '' });
+      if (!info.has(base))
+        info.set(base, { hasRoot: false, hasWild: false, wildcard: "" });
       const entry = info.get(base);
       entry.hasWild = true;
       entry.wildcard = match[2];
     } else {
-      if (!info.has(p)) info.set(p, { hasRoot: false, hasWild: false, wildcard: '' });
+      if (!info.has(p))
+        info.set(p, { hasRoot: false, hasWild: false, wildcard: "" });
       info.get(p).hasRoot = true;
     }
   }
@@ -854,8 +902,10 @@ function collapsePackagePairs(items) {
 function renderPackageBulletList(items) {
   const collapsed = collapsePackagePairs(items);
   return collapsed
-    .map((c) => (c.subpaths ? `- \`${c.pattern}\` (+ 서브경로)` : `- \`${c.pattern}\``))
-    .join('\n');
+    .map((c) =>
+      c.subpaths ? `- \`${c.pattern}\` (+ 서브경로)` : `- \`${c.pattern}\``,
+    )
+    .join("\n");
 }
 
 /**
@@ -866,18 +916,21 @@ function categorizeIgnorePattern(p) {
   // 구체 경로 매칭 먼저 (regex 오탐 방지):
   // - `next-env.d.ts`는 `.d.ts`지만 자동 생성 메타 → build
   // - `eslint.config.mjs`는 `.config.`지만 ESLint 자체 설정 → build
-  if (p === 'next-env.d.ts' || p === 'eslint.config.mjs') return 'build';
+  if (p === "next-env.d.ts" || p === "eslint.config.mjs") return "build";
   if (
-    /^(?:dist|build|coverage|\.next|out|\.jkit|scripts|e2e|node_modules|eslint-rules|migrations)(?:\/|$)/.test(p)
+    /^(?:dist|build|coverage|\.next|out|\.jkit|scripts|e2e|node_modules|eslint-rules|migrations)(?:\/|$)/.test(
+      p,
+    )
   )
-    return 'build';
-  if (/\.(?:spec|test)\.(?:ts|tsx|js|jsx)$/.test(p)) return 'test';
-  if (/^test\/|\/test\/|^src\/test\//.test(p)) return 'test';
-  if (/\.config\./.test(p)) return 'test';
-  if (/\.module\.(?:ts|tsx)$/.test(p)) return 'module';
-  if (/\.d\.ts$/.test(p) || p === '*.ts' || /(^|\/)types\//.test(p)) return 'meta';
-  if (/^src\/main\.|^src\/app\./.test(p)) return 'bootstrap';
-  return 'special';
+    return "build";
+  if (/\.(?:spec|test)\.(?:ts|tsx|js|jsx)$/.test(p)) return "test";
+  if (/^test\/|\/test\/|^src\/test\//.test(p)) return "test";
+  if (/\.config\./.test(p)) return "test";
+  if (/\.module\.(?:ts|tsx)$/.test(p)) return "module";
+  if (/\.d\.ts$/.test(p) || p === "*.ts" || /(^|\/)types\//.test(p))
+    return "meta";
+  if (/^src\/main\.|^src\/app\./.test(p)) return "bootstrap";
+  return "special";
 }
 
 /**
@@ -886,12 +939,12 @@ function categorizeIgnorePattern(p) {
  */
 function renderIgnoredPaths(patterns) {
   const groups = [
-    { key: 'test', label: '테스트/설정 파일', items: [] },
-    { key: 'module', label: 'NestJS DI 조립', items: [] },
-    { key: 'meta', label: '타입/메타 파일', items: [] },
-    { key: 'bootstrap', label: '앱 부트스트랩', items: [] },
-    { key: 'special', label: '특수 경로', items: [] },
-    { key: 'build', label: '빌드/툴 산출물 (코드 작성 무관)', items: [] },
+    { key: "test", label: "테스트/설정 파일", items: [] },
+    { key: "module", label: "NestJS DI 조립", items: [] },
+    { key: "meta", label: "타입/메타 파일", items: [] },
+    { key: "bootstrap", label: "앱 부트스트랩", items: [] },
+    { key: "special", label: "특수 경로", items: [] },
+    { key: "build", label: "빌드/툴 산출물 (코드 작성 무관)", items: [] },
   ];
   const byKey = new Map(groups.map((g) => [g.key, g]));
   const seen = new Set();
@@ -899,15 +952,15 @@ function renderIgnoredPaths(patterns) {
     if (seen.has(p)) continue;
     seen.add(p);
     const cat = categorizeIgnorePattern(p);
-    (byKey.get(cat) || byKey.get('special')).items.push(p);
+    (byKey.get(cat) || byKey.get("special")).items.push(p);
   }
   const out = [];
   for (const g of groups) {
     if (g.items.length === 0) continue;
-    const patt = g.items.map((p) => `\`${p}\``).join(', ');
+    const patt = g.items.map((p) => `\`${p}\``).join(", ");
     out.push(`- **${g.label}**: ${patt}`);
   }
-  return out.join('\n');
+  return out.join("\n");
 }
 
 /**
@@ -923,10 +976,11 @@ function renderIgnoredPaths(patterns) {
  *   (code block)            (선택, example 있을 때)
  */
 function renderLayerGlossary(elements, layerSemantics) {
-  if (!layerSemantics || typeof layerSemantics !== 'object') return '';
-  const order = Array.isArray(elements) && elements.length > 0
-    ? elements.map((e) => e?.type).filter(Boolean)
-    : Object.keys(layerSemantics);
+  if (!layerSemantics || typeof layerSemantics !== "object") return "";
+  const order =
+    Array.isArray(elements) && elements.length > 0
+      ? elements.map((e) => e?.type).filter(Boolean)
+      : Object.keys(layerSemantics);
 
   const blocks = [];
   for (const type of order) {
@@ -934,36 +988,36 @@ function renderLayerGlossary(elements, layerSemantics) {
     if (!s) continue;
     const lines = [];
     lines.push(`### \`${type}\``);
-    lines.push('');
+    lines.push("");
     if (s.role) {
       lines.push(`**Role** — ${s.role}`);
-      lines.push('');
+      lines.push("");
     }
     if (Array.isArray(s.contains) && s.contains.length) {
-      lines.push('**Contains**');
-      lines.push('');
+      lines.push("**Contains**");
+      lines.push("");
       for (const c of s.contains) lines.push(`- ${c}`);
-      lines.push('');
+      lines.push("");
     }
     if (Array.isArray(s.forbids) && s.forbids.length) {
-      lines.push('**Forbids**');
-      lines.push('');
+      lines.push("**Forbids**");
+      lines.push("");
       for (const f of s.forbids) lines.push(`- ${f}`);
-      lines.push('');
+      lines.push("");
     }
     if (s.scope) {
       lines.push(`**Scope** — ${s.scope}`);
-      lines.push('');
+      lines.push("");
     }
     if (s.example) {
-      lines.push('```ts');
+      lines.push("```ts");
       lines.push(s.example);
-      lines.push('```');
-      lines.push('');
+      lines.push("```");
+      lines.push("");
     }
-    blocks.push(lines.join('\n').replace(/\n+$/, ''));
+    blocks.push(lines.join("\n").replace(/\n+$/, ""));
   }
-  return blocks.join('\n\n');
+  return blocks.join("\n\n");
 }
 
 /**
@@ -973,24 +1027,24 @@ function renderLayerGlossary(elements, layerSemantics) {
  * - 새 규칙을 config에 추가해도 이 맵에 없으면 렌더되지 않음 (의도적 allowlist).
  */
 const RULE_OVERRIDE_HINTS = {
-  '@typescript-eslint/consistent-type-imports':
+  "@typescript-eslint/consistent-type-imports":
     'type-only import은 `import type { X } from "..."` 인라인 형식으로 작성.',
-  '@typescript-eslint/no-explicit-any':
-    '`any` 금지 — 정확한 타입 또는 `unknown` 사용.',
-  '@typescript-eslint/no-floating-promises':
-    'Promise는 반드시 `await` 또는 `.catch()` 체이닝 (방치 금지).',
-  '@typescript-eslint/no-unsafe-argument':
-    '`any` 값을 타입된 파라미터에 전달 금지 — 타입 가드/단언으로 좁힌 뒤 전달.',
-  '@typescript-eslint/no-deprecated':
-    'deprecated API 사용 금지 — 대체 API로 마이그레이션.',
-  'no-console':
-    '`console.warn` / `console.error`만 허용. `console.log` / `console.debug` 금지.',
-  'no-warning-comments':
-    'TODO / FIXME / HACK 주석 추적 (warn) — 차단하지 않음, 장기 방치 금지.',
-  'sonarjs/no-nested-conditional':
-    '중첩 삼항 연산자 금지 — `if/else` 블록 또는 함수 추출.',
-  'unused-imports/no-unused-vars':
-    '사용 안 하는 변수/파라미터는 `_` prefix (예: `_unused`, `_ctx`).',
+  "@typescript-eslint/no-explicit-any":
+    "`any` 금지 — 정확한 타입 또는 `unknown` 사용.",
+  "@typescript-eslint/no-floating-promises":
+    "Promise는 반드시 `await` 또는 `.catch()` 체이닝 (방치 금지).",
+  "@typescript-eslint/no-unsafe-argument":
+    "`any` 값을 타입된 파라미터에 전달 금지 — 타입 가드/단언으로 좁힌 뒤 전달.",
+  "@typescript-eslint/no-deprecated":
+    "deprecated API 사용 금지 — 대체 API로 마이그레이션.",
+  "no-console":
+    "`console.warn` / `console.error`만 허용. `console.log` / `console.debug` 금지.",
+  "no-warning-comments":
+    "TODO / FIXME / HACK 주석 추적 (warn) — 차단하지 않음, 장기 방치 금지.",
+  "sonarjs/no-nested-conditional":
+    "중첩 삼항 연산자 금지 — `if/else` 블록 또는 함수 추출.",
+  "unused-imports/no-unused-vars":
+    "사용 안 하는 변수/파라미터는 `_` prefix (예: `_unused`, `_ctx`).",
 };
 
 /**
@@ -1005,28 +1059,30 @@ function renderRuleOverrides(collected) {
   const merged = {};
   const unscopedBlocks = collected?.unscoped || [];
   const scopedBlocks = collected?.scoped || [];
-  for (const b of scopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
-  for (const b of unscopedBlocks) for (const [k, v] of Object.entries(b)) merged[k] = v;
+  for (const b of scopedBlocks)
+    for (const [k, v] of Object.entries(b)) merged[k] = v;
+  for (const b of unscopedBlocks)
+    for (const [k, v] of Object.entries(b)) merged[k] = v;
 
   const parseEntry = (v) => {
-    if (typeof v === 'string') return { severity: v };
+    if (typeof v === "string") return { severity: v };
     if (Array.isArray(v)) {
       const [sev] = v;
-      return { severity: typeof sev === 'string' ? sev : String(sev) };
+      return { severity: typeof sev === "string" ? sev : String(sev) };
     }
-    return { severity: '(동적)' };
+    return { severity: "(동적)" };
   };
 
   const rows = [];
   for (const rule of Object.keys(RULE_OVERRIDE_HINTS)) {
     if (!(rule in merged)) continue;
     const { severity } = parseEntry(merged[rule]);
-    if (severity === 'off') continue;
+    if (severity === "off") continue;
     rows.push({ rule, hint: RULE_OVERRIDE_HINTS[rule] });
   }
-  if (rows.length === 0) return '';
+  if (rows.length === 0) return "";
   rows.sort((a, b) => a.rule.localeCompare(b.rule));
-  return rows.map((r) => `- \`${r.rule}\` — ${r.hint}`).join('\n');
+  return rows.map((r) => `- \`${r.rule}\` — ${r.hint}`).join("\n");
 }
 
 /**
@@ -1049,13 +1105,13 @@ function renderBoundaryAllowPatches(patches) {
     }
   }
   const lines = [];
-  lines.push('| From | 추가 허용 (To) |');
-  lines.push('| --- | --- |');
+  lines.push("| From | 추가 허용 (To) |");
+  lines.push("| --- | --- |");
   for (const [from, toSet] of rows) {
-    const tos = [...toSet].map((t) => `\`${t}\``).join(', ');
+    const tos = [...toSet].map((t) => `\`${t}\``).join(", ");
     lines.push(`| \`${from}\` | ${tos} |`);
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -1064,18 +1120,20 @@ function renderBoundaryAllowPatches(patches) {
  */
 function renderDiagram({ boundaryRules, stackLabel, inputRelPath }) {
   const out = [];
-  out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  out.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
+  out.push("<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->");
+  out.push("<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->");
   out.push(`<!-- Source: ${inputRelPath} (baseBoundaryRules) -->`);
-  out.push('');
+  out.push("");
   out.push(`# Lint Rules — Dependency Diagram (${stackLabel})`);
-  out.push('');
-  out.push('> 레이어 간 의존성 시각화 (`baseBoundaryRules` allow-list 기반).');
-  out.push('> 텍스트 조회 / Allow 매트릭스 / 레이어별 상세: `lint-rules-reference.md` 참조.');
-  out.push('');
+  out.push("");
+  out.push("> 레이어 간 의존성 시각화 (`baseBoundaryRules` allow-list 기반).");
+  out.push(
+    "> 텍스트 조회 / Allow 매트릭스 / 레이어별 상세: `lint-rules-reference.md` 참조.",
+  );
+  out.push("");
   out.push(renderMermaid(boundaryRules));
-  out.push('');
-  return out.join('\n');
+  out.push("");
+  return out.join("\n");
 }
 
 function renderReference({
@@ -1095,147 +1153,149 @@ function renderReference({
   inputRelPath,
 }) {
   const out = [];
-  out.push('<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->');
-  out.push('<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->');
+  out.push("<!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->");
+  out.push("<!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->");
   out.push(`<!-- Source: ${inputRelPath} -->`);
-  out.push('');
+  out.push("");
   out.push(`# Lint Rules Reference (${stackLabel})`);
-  out.push('');
+  out.push("");
 
   const sections = [];
 
   const glossary = renderLayerGlossary(boundaryElements, layerSemantics);
   if (glossary) {
     const body = [];
-    body.push('## 레이어 글로서리 (Layer Glossary)');
-    body.push('');
+    body.push("## 레이어 글로서리 (Layer Glossary)");
+    body.push("");
     if (jsdocMap.layerSemantics) {
       body.push(jsdocMap.layerSemantics);
-      body.push('');
+      body.push("");
     }
     body.push(glossary);
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (boundaryRules?.length) {
     const body = [];
-    body.push('## 의존성 규칙 (Dependency Rules)');
-    body.push('');
+    body.push("## 의존성 규칙 (Dependency Rules)");
+    body.push("");
     if (jsdocMap.boundaryRules) {
       body.push(jsdocMap.boundaryRules);
-      body.push('');
+      body.push("");
     }
-    body.push('시각화된 의존성 그래프는 `lint-rules-diagram.md` 참조.');
-    body.push('');
-    body.push('### Allow 매트릭스');
-    body.push('');
+    body.push("시각화된 의존성 그래프는 `lint-rules-diagram.md` 참조.");
+    body.push("");
+    body.push("### Allow 매트릭스");
+    body.push("");
     body.push(renderMatrix(boundaryRules));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (boundaryAllowPatches?.length) {
     const body = [];
-    body.push('## Boundary Allow Patches (base 규칙 추가 허용)');
-    body.push('');
+    body.push("## Boundary Allow Patches (base 규칙 추가 허용)");
+    body.push("");
     if (jsdocMap.boundaryAllowPatches) {
       body.push(jsdocMap.boundaryAllowPatches);
-      body.push('');
+      body.push("");
     }
     body.push(renderBoundaryAllowPatches(boundaryAllowPatches));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (restrictedPatterns?.length) {
     const body = [];
-    body.push('## Restricted Patterns (Import 금지 패턴)');
-    body.push('');
+    body.push("## Restricted Patterns (Import 금지 패턴)");
+    body.push("");
     if (jsdocMap.restrictedPatterns) {
       body.push(jsdocMap.restrictedPatterns);
-      body.push('');
+      body.push("");
     }
     body.push(renderPatterns(restrictedPatterns));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (restrictedSyntax?.length) {
     const body = [];
-    body.push('## Restricted Syntax (AST 금지 구문)');
-    body.push('');
+    body.push("## Restricted Syntax (AST 금지 구문)");
+    body.push("");
     if (jsdocMap.restrictedSyntax) {
       body.push(jsdocMap.restrictedSyntax);
-      body.push('');
+      body.push("");
     }
     body.push(renderSyntax(restrictedSyntax));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (domainBannedPackages?.length) {
     const body = [];
-    body.push('## Domain Purity (도메인 순수성)');
-    body.push('');
+    body.push("## Domain Purity (도메인 순수성)");
+    body.push("");
     if (jsdocMap.domainBannedPackages) {
       body.push(jsdocMap.domainBannedPackages);
-      body.push('');
+      body.push("");
     }
-    body.push('### 도메인 레이어 금지 패키지');
-    body.push('');
+    body.push("### 도메인 레이어 금지 패키지");
+    body.push("");
     body.push(renderPackageBulletList(domainBannedPackages));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (frameworkBannedPackages?.length) {
     const body = [];
-    body.push('## Framework 금지 패키지 (순수 레이어 차단)');
-    body.push('');
+    body.push("## Framework 금지 패키지 (순수 레이어 차단)");
+    body.push("");
     if (jsdocMap.frameworkBannedPackages) {
       body.push(jsdocMap.frameworkBannedPackages);
-      body.push('');
+      body.push("");
     }
     body.push(renderPackageBulletList(frameworkBannedPackages));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (infraBannedPackages?.length) {
     const body = [];
-    body.push('## Infra 금지 패키지 (service 레이어 차단)');
-    body.push('');
+    body.push("## Infra 금지 패키지 (service 레이어 차단)");
+    body.push("");
     if (jsdocMap.infraBannedPackages) {
       body.push(jsdocMap.infraBannedPackages);
-      body.push('');
+      body.push("");
     }
     body.push(renderPackageBulletList(infraBannedPackages));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   const overrideTable = renderRuleOverrides(ruleOverrides);
   if (overrideTable) {
     const body = [];
-    body.push('## Rule Overrides (코드 작성 주의)');
-    body.push('');
-    body.push('ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 할 규칙만 선별**.');
-    body.push('(autofix가 처리하거나 LLM 기본 동작과 동일한 규칙은 생략.)');
-    body.push('');
+    body.push("## Rule Overrides (코드 작성 주의)");
+    body.push("");
+    body.push(
+      "ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 할 규칙만 선별**.",
+    );
+    body.push("(autofix가 처리하거나 LLM 기본 동작과 동일한 규칙은 생략.)");
+    body.push("");
     body.push(overrideTable);
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
   if (ignoredPaths?.length) {
     const body = [];
-    body.push('## Ignored Paths (무시 경로)');
-    body.push('');
+    body.push("## Ignored Paths (무시 경로)");
+    body.push("");
     if (jsdocMap.boundaryIgnores || jsdocMap.ignores) {
       body.push(jsdocMap.boundaryIgnores || jsdocMap.ignores);
-      body.push('');
+      body.push("");
     }
-    body.push('### 무시 패턴 목록');
-    body.push('');
+    body.push("### 무시 패턴 목록");
+    body.push("");
     body.push(renderIgnoredPaths(ignoredPaths));
-    sections.push(body.join('\n'));
+    sections.push(body.join("\n"));
   }
 
-  out.push(sections.join('\n\n'));
-  out.push('');
-  return out.join('\n');
+  out.push(sections.join("\n\n"));
+  out.push("");
+  return out.join("\n");
 }
 
 // ─── 메인 ───────────────────────────────────────────────────────────────────
@@ -1255,7 +1315,8 @@ function tryValue(declarator, localConsts) {
  */
 function findExportBySuffix(exportsMap, suffix) {
   const baseKey = `base${suffix}`;
-  if (exportsMap.has(baseKey)) return { name: baseKey, ...exportsMap.get(baseKey) };
+  if (exportsMap.has(baseKey))
+    return { name: baseKey, ...exportsMap.get(baseKey) };
   const pattern = new RegExp(`^[a-z][A-Za-z0-9]*${suffix}$`);
   for (const [name, info] of exportsMap) {
     if (pattern.test(name) && name !== suffix) return { name, ...info };
@@ -1287,32 +1348,49 @@ function main() {
   }
   // 진입 파일을 파싱하고, `export { x } from './sub.mjs'` 형식 re-export를 따라가
   // 모든 export를 단일 맵으로 통합. 각 엔트리에는 원본 파일 컨텍스트(`file`)가 부착된다.
-  const { exportsMap, jsdocMap: rawJsdocMap } = parseAndResolveExports(inputPath);
+  const { exportsMap, jsdocMap: rawJsdocMap } =
+    parseAndResolveExports(inputPath);
 
   // suffix → 발견된 export 정보 (없으면 null)
   const resolved = {
-    boundaryElements: findExportBySuffix(exportsMap, 'BoundaryElements'),
-    structureAnnotations: findExportBySuffix(exportsMap, 'StructureAnnotations'),
-    layerSemantics: findExportBySuffix(exportsMap, 'LayerSemantics'),
-    boundaryRules: findExportBySuffix(exportsMap, 'BoundaryRules'),
-    boundaryAllowPatches: findExportBySuffix(exportsMap, 'BoundaryAllowPatches'),
-    restrictedPatterns: findExportBySuffix(exportsMap, 'RestrictedPatterns'),
-    restrictedSyntax: findExportBySuffix(exportsMap, 'RestrictedSyntax'),
-    domainBannedPackages: findExportBySuffix(exportsMap, 'DomainBannedPackages'),
-    frameworkBannedPackages: findExportBySuffix(exportsMap, 'FrameworkBannedPackages'),
-    infraBannedPackages: findExportBySuffix(exportsMap, 'InfraBannedPackages'),
-    boundaryIgnores: findExportBySuffix(exportsMap, 'BoundaryIgnores'),
-    ignores: findExportBySuffix(exportsMap, 'Ignores'),
-    config: findExportBySuffix(exportsMap, 'Config'),
+    boundaryElements: findExportBySuffix(exportsMap, "BoundaryElements"),
+    structureAnnotations: findExportBySuffix(
+      exportsMap,
+      "StructureAnnotations",
+    ),
+    layerSemantics: findExportBySuffix(exportsMap, "LayerSemantics"),
+    boundaryRules: findExportBySuffix(exportsMap, "BoundaryRules"),
+    boundaryAllowPatches: findExportBySuffix(
+      exportsMap,
+      "BoundaryAllowPatches",
+    ),
+    restrictedPatterns: findExportBySuffix(exportsMap, "RestrictedPatterns"),
+    restrictedSyntax: findExportBySuffix(exportsMap, "RestrictedSyntax"),
+    domainBannedPackages: findExportBySuffix(
+      exportsMap,
+      "DomainBannedPackages",
+    ),
+    frameworkBannedPackages: findExportBySuffix(
+      exportsMap,
+      "FrameworkBannedPackages",
+    ),
+    infraBannedPackages: findExportBySuffix(exportsMap, "InfraBannedPackages"),
+    boundaryIgnores: findExportBySuffix(exportsMap, "BoundaryIgnores"),
+    ignores: findExportBySuffix(exportsMap, "Ignores"),
+    config: findExportBySuffix(exportsMap, "Config"),
   };
   const jsdocMap = normalizeJsdocBySuffix(rawJsdocMap, resolved);
 
   // 각 declarator에 부착된 file 컨텍스트(localConsts/comments)로 값을 평가하는 헬퍼.
   // re-export 통해 들어온 export는 원본 sub-파일의 컨텍스트를 사용해야 한다.
   const evalArr = (info, fallback = []) =>
-    info?.declarator ? tryValue(info.declarator, info.file.localConsts) || fallback : fallback;
+    info?.declarator
+      ? tryValue(info.declarator, info.file.localConsts) || fallback
+      : fallback;
   const evalObj = (info, fallback = {}) =>
-    info?.declarator ? tryValue(info.declarator, info.file.localConsts) || fallback : fallback;
+    info?.declarator
+      ? tryValue(info.declarator, info.file.localConsts) || fallback
+      : fallback;
 
   const elements = evalArr(resolved.boundaryElements);
   const inlineComments = resolved.boundaryElements?.declarator
@@ -1339,7 +1417,9 @@ function main() {
     const arrNode = getCallArgArray(resolved.ignores.declarator);
     if (arrNode) {
       try {
-        ignoredPaths = ignoredPaths.concat(nodeToValue(arrNode, resolved.ignores.file.localConsts));
+        ignoredPaths = ignoredPaths.concat(
+          nodeToValue(arrNode, resolved.ignores.file.localConsts),
+        );
       } catch {
         // skip
       }
@@ -1355,32 +1435,37 @@ function main() {
   if (resolved.config?.declarator) {
     const init = resolved.config.declarator.init;
     const configLocalConsts = resolved.config.file.localConsts;
-    if (init?.type === 'CallExpression') {
+    if (init?.type === "CallExpression") {
       for (const arg of init.arguments) {
-        const { unscoped, scoped } = findRuleOverrideBlocks(arg, configLocalConsts);
+        const { unscoped, scoped } = findRuleOverrideBlocks(
+          arg,
+          configLocalConsts,
+        );
         ruleOverrides.unscoped.push(...unscoped);
         ruleOverrides.scoped.push(...scoped);
       }
     }
   }
 
-  const outDir = args.outDir ? path.resolve(args.outDir) : path.dirname(inputPath);
+  const outDir = args.outDir
+    ? path.resolve(args.outDir)
+    : path.dirname(inputPath);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
   const repoRoot = process.cwd();
   const inputRelPath = path.relative(repoRoot, inputPath);
   const parts = inputRelPath.split(path.sep);
-  const rulesIdx = parts.indexOf('rules');
+  const rulesIdx = parts.indexOf("rules");
   const stackLabel =
     rulesIdx >= 0 && parts.length > rulesIdx + 2
-      ? parts.slice(rulesIdx + 1, parts.length - 1).join('/')
+      ? parts.slice(rulesIdx + 1, parts.length - 1).join("/")
       : path.basename(path.dirname(inputPath));
 
   const writes = [];
 
   if (elements.length) {
     writes.push({
-      path: path.join(outDir, 'lint-rules-structure-reference.md'),
+      path: path.join(outDir, "lint-rules-structure-reference.md"),
       content: renderStructure({
         jsdocMap,
         elements,
@@ -1426,18 +1511,20 @@ function main() {
 
   if (hasAnySection) {
     writes.push({
-      path: path.join(outDir, 'lint-rules-reference.md'),
+      path: path.join(outDir, "lint-rules-reference.md"),
       content: referenceContent,
     });
   } else {
-    console.warn(`[skip] ${inputRelPath}: 렌더할 섹션이 없어 lint-rules-reference.md를 생성하지 않습니다.`);
+    console.warn(
+      `[skip] ${inputRelPath}: 렌더할 섹션이 없어 lint-rules-reference.md를 생성하지 않습니다.`,
+    );
   }
 
   // Mermaid 의존성 그래프는 별도 파일로 분리 — 사람 독자용 시각화 전용.
   // boundaryRules가 있을 때만 생성 (allow-list 데이터가 있어야 그래프 의미가 있음).
   if (boundaryRules.length) {
     writes.push({
-      path: path.join(outDir, 'lint-rules-diagram.md'),
+      path: path.join(outDir, "lint-rules-diagram.md"),
       content: renderDiagram({ boundaryRules, stackLabel, inputRelPath }),
     });
   }
@@ -1445,17 +1532,19 @@ function main() {
   if (args.check) {
     let drift = false;
     for (const w of writes) {
-      const cur = fs.existsSync(w.path) ? fs.readFileSync(w.path, 'utf8') : '';
+      const cur = fs.existsSync(w.path) ? fs.readFileSync(w.path, "utf8") : "";
       if (cur !== w.content) {
         console.error(`[DRIFT] ${path.relative(repoRoot, w.path)}`);
         drift = true;
       }
     }
     if (drift) {
-      console.error('\n생성물이 커밋된 파일과 다릅니다. `node scripts/typescript/gen-eslint-reference.mjs <파일>` 을 실행하고 결과를 커밋하세요.');
+      console.error(
+        "\n생성물이 커밋된 파일과 다릅니다. `node scripts/typescript/gen-eslint-reference.mjs <파일>` 을 실행하고 결과를 커밋하세요.",
+      );
       process.exit(1);
     }
-    console.log('드리프트 없음.');
+    console.log("드리프트 없음.");
     return;
   }
 

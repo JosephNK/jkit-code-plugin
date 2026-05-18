@@ -29,7 +29,7 @@
  * "*.entity" 또는 경로에 `/model/` 이 포함된 모든 경우를 대상으로 한다.
  */
 function isEntitySource(source) {
-  if (typeof source !== 'string') return false;
+  if (typeof source !== "string") return false;
   // 확장자가 생략된 경우가 대부분 — `.entity`로 끝나거나 `.entity.ts`로 끝남
   if (/\.entity(\.ts)?$/.test(source)) return true;
   // TypeORM orm-entity도 DB 스키마이므로 동일하게 노출 금지 대상
@@ -42,47 +42,49 @@ function isEntitySource(source) {
  * Promise<T>, T[], readonly T[], T | null 등 일반 wrapper를 모두 내려가며 검사.
  */
 function findEntityReference(typeNode, entityNames) {
-  if (!typeNode || typeof typeNode !== 'object') return null;
+  if (!typeNode || typeof typeNode !== "object") return null;
 
   switch (typeNode.type) {
-    case 'TSTypeReference': {
+    case "TSTypeReference": {
       const name = typeNode.typeName?.name;
       if (name && entityNames.has(name)) return name;
       // Promise<T>, Array<T>, ReadonlyArray<T> 등
-      const params = typeNode.typeArguments?.params ?? typeNode.typeParameters?.params ?? [];
+      const params =
+        typeNode.typeArguments?.params ?? typeNode.typeParameters?.params ?? [];
       for (const p of params) {
         const hit = findEntityReference(p, entityNames);
         if (hit) return hit;
       }
       return null;
     }
-    case 'TSArrayType':
+    case "TSArrayType":
       return findEntityReference(typeNode.elementType, entityNames);
-    case 'TSUnionType':
-    case 'TSIntersectionType':
+    case "TSUnionType":
+    case "TSIntersectionType":
       for (const t of typeNode.types) {
         const hit = findEntityReference(t, entityNames);
         if (hit) return hit;
       }
       return null;
-    case 'TSTypeOperator': // readonly T[]
+    case "TSTypeOperator": // readonly T[]
       return findEntityReference(typeNode.typeAnnotation, entityNames);
-    case 'TSParenthesizedType':
+    case "TSParenthesizedType":
       return findEntityReference(typeNode.typeAnnotation, entityNames);
     default:
       return null;
   }
 }
 
-const TARGET_PATTERN = /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(controller|service)\/[^/]*\.(controller|service)\.ts$/;
+const TARGET_PATTERN =
+  /\/src\/modules\/[^/]+(?:\/[^/]+)*\/(controller|service)\/[^/]*\.(controller|service)\.ts$/;
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
   meta: {
-    type: 'problem',
+    type: "problem",
     docs: {
       description:
-        'Disallow returning domain entities from controller/ or service/ methods',
+        "Disallow returning domain entities from controller/ or service/ methods",
     },
     messages: {
       noEntityReturn:
@@ -91,7 +93,7 @@ export default {
     schema: [],
   },
   create(context) {
-    const filename = context.filename ?? context.getFilename?.() ?? '';
+    const filename = context.filename ?? context.getFilename?.() ?? "";
     if (!filename.match(TARGET_PATTERN)) {
       return {};
     }
@@ -105,7 +107,7 @@ export default {
       if (hit) {
         context.report({
           node: returnType,
-          messageId: 'noEntityReturn',
+          messageId: "noEntityReturn",
           data: { name: hit },
         });
       }
@@ -134,7 +136,7 @@ export default {
       },
       // class field assigned arrow function: `foo = (): Entity => ...`
       PropertyDefinition(node) {
-        if (node.value && node.value.type === 'ArrowFunctionExpression') {
+        if (node.value && node.value.type === "ArrowFunctionExpression") {
           checkReturnType(node.value);
         }
       },

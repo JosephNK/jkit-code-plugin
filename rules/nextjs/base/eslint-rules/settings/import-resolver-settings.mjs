@@ -5,8 +5,8 @@
  * 다운스트림은 `eslint-import-resolver-typescript`를 dev dep으로 설치해야 한다.
  */
 export const baseImportResolverSettings = {
-  'import/resolver': {
-    typescript: { alwaysTryTypes: true, project: './tsconfig.json' },
-    node: { extensions: ['.js', '.ts', '.tsx'] },
+  "import/resolver": {
+    typescript: { alwaysTryTypes: true, project: "./tsconfig.json" },
+    node: { extensions: [".js", ".ts", ".tsx"] },
   },
 };

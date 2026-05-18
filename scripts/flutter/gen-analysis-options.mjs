@@ -36,23 +36,23 @@
 //   gen-analysis-options.mjs flutter -p <project-dir> [-entry <dir>]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import YAML from 'yaml';
+import YAML from "yaml";
 
-import { ensureFlutterRoot, normalizePath } from '../common.mjs';
+import { ensureFlutterRoot, normalizePath } from "../common.mjs";
 
-const BANNER_LINE = '# GENERATED FILE - DO NOT MODIFY BY HAND';
+const BANNER_LINE = "# GENERATED FILE - DO NOT MODIFY BY HAND";
 
 const TEMPLATE_REL = {
   workspaceRoot:
-    'rules/flutter/base/templates/analysis-options.workspace-root.yaml',
+    "rules/flutter/base/templates/analysis-options.workspace-root.yaml",
   workspaceMember:
-    'rules/flutter/base/templates/analysis-options.workspace-member.yaml',
-  standalone: 'rules/flutter/base/templates/analysis-options.standalone.yaml',
+    "rules/flutter/base/templates/analysis-options.workspace-member.yaml",
+  standalone: "rules/flutter/base/templates/analysis-options.standalone.yaml",
 };
 
 const HELP = `Usage: gen-analysis-options.mjs flutter -p <project-dir> [-entry <dir>]
@@ -87,32 +87,32 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', projectDir: '', entry: 'app' };
+  const args = { framework: "", projectDir: "", entry: "app" };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a directory\n');
+          process.stderr.write("-entry requires a directory\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -122,11 +122,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.projectDir) {
-    process.stderr.write('Error: -p <project-dir> is required\n');
+    process.stderr.write("Error: -p <project-dir> is required\n");
     usage();
   }
 
@@ -136,20 +136,20 @@ function parseArgs(argv) {
 // Detect whether projectDir is a Dart pub workspace root that includes the
 // given entry as a member. (Mirrors gen-custom-lint.mjs's logic.)
 function isWorkspaceMember(projectDir, entry) {
-  const rootPubspec = path.join(projectDir, 'pubspec.yaml');
+  const rootPubspec = path.join(projectDir, "pubspec.yaml");
   if (!fs.existsSync(rootPubspec) || !fs.statSync(rootPubspec).isFile()) {
     return false;
   }
   let doc;
   try {
-    doc = YAML.parseDocument(fs.readFileSync(rootPubspec, 'utf-8'));
+    doc = YAML.parseDocument(fs.readFileSync(rootPubspec, "utf-8"));
   } catch {
     return false;
   }
-  const ws = doc.get('workspace');
+  const ws = doc.get("workspace");
   if (!YAML.isSeq(ws)) return false;
-  const entries = ws.toJSON().map((s) => String(s).replace(/\/+$/, ''));
-  return entries.includes(entry.replace(/\/+$/, ''));
+  const entries = ws.toJSON().map((s) => String(s).replace(/\/+$/, ""));
+  return entries.includes(entry.replace(/\/+$/, ""));
 }
 
 function hasBanner(content) {
@@ -157,7 +157,7 @@ function hasBanner(content) {
 }
 
 function loadTemplate(templateAbsPath, vars = {}) {
-  let content = fs.readFileSync(templateAbsPath, 'utf-8');
+  let content = fs.readFileSync(templateAbsPath, "utf-8");
   for (const [key, value] of Object.entries(vars)) {
     content = content.replaceAll(`{{${key}}}`, value);
   }
@@ -172,9 +172,11 @@ function scaffoldFile(targetAbsPath, templateContent, label) {
 
   let priorWasNonBanner = false;
   if (exists) {
-    const current = fs.readFileSync(targetAbsPath, 'utf-8');
+    const current = fs.readFileSync(targetAbsPath, "utf-8");
     if (current === templateContent) {
-      process.stdout.write(`  ${label} already up-to-date (${targetAbsPath})\n`);
+      process.stdout.write(
+        `  ${label} already up-to-date (${targetAbsPath})\n`,
+      );
       return true;
     }
     priorWasNonBanner = !hasBanner(current);
@@ -193,7 +195,7 @@ function scaffoldFile(targetAbsPath, templateContent, label) {
     );
   } else {
     process.stdout.write(
-      `  ${exists ? 'Regenerated' : 'Created'} ${label} (${targetAbsPath})\n`,
+      `  ${exists ? "Regenerated" : "Created"} ${label} (${targetAbsPath})\n`,
     );
   }
   return true;
@@ -203,7 +205,7 @@ function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..', '..');
+  const pluginRoot = path.resolve(scriptDir, "..", "..");
 
   try {
     ensureFlutterRoot(args.projectDir, args.entry);
@@ -223,7 +225,7 @@ function main() {
   const inWorkspace = isWorkspaceMember(projectDir, args.entry);
   process.stdout.write(
     `Scaffolding analysis_options.yaml from jkit templates ` +
-      `(${inWorkspace ? 'workspace' : 'standalone'} mode)...\n`,
+      `(${inWorkspace ? "workspace" : "standalone"} mode)...\n`,
   );
 
   let ok = true;
@@ -233,17 +235,21 @@ function main() {
     const rootTplContent = loadTemplate(rootTplPath);
     ok =
       scaffoldFile(
-        path.join(projectDir, 'analysis_options.yaml'),
+        path.join(projectDir, "analysis_options.yaml"),
         rootTplContent,
-        'workspace root',
+        "workspace root",
       ) && ok;
 
-    const memberPath = path.join(projectDir, args.entry, 'analysis_options.yaml');
+    const memberPath = path.join(
+      projectDir,
+      args.entry,
+      "analysis_options.yaml",
+    );
     const includePathOs = path.relative(
       path.dirname(memberPath),
-      path.join(projectDir, 'analysis_options.yaml'),
+      path.join(projectDir, "analysis_options.yaml"),
     );
-    const includePath = includePathOs.split(path.sep).join('/');
+    const includePath = includePathOs.split(path.sep).join("/");
     const memberTplPath = path.join(pluginRoot, TEMPLATE_REL.workspaceMember);
     const memberTplContent = loadTemplate(memberTplPath, {
       INCLUDE_PATH: includePath,
@@ -259,7 +265,7 @@ function main() {
     const standaloneTplContent = loadTemplate(standaloneTplPath);
     ok =
       scaffoldFile(
-        path.join(projectDir, args.entry, 'analysis_options.yaml'),
+        path.join(projectDir, args.entry, "analysis_options.yaml"),
         standaloneTplContent,
         `standalone (entry=${args.entry})`,
       ) && ok;
@@ -267,10 +273,10 @@ function main() {
 
   if (ok) {
     process.stdout.write(
-      'Done. Run gen-custom-lint.mjs next to add the plugins: section.\n',
+      "Done. Run gen-custom-lint.mjs next to add the plugins: section.\n",
     );
   } else {
-    process.stderr.write('Completed with errors.\n');
+    process.stderr.write("Completed with errors.\n");
   }
 
   process.exit(ok ? 0 : 1);

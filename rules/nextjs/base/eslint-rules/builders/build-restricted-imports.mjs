@@ -1,4 +1,4 @@
-import { defineConfig } from 'eslint/config';
+import { defineConfig } from "eslint/config";
 
 /**
  * 전역 `no-restricted-imports` 규칙 생성기.
@@ -8,7 +8,7 @@ export function buildRestrictedImports(restrictedPatterns) {
   return defineConfig([
     {
       rules: {
-        'no-restricted-imports': ['error', { patterns: restrictedPatterns }],
+        "no-restricted-imports": ["error", { patterns: restrictedPatterns }],
       },
     },
   ]);

@@ -11,12 +11,12 @@
 //   generate-api.mjs <spec> <api_name> --output-dir <path> [--dry-run]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import nunjucks from 'nunjucks';
+import nunjucks from "nunjucks";
 
 import {
   extractPathParams,
@@ -32,9 +32,9 @@ import {
   tagToServiceFilename,
   toCamelCase,
   toPascalCase,
-} from './dart-name-utils.mjs';
+} from "./dart-name-utils.mjs";
 
-import { parseOpenapi } from './openapi-parser.mjs';
+import { parseOpenapi } from "./openapi-parser.mjs";
 
 // ──────────────────────────────────────────────
 // CLI
@@ -61,26 +61,26 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const rest = argv.slice(2);
-  const args = { spec: '', apiName: '', outputDir: '', dryRun: false };
+  const args = { spec: "", apiName: "", outputDir: "", dryRun: false };
 
   for (const a of rest) {
-    if (a === '-h' || a === '--help') usage(0);
+    if (a === "-h" || a === "--help") usage(0);
   }
 
   const positional = [];
   while (rest.length > 0) {
     const a = rest.shift();
-    if (a === '--dry-run') {
+    if (a === "--dry-run") {
       args.dryRun = true;
-    } else if (a === '--output-dir') {
+    } else if (a === "--output-dir") {
       if (!rest.length) {
-        process.stderr.write('--output-dir requires a value\n');
+        process.stderr.write("--output-dir requires a value\n");
         usage();
       }
       args.outputDir = rest.shift();
-    } else if (a.startsWith('--output-dir=')) {
-      args.outputDir = a.slice('--output-dir='.length);
-    } else if (a.startsWith('-')) {
+    } else if (a.startsWith("--output-dir=")) {
+      args.outputDir = a.slice("--output-dir=".length);
+    } else if (a.startsWith("-")) {
       process.stderr.write(`Unknown option: ${a}\n`);
       usage();
     } else {
@@ -89,14 +89,14 @@ function parseArgs(argv) {
   }
 
   if (positional.length < 2) {
-    process.stderr.write('Error: <spec> and <api_name> are required\n');
+    process.stderr.write("Error: <spec> and <api_name> are required\n");
     usage();
   }
   args.spec = positional[0];
   args.apiName = positional[1];
 
   if (!args.outputDir) {
-    process.stderr.write('Error: --output-dir is required\n');
+    process.stderr.write("Error: --output-dir is required\n");
     usage();
   }
 
@@ -109,11 +109,12 @@ function parseArgs(argv) {
 
 function createEnv() {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const templatesDir = path.join(scriptDir, 'templates');
-  return new nunjucks.Environment(
-    new nunjucks.FileSystemLoader(templatesDir),
-    { trimBlocks: true, lstripBlocks: true, autoescape: false },
-  );
+  const templatesDir = path.join(scriptDir, "templates");
+  return new nunjucks.Environment(new nunjucks.FileSystemLoader(templatesDir), {
+    trimBlocks: true,
+    lstripBlocks: true,
+    autoescape: false,
+  });
 }
 
 // ──────────────────────────────────────────────
@@ -126,7 +127,7 @@ function writeFile(filepath, content, dryRun) {
     return;
   }
   fs.mkdirSync(path.dirname(filepath), { recursive: true });
-  fs.writeFileSync(filepath, content, 'utf8');
+  fs.writeFileSync(filepath, content, "utf8");
   process.stdout.write(`  Created ${filepath}\n`);
 }
 
@@ -135,7 +136,7 @@ function writeFile(filepath, content, dryRun) {
 // ──────────────────────────────────────────────
 
 function hasBuiltList(fields) {
-  return fields.some((f) => f.dart_type.includes('BuiltList'));
+  return fields.some((f) => f.dart_type.includes("BuiltList"));
 }
 
 function collectModelImports(schema, allSchemas) {
@@ -170,20 +171,20 @@ function generateModel(env, schema, allSchemas, apiName, outputDir, dryRun) {
   const filename = schemaToDartFilename(schema.name);
   const filepath = path.join(
     outputDir,
-    'src',
-    'api',
+    "src",
+    "api",
     apiName,
-    'models',
-    'src',
+    "models",
+    "src",
     filename,
   );
 
   const extraImports = collectModelImports(schema, allSchemas);
 
-  const content = env.render('model.dart.j2', {
+  const content = env.render("model.dart.j2", {
     class_name: schema.dart_class_name,
     serializer_name: serializerName(schema.dart_class_name),
-    filename_without_ext: filename.replace('.dart', ''),
+    filename_without_ext: filename.replace(".dart", ""),
     fields: schema.fields,
     has_built_list: hasBuiltList(schema.fields),
     extra_imports: extraImports,
@@ -198,11 +199,11 @@ function generateEnum(env, schema, apiName, outputDir, dryRun) {
   const filename = schemaToEnumFilename(schema.name);
   const filepath = path.join(
     outputDir,
-    'src',
-    'api',
+    "src",
+    "api",
     apiName,
-    'models',
-    'src',
+    "models",
+    "src",
     filename,
   );
 
@@ -214,12 +215,12 @@ function generateEnum(env, schema, apiName, outputDir, dryRun) {
   const className = schema.dart_class_name;
   const serializer = serializerName(className);
 
-  const content = env.render('enum.dart.j2', {
+  const content = env.render("enum.dart.j2", {
     class_name: className,
     serializer_name: serializer,
     values_name: serializer,
     value_of_name: serializer,
-    filename_without_ext: filename.replace('.dart', ''),
+    filename_without_ext: filename.replace(".dart", ""),
     enum_values: enumValues,
     description: schema.description,
   });
@@ -247,19 +248,19 @@ function collectSerializerImports(schemas) {
 function generateSerializers(env, schemas, apiName, outputDir, dryRun) {
   const filepath = path.join(
     outputDir,
-    'src',
-    'api',
+    "src",
+    "api",
     apiName,
-    'models',
-    'src',
-    'serializers',
-    'serializers.dart',
+    "models",
+    "src",
+    "serializers",
+    "serializers.dart",
   );
 
   const sortedClasses = schemas.map((s) => s.dart_class_name).sort();
   const modelImports = collectSerializerImports(schemas);
 
-  const content = env.render('serializers.dart.j2', {
+  const content = env.render("serializers.dart.j2", {
     model_imports: modelImports,
     model_classes: sortedClasses,
   });
@@ -284,7 +285,8 @@ function buildEndpointData(endpoints, apiName) {
     let constantName = pathToEndpointName(ep.path, ep.method, ep.operation_id);
 
     if (seenNames.has(constantName)) {
-      const methodCap = ep.method[0].toUpperCase() + ep.method.slice(1).toLowerCase();
+      const methodCap =
+        ep.method[0].toUpperCase() + ep.method.slice(1).toLowerCase();
       constantName = `${constantName}${methodCap}`;
     }
     seenNames.add(constantName);
@@ -294,7 +296,7 @@ function buildEndpointData(endpoints, apiName) {
     const pathParamsData = [];
     if (isDynamic) {
       for (const paramName of extractPathParams(ep.path)) {
-        let dartType = 'String';
+        let dartType = "String";
         let dartName = toCamelCase(paramName);
         for (const pp of ep.path_params) {
           if (pp.name === paramName) {
@@ -322,14 +324,14 @@ function buildEndpointData(endpoints, apiName) {
 }
 
 function generateEndpoints(env, parsed, apiName, outputDir, dryRun) {
-  const apiDir = path.join(outputDir, 'src', 'api', apiName);
-  const filepath = path.join(apiDir, 'endpoints.dart');
+  const apiDir = path.join(outputDir, "src", "api", apiName);
+  const filepath = path.join(apiDir, "endpoints.dart");
 
-  const baseUrl = parsed.servers.length > 0 ? parsed.servers[0].url : '/';
+  const baseUrl = parsed.servers.length > 0 ? parsed.servers[0].url : "/";
 
   const endpointData = buildEndpointData(parsed.endpoints, apiName);
 
-  const content = env.render('endpoints.dart.j2', {
+  const content = env.render("endpoints.dart.j2", {
     api_name_pascal: toPascalCase(apiName),
     base_url: baseUrl,
     endpoints: endpointData,
@@ -345,7 +347,7 @@ function generateEndpoints(env, parsed, apiName, outputDir, dryRun) {
 
 function determineErrorStrategy(errorSchemas) {
   if (!errorSchemas || errorSchemas.length === 0) {
-    return ['Null', null, false];
+    return ["Null", null, false];
   }
 
   const schemaNames = new Set(errorSchemas.map((es) => es.schema_name));
@@ -355,7 +357,7 @@ function determineErrorStrategy(errorSchemas) {
     return [schemaToDartClass(name), name, false];
   }
 
-  return ['Null', null, true];
+  return ["Null", null, true];
 }
 
 function buildServiceMethods(endpoints, tag, apiName, _allSchemas) {
@@ -365,27 +367,37 @@ function buildServiceMethods(endpoints, tag, apiName, _allSchemas) {
   const tagEndpoints = endpoints.filter((ep) => ep.tag === tag);
 
   for (const ep of tagEndpoints) {
-    const methodName = methodNameFromEndpoint(ep.path, ep.method, ep.operation_id);
+    const methodName = methodNameFromEndpoint(
+      ep.path,
+      ep.method,
+      ep.operation_id,
+    );
 
     const responseType = ep.response_schema
       ? schemaToDartClass(ep.response_schema)
-      : 'Null';
+      : "Null";
 
-    const [errorType, , useErrorParser] = determineErrorStrategy(ep.error_schemas);
+    const [errorType, , useErrorParser] = determineErrorStrategy(
+      ep.error_schemas,
+    );
 
-    const constantName = pathToEndpointName(ep.path, ep.method, ep.operation_id);
+    const constantName = pathToEndpointName(
+      ep.path,
+      ep.method,
+      ep.operation_id,
+    );
     let endpointCall;
     if (hasPathParams(ep.path)) {
-      const paramArgs = extractPathParams(ep.path).map(toCamelCase).join(', ');
+      const paramArgs = extractPathParams(ep.path).map(toCamelCase).join(", ");
       endpointCall = `${apiNamePascal}ApiEndpoints.${constantName}(${paramArgs})`;
     } else {
       endpointCall = `${apiNamePascal}ApiEndpoints.${constantName}`;
     }
 
     const requestBody = ep.request_body_schema != null;
-    let requestBodyType = '';
-    let requestBodyName = '';
-    let requestBodySerializer = '';
+    let requestBodyType = "";
+    let requestBodyName = "";
+    let requestBodySerializer = "";
     if (requestBody && ep.request_body_schema) {
       requestBodyType = schemaToDartClass(ep.request_body_schema);
       requestBodyName = toCamelCase(ep.request_body_schema);
@@ -438,13 +450,17 @@ function collectServiceImports(methods, allSchemas) {
   const schemaMap = new Map(allSchemas.map((s) => [s.dart_class_name, s]));
 
   for (const method of methods) {
-    if (method.response_type !== 'Null') {
+    if (method.response_type !== "Null") {
       const schema = schemaMap.get(method.response_type);
       if (schema) {
         if (schema.is_enum) {
-          imports.add(`import '../../models/src/${schemaToEnumFilename(schema.name)}';`);
+          imports.add(
+            `import '../../models/src/${schemaToEnumFilename(schema.name)}';`,
+          );
         } else {
-          imports.add(`import '../../models/src/${schemaToDartFilename(schema.name)}';`);
+          imports.add(
+            `import '../../models/src/${schemaToDartFilename(schema.name)}';`,
+          );
         }
       }
     }
@@ -452,22 +468,28 @@ function collectServiceImports(methods, allSchemas) {
     if (method.request_body && method.request_body_type) {
       const schema = schemaMap.get(method.request_body_type);
       if (schema) {
-        imports.add(`import '../../models/src/${schemaToDartFilename(schema.name)}';`);
+        imports.add(
+          `import '../../models/src/${schemaToDartFilename(schema.name)}';`,
+        );
       }
     }
 
     for (const es of method.error_schemas || []) {
-      const className = es.serializer.replace('.serializer', '');
+      const className = es.serializer.replace(".serializer", "");
       const schema = schemaMap.get(className);
       if (schema) {
-        imports.add(`import '../../models/src/${schemaToDartFilename(schema.name)}';`);
+        imports.add(
+          `import '../../models/src/${schemaToDartFilename(schema.name)}';`,
+        );
       }
     }
 
-    if (method.error_type !== 'Null') {
+    if (method.error_type !== "Null") {
       const schema = schemaMap.get(method.error_type);
       if (schema) {
-        imports.add(`import '../../models/src/${schemaToDartFilename(schema.name)}';`);
+        imports.add(
+          `import '../../models/src/${schemaToDartFilename(schema.name)}';`,
+        );
       }
     }
   }
@@ -476,7 +498,7 @@ function collectServiceImports(methods, allSchemas) {
 }
 
 function generateServices(env, parsed, apiName, outputDir, dryRun) {
-  const apiDir = path.join(outputDir, 'src', 'api', apiName, 'services', 'src');
+  const apiDir = path.join(outputDir, "src", "api", apiName, "services", "src");
   const generated = [];
 
   for (const tag of parsed.tags) {
@@ -484,22 +506,27 @@ function generateServices(env, parsed, apiName, outputDir, dryRun) {
     const filename = tagToServiceFilename(tag);
     const filepath = path.join(apiDir, filename);
 
-    const methods = buildServiceMethods(parsed.endpoints, tag, apiName, parsed.schemas);
+    const methods = buildServiceMethods(
+      parsed.endpoints,
+      tag,
+      apiName,
+      parsed.schemas,
+    );
     if (methods.length === 0) continue;
 
     const extraImports = collectServiceImports(methods, parsed.schemas);
 
     const hasBuiltListFlag = methods.some(
       (m) =>
-        m.response_type.includes('BuiltList') ||
-        m.query_params.some((p) => p.dart_type.includes('BuiltList')),
+        m.response_type.includes("BuiltList") ||
+        m.query_params.some((p) => p.dart_type.includes("BuiltList")),
     );
 
     const hasSerializersFlag = methods.some(
       (m) => (m.request_body && !m.is_multipart) || m.error_parser_code,
     );
 
-    const content = env.render('service.dart.j2', {
+    const content = env.render("service.dart.j2", {
       class_name: className,
       tag,
       methods,
@@ -521,7 +548,7 @@ function generateServices(env, parsed, apiName, outputDir, dryRun) {
 // ──────────────────────────────────────────────
 
 function generateApiClient(env, parsed, apiName, outputDir, dryRun) {
-  const apiDir = path.join(outputDir, 'src', 'api', apiName);
+  const apiDir = path.join(outputDir, "src", "api", apiName);
   const filepath = path.join(apiDir, `${apiName}_api.dart`);
 
   const serviceClasses = [];
@@ -535,7 +562,7 @@ function generateApiClient(env, parsed, apiName, outputDir, dryRun) {
     serviceImports.push(`import 'services/src/${fname}';`);
   }
 
-  const content = env.render('api_client.dart.j2', {
+  const content = env.render("api_client.dart.j2", {
     api_name_pascal: toPascalCase(apiName),
     service_classes: serviceClasses,
     service_imports: serviceImports.sort(),
@@ -550,7 +577,7 @@ function generateApiClient(env, parsed, apiName, outputDir, dryRun) {
 // ──────────────────────────────────────────────
 
 function discoverExistingApis(outputDir) {
-  const apiBase = path.join(outputDir, 'src', 'api');
+  const apiBase = path.join(outputDir, "src", "api");
   if (!fs.existsSync(apiBase)) return [];
 
   return fs
@@ -558,14 +585,14 @@ function discoverExistingApis(outputDir) {
     .filter(
       (d) =>
         d.isDirectory() &&
-        fs.existsSync(path.join(apiBase, d.name, 'endpoints.dart')),
+        fs.existsSync(path.join(apiBase, d.name, "endpoints.dart")),
     )
     .map((d) => d.name)
     .sort();
 }
 
 function generateNetwork(env, apiNames, outputDir, dryRun) {
-  const filepath = path.join(outputDir, 'src', 'network.dart');
+  const filepath = path.join(outputDir, "src", "network.dart");
 
   const apis = [];
   const apiImports = [];
@@ -576,7 +603,7 @@ function generateNetwork(env, apiNames, outputDir, dryRun) {
     apiImports.push(`import 'api/${name}/${name}_api.dart';`);
   }
 
-  const content = env.render('network.dart.j2', {
+  const content = env.render("network.dart.j2", {
     api_imports: apiImports.sort(),
     apis,
   });
@@ -586,7 +613,14 @@ function generateNetwork(env, apiNames, outputDir, dryRun) {
 }
 
 function generateModelsIndex(env, parsed, apiName, outputDir, dryRun) {
-  const filepath = path.join(outputDir, 'src', 'api', apiName, 'models', 'index.dart');
+  const filepath = path.join(
+    outputDir,
+    "src",
+    "api",
+    apiName,
+    "models",
+    "index.dart",
+  );
 
   const exports = [];
   const schemasSorted = [...parsed.schemas].sort((a, b) =>
@@ -601,7 +635,7 @@ function generateModelsIndex(env, parsed, apiName, outputDir, dryRun) {
   }
   exports.push("export 'src/serializers/serializers.dart';");
 
-  const content = env.render('index.dart.j2', {
+  const content = env.render("index.dart.j2", {
     exports: [...new Set(exports)].sort(),
   });
 
@@ -610,15 +644,15 @@ function generateModelsIndex(env, parsed, apiName, outputDir, dryRun) {
 }
 
 function generateServicesIndex(env, parsed, apiName, outputDir, dryRun) {
-  const servicesBase = path.join(outputDir, 'src', 'api', apiName, 'services');
-  const servicesSrcDir = path.join(servicesBase, 'src');
-  const filepath = path.join(servicesBase, 'index.dart');
+  const servicesBase = path.join(outputDir, "src", "api", apiName, "services");
+  const servicesSrcDir = path.join(servicesBase, "src");
+  const filepath = path.join(servicesBase, "index.dart");
 
   const exports = [];
   if (fs.existsSync(servicesSrcDir)) {
     const files = fs.readdirSync(servicesSrcDir).sort();
     for (const name of files) {
-      if (path.extname(name) === '.dart') {
+      if (path.extname(name) === ".dart") {
         exports.push(`export 'src/${name}';`);
       }
     }
@@ -631,7 +665,7 @@ function generateServicesIndex(env, parsed, apiName, outputDir, dryRun) {
     }
   }
 
-  const content = env.render('index.dart.j2', {
+  const content = env.render("index.dart.j2", {
     exports: [...new Set(exports)].sort(),
   });
 
@@ -639,7 +673,14 @@ function generateServicesIndex(env, parsed, apiName, outputDir, dryRun) {
   return filepath;
 }
 
-function generateBarrel(env, _parsed, apiNames, packageName, outputDir, dryRun) {
+function generateBarrel(
+  env,
+  _parsed,
+  apiNames,
+  packageName,
+  outputDir,
+  dryRun,
+) {
   const filepath = path.join(outputDir, `${packageName}.dart`);
 
   const modelExports = apiNames.map(
@@ -654,7 +695,7 @@ function generateBarrel(env, _parsed, apiNames, packageName, outputDir, dryRun) 
   }
   apiExports.push("export 'src/network.dart';");
 
-  const content = env.render('barrel.dart.j2', {
+  const content = env.render("barrel.dart.j2", {
     package_name: packageName,
     model_exports: [...new Set(modelExports)].sort(),
     api_exports: [...new Set(apiExports)].sort(),
@@ -674,8 +715,8 @@ async function generate(specPath, apiName, outputDirStr, dryRun = false) {
   const packageName = path.basename(path.dirname(outputDir));
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const projectRoot = path.resolve(scriptDir, '..', '..', '..', '..');
-  const specsDir = path.join(projectRoot, 'specs');
+  const projectRoot = path.resolve(scriptDir, "..", "..", "..", "..");
+  const specsDir = path.join(projectRoot, "specs");
 
   process.stdout.write(`\nOpenAPI Code Generator\n`);
   process.stdout.write(`  Spec: ${specPath}\n`);
@@ -693,7 +734,7 @@ async function generate(specPath, apiName, outputDirStr, dryRun = false) {
     `  Found ${parsed.schemas.length} schemas, ${parsed.endpoints.length} endpoints, ${parsed.tags.length} tags\n`,
   );
 
-  const apiDir = path.join(outputDir, 'src', 'api', apiName);
+  const apiDir = path.join(outputDir, "src", "api", apiName);
   if (fs.existsSync(apiDir) && !dryRun) {
     fs.rmSync(apiDir, { recursive: true, force: true });
     process.stdout.write(`\n  Cleaned ${apiDir}\n`);
@@ -704,25 +745,68 @@ async function generate(specPath, apiName, outputDirStr, dryRun = false) {
   process.stdout.write(`\nStep 3: Generating models...\n`);
   const modelFiles = [];
   for (const schema of parsed.schemas) {
-    const p = generateModel(env, schema, parsed.schemas, apiName, outputDir, dryRun);
+    const p = generateModel(
+      env,
+      schema,
+      parsed.schemas,
+      apiName,
+      outputDir,
+      dryRun,
+    );
     if (p) modelFiles.push(p);
   }
 
   process.stdout.write(`\nStep 4: Generating serializers...\n`);
-  const serializersFile = generateSerializers(env, parsed.schemas, apiName, outputDir, dryRun);
+  const serializersFile = generateSerializers(
+    env,
+    parsed.schemas,
+    apiName,
+    outputDir,
+    dryRun,
+  );
 
   process.stdout.write(`\nStep 5: Generating endpoints...\n`);
-  const endpointsFile = generateEndpoints(env, parsed, apiName, outputDir, dryRun);
+  const endpointsFile = generateEndpoints(
+    env,
+    parsed,
+    apiName,
+    outputDir,
+    dryRun,
+  );
 
   process.stdout.write(`\nStep 6: Generating services...\n`);
-  const serviceFiles = generateServices(env, parsed, apiName, outputDir, dryRun);
+  const serviceFiles = generateServices(
+    env,
+    parsed,
+    apiName,
+    outputDir,
+    dryRun,
+  );
 
   process.stdout.write(`\nStep 7: Generating API client...\n`);
-  const apiClientFile = generateApiClient(env, parsed, apiName, outputDir, dryRun);
+  const apiClientFile = generateApiClient(
+    env,
+    parsed,
+    apiName,
+    outputDir,
+    dryRun,
+  );
 
   process.stdout.write(`\nStep 8: Generating index files...\n`);
-  const modelsIndexFile = generateModelsIndex(env, parsed, apiName, outputDir, dryRun);
-  const servicesIndexFile = generateServicesIndex(env, parsed, apiName, outputDir, dryRun);
+  const modelsIndexFile = generateModelsIndex(
+    env,
+    parsed,
+    apiName,
+    outputDir,
+    dryRun,
+  );
+  const servicesIndexFile = generateServicesIndex(
+    env,
+    parsed,
+    apiName,
+    outputDir,
+    dryRun,
+  );
 
   process.stdout.write(`\nStep 9: Generating network & barrel...\n`);
   const allApiNames = discoverExistingApis(outputDir);
@@ -732,11 +816,17 @@ async function generate(specPath, apiName, outputDirStr, dryRun = false) {
   allApiNames.sort();
 
   const networkFile = generateNetwork(env, allApiNames, outputDir, dryRun);
-  const barrelFile = generateBarrel(env, parsed, allApiNames, packageName, outputDir, dryRun);
+  const barrelFile = generateBarrel(
+    env,
+    parsed,
+    allApiNames,
+    packageName,
+    outputDir,
+    dryRun,
+  );
 
-  const total =
-    modelFiles.length + 1 + 1 + serviceFiles.length + 1 + 2 + 1 + 1;
-  const action = dryRun ? 'would generate' : 'generated';
+  const total = modelFiles.length + 1 + 1 + serviceFiles.length + 1 + 2 + 1 + 1;
+  const action = dryRun ? "would generate" : "generated";
   process.stdout.write(`\nDone! ${total} files ${action}.\n`);
 
   return {

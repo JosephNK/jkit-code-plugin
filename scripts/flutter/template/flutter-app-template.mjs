@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 // Flutter App 위젯 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
 function toSnakeCase(name) {
-  let out = '';
+  let out = "";
   for (let i = 0; i < name.length; i++) {
     const ch = name[i];
-    if (ch >= 'A' && ch <= 'Z' && i > 0) {
-      out += '_';
+    if (ch >= "A" && ch <= "Z" && i > 0) {
+      out += "_";
     }
     out += ch.toLowerCase();
   }
   return out;
 }
 
-function generateApp(appNameIn, packageNameIn = '') {
+function generateApp(appNameIn, packageNameIn = "") {
   let appName = appNameIn;
   let className;
-  if (!appName.endsWith('App')) {
+  if (!appName.endsWith("App")) {
     className = `${appName}App`;
   } else {
     className = appName;
@@ -64,14 +64,16 @@ class _${className}State extends State<${className}> {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length < 1) {
-    process.stderr.write('Usage: flutter-app-template.mjs <AppName> [package_name]\n');
-    process.stderr.write('Example: flutter-app-template.mjs MyApp\n');
-    process.stderr.write('Example: flutter-app-template.mjs MyApp my_app\n');
+    process.stderr.write(
+      "Usage: flutter-app-template.mjs <AppName> [package_name]\n",
+    );
+    process.stderr.write("Example: flutter-app-template.mjs MyApp\n");
+    process.stderr.write("Example: flutter-app-template.mjs MyApp my_app\n");
     process.exit(1);
   }
 
   const appName = argv[0];
-  const packageName = argv[1] ?? '';
+  const packageName = argv[1] ?? "";
   console.log(generateApp(appName, packageName));
 }
 

@@ -6,12 +6,12 @@
 //   deploy.mjs [<version>|patch|minor|major] [--yes]
 // =============================================================================
 
-import { execFileSync, spawnSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import readline from 'node:readline';
-import { fileURLToPath } from 'node:url';
+import { execFileSync, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 
 const HELP = `Usage: ./deploy.mjs [<version>|patch|minor|major] [--yes]
 
@@ -55,23 +55,23 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { bump: 'patch', explicitVersion: '', yes: false };
+  const args = { bump: "patch", explicitVersion: "", yes: false };
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case 'patch':
-      case 'minor':
-      case 'major':
+      case "patch":
+      case "minor":
+      case "major":
         args.bump = a;
         break;
-      case '--yes':
-      case '-y':
+      case "--yes":
+      case "-y":
         args.yes = true;
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -88,27 +88,30 @@ function parseArgs(argv) {
 }
 
 function git(argsArray) {
-  return execFileSync('git', argsArray, { encoding: 'utf-8' }).trim();
+  return execFileSync("git", argsArray, { encoding: "utf-8" }).trim();
 }
 
 function gitSafe(argsArray) {
   try {
-    return execFileSync('git', argsArray, {
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore'],
+    return execFileSync("git", argsArray, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
     }).trim();
   } catch {
-    return '';
+    return "";
   }
 }
 
 function gitExists(argsArray) {
-  const r = spawnSync('git', argsArray, { stdio: 'ignore' });
+  const r = spawnSync("git", argsArray, { stdio: "ignore" });
   return r.status === 0;
 }
 
 async function prompt(question) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
@@ -118,21 +121,23 @@ async function prompt(question) {
 }
 
 function computeNewVersion(current, bump) {
-  const parts = current.split('.').map((x) => parseInt(x, 10));
+  const parts = current.split(".").map((x) => parseInt(x, 10));
   if (parts.length !== 3 || parts.some(Number.isNaN)) {
-    process.stderr.write(`Error: unable to parse current version "${current}"\n`);
+    process.stderr.write(
+      `Error: unable to parse current version "${current}"\n`,
+    );
     process.exit(1);
   }
   let [maj, min, pat] = parts;
   switch (bump) {
-    case 'patch':
+    case "patch":
       pat += 1;
       break;
-    case 'minor':
+    case "minor":
       min += 1;
       pat = 0;
       break;
-    case 'major':
+    case "major":
       maj += 1;
       min = 0;
       pat = 0;
@@ -146,19 +151,19 @@ function updateJsonVersion(filePath, newVersion) {
     process.stdout.write(`  Skipped ${filePath} (not found)\n`);
     return;
   }
-  const raw = fs.readFileSync(filePath, 'utf-8');
+  const raw = fs.readFileSync(filePath, "utf-8");
   const data = JSON.parse(raw);
-  if ('version' in data) {
+  if ("version" in data) {
     data.version = newVersion;
   }
   if (Array.isArray(data.plugins)) {
     for (const plugin of data.plugins) {
-      if (plugin && plugin.name === 'jkit') {
+      if (plugin && plugin.name === "jkit") {
         plugin.version = newVersion;
       }
     }
   }
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
   process.stdout.write(`  Updated ${filePath}\n`);
 }
 
@@ -167,7 +172,7 @@ function updateYamlVersion(filePath, newVersion) {
     process.stdout.write(`  Skipped ${filePath} (not found)\n`);
     return;
   }
-  const txt = fs.readFileSync(filePath, 'utf-8');
+  const txt = fs.readFileSync(filePath, "utf-8");
   const re = /^(version:\s*)[\d.]+(?:[-+][\w.]+)?/m;
   if (!re.test(txt)) {
     process.stderr.write(`Failed to find version: field in ${filePath}\n`);
@@ -185,48 +190,53 @@ async function main() {
   process.chdir(scriptDir);
 
   // Safety checks
-  const status = gitSafe(['status', '--porcelain']);
+  const status = gitSafe(["status", "--porcelain"]);
   if (status) {
     process.stderr.write(
-      'Error: working tree has uncommitted changes. Commit or stash first.\n',
+      "Error: working tree has uncommitted changes. Commit or stash first.\n",
     );
-    spawnSync('git', ['status', '--short'], { stdio: 'inherit' });
+    spawnSync("git", ["status", "--short"], { stdio: "inherit" });
     process.exit(1);
   }
 
-  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
-  if (branch !== 'main') {
-    process.stdout.write(`Warning: current branch is '${branch}', not 'main'.\n`);
+  const branch = git(["rev-parse", "--abbrev-ref", "HEAD"]);
+  if (branch !== "main") {
+    process.stdout.write(
+      `Warning: current branch is '${branch}', not 'main'.\n`,
+    );
     if (!args.yes) {
-      const ans = await prompt('Continue anyway? [y/N] ');
+      const ans = await prompt("Continue anyway? [y/N] ");
       if (!/^[Yy]$/.test(ans)) process.exit(1);
     }
   }
 
-  const codexPluginJsonPath = '.codex-plugin/plugin.json';
-  const pluginJsonPath = '.claude-plugin/plugin.json';
-  const marketplaceJsonPath = '.claude-plugin/marketplace.json';
-  const agentsMarketplaceJsonPath = '.agents/plugins/marketplace.json';
-  const rootPackageJsonPath = 'package.json';
+  const codexPluginJsonPath = ".codex-plugin/plugin.json";
+  const pluginJsonPath = ".claude-plugin/plugin.json";
+  const marketplaceJsonPath = ".claude-plugin/marketplace.json";
+  const agentsMarketplaceJsonPath = ".agents/plugins/marketplace.json";
+  const rootPackageJsonPath = "package.json";
   const architectureLintPubspecPath =
-    'rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml';
+    "rules/flutter/base/custom-lint/architecture_lint/pubspec.yaml";
   const leafKitLintPubspecPath =
-    'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/pubspec.yaml';
+    "rules/flutter/leaf-kit/custom-lint/leaf_kit_lint/pubspec.yaml";
   const freezedLintPubspecPath =
-    'rules/flutter/freezed/custom-lint/freezed_lint/pubspec.yaml';
+    "rules/flutter/freezed/custom-lint/freezed_lint/pubspec.yaml";
 
-  const current = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8')).version;
+  const current = JSON.parse(fs.readFileSync(pluginJsonPath, "utf-8")).version;
   process.stdout.write(`Current version: ${current}\n`);
 
-  const newVersion = args.explicitVersion || computeNewVersion(current, args.bump);
+  const newVersion =
+    args.explicitVersion || computeNewVersion(current, args.bump);
   const tag = `v${newVersion}`;
 
   if (newVersion === current) {
-    process.stderr.write(`Error: new version equals current version (${current})\n`);
+    process.stderr.write(
+      `Error: new version equals current version (${current})\n`,
+    );
     process.exit(1);
   }
 
-  if (gitExists(['rev-parse', '--verify', '--quiet', tag])) {
+  if (gitExists(["rev-parse", "--verify", "--quiet", tag])) {
     process.stderr.write(`Error: tag ${tag} already exists\n`);
     process.exit(1);
   }
@@ -235,52 +245,68 @@ async function main() {
   process.stdout.write(`New tag:         ${tag}\n`);
 
   // Show changes since last release
-  const tagsOutput = gitSafe(['tag', '--list', 'v*', '--sort=-v:refname']);
-  const lastTag = tagsOutput ? tagsOutput.split('\n')[0] : '';
+  const tagsOutput = gitSafe(["tag", "--list", "v*", "--sort=-v:refname"]);
+  const lastTag = tagsOutput ? tagsOutput.split("\n")[0] : "";
 
-  process.stdout.write('\n');
+  process.stdout.write("\n");
   let range;
   if (lastTag) {
     range = `${lastTag}..HEAD`;
     process.stdout.write(`─── Commits since ${lastTag} ───\n`);
   } else {
-    range = 'HEAD';
-    process.stdout.write('─── All commits (no previous tag) ───\n');
+    range = "HEAD";
+    process.stdout.write("─── All commits (no previous tag) ───\n");
   }
 
-  const commits = gitSafe(['log', '--pretty=format:  %h %s', range]);
-  process.stdout.write(commits ? `${commits}\n` : '  (no new commits)\n');
+  const commits = gitSafe(["log", "--pretty=format:  %h %s", range]);
+  process.stdout.write(commits ? `${commits}\n` : "  (no new commits)\n");
 
-  process.stdout.write('\n─── Files changed ───\n');
-  const files = gitSafe(['diff', '--stat', range]);
+  process.stdout.write("\n─── Files changed ───\n");
+  const files = gitSafe(["diff", "--stat", range]);
   if (!files) {
-    process.stdout.write('  (no file changes)\n');
+    process.stdout.write("  (no file changes)\n");
   } else {
     process.stdout.write(
       files
-        .split('\n')
+        .split("\n")
         .map((l) => `  ${l}`)
-        .join('\n') + '\n',
+        .join("\n") + "\n",
     );
   }
 
-  process.stdout.write('\n─── Release actions ───\n');
-  process.stdout.write(`  1. Update ${codexPluginJsonPath}            → ${newVersion}\n`);
-  process.stdout.write(`  2. Update ${pluginJsonPath}            → ${newVersion}\n`);
-  process.stdout.write(`  3. Update ${marketplaceJsonPath}       → ${newVersion}\n`);
-  process.stdout.write(`  4. Update ${agentsMarketplaceJsonPath}      → ${newVersion}\n`);
-  process.stdout.write(`  5. Update ${rootPackageJsonPath}                          → ${newVersion}\n`);
-  process.stdout.write(`  6. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`);
-  process.stdout.write(`  7. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`);
-  process.stdout.write(`  8. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`);
+  process.stdout.write("\n─── Release actions ───\n");
+  process.stdout.write(
+    `  1. Update ${codexPluginJsonPath}            → ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  2. Update ${pluginJsonPath}            → ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  3. Update ${marketplaceJsonPath}       → ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  4. Update ${agentsMarketplaceJsonPath}      → ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  5. Update ${rootPackageJsonPath}                          → ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  6. Update architecture_lint/pubspec.yaml          → version: ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  7. Update leaf_kit_lint/pubspec.yaml              → version: ${newVersion}\n`,
+  );
+  process.stdout.write(
+    `  8. Update freezed_lint/pubspec.yaml               → version: ${newVersion}\n`,
+  );
   process.stdout.write(`  9. git commit -m "chore: 버전 ${newVersion} 범프"\n`);
   process.stdout.write(`  10. git tag ${tag}\n`);
   process.stdout.write(`  11. git push origin ${branch} --follow-tags\n\n`);
 
   if (!args.yes) {
-    const ans = await prompt('Proceed with release? [y/N] ');
+    const ans = await prompt("Proceed with release? [y/N] ");
     if (!/^[Yy]$/.test(ans)) {
-      process.stdout.write('Aborted.\n');
+      process.stdout.write("Aborted.\n");
       process.exit(1);
     }
   }
@@ -306,14 +332,22 @@ async function main() {
     freezedLintPubspecPath,
   ];
   if (fs.existsSync(rootPackageJsonPath)) addFiles.push(rootPackageJsonPath);
-  spawnSync('git', ['add', ...addFiles], { stdio: 'inherit' });
-  spawnSync('git', ['commit', '-m', `chore: 버전 ${newVersion} 범프`], { stdio: 'inherit' });
-  spawnSync('git', ['tag', '-a', tag, '-m', `Release ${tag}`], { stdio: 'inherit' });
-
-  process.stdout.write('\nPushing commit and tag...\n');
-  const pushResult = spawnSync('git', ['push', 'origin', branch, '--follow-tags'], {
-    stdio: 'inherit',
+  spawnSync("git", ["add", ...addFiles], { stdio: "inherit" });
+  spawnSync("git", ["commit", "-m", `chore: 버전 ${newVersion} 범프`], {
+    stdio: "inherit",
   });
+  spawnSync("git", ["tag", "-a", tag, "-m", `Release ${tag}`], {
+    stdio: "inherit",
+  });
+
+  process.stdout.write("\nPushing commit and tag...\n");
+  const pushResult = spawnSync(
+    "git",
+    ["push", "origin", branch, "--follow-tags"],
+    {
+      stdio: "inherit",
+    },
+  );
   if (pushResult.status !== 0) process.exit(pushResult.status ?? 1);
 
   process.stdout.write(`\n✓ Released ${tag}\n`);

@@ -49,32 +49,32 @@
 //     [--strip-stale-from app/analysis_options.yaml]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
 
-import YAML from 'yaml';
+import YAML from "yaml";
 
 // Legacy umbrella plugin name — stripped from pubspec/analysis_options on injection.
-const LEGACY_CUSTOM_LINT = 'custom_lint';
+const LEGACY_CUSTOM_LINT = "custom_lint";
 
 // Base package — always injected. `subPath` is relative to --plugin-root
 // (the local jkit-code-plugin checkout).
 const BASE_PACKAGE = {
-  name: 'architecture_lint',
-  subPath: 'rules/flutter/base/custom-lint/architecture_lint',
+  name: "architecture_lint",
+  subPath: "rules/flutter/base/custom-lint/architecture_lint",
 };
 
 // Stack → package mapping. Selecting a stack installs the corresponding lint
 // package as an additional analyzer plugin.
 const STACK_PACKAGES = {
-  'leaf-kit': {
-    name: 'leaf_kit_lint',
-    subPath: 'rules/flutter/leaf-kit/custom-lint/leaf_kit_lint',
+  "leaf-kit": {
+    name: "leaf_kit_lint",
+    subPath: "rules/flutter/leaf-kit/custom-lint/leaf_kit_lint",
   },
   freezed: {
-    name: 'freezed_lint',
-    subPath: 'rules/flutter/freezed/custom-lint/freezed_lint',
+    name: "freezed_lint",
+    subPath: "rules/flutter/freezed/custom-lint/freezed_lint",
   },
 };
 
@@ -99,7 +99,7 @@ Options:
   --analysis-options <path>  Path to analysis_options.yaml (required)
   --plugin-root <abs-dir>    Absolute path to the local jkit-code-plugin checkout (required)
   --stacks <stacks>          Comma-separated convention stacks (optional)
-                             Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(', ')}
+                             Known stacks with lint packages: ${Object.keys(STACK_PACKAGES).join(", ")}
   --strip-stale-from <path>  In workspace mode: normalize a member's analysis_options.yaml —
                              strip its plugins:/analyzer.plugins:, prepend
                              include: <relpath-to-root> if absent. Required so
@@ -115,58 +115,58 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    pubspec: '',
-    analysisOptions: '',
-    pluginRoot: '',
+    pubspec: "",
+    analysisOptions: "",
+    pluginRoot: "",
     stacks: [],
-    stripStaleFrom: '',
+    stripStaleFrom: "",
   };
   const rest = argv.slice(2);
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '--pubspec':
+      case "--pubspec":
         if (!rest.length) {
-          process.stderr.write('--pubspec requires a value\n');
+          process.stderr.write("--pubspec requires a value\n");
           usage();
         }
         args.pubspec = rest.shift();
         break;
-      case '--analysis-options':
+      case "--analysis-options":
         if (!rest.length) {
-          process.stderr.write('--analysis-options requires a value\n');
+          process.stderr.write("--analysis-options requires a value\n");
           usage();
         }
         args.analysisOptions = rest.shift();
         break;
-      case '--plugin-root':
+      case "--plugin-root":
         if (!rest.length) {
-          process.stderr.write('--plugin-root requires a value\n');
+          process.stderr.write("--plugin-root requires a value\n");
           usage();
         }
         args.pluginRoot = rest.shift();
         break;
-      case '--stacks':
+      case "--stacks":
         if (!rest.length) {
-          process.stderr.write('--stacks requires a value\n');
+          process.stderr.write("--stacks requires a value\n");
           usage();
         }
         args.stacks = rest
           .shift()
-          .split(',')
+          .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
         break;
-      case '--strip-stale-from':
+      case "--strip-stale-from":
         if (!rest.length) {
-          process.stderr.write('--strip-stale-from requires a value\n');
+          process.stderr.write("--strip-stale-from requires a value\n");
           usage();
         }
         args.stripStaleFrom = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -176,9 +176,9 @@ function parseArgs(argv) {
   }
 
   for (const [name, value] of [
-    ['--pubspec', args.pubspec],
-    ['--analysis-options', args.analysisOptions],
-    ['--plugin-root', args.pluginRoot],
+    ["--pubspec", args.pubspec],
+    ["--analysis-options", args.analysisOptions],
+    ["--plugin-root", args.pluginRoot],
   ]) {
     if (!value) {
       process.stderr.write(`Error: ${name} is required\n`);
@@ -187,7 +187,7 @@ function parseArgs(argv) {
   }
 
   if (!path.isAbsolute(args.pluginRoot)) {
-    process.stderr.write('Error: --plugin-root must be an absolute path\n');
+    process.stderr.write("Error: --plugin-root must be an absolute path\n");
     usage();
   }
 
@@ -198,14 +198,14 @@ function parseArgs(argv) {
 // return a sorted, de-duplicated list of code names. The diagnostics: enable
 // list in plugins: must contain exactly these codes for rules to fire.
 function extractDiagnosticsFor(pluginAbsPath) {
-  const lintsDir = path.join(pluginAbsPath, 'lib', 'src', 'lints');
+  const lintsDir = path.join(pluginAbsPath, "lib", "src", "lints");
   if (!fs.existsSync(lintsDir) || !fs.statSync(lintsDir).isDirectory()) {
     return [];
   }
   const codes = new Set();
   for (const entry of fs.readdirSync(lintsDir)) {
-    if (!entry.endsWith('.dart')) continue;
-    const content = fs.readFileSync(path.join(lintsDir, entry), 'utf-8');
+    if (!entry.endsWith(".dart")) continue;
+    const content = fs.readFileSync(path.join(lintsDir, entry), "utf-8");
     for (const m of content.matchAll(LINT_CODE_RE)) {
       codes.add(m[1]);
     }
@@ -221,7 +221,7 @@ function buildPluginEntry(absPath, diagnosticCodes) {
 }
 
 function diagnosticsEqual(a, b) {
-  if (!a || typeof a !== 'object') return false;
+  if (!a || typeof a !== "object") return false;
   const aKeys = Object.keys(a).sort();
   if (aKeys.length !== b.length) return false;
   for (let i = 0; i < b.length; i++) {
@@ -233,17 +233,17 @@ function diagnosticsEqual(a, b) {
 
 function nodeToJs(node) {
   if (node == null) return null;
-  if (typeof node.toJSON === 'function') return node.toJSON();
+  if (typeof node.toJSON === "function") return node.toJSON();
   return node;
 }
 
 function loadOrCreateDoc(filePath) {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    const empty = YAML.parseDocument('');
+    const empty = YAML.parseDocument("");
     empty.contents = empty.createNode({});
     return empty;
   }
-  const raw = fs.readFileSync(filePath, 'utf-8');
+  const raw = fs.readFileSync(filePath, "utf-8");
   const doc = YAML.parseDocument(raw);
   if (doc.contents === null) {
     doc.contents = doc.createNode({});
@@ -274,13 +274,13 @@ function cleanPubspec(pubspecPath) {
     return true;
   }
 
-  const raw = fs.readFileSync(pubspecPath, 'utf-8');
+  const raw = fs.readFileSync(pubspecPath, "utf-8");
   const doc = YAML.parseDocument(raw);
   if (doc.contents === null) return true;
 
   let changed = false;
 
-  for (const section of ['dependencies', 'dev_dependencies']) {
+  for (const section of ["dependencies", "dev_dependencies"]) {
     const sectionMap = doc.get(section);
     if (!YAML.isMap(sectionMap)) continue;
 
@@ -315,24 +315,24 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
   const doc = loadOrCreateDoc(analysisPath);
 
   // 1. Strip legacy `analyzer.plugins: [custom_lint]` registration.
-  const analyzer = doc.get('analyzer');
+  const analyzer = doc.get("analyzer");
   if (YAML.isMap(analyzer)) {
-    const legacyPlugins = analyzer.get('plugins');
+    const legacyPlugins = analyzer.get("plugins");
     if (legacyPlugins != null) {
-      analyzer.delete('plugins');
+      analyzer.delete("plugins");
       process.stdout.write(
         `  Removed legacy analyzer.plugins from ${analysisPath}\n`,
       );
     }
     if (analyzer.items.length === 0) {
-      doc.delete('analyzer');
+      doc.delete("analyzer");
     }
   }
 
   // 2. Build/update top-level `plugins:` section with `path:` deps.
-  let pluginsMap = doc.get('plugins');
+  let pluginsMap = doc.get("plugins");
   if (pluginsMap != null && !YAML.isMap(pluginsMap)) {
-    doc.delete('plugins');
+    doc.delete("plugins");
     pluginsMap = null;
   }
 
@@ -341,9 +341,7 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
   for (const pkg of packages) {
     const absPath = path.join(pluginRoot, pkg.subPath);
     if (!fs.existsSync(absPath) || !fs.statSync(absPath).isDirectory()) {
-      process.stderr.write(
-        `Error: plugin source not found: ${absPath}\n`,
-      );
+      process.stderr.write(`Error: plugin source not found: ${absPath}\n`);
       return false;
     }
 
@@ -355,12 +353,14 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
       return false;
     }
 
-    const current = YAML.isMap(pluginsMap) ? nodeToJs(pluginsMap.get(pkg.name)) : null;
+    const current = YAML.isMap(pluginsMap)
+      ? nodeToJs(pluginsMap.get(pkg.name))
+      : null;
     const desired = buildPluginEntry(absPath, codes);
     const alreadyPinned =
       current &&
-      typeof current === 'object' &&
-      typeof current.path === 'string' &&
+      typeof current === "object" &&
+      typeof current.path === "string" &&
       current.path === desired.path &&
       current.git === undefined &&
       diagnosticsEqual(current.diagnostics, codes);
@@ -372,14 +372,14 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
       continue;
     }
 
-    doc.setIn(['plugins', pkg.name], desired);
+    doc.setIn(["plugins", pkg.name], desired);
     process.stdout.write(
       `  Registered ${pkg.name} (path: ${absPath}, ${codes.length} diagnostics) in ${analysisPath} plugins:\n`,
     );
     changed = true;
   }
 
-  if (changed || doc.get('analyzer')?.get?.('plugins') === undefined) {
+  if (changed || doc.get("analyzer")?.get?.("plugins") === undefined) {
     writeDoc(analysisPath, doc);
   }
   return true;
@@ -400,19 +400,19 @@ function injectAnalysisOptions(analysisPath, pluginRoot, packages) {
 //      has a non-matching include, warn and preserve (chain it manually).
 function normalizeWorkspaceMember(memberPath, rootPath) {
   const includeRelOs = path.relative(path.dirname(memberPath), rootPath);
-  const includeRel = includeRelOs.split(path.sep).join('/');
+  const includeRel = includeRelOs.split(path.sep).join("/");
 
   // Read existing content (or empty string).
-  let raw = '';
+  let raw = "";
   if (fs.existsSync(memberPath) && fs.statSync(memberPath).isFile()) {
-    raw = fs.readFileSync(memberPath, 'utf-8');
+    raw = fs.readFileSync(memberPath, "utf-8");
   }
 
   let stripped = false;
   let bodyAfterStrip = raw;
   let currentInclude;
 
-  if (raw.trim() !== '') {
+  if (raw.trim() !== "") {
     let doc;
     try {
       doc = YAML.parseDocument(raw);
@@ -423,7 +423,7 @@ function normalizeWorkspaceMember(memberPath, rootPath) {
 
     if (doc.contents !== null) {
       // 1. Strip our managed plugins:
-      const plugins = doc.get('plugins');
+      const plugins = doc.get("plugins");
       if (YAML.isMap(plugins)) {
         for (const name of ALL_LINT_PACKAGE_NAMES) {
           if (plugins.has(name)) {
@@ -434,24 +434,24 @@ function normalizeWorkspaceMember(memberPath, rootPath) {
             stripped = true;
           }
         }
-        if (plugins.items.length === 0 && stripped) doc.delete('plugins');
+        if (plugins.items.length === 0 && stripped) doc.delete("plugins");
       }
 
       // 2. Strip legacy analyzer.plugins
-      const analyzer = doc.get('analyzer');
+      const analyzer = doc.get("analyzer");
       if (YAML.isMap(analyzer)) {
-        const legacyPlugins = analyzer.get('plugins');
+        const legacyPlugins = analyzer.get("plugins");
         if (legacyPlugins != null) {
-          analyzer.delete('plugins');
+          analyzer.delete("plugins");
           process.stdout.write(
             `  Stripped legacy analyzer.plugins from ${memberPath}\n`,
           );
           stripped = true;
-          if (analyzer.items.length === 0) doc.delete('analyzer');
+          if (analyzer.items.length === 0) doc.delete("analyzer");
         }
       }
 
-      currentInclude = doc.get('include');
+      currentInclude = doc.get("include");
     }
 
     if (stripped) bodyAfterStrip = String(doc);
@@ -462,13 +462,13 @@ function normalizeWorkspaceMember(memberPath, rootPath) {
   if (currentInclude === undefined) {
     const includeLine = `include: ${includeRel}\n`;
     finalContent =
-      bodyAfterStrip.trim() === ''
+      bodyAfterStrip.trim() === ""
         ? includeLine
         : `${includeLine}${bodyAfterStrip}`;
     process.stdout.write(
       `  Prepended include: ${includeRel} to ${memberPath}\n`,
     );
-  } else if (typeof currentInclude === 'string') {
+  } else if (typeof currentInclude === "string") {
     if (currentInclude === includeRel) {
       // Idempotent — no announce unless we also stripped.
       if (!stripped) {
@@ -504,7 +504,7 @@ function main() {
   const args = parseArgs(process.argv);
   const packages = resolvePackages(args.stacks);
 
-  const stackList = args.stacks.length ? args.stacks.join(', ') : '(none)';
+  const stackList = args.stacks.length ? args.stacks.join(", ") : "(none)";
   process.stdout.write(
     `Registering analysis_server_plugin lint packages (stacks: ${stackList})...\n`,
   );
@@ -526,9 +526,9 @@ function main() {
     ) && ok;
 
   if (ok) {
-    process.stdout.write('Done.\n');
+    process.stdout.write("Done.\n");
   } else {
-    process.stderr.write('Completed with errors.\n');
+    process.stderr.write("Completed with errors.\n");
   }
 
   process.exit(ok ? 0 : 1);

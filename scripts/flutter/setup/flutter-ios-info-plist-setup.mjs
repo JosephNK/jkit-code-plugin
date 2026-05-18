@@ -13,8 +13,8 @@
 //   flutter-ios-info-plist-setup.mjs <plist_path>
 // =============================================================================
 
-import fs from 'node:fs';
-import process from 'node:process';
+import fs from "node:fs";
+import process from "node:process";
 
 const HELP = `Usage: flutter-ios-info-plist-setup.mjs <plist_path>
 
@@ -42,12 +42,12 @@ function parseArgs(argv) {
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -56,11 +56,13 @@ function parseArgs(argv) {
   }
 
   if (positional.length === 0) {
-    process.stderr.write('Error: <plist_path> is required\n');
+    process.stderr.write("Error: <plist_path> is required\n");
     usage();
   }
   if (positional.length > 1) {
-    process.stderr.write(`Error: unexpected extra arguments: ${positional.slice(1).join(' ')}\n`);
+    process.stderr.write(
+      `Error: unexpected extra arguments: ${positional.slice(1).join(" ")}\n`,
+    );
     usage();
   }
 
@@ -83,14 +85,14 @@ function patchInfoPlist(input) {
   let content = input;
 
   // 1. CFBundleDisplayName → $(APP_DISPLAY_NAME)
-  if (!content.includes('$(APP_DISPLAY_NAME)')) {
-    if (content.includes('<key>CFBundleDisplayName</key>')) {
+  if (!content.includes("$(APP_DISPLAY_NAME)")) {
+    if (content.includes("<key>CFBundleDisplayName</key>")) {
       // 기존 키가 있으면 다음 줄의 <string> 값을 교체
-      const lines = content.split('\n');
+      const lines = content.split("\n");
       const newLines = [];
       for (let i = 0; i < lines.length; i += 1) {
         newLines.push(lines[i]);
-        if (lines[i].includes('<key>CFBundleDisplayName</key>')) {
+        if (lines[i].includes("<key>CFBundleDisplayName</key>")) {
           i += 1;
           if (i < lines.length) {
             const line = lines[i];
@@ -99,26 +101,26 @@ function patchInfoPlist(input) {
           }
         }
       }
-      content = newLines.join('\n');
+      content = newLines.join("\n");
     } else {
       // 키가 없으면 CFBundleExecutable 앞에 추가
       content = content.replace(
-        '\t<key>CFBundleExecutable</key>',
-        '\t<key>CFBundleDisplayName</key>\n' +
-          '\t<string>$(APP_DISPLAY_NAME)</string>\n' +
-          '\t<key>CFBundleExecutable</key>',
+        "\t<key>CFBundleExecutable</key>",
+        "\t<key>CFBundleDisplayName</key>\n" +
+          "\t<string>$(APP_DISPLAY_NAME)</string>\n" +
+          "\t<key>CFBundleExecutable</key>",
       );
     }
   }
 
   // 2. CFBundleURLTypes 블록 추가
-  if (!content.includes('CFBundleURLTypes')) {
-    const lastDictClose = content.lastIndexOf('</dict>');
+  if (!content.includes("CFBundleURLTypes")) {
+    const lastDictClose = content.lastIndexOf("</dict>");
     if (lastDictClose !== -1) {
       content =
         content.slice(0, lastDictClose) +
         URL_TYPES_BLOCK +
-        '\n' +
+        "\n" +
         content.slice(lastDictClose);
     }
   }
@@ -131,14 +133,14 @@ function main() {
 
   let content;
   try {
-    content = fs.readFileSync(args.plistPath, 'utf-8');
+    content = fs.readFileSync(args.plistPath, "utf-8");
   } catch (err) {
     process.stderr.write(`Error reading ${args.plistPath}: ${err.message}\n`);
     process.exit(1);
   }
 
   const patched = patchInfoPlist(content);
-  process.stdout.write(patched.replace(/\n+$/, '') + '\n');
+  process.stdout.write(patched.replace(/\n+$/, "") + "\n");
 }
 
 main();

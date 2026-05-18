@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Flutter GoRoute 템플릿 생성 스크립트
 
-import process from 'node:process';
+import process from "node:process";
 
-function generateRoute(screenName, routePath = '/', noTransition = false) {
+function generateRoute(screenName, routePath = "/", noTransition = false) {
   if (noTransition) {
     return `GoRoute(
         path: '${routePath}',
@@ -32,14 +32,18 @@ function generateRoute(screenName, routePath = '/', noTransition = false) {
 }
 
 function printUsage() {
-  process.stderr.write('usage: flutter-route-template.mjs [-h] [-nt] screen_name [path]\n');
-  process.stderr.write('\nFlutter GoRoute 템플릿 생성\n');
-  process.stderr.write('\npositional arguments:\n');
-  process.stderr.write('  screen_name  스크린 이름 (PascalCase, 예: Login)\n');
-  process.stderr.write('  path         라우트 경로 (기본: /)\n');
-  process.stderr.write('\noptions:\n');
-  process.stderr.write('  -h, --help   show this help message and exit\n');
-  process.stderr.write('  -nt          NoTransitionPage 래핑 (pageBuilder 사용)\n');
+  process.stderr.write(
+    "usage: flutter-route-template.mjs [-h] [-nt] screen_name [path]\n",
+  );
+  process.stderr.write("\nFlutter GoRoute 템플릿 생성\n");
+  process.stderr.write("\npositional arguments:\n");
+  process.stderr.write("  screen_name  스크린 이름 (PascalCase, 예: Login)\n");
+  process.stderr.write("  path         라우트 경로 (기본: /)\n");
+  process.stderr.write("\noptions:\n");
+  process.stderr.write("  -h, --help   show this help message and exit\n");
+  process.stderr.write(
+    "  -nt          NoTransitionPage 래핑 (pageBuilder 사용)\n",
+  );
 }
 
 function main() {
@@ -48,12 +52,12 @@ function main() {
   const positional = [];
 
   for (const arg of argv) {
-    if (arg === '-h' || arg === '--help') {
+    if (arg === "-h" || arg === "--help") {
       printUsage();
       process.exit(0);
-    } else if (arg === '-nt') {
+    } else if (arg === "-nt") {
       noTransition = true;
-    } else if (arg.startsWith('-')) {
+    } else if (arg.startsWith("-")) {
       process.stderr.write(`error: unrecognized arguments: ${arg}\n`);
       process.exit(2);
     } else {
@@ -62,16 +66,20 @@ function main() {
   }
 
   if (positional.length < 1) {
-    process.stderr.write('error: the following arguments are required: screen_name\n');
+    process.stderr.write(
+      "error: the following arguments are required: screen_name\n",
+    );
     process.exit(2);
   }
   if (positional.length > 2) {
-    process.stderr.write(`error: unrecognized arguments: ${positional.slice(2).join(' ')}\n`);
+    process.stderr.write(
+      `error: unrecognized arguments: ${positional.slice(2).join(" ")}\n`,
+    );
     process.exit(2);
   }
 
   const screenName = positional[0];
-  const routePath = positional[1] ?? '/';
+  const routePath = positional[1] ?? "/";
   console.log(generateRoute(screenName, routePath, noTransition));
 }
 

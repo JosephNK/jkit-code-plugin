@@ -8,10 +8,10 @@
 //                                       --project-dir <dir>
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { spawnSync } from 'node:child_process';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { spawnSync } from "node:child_process";
 
 const HELP = `Usage: android-signing-report-keystore.mjs <keystore> <alias> [options] --project-dir <dir>
 
@@ -35,11 +35,11 @@ function usage(code = 1) {
 
 function parseArgs(argv) {
   const args = {
-    keystore: '',
-    alias: '',
-    storepass: '',
-    keypass: '',
-    projectDir: '',
+    keystore: "",
+    alias: "",
+    storepass: "",
+    keypass: "",
+    projectDir: "",
   };
   const positional = [];
   const rest = argv.slice(2);
@@ -47,35 +47,35 @@ function parseArgs(argv) {
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-s':
-      case '--storepass':
+      case "-s":
+      case "--storepass":
         if (!rest.length) {
           process.stderr.write(`${a} requires a value\n`);
           usage();
         }
         args.storepass = rest.shift();
         break;
-      case '-p':
-      case '--keypass':
+      case "-p":
+      case "--keypass":
         if (!rest.length) {
           process.stderr.write(`${a} requires a value\n`);
           usage();
         }
         args.keypass = rest.shift();
         break;
-      case '--project-dir':
+      case "--project-dir":
         if (!rest.length) {
-          process.stderr.write('--project-dir requires a value\n');
+          process.stderr.write("--project-dir requires a value\n");
           usage();
         }
         args.projectDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
-        if (a.startsWith('-')) {
+        if (a.startsWith("-")) {
           process.stderr.write(`Unknown option: ${a}\n`);
           usage();
         }
@@ -84,22 +84,22 @@ function parseArgs(argv) {
   }
 
   if (positional.length < 2) {
-    process.stderr.write('Error: <keystore> and <alias> are required\n');
+    process.stderr.write("Error: <keystore> and <alias> are required\n");
     usage();
   }
   args.keystore = positional[0];
   args.alias = positional[1];
 
   if (!args.storepass) {
-    process.stderr.write('Error: -s/--storepass is required\n');
+    process.stderr.write("Error: -s/--storepass is required\n");
     usage();
   }
   if (!args.keypass) {
-    process.stderr.write('Error: -p/--keypass is required\n');
+    process.stderr.write("Error: -p/--keypass is required\n");
     usage();
   }
   if (!args.projectDir) {
-    process.stderr.write('Error: --project-dir is required\n');
+    process.stderr.write("Error: --project-dir is required\n");
     usage();
   }
 
@@ -107,8 +107,11 @@ function parseArgs(argv) {
 }
 
 function findAndroidDir(projectRoot) {
-  const directAndroid = path.join(projectRoot, 'android');
-  if (fs.existsSync(directAndroid) && fs.statSync(directAndroid).isDirectory()) {
+  const directAndroid = path.join(projectRoot, "android");
+  if (
+    fs.existsSync(directAndroid) &&
+    fs.statSync(directAndroid).isDirectory()
+  ) {
     return directAndroid;
   }
 
@@ -121,7 +124,7 @@ function findAndroidDir(projectRoot) {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const candidate = path.join(projectRoot, entry.name, 'android');
+    const candidate = path.join(projectRoot, entry.name, "android");
     if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
       return candidate;
     }
@@ -138,7 +141,7 @@ function main() {
     const projectRoot = path.resolve(args.projectDir);
     const androidDir = findAndroidDir(projectRoot);
     if (androidDir === null) {
-      process.stderr.write('Error: android directory not found in project\n');
+      process.stderr.write("Error: android directory not found in project\n");
       process.exit(1);
     }
     keystorePath = path.join(androidDir, args.keystore);
@@ -150,24 +153,24 @@ function main() {
   }
 
   const cmd = [
-    'keytool',
-    '-list',
-    '-v',
-    '-keystore',
+    "keytool",
+    "-list",
+    "-v",
+    "-keystore",
     keystorePath,
-    '-alias',
+    "-alias",
     args.alias,
-    '-storepass',
+    "-storepass",
     args.storepass,
-    '-keypass',
+    "-keypass",
     args.keypass,
   ];
-  const result = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
+  const result = spawnSync(cmd[0], cmd.slice(1), { stdio: "inherit" });
 
   if (result.error) {
-    if (result.error.code === 'ENOENT') {
+    if (result.error.code === "ENOENT") {
       process.stderr.write(
-        'Error: keytool command not found. Please ensure JDK is installed.\n',
+        "Error: keytool command not found. Please ensure JDK is installed.\n",
       );
       process.exit(1);
     }

@@ -6,12 +6,12 @@
 //   gen-architecture.mjs <framework> -p <output-dir>
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { ensureGitRepo, normalizePath } from './common.mjs';
+import { ensureGitRepo, normalizePath } from "./common.mjs";
 
 const HELP = `Usage: gen-architecture.mjs <framework> -p <output-dir>
 
@@ -35,25 +35,25 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '' };
+  const args = { framework: "", outputDir: "" };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -63,11 +63,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -79,7 +79,7 @@ function main() {
 
   // ARCHITECTURE.md is a project-level doc; refuse to write it from a random dir.
   try {
-    ensureGitRepo('.');
+    ensureGitRepo(".");
   } catch (err) {
     process.stderr.write(`Error: ${err.message}\n`);
     process.exit(1);
@@ -96,13 +96,13 @@ function main() {
   }
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..');
+  const pluginRoot = path.resolve(scriptDir, "..");
   const source = path.join(
     pluginRoot,
-    'rules',
+    "rules",
     args.framework,
-    'base',
-    'architecture.md',
+    "base",
+    "architecture.md",
   );
 
   if (!fs.existsSync(source)) {
@@ -110,7 +110,7 @@ function main() {
     process.exit(1);
   }
 
-  const outputFile = path.join(outputDir, 'ARCHITECTURE.md');
+  const outputFile = path.join(outputDir, "ARCHITECTURE.md");
   fs.copyFileSync(source, outputFile);
 
   process.stdout.write(`Generated: ${outputFile}\n`);

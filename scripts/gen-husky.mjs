@@ -18,12 +18,12 @@
 //   gen-husky.mjs <framework> -p <output-dir> [-entry <dir>]
 // =============================================================================
 
-import fs from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { setDep } from './common.mjs';
+import { setDep } from "./common.mjs";
 
 const HELP = `Usage: gen-husky.mjs <framework> -p <output-dir> [-entry <dir>]
 
@@ -46,27 +46,27 @@ Examples:
 
 // Pinned versions aligned to the bin/CLI shape used by the husky hook templates.
 // Bump these in one place when upgrading across downstream projects.
-const HUSKY_VERSION = '^9.1.7';
-const LINT_STAGED_VERSION = '^16.4.0';
-const COMMITLINT_CLI_VERSION = '^20.5.2';
-const COMMITLINT_CONFIG_CONVENTIONAL_VERSION = '^20.5.0';
+const HUSKY_VERSION = "^9.1.7";
+const LINT_STAGED_VERSION = "^16.4.0";
+const COMMITLINT_CLI_VERSION = "^20.5.2";
+const COMMITLINT_CONFIG_CONVENTIONAL_VERSION = "^20.5.0";
 
 // Framework → devDeps required by the generated hooks.
 // `husky` itself is added for every framework (needed by `prepare`).
 const FRAMEWORK_DEPS = {
   flutter: {
-    '@commitlint/cli': COMMITLINT_CLI_VERSION,
-    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+    "@commitlint/cli": COMMITLINT_CLI_VERSION,
+    "@commitlint/config-conventional": COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
   },
   nestjs: {
-    'lint-staged': LINT_STAGED_VERSION,
-    '@commitlint/cli': COMMITLINT_CLI_VERSION,
-    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+    "lint-staged": LINT_STAGED_VERSION,
+    "@commitlint/cli": COMMITLINT_CLI_VERSION,
+    "@commitlint/config-conventional": COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
   },
   nextjs: {
-    'lint-staged': LINT_STAGED_VERSION,
-    '@commitlint/cli': COMMITLINT_CLI_VERSION,
-    '@commitlint/config-conventional': COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
+    "lint-staged": LINT_STAGED_VERSION,
+    "@commitlint/cli": COMMITLINT_CLI_VERSION,
+    "@commitlint/config-conventional": COMMITLINT_CONFIG_CONVENTIONAL_VERSION,
   },
 };
 
@@ -76,32 +76,32 @@ function usage(code = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { framework: '', outputDir: '', entry: '' };
+  const args = { framework: "", outputDir: "", entry: "" };
   const rest = argv.slice(2);
 
-  if (rest.length >= 1 && !rest[0].startsWith('-')) {
+  if (rest.length >= 1 && !rest[0].startsWith("-")) {
     args.framework = rest.shift();
   }
 
   while (rest.length > 0) {
     const a = rest.shift();
     switch (a) {
-      case '-p':
+      case "-p":
         if (!rest.length) {
-          process.stderr.write('-p requires a directory\n');
+          process.stderr.write("-p requires a directory\n");
           usage();
         }
         args.outputDir = rest.shift();
         break;
-      case '-entry':
+      case "-entry":
         if (!rest.length) {
-          process.stderr.write('-entry requires a directory\n');
+          process.stderr.write("-entry requires a directory\n");
           usage();
         }
         args.entry = rest.shift();
         break;
-      case '-h':
-      case '--help':
+      case "-h":
+      case "--help":
         usage(0);
         break;
       default:
@@ -111,11 +111,11 @@ function parseArgs(argv) {
   }
 
   if (!args.framework) {
-    process.stderr.write('Error: framework is required\n');
+    process.stderr.write("Error: framework is required\n");
     usage();
   }
   if (!args.outputDir) {
-    process.stderr.write('Error: -p <output-dir> is required\n');
+    process.stderr.write("Error: -p <output-dir> is required\n");
     usage();
   }
 
@@ -133,9 +133,9 @@ function copyHooks(huskySrc, huskyDest, entry) {
     if (!fs.statSync(src).isFile()) continue;
 
     const dest = path.join(huskyDest, hookName);
-    let content = fs.readFileSync(src, 'utf8');
+    let content = fs.readFileSync(src, "utf8");
     if (entry) {
-      content = content.replaceAll('{{ENTRY}}', entry);
+      content = content.replaceAll("{{ENTRY}}", entry);
     }
     fs.writeFileSync(dest, content);
     fs.chmodSync(dest, 0o755);
@@ -150,22 +150,22 @@ function copyHooks(huskySrc, huskyDest, entry) {
 // to bootstrap it via `npm init -y` / `pnpm init` / etc.). Fails loudly so
 // the caller doesn't ship a silently-broken husky install.
 function patchPackageJson(outputDir, framework) {
-  const pkgPath = path.join(outputDir, 'package.json');
+  const pkgPath = path.join(outputDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     process.stderr.write(
       `Error: package.json not found at ${pkgPath}\n` +
-        'Hint: create it first (e.g., `npm init -y` / `pnpm init`) before ' +
-        'running gen-husky.mjs.\n',
+        "Hint: create it first (e.g., `npm init -y` / `pnpm init`) before " +
+        "running gen-husky.mjs.\n",
     );
     process.exit(1);
   }
 
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
   const changes = [];
 
   // ── devDependencies ───────────────────────────────────────────────────────
   const dev = pkg.devDependencies || {};
-  changes.push(setDep(dev, 'husky', HUSKY_VERSION));
+  changes.push(setDep(dev, "husky", HUSKY_VERSION));
   const extraDeps = FRAMEWORK_DEPS[framework] || {};
   for (const [name, version] of Object.entries(extraDeps)) {
     changes.push(setDep(dev, name, version));
@@ -181,10 +181,10 @@ function patchPackageJson(outputDir, framework) {
   const prevPrepare = scripts.prepare;
   let prepareNote;
   if (!prevPrepare) {
-    scripts.prepare = 'husky';
-    prepareNote = '  Added:     scripts.prepare -> husky';
-  } else if (prevPrepare === 'husky') {
-    prepareNote = '  Unchanged: scripts.prepare (husky)';
+    scripts.prepare = "husky";
+    prepareNote = "  Added:     scripts.prepare -> husky";
+  } else if (prevPrepare === "husky") {
+    prepareNote = "  Unchanged: scripts.prepare (husky)";
   } else {
     // User already has a prepare script — don't clobber. husky v9 is tolerant
     // of being invoked from any prepare chain, so leave composition to the
@@ -193,10 +193,10 @@ function patchPackageJson(outputDir, framework) {
   }
   pkg.scripts = scripts;
 
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 
-  for (const line of changes) process.stdout.write(line + '\n');
-  process.stdout.write(prepareNote + '\n');
+  for (const line of changes) process.stdout.write(line + "\n");
+  process.stdout.write(prepareNote + "\n");
   process.stdout.write(`Patched:   ${pkgPath}\n`);
 }
 
@@ -204,13 +204,13 @@ function main() {
   const args = parseArgs(process.argv);
 
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const pluginRoot = path.resolve(scriptDir, '..');
+  const pluginRoot = path.resolve(scriptDir, "..");
   const huskySrc = path.join(
     pluginRoot,
-    'rules',
+    "rules",
     args.framework,
-    'base',
-    'husky',
+    "base",
+    "husky",
   );
 
   if (!fs.existsSync(huskySrc) || !fs.statSync(huskySrc).isDirectory()) {
@@ -220,17 +220,17 @@ function main() {
 
   // Fail-fast: verify package.json exists before writing any hook files so
   // a partial failure doesn't leave orphan `.husky/` artifacts behind.
-  const pkgPath = path.join(args.outputDir, 'package.json');
+  const pkgPath = path.join(args.outputDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     process.stderr.write(
       `Error: package.json not found at ${pkgPath}\n` +
-        'Hint: create it first (e.g., `npm init -y` / `pnpm init`) before ' +
-        'running gen-husky.mjs.\n',
+        "Hint: create it first (e.g., `npm init -y` / `pnpm init`) before " +
+        "running gen-husky.mjs.\n",
     );
     process.exit(1);
   }
 
-  const huskyDest = path.join(args.outputDir, '.husky');
+  const huskyDest = path.join(args.outputDir, ".husky");
   copyHooks(huskySrc, huskyDest, args.entry);
 
   patchPackageJson(args.outputDir, args.framework);
