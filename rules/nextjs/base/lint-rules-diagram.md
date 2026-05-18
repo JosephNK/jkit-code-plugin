@@ -23,6 +23,10 @@ graph LR
     http_repository["http-repository"]
     http_hook["http-hook"]
   end
+  subgraph g_lib [lib]
+    lib_shared["lib-shared"]
+    lib_shared_barrel["lib-shared-barrel"]
+  end
   subgraph g_shared [shared]
     shared_ui["shared-ui"]
     shared_type["shared-type"]
@@ -33,7 +37,6 @@ graph LR
     page["page"]
   end
   db["db"]
-  lib_shared["lib-shared"]
   dictionary["dictionary"]
   email_template["email-template"]
   route_handler["route-handler"]
@@ -52,14 +55,17 @@ graph LR
   http_repository --> domain_model
   http_repository --> db
   http_hook --> domain_service
+  lib_shared_barrel --> lib_shared
   shared_ui --> domain_model
   shared_ui --> shared_type
   page_component --> http_hook
   page_component --> shared_ui
   page_component --> domain_model
   page_component --> lib_shared
+  page_component --> lib_shared_barrel
   page_component --> shared_type
   page_provider --> lib_shared
+  page_provider --> lib_shared_barrel
   dictionary --> shared_type
   shared_type --> dictionary
   email_template --> dictionary

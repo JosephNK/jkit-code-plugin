@@ -215,6 +215,19 @@ export function useOrder(id: string) {
 }
 ```
 
+### `lib-shared-barrel`
+
+**Role** — 공용 유틸 barrel — `src/lib/utils/index.ts`. `lib-shared` leaf의 re-export 전용.
+
+**Contains**
+
+- barrel re-export — `export * from './cn'`, `export { foo } from './format-date'` 등
+
+**Forbids**
+
+- 런타임 로직 정의 (helper 구현은 leaf 파일에 두고 여기서는 재노출만)
+- `lib-shared` 외 다른 레이어 import (barrel은 leaf 묶음 역할만)
+
 ### `lib-shared`
 
 **Role** — 공용 유틸 함수. 내부 의존 0 — 다른 레이어 import 금지 (allow: []).
@@ -395,10 +408,11 @@ export async function GET(
 | `http-repository` | `http-client`, `http-endpoint`, `http-dto`, `http-mapper`, `domain-port`, `domain-error`, `domain-model`, `db` |
 | `http-hook` | `domain-service` |
 | `lib-shared` | _(no layer imports)_ |
+| `lib-shared-barrel` | `lib-shared` |
 | `db` | _(no layer imports)_ |
 | `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
-| `page-component` | `http-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
-| `page-provider` | `lib-shared` |
+| `page-component` | `http-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type` |
+| `page-provider` | `lib-shared`, `lib-shared-barrel` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `shared-type` | `dictionary` |
 | `email-template` | `dictionary`, `shared-type` |

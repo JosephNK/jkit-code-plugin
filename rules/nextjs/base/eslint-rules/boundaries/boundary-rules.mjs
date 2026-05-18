@@ -44,6 +44,12 @@ export const baseBoundaryRules = [
   { from: { type: "http-hook" }, allow: [{ to: { type: "domain-service" } }] },
   // lib-shared: src/lib 루트 공용 유틸. 내부 의존 0개 (순수 유틸만)
   { from: { type: "lib-shared" }, allow: [] },
+  // lib-shared-barrel: re-export 전용 (`src/lib/utils/index.ts`). barrel → leaf만 허용.
+  // 다른 레이어에서 `@/lib/utils`로 한 번에 import할 수 있게 하되, utility 간 cross-import는 base의 lib-shared 규칙으로 여전히 차단.
+  {
+    from: { type: "lib-shared-barrel" },
+    allow: [{ to: { type: "lib-shared" } }],
+  },
   // db: DB 드라이버 래퍼 — 프로젝트 내 어떤 element도 import 하지 않는다 (순수 래퍼).
   // mongodb/pg/redis/typeorm 등 외부 드라이버 패키지는 element 규칙 대상 아님 → allow: [] 로 충분.
   { from: { type: "db" }, allow: [] },
@@ -65,13 +71,17 @@ export const baseBoundaryRules = [
       { to: { type: "domain-model" } },
       { to: { type: "page-component" } },
       { to: { type: "lib-shared" } },
+      { to: { type: "lib-shared-barrel" } },
       { to: { type: "shared-type" } },
     ],
   },
   {
     // 페이지 Provider: 설정/컨텍스트 래퍼. 공용 유틸만
     from: { type: "page-provider" },
-    allow: [{ to: { type: "lib-shared" } }],
+    allow: [
+      { to: { type: "lib-shared" } },
+      { to: { type: "lib-shared-barrel" } },
+    ],
   },
   {
     // i18n 사전: 타입과 다른 사전 참조만 허용

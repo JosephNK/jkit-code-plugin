@@ -29,6 +29,12 @@ export const baseBoundaryElements = [
   }, // Port 구현체
   { type: "http-hook", mode: "full", pattern: ["src/http/*/hook.ts"] }, // TanStack Query 훅
   // Shared lib — layered code(domain/http)는 더 이상 lib 아래 두지 않고, lib는 공용 리소스 전담.
+  // barrel은 lib-shared보다 먼저 정의 — 더 구체적인 pattern이 우선 매칭되어야 한다.
+  {
+    type: "lib-shared-barrel",
+    mode: "full",
+    pattern: ["src/lib/utils/index.ts"],
+  }, // 공용 유틸 barrel (re-export 전용)
   { type: "lib-shared", mode: "full", pattern: ["src/lib/utils/*.ts"] }, // 공용 유틸 함수
   {
     type: "dictionary",

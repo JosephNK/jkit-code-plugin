@@ -62,7 +62,8 @@
         │   └── *                 # dictionary — i18n 사전
         ├── types/                # shared-type — 전역 타입
         └── utils/
-            └── *.ts              # lib-shared — 공용 유틸 함수
+            ├── *.ts              # lib-shared — 공용 유틸 함수
+            └── index.ts          # lib-shared-barrel — 공용 유틸 barrel (re-export 전용)
 ```
 
 ## 레이어별 경로 매핑
@@ -79,6 +80,7 @@
 | `http-mapper` | `src/http/*/mapper.ts` | `full` | DTO ↔ Domain 변환 |
 | `http-repository` | `src/http/*/repository.ts` | `full` | Port 구현체 |
 | `http-hook` | `src/http/*/hook.ts` | `full` | TanStack Query 훅 |
+| `lib-shared-barrel` | `src/lib/utils/index.ts` | `full` | 공용 유틸 barrel (re-export 전용) |
 | `lib-shared` | `src/lib/utils/*.ts` | `full` | 공용 유틸 함수 |
 | `dictionary` | `src/lib/dictionaries/*` / `src/app/\[locale\]/dictionaries.ts` | `full` | i18n 사전 |
 | `shared-type` | `src/lib/types` | — | 전역 타입 |

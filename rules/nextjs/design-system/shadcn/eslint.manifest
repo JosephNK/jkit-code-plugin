@@ -1,5 +1,6 @@
 --- import ---
 import {
+  shadcnBoundaryAllowPatches,
   shadcnDomainBannedPackages,
   shadcnRestrictedPatterns,
 } from '@jkit/code-plugin/nextjs/design-system/shadcn/eslint.rules.mjs';
@@ -11,4 +12,5 @@ import {
 --- elements ---
 --- rules ---
 --- patches ---
+        ...shadcnBoundaryAllowPatches,
 --- ignores ---

@@ -29,3 +29,14 @@ export const shadcnDomainBannedPackages = [
   "clsx",
   "tailwind-merge",
 ];
+
+/**
+ * `shared-ui` → `lib-shared`(+barrel) 허용 패치 — shadcn 컴포넌트(`src/components/ui/*`)가
+ * `cn()` 헬퍼(`src/lib/utils/cn.ts`, `clsx` + `tailwind-merge` 래퍼)를 leaf 또는 barrel
+ * (`@/lib/utils`) 경로로 import할 수 있도록 base의 `shared-ui` allow-list를 확장한다.
+ * shadcn CLI가 생성하는 모든 컴포넌트가 `cn()`을 사용하므로 이 패치 없이는 boundary 위반.
+ */
+export const shadcnBoundaryAllowPatches = [
+  { from: "shared-ui", allow: { to: { type: "lib-shared" } } },
+  { from: "shared-ui", allow: { to: { type: "lib-shared-barrel" } } },
+];

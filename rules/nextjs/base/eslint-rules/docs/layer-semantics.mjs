@@ -4,7 +4,7 @@
  */
 export const baseLayerSemantics = {
   // ─── Domain layer (feature-first: src/domain/<feature>/...) ───────────────
-  'domain-model': {
+  "domain-model": {
     role: "도메인 Entity · Value Object · 공용 타입. 프레임워크 비의존 순수 TypeScript로, 프로젝트 전역에서 참조되는 가장 안정적인 계약.",
     contains: [
       "Entity·VO 타입 (interface/type) — `src/domain/<feature>/model.ts`",
@@ -26,14 +26,12 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'domain-error': {
+  "domain-error": {
     role: "도메인 특화 에러 타입. UI/HTTP 레이어에서 `instanceof`로 식별해 사용자 메시지 매핑.",
     contains: [
       "한 feature의 도메인 에러 클래스 모음 — `src/domain/<feature>/errors.ts`",
     ],
-    forbids: [
-      "React/Next.js/DB 드라이버 import (domain layer 동일 제약)",
-    ],
+    forbids: ["React/Next.js/DB 드라이버 import (domain layer 동일 제약)"],
     example: [
       "// src/domain/order/errors.ts",
       "export class OrderNotFoundError extends Error {",
@@ -44,7 +42,7 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'domain-port': {
+  "domain-port": {
     role: "Repository·외부 의존 인터페이스. domain-service가 주입받아 쓰는 경계 계약.",
     contains: [
       "한 feature의 Port 인터페이스 — `src/domain/<feature>/port.ts`",
@@ -63,7 +61,7 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'domain-service': {
+  "domain-service": {
     role: "UseCase·비즈니스 로직 조합기. Port를 주입받아 도메인 흐름을 orchestrate.",
     contains: [
       "한 feature의 Service 클래스 — `src/domain/<feature>/service.ts`",
@@ -86,17 +84,13 @@ export const baseLayerSemantics = {
   },
 
   // ─── HTTP adapter layer (feature-first: src/http/<feature>/...) ───────────
-  'http-client': {
+  "http-client": {
     role: "HTTP 클라이언트 단일 파일 (axios/fetch/ky 래퍼). baseURL·인터셉터·에러 포맷팅 공통화.",
-    contains: [
-      "client 인스턴스 export — `src/http/client.ts` (단일 파일)",
-    ],
-    forbids: [
-      "이 파일에서 다른 레이어 import (순수 통신 경계; allow: [])",
-    ],
+    contains: ["client 인스턴스 export — `src/http/client.ts` (단일 파일)"],
+    forbids: ["이 파일에서 다른 레이어 import (순수 통신 경계; allow: [])"],
   },
 
-  'http-endpoint': {
+  "http-endpoint": {
     role: "엔드포인트 URL 헬퍼. operationId 기반 함수 형태 (path-parameter는 함수 인자).",
     contains: [
       "URL 헬퍼 export — `src/http/_generated/endpoints.ts` (generator 산출물)",
@@ -107,7 +101,7 @@ export const baseLayerSemantics = {
     ],
   },
 
-  'http-dto': {
+  "http-dto": {
     role: "외부 API 응답·요청 타입 (DTO). 컴포넌트에서 직접 사용 금지 — 반드시 mapper를 거쳐 Domain Model로 변환 후 사용.",
     contains: [
       "DTO 타입 export — `src/http/_generated/types.ts` (generator 산출물)",
@@ -119,14 +113,12 @@ export const baseLayerSemantics = {
     ],
   },
 
-  'http-mapper': {
+  "http-mapper": {
     role: "DTO ↔ Domain Model 변환 전담. snake_case → camelCase, nullable 정규화, enum 매핑 등.",
     contains: [
       "한 feature의 Mapper 클래스(static 메서드) — `src/http/<feature>/mapper.ts`",
     ],
-    forbids: [
-      "비즈니스 로직 (순수 변환만; 계산/조합은 domain-service)",
-    ],
+    forbids: ["비즈니스 로직 (순수 변환만; 계산/조합은 domain-service)"],
     example: [
       "// src/http/order/mapper.ts",
       "export class OrderMapper {",
@@ -142,7 +134,7 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'http-repository': {
+  "http-repository": {
     role: "domain-port 구현체. http-client로 HTTP 호출 후 http-mapper로 Domain 타입 변환.",
     contains: [
       "한 feature의 Repository 클래스 — `src/http/<feature>/repository.ts`",
@@ -162,7 +154,7 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'http-hook': {
+  "http-hook": {
     role: "UI에 제공되는 데이터 페칭 훅 (TanStack Query 등). domain-service만 호출 — Repository 직접 호출 금지.",
     contains: [
       "한 feature의 React Query 훅 (useQuery/useMutation) — `src/http/<feature>/hook.ts`",
@@ -185,7 +177,7 @@ export const baseLayerSemantics = {
   },
 
   // ─── Shared lib / DB ──────────────────────────────────────────────────────
-  'lib-shared': {
+  "lib-shared": {
     role: "공용 유틸 함수. 내부 의존 0 — 다른 레이어 import 금지 (allow: []).",
     contains: [
       "순수 유틸 함수 — `src/lib/utils/*.ts` (예: `cn.ts`, `format-date.ts`, `auth.ts`)",
@@ -196,18 +188,25 @@ export const baseLayerSemantics = {
     ],
   },
 
-  db: {
-    role: "DB 드라이버 래퍼 — 클라이언트 초기화·커넥션 풀·트랜잭션 관리. MongoDB/PostgreSQL/Redis/TypeORM 드라이버 무관.",
+  "lib-shared-barrel": {
+    role: "공용 유틸 barrel — `src/lib/utils/index.ts`. `lib-shared` leaf의 re-export 전용.",
     contains: [
-      "DB 클라이언트 팩토리·커넥션 헬퍼 — `src/db/*.ts`",
+      "barrel re-export — `export * from './cn'`, `export { foo } from './format-date'` 등",
     ],
     forbids: [
-      "프로젝트 내 다른 레이어 import (순수 래퍼; allow: [])",
+      "런타임 로직 정의 (helper 구현은 leaf 파일에 두고 여기서는 재노출만)",
+      "`lib-shared` 외 다른 레이어 import (barrel은 leaf 묶음 역할만)",
     ],
   },
 
+  db: {
+    role: "DB 드라이버 래퍼 — 클라이언트 초기화·커넥션 풀·트랜잭션 관리. MongoDB/PostgreSQL/Redis/TypeORM 드라이버 무관.",
+    contains: ["DB 클라이언트 팩토리·커넥션 헬퍼 — `src/db/*.ts`"],
+    forbids: ["프로젝트 내 다른 레이어 import (순수 래퍼; allow: [])"],
+  },
+
   // ─── UI layer ─────────────────────────────────────────────────────────────
-  'shared-ui': {
+  "shared-ui": {
     role: "전역 재사용 Client Component. 도메인 모델은 타입 표현용으로만 참조 — domain-service 호출 금지.",
     contains: [
       "Presentational Component — `src/components/<name>/<Name>.tsx`",
@@ -226,11 +225,9 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'page-component': {
+  "page-component": {
     role: "페이지 전용 Client Component. `src/app/[locale]/**/_components/`에 콜로케이션. http-hook으로 데이터 조회 + shared-ui 조합.",
-    contains: [
-      "`'use client'` Client Component — `_components/<name>.tsx`",
-    ],
+    contains: ["`'use client'` Client Component — `_components/<name>.tsx`"],
     forbids: [
       "domain-service 직접 호출 (→ http-hook을 통해서)",
       "`React.FC` 사용 (baseRestrictedSyntax)",
@@ -246,14 +243,10 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
-  'page-provider': {
+  "page-provider": {
     role: "페이지 전용 Provider — 설정/컨텍스트 래퍼. 공용 유틸(lib-shared)만 import.",
-    contains: [
-      "Context Provider Client Component — `_providers/<name>.tsx`",
-    ],
-    forbids: [
-      "도메인/HTTP 레이어 import (설정 전달에만 집중)",
-    ],
+    contains: ["Context Provider Client Component — `_providers/<name>.tsx`"],
+    forbids: ["도메인/HTTP 레이어 import (설정 전달에만 집중)"],
   },
 
   // ─── Common resources ─────────────────────────────────────────────────────
@@ -263,38 +256,26 @@ export const baseLayerSemantics = {
       "사전 파일 — `src/lib/dictionaries/*.ts`",
       "로케일 loader — `src/app/[locale]/dictionaries.ts`",
     ],
-    forbids: [
-      "런타임 비즈니스 로직 (순수 데이터 객체)",
-    ],
+    forbids: ["런타임 비즈니스 로직 (순수 데이터 객체)"],
   },
 
-  'shared-type': {
+  "shared-type": {
     role: "프로젝트 전역 타입 선언 (i18n 키 타입 등). `src/lib/types/**`에 배치.",
-    contains: [
-      "전역 타입 선언 — `src/lib/types/*.ts`",
-    ],
-    forbids: [
-      "런타임 코드 (타입 선언 전용)",
-    ],
+    contains: ["전역 타입 선언 — `src/lib/types/*.ts`"],
+    forbids: ["런타임 코드 (타입 선언 전용)"],
   },
 
   // ─── Server-rendered templates ────────────────────────────────────────────
-  'email-template': {
+  "email-template": {
     role: "이메일 전송 시 서버에서 렌더링되는 React Email 템플릿. 필요 데이터는 props로 주입받음.",
-    contains: [
-      "React Email 컴포넌트 — `src/email-templates/*.tsx`",
-    ],
-    forbids: [
-      "도메인/HTTP 레이어 import (서버 전용 로직 유출 방지)",
-    ],
+    contains: ["React Email 컴포넌트 — `src/email-templates/*.tsx`"],
+    forbids: ["도메인/HTTP 레이어 import (서버 전용 로직 유출 방지)"],
   },
 
   // ─── Routes ───────────────────────────────────────────────────────────────
-  'route-handler': {
+  "route-handler": {
     role: "Next.js App Router HTTP 엔드포인트 — GET/POST/PUT/DELETE 등 export하는 얇은 HTTP 어댑터.",
-    contains: [
-      "HTTP 핸들러 export — `src/app/**/route.ts`",
-    ],
+    contains: ["HTTP 핸들러 export — `src/app/**/route.ts`"],
     forbids: [
       "UI 레이어 import (shared-ui/page-component 금지; 서버 경계 위반)",
       "비즈니스 로직 포함 (→ domain-service 호출에 집중)",
