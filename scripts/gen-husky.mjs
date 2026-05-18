@@ -47,9 +47,9 @@ Examples:
 // Pinned versions aligned to the bin/CLI shape used by the husky hook templates.
 // Bump these in one place when upgrading across downstream projects.
 const HUSKY_VERSION = "^9.1.7";
-const LINT_STAGED_VERSION = "^16.4.0";
-const COMMITLINT_CLI_VERSION = "^20.5.2";
-const COMMITLINT_CONFIG_CONVENTIONAL_VERSION = "^20.5.0";
+const LINT_STAGED_VERSION = "^17.0.5";
+const COMMITLINT_CLI_VERSION = "^21.0.1";
+const COMMITLINT_CONFIG_CONVENTIONAL_VERSION = "^21.0.1";
 
 // Framework → devDeps required by the generated hooks.
 // `husky` itself is added for every framework (needed by `prepare`).

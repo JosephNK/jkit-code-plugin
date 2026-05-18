@@ -161,11 +161,12 @@ function main() {
   // ── devDependencies ─────────────────────────────────────────────────────
   const dev = pkg.devDependencies || {};
   const devChanges = [];
-  // stylelint 16.x (Node 18+) — stylelint-config-standard 36.x is 16-compatible.
-  devChanges.push(setDep(dev, "stylelint", "^16.0.0"));
-  devChanges.push(setDep(dev, "stylelint-config-standard", "^36.0.0"));
+  // stylelint 17.x (Node 18+) — stylelint-config-standard 40.x is 17-compatible.
+  devChanges.push(setDep(dev, "stylelint", "^17.11.1"));
+  devChanges.push(setDep(dev, "stylelint-config-standard", "^40.0.0"));
   // Enforces token usage (stylelint.rules.mjs uses scale-unlimited/declaration-strict-value).
-  devChanges.push(setDep(dev, "stylelint-declaration-strict-value", "^1.10.0"));
+  // v1.11+ requires `ignoreFunctions: boolean` and string `message` (see stylelint.rules.mjs).
+  devChanges.push(setDep(dev, "stylelint-declaration-strict-value", "^1.11.1"));
   // gen-eslint.mjs already pins @jkit/code-plugin; re-sync here for idempotency.
   devChanges.push(setDep(dev, "@jkit/code-plugin", gitDep));
 
