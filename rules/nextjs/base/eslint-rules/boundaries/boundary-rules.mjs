@@ -54,11 +54,24 @@ export const baseBoundaryRules = [
   // mongodb/pg/redis/typeorm 등 외부 드라이버 패키지는 element 규칙 대상 아님 → allow: [] 로 충분.
   { from: { type: "db" }, allow: [] },
   {
+    // 공용 React hook: UI/HTTP 비의존 — domain-service/http-hook 호출 금지.
+    // 도메인 모델은 타입 표현용으로만 참조. 다른 공용 hook 조합 허용.
+    from: { type: "shared-hook" },
+    allow: [
+      { to: { type: "lib-shared" } },
+      { to: { type: "lib-shared-barrel" } },
+      { to: { type: "shared-type" } },
+      { to: { type: "domain-model" } },
+      { to: { type: "shared-hook" } },
+    ],
+  },
+  {
     // 전역 재사용 UI: 도메인 모델은 타입 표현용으로만 참조. API 호출 금지 (domain-service 접근 불가)
     from: { type: "shared-ui" },
     allow: [
       { to: { type: "domain-model" } },
       { to: { type: "shared-ui" } },
+      { to: { type: "shared-hook" } },
       { to: { type: "shared-type" } },
     ],
   },
@@ -68,6 +81,7 @@ export const baseBoundaryRules = [
     allow: [
       { to: { type: "http-hook" } },
       { to: { type: "shared-ui" } },
+      { to: { type: "shared-hook" } },
       { to: { type: "domain-model" } },
       { to: { type: "page-component" } },
       { to: { type: "lib-shared" } },
@@ -76,11 +90,12 @@ export const baseBoundaryRules = [
     ],
   },
   {
-    // 페이지 Provider: 설정/컨텍스트 래퍼. 공용 유틸만
+    // 페이지 Provider: 설정/컨텍스트 래퍼. 공용 유틸·hook만
     from: { type: "page-provider" },
     allow: [
       { to: { type: "lib-shared" } },
       { to: { type: "lib-shared-barrel" } },
+      { to: { type: "shared-hook" } },
     ],
   },
   {

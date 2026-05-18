@@ -4,19 +4,19 @@
 // `src/` 직속 디렉토리를 화이트리스트로 제한한다.
 //
 // 허용:
-//   src/app, src/components, src/domain, src/http, src/lib,
+//   src/app, src/components, src/domain, src/http, src/hooks, src/lib,
 //   src/db, src/email-templates
 //
 // 위반 예:
 //   src/utils/...     ❌ (utils/ 디렉토리)
 //   src/types/...     ❌ (types/ 디렉토리)
-//   src/hooks/...     ❌ (hooks/ 디렉토리)
 //
 // 정상 예:
 //   src/app/...       ✅
 //   src/components/.. ✅
 //   src/domain/...    ✅
 //   src/http/...      ✅
+//   src/hooks/...     ✅
 //   src/lib/...       ✅
 //   src/db/...        ✅
 //   src/email-templates/... ✅
@@ -38,6 +38,7 @@ const ALLOWED_SRC_DIRS = new Set([
   "components",
   "domain",
   "http",
+  "hooks",
   "lib",
   "db",
   "email-templates",
@@ -53,11 +54,11 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Allow only whitelisted directories directly under src/ (app, components, domain, http, lib, db, email-templates)",
+        "Allow only whitelisted directories directly under src/ (app, components, domain, http, hooks, lib, db, email-templates)",
     },
     messages: {
       unknownDir:
-        '"src/{{ subdir }}/" is not allowed. Only these top-level folders are permitted under src/: app, components, domain, http, lib, db, email-templates.',
+        '"src/{{ subdir }}/" is not allowed. Only these top-level folders are permitted under src/: app, components, domain, http, hooks, lib, db, email-templates.',
     },
     schema: [],
   },

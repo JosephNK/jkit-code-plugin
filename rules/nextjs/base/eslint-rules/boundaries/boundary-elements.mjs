@@ -45,6 +45,8 @@ export const baseBoundaryElements = [
   // DB driver wrapper — 클라이언트 초기화·커넥션 풀·트랜잭션 관리 등 DB 인프라 전담
   // (MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관. 실제 드라이버 선택은 프로젝트 재량)
   { type: "db", pattern: ["src/db"] }, // DB 드라이버 래퍼
+  // Shared client hooks — UI/HTTP 비의존 공용 React hook
+  { type: "shared-hook", pattern: ["src/hooks"] }, // 전역 재사용 React hook
   // UI layer
   { type: "shared-ui", pattern: ["src/components"] }, // 전역 재사용 컴포넌트
   { type: "page-component", pattern: ["src/app/\\[locale\\]/**/_components"] }, // 페이지 전용 컴포넌트 ([locale] 아래)

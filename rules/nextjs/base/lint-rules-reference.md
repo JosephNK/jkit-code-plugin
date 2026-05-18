@@ -278,6 +278,37 @@ export function useOrder(id: string) {
 
 - 프로젝트 내 다른 레이어 import (순수 래퍼; allow: [])
 
+### `shared-hook`
+
+**Role** — 전역 재사용 Client React hook. UI/HTTP 비의존 — domain-service/http-hook/Repository 호출 금지. 도메인 모델은 타입 표현용으로만 참조.
+
+**Contains**
+
+- 공용 React hook — `src/hooks/<name>.ts` (예: `use-reduced-motion.ts`, `use-debounce.ts`, `use-media-query.ts`)
+- hook 조합용 내부 helper (콜로케이션)
+
+**Forbids**
+
+- domain-service / http-hook / http-repository 호출 (→ http-hook 또는 page-component가 담당)
+- UI 컴포넌트 import (hook은 behavior만 — JSX 반환 금지)
+
+```ts
+// src/hooks/use-reduced-motion.ts
+'use client';
+import { useEffect, useState } from 'react';
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return reduced;
+}
+```
+
 ### `shared-ui`
 
 **Role** — 전역 재사용 Client Component. 도메인 모델은 타입 표현용으로만 참조 — domain-service 호출 금지.
@@ -410,9 +441,10 @@ export async function GET(
 | `lib-shared` | _(no layer imports)_ |
 | `lib-shared-barrel` | `lib-shared` |
 | `db` | _(no layer imports)_ |
-| `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
-| `page-component` | `http-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type` |
-| `page-provider` | `lib-shared`, `lib-shared-barrel` |
+| `shared-hook` | `lib-shared`, `lib-shared-barrel`, `shared-type`, `domain-model`, `shared-hook` |
+| `shared-ui` | `domain-model`, `shared-ui`, `shared-hook`, `shared-type` |
+| `page-component` | `http-hook`, `shared-ui`, `shared-hook`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type` |
+| `page-provider` | `lib-shared`, `lib-shared-barrel`, `shared-hook` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `shared-type` | `dictionary` |
 | `email-template` | `dictionary`, `shared-type` |

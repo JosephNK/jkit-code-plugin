@@ -48,6 +48,7 @@
     │       ├── port.ts           # domain-port — Repository 인터페이스
     │       └── service.ts        # domain-service — UseCase/서비스
     ├── email-templates/          # email-template — React Email 등 이메일 템플릿
+    ├── hooks/                    # shared-hook — 전역 재사용 React hook
     ├── http/
     │   ├── _generated/
     │   │   ├── endpoints.ts      # http-endpoint — (generated) URL 헬퍼
@@ -85,6 +86,7 @@
 | `dictionary` | `src/lib/dictionaries/*` / `src/app/\[locale\]/dictionaries.ts` | `full` | i18n 사전 |
 | `shared-type` | `src/lib/types` | — | 전역 타입 |
 | `db` | `src/db` | — | DB 드라이버 래퍼 |
+| `shared-hook` | `src/hooks` | — | 전역 재사용 React hook |
 | `shared-ui` | `src/components` | — | 전역 재사용 컴포넌트 |
 | `page-component` | `src/app/\[locale\]/**/_components` | — | 페이지 전용 컴포넌트 ([locale] 아래) |
 | `page-provider` | `src/app/\[locale\]/**/_providers` | — | 페이지 전용 Provider ([locale] 아래) |

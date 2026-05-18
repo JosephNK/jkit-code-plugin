@@ -205,6 +205,35 @@ export const baseLayerSemantics = {
     forbids: ["프로젝트 내 다른 레이어 import (순수 래퍼; allow: [])"],
   },
 
+  // ─── Shared client hooks ──────────────────────────────────────────────────
+  "shared-hook": {
+    role: "전역 재사용 Client React hook. UI/HTTP 비의존 — domain-service/http-hook/Repository 호출 금지. 도메인 모델은 타입 표현용으로만 참조.",
+    contains: [
+      "공용 React hook — `src/hooks/<name>.ts` (예: `use-reduced-motion.ts`, `use-debounce.ts`, `use-media-query.ts`)",
+      "hook 조합용 내부 helper (콜로케이션)",
+    ],
+    forbids: [
+      "domain-service / http-hook / http-repository 호출 (→ http-hook 또는 page-component가 담당)",
+      "UI 컴포넌트 import (hook은 behavior만 — JSX 반환 금지)",
+    ],
+    example: [
+      "// src/hooks/use-reduced-motion.ts",
+      "'use client';",
+      "import { useEffect, useState } from 'react';",
+      "export function useReducedMotion(): boolean {",
+      "  const [reduced, setReduced] = useState(false);",
+      "  useEffect(() => {",
+      "    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');",
+      "    setReduced(mq.matches);",
+      "    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);",
+      "    mq.addEventListener('change', handler);",
+      "    return () => mq.removeEventListener('change', handler);",
+      "  }, []);",
+      "  return reduced;",
+      "}",
+    ].join("\n"),
+  },
+
   // ─── UI layer ─────────────────────────────────────────────────────────────
   "shared-ui": {
     role: "전역 재사용 Client Component. 도메인 모델은 타입 표현용으로만 참조 — domain-service 호출 금지.",
