@@ -2,14 +2,12 @@
 import {
   mantineDomainBannedPackages,
   mantineRestrictedPatterns,
-  mantineRestrictedSyntax,
-} from '@jkit/code-plugin/nextjs/mantine/eslint.rules.mjs';
+} from '@jkit/code-plugin/nextjs/design-system/mantine/eslint.rules.mjs';
 --- restricted ---
     ...mantineRestrictedPatterns,
 --- domain ---
     ...mantineDomainBannedPackages,
 --- syntax ---
-        ...mantineRestrictedSyntax,
 --- elements ---
 --- rules ---
 --- patches ---

@@ -1372,7 +1372,7 @@ function main() {
   const rulesIdx = parts.indexOf('rules');
   const stackLabel =
     rulesIdx >= 0 && parts.length > rulesIdx + 2
-      ? `${parts[rulesIdx + 1]}/${parts[rulesIdx + 2]}`
+      ? parts.slice(rulesIdx + 1, parts.length - 1).join('/')
       : path.basename(path.dirname(inputPath));
 
   const writes = [];

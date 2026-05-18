@@ -1,0 +1,31 @@
+// =============================================================================
+// JKit Next.js — shadcn/ui 스택 규칙
+//
+// {{STACK_IMPORTS}} / {{RESTRICTED_PATTERNS}} / {{DOMAIN_BANNED}}에 주입.
+// =============================================================================
+
+/**
+ * 다른 런타임 CSS-in-JS 차단 — shadcn은 Tailwind utility class + CSS 변수 기반이라
+ * CSS-in-JS와 섞으면 클래스 우선순위·SSR hydration·테마 토큰이 어긋난다.
+ * 해결 경로: Tailwind utility + `cn()` (`@/lib/utils`의 `clsx` + `tailwind-merge`) 또는 CSS Modules.
+ */
+export const shadcnRestrictedPatterns = [
+  {
+    group: ['@emotion/*', 'styled-components', 'styled-jsx', 'styled-jsx/**'],
+    message:
+      'CSS-in-JS libraries are not allowed. shadcn/ui composes Tailwind utility classes — use the cn() helper from @/lib/utils or CSS Modules instead.',
+  },
+];
+
+/**
+ * 도메인 레이어에서 shadcn 기반 UI 의존 전체 차단 — 도메인은 UI 프레임워크 비의존.
+ * shadcn 컴포넌트가 의존하는 underlying primitives(Radix·lucide-react·CVA·class helpers)는
+ * presentation 레이어 전용. 도메인이 className/variant 조립을 시도하면 UI 책임이 누수된다.
+ */
+export const shadcnDomainBannedPackages = [
+  '@radix-ui/**',
+  'lucide-react',
+  'class-variance-authority',
+  'clsx',
+  'tailwind-merge',
+];

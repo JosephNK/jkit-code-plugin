@@ -25,11 +25,11 @@ argument-hint: "<framework | all>  (e.g. flutter, nestjs, nextjs, all — 생략
 
 ```bash
 # all 모드
-find rules -maxdepth 3 -name conventions.md \
+find rules -maxdepth 4 -name conventions.md \
   | while read c; do d=$(dirname "$c"); [ -f "$d/lint-rules-reference.md" ] && echo "$d"; done
 
 # 단일 framework 모드
-find rules/<framework> -maxdepth 2 -name conventions.md \
+find rules/<framework> -maxdepth 3 -name conventions.md \
   | while read c; do d=$(dirname "$c"); [ -f "$d/lint-rules-reference.md" ] && echo "$d"; done
 ```
 
@@ -71,7 +71,7 @@ find rules/<framework> -maxdepth 2 -name conventions.md \
 
 ### 약한 중복 (사용자 판단)
 
-- 같은 framework의 **다른 scope**에 있는 룰을 base/conventions.md가 prose로 재진술 (예: `nextjs/base/conventions.md`의 `component="a"` 차단은 `nextjs/mantine/lint-rules-reference.md`에만 lint으로 enforce됨).
+- 같은 framework의 **다른 scope**에 있는 룰을 base/conventions.md가 prose로 재진술 (예: `nextjs/base/conventions.md`의 `component="a"` 차단은 `nextjs/design-system/mantine/lint-rules-reference.md`에만 lint으로 enforce됨).
 - 사용자가 그 stack을 안 쓰면 lint이 미적용이라 conventions가 유일한 가이드 역할 → 보존 가치.
 - 보고 시 "약한 중복: <stack>에 의존" 라벨로 분리 표시.
 

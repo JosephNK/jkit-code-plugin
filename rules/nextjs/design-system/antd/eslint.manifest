@@ -2,7 +2,7 @@
 import {
   antdDomainBannedPackages,
   antdRestrictedPatterns,
-} from '@jkit/code-plugin/nextjs/antd/eslint.rules.mjs';
+} from '@jkit/code-plugin/nextjs/design-system/antd/eslint.rules.mjs';
 --- restricted ---
     ...antdRestrictedPatterns,
 --- domain ---

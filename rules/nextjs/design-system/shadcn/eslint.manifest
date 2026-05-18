@@ -1,0 +1,14 @@
+--- import ---
+import {
+  shadcnDomainBannedPackages,
+  shadcnRestrictedPatterns,
+} from '@jkit/code-plugin/nextjs/design-system/shadcn/eslint.rules.mjs';
+--- restricted ---
+    ...shadcnRestrictedPatterns,
+--- domain ---
+    ...shadcnDomainBannedPackages,
+--- syntax ---
+--- elements ---
+--- rules ---
+--- patches ---
+--- ignores ---

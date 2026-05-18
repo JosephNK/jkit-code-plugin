@@ -1,8 +1,8 @@
 <!-- GENERATED DOCUMENT - DO NOT MODIFY BY HAND -->
 <!-- Generator: scripts/typescript/gen-eslint-reference.mjs -->
-<!-- Source: rules/nextjs/antd/eslint.rules.mjs -->
+<!-- Source: rules/nextjs/design-system/antd/eslint.rules.mjs -->
 
-# Lint Rules Reference (nextjs/antd)
+# Lint Rules Reference (nextjs/design-system/antd)
 
 ## Restricted Patterns (Import 금지 패턴)
 
