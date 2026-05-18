@@ -21,11 +21,19 @@
     "type": "git",
     "url": "https://github.com/JosephNK/jkit-code-plugin.git"
   },
+  "scripts": {
+    "prepare": "husky"
+  },
   "devDependencies": {
     "acorn": "^8.16.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "nunjucks": "^3.2.4",
     "prettier": "^3.8.3",
     "yaml": "^2.8.3"
+  },
+  "lint-staged": {
+    "*.mjs": "prettier --write"
   },
   "peerDependencies": {
     "eslint-config-next": "^14.0.0 || ^15.0.0",
