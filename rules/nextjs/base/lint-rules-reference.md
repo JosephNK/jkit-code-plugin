@@ -15,8 +15,8 @@
 
 **Contains**
 
-- Entity 타입 (interface/type) — `*.model.ts`
-- Value Object — `*.vo.ts`
+- Entity·VO 타입 (interface/type) — `src/domain/<feature>/model.ts`
+- 한 feature 안에 여러 Entity·VO가 함께 살아도 됨 (예: User + UserPreferences)
 
 **Forbids**
 
@@ -25,7 +25,7 @@
 - class 기반 도메인 (interface/type + 순수 함수 지향)
 
 ```ts
-// src/lib/domain/models/order.model.ts
+// src/domain/order/model.ts
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped';
 export interface Order {
   readonly id: string;
@@ -36,18 +36,18 @@ export interface Order {
 
 ### `domain-error`
 
-**Role** — 도메인 특화 에러 타입. UI/API 레이어에서 `instanceof`로 식별해 사용자 메시지 매핑.
+**Role** — 도메인 특화 에러 타입. UI/HTTP 레이어에서 `instanceof`로 식별해 사용자 메시지 매핑.
 
 **Contains**
 
-- 도메인 에러 클래스 — `*.error.ts`
+- 한 feature의 도메인 에러 클래스 모음 — `src/domain/<feature>/errors.ts`
 
 **Forbids**
 
 - React/Next.js/DB 드라이버 import (domain layer 동일 제약)
 
 ```ts
-// src/lib/domain/errors/order-not-found.error.ts
+// src/domain/order/errors.ts
 export class OrderNotFoundError extends Error {
   constructor(public readonly id: string) {
     super(`Order not found: ${id}`);
@@ -61,16 +61,16 @@ export class OrderNotFoundError extends Error {
 
 **Contains**
 
-- Repository Port — `*-repository.port.ts`
-- 기타 outbound port (알림·결제·캐시 등) — `*.port.ts`
+- 한 feature의 Port 인터페이스 — `src/domain/<feature>/port.ts`
+- Repository Port 외 outbound port(알림·결제·캐시 등)도 같은 파일에 동거 가능
 
 **Forbids**
 
 - 인터페이스 시그니처에 프레임워크 타입 (model/error만 사용)
-- 구현 코드 (→ api-repository)
+- 구현 코드 (→ http-repository)
 
 ```ts
-// src/lib/domain/ports/order-repository.port.ts
+// src/domain/order/port.ts
 export interface OrderRepositoryPort {
   findById(id: string): Promise<Order | null>;
   findAll(): Promise<Order[]>;
@@ -83,15 +83,15 @@ export interface OrderRepositoryPort {
 
 **Contains**
 
-- Service 클래스 — `*.service.ts`
+- 한 feature의 Service 클래스 — `src/domain/<feature>/service.ts`
 
 **Forbids**
 
 - React Hook 호출 (`use*` — UI 전용)
-- api-repository 직접 import (→ domain-port 주입으로만)
+- http-repository 직접 import (→ domain-port 주입으로만)
 
 ```ts
-// src/lib/domain/services/order.service.ts
+// src/domain/order/service.ts
 export class OrderService {
   constructor(private readonly orderRepository: OrderRepositoryPort) {}
   async getOrder(id: string): Promise<Order> {
@@ -102,58 +102,59 @@ export class OrderService {
 }
 ```
 
-### `api-client`
+### `http-client`
 
 **Role** — HTTP 클라이언트 단일 파일 (axios/fetch/ky 래퍼). baseURL·인터셉터·에러 포맷팅 공통화.
 
 **Contains**
 
-- client 인스턴스 export — `src/lib/api/client.ts` (단일 파일)
+- client 인스턴스 export — `src/http/client.ts` (단일 파일)
 
 **Forbids**
 
 - 이 파일에서 다른 레이어 import (순수 통신 경계; allow: [])
 
-### `api-endpoint`
+### `http-endpoint`
 
-**Role** — 엔드포인트 URL 상수 단일 파일. API 경로 변경 시 단일 지점 수정.
-
-**Contains**
-
-- URL 상수 export — `src/lib/api/endpoints.ts` (단일 파일)
-
-**Forbids**
-
-- 런타임 로직·동적 URL 생성 (상수 객체만)
-- 다른 레이어 import (allow: [])
-
-### `api-dto`
-
-**Role** — 외부 API 응답 타입 단일 파일. 백엔드 계약을 코드로 표현 (snake_case 등 원형 유지).
+**Role** — 엔드포인트 URL 헬퍼. operationId 기반 함수 형태 (path-parameter는 함수 인자).
 
 **Contains**
 
-- DTO 타입 export — `src/lib/api/types.ts` (단일 파일)
+- URL 헬퍼 export — `src/http/_generated/endpoints.ts` (generator 산출물)
 
 **Forbids**
 
-- 도메인 변환 로직 (→ api-mapper)
+- 수기 편집 (jkit:nextjs-openapi-gen으로만 갱신)
 - 다른 레이어 import (allow: [])
 
-### `api-mapper`
+### `http-dto`
+
+**Role** — 외부 API 응답·요청 타입 (DTO). 컴포넌트에서 직접 사용 금지 — 반드시 mapper를 거쳐 Domain Model로 변환 후 사용.
+
+**Contains**
+
+- DTO 타입 export — `src/http/_generated/types.ts` (generator 산출물)
+
+**Forbids**
+
+- 수기 편집 (jkit:nextjs-openapi-gen으로만 갱신)
+- 도메인 변환 로직 (→ http-mapper)
+- 다른 레이어 import (allow: [])
+
+### `http-mapper`
 
 **Role** — DTO ↔ Domain Model 변환 전담. snake_case → camelCase, nullable 정규화, enum 매핑 등.
 
 **Contains**
 
-- Mapper 클래스 (static 메서드) — `*.mapper.ts`
+- 한 feature의 Mapper 클래스(static 메서드) — `src/http/<feature>/mapper.ts`
 
 **Forbids**
 
 - 비즈니스 로직 (순수 변환만; 계산/조합은 domain-service)
 
 ```ts
-// src/lib/api/mappers/order.mapper.ts
+// src/http/order/mapper.ts
 export class OrderMapper {
   static toDomain(dto: OrderDto): Order {
     return {
@@ -166,13 +167,13 @@ export class OrderMapper {
 }
 ```
 
-### `api-repository`
+### `http-repository`
 
-**Role** — domain-port 구현체. api-client로 HTTP 호출 후 api-mapper로 Domain 타입 변환.
+**Role** — domain-port 구현체. http-client로 HTTP 호출 후 http-mapper로 Domain 타입 변환.
 
 **Contains**
 
-- Repository 클래스 (implements *Port) — `*.repository.ts`
+- 한 feature의 Repository 클래스 — `src/http/<feature>/repository.ts`
 
 **Forbids**
 
@@ -180,31 +181,31 @@ export class OrderMapper {
 - repository 간 상호 import (cross-repository 의존 금지)
 
 ```ts
-// src/lib/api/repositories/order.repository.ts
+// src/http/order/repository.ts
 export class OrderRepository implements OrderRepositoryPort {
   async findById(id: string): Promise<Order | null> {
-    const dto = await apiClient.get<OrderDto>(`${ENDPOINTS.ORDERS}/${id}`);
+    const dto = await apiClient.get<OrderDto>(endpoints.getOrder(id));
     return dto ? OrderMapper.toDomain(dto) : null;
   }
 }
 ```
 
-### `api-hook`
+### `http-hook`
 
 **Role** — UI에 제공되는 데이터 페칭 훅 (TanStack Query 등). domain-service만 호출 — Repository 직접 호출 금지.
 
 **Contains**
 
-- React Query 훅 (useQuery/useMutation) — `use-*.ts`
-- Service 팩토리 훅 — `use-*-service.ts`
+- 한 feature의 React Query 훅 (useQuery/useMutation) — `src/http/<feature>/hook.ts`
+- Service 팩토리 훅도 같은 파일에 동거 가능
 
 **Forbids**
 
-- api-repository 직접 import (→ domain-service 경유)
+- http-repository 직접 import (→ domain-service 경유)
 - UI 컴포넌트 import (훅은 데이터 계약만)
 
 ```ts
-// src/lib/api/hooks/use-order.ts
+// src/http/order/hook.ts
 export function useOrder(id: string) {
   const service = useOrderService();
   return useQuery({
@@ -216,15 +217,41 @@ export function useOrder(id: string) {
 
 ### `lib-shared`
 
-**Role** — `src/lib/` 루트의 공용 유틸. 내부 의존 0 — 다른 레이어 import 금지 (allow: []).
+**Role** — 공용 유틸 함수. 내부 의존 0 — 다른 레이어 import 금지 (allow: []).
 
 **Contains**
 
-- 순수 유틸 함수 — `src/lib/*.ts` (루트 단일 파일 한정)
+- 순수 유틸 함수 — `src/lib/utils/*.ts` (예: `cn.ts`, `format-date.ts`, `auth.ts`)
 
 **Forbids**
 
 - 다른 레이어 import (순수 유틸 경계 유지)
+- layered code 배치 (도메인/HTTP는 `src/domain/`, `src/http/`로 promote됨)
+
+### `dictionary`
+
+**Role** — i18n 사전. 로케일별 메시지 객체 + 타입 안전 키 (shared-type과 상호 참조).
+
+**Contains**
+
+- 사전 파일 — `src/lib/dictionaries/*.ts`
+- 로케일 loader — `src/app/[locale]/dictionaries.ts`
+
+**Forbids**
+
+- 런타임 비즈니스 로직 (순수 데이터 객체)
+
+### `shared-type`
+
+**Role** — 프로젝트 전역 타입 선언 (i18n 키 타입 등). `src/lib/types/**`에 배치.
+
+**Contains**
+
+- 전역 타입 선언 — `src/lib/types/*.ts`
+
+**Forbids**
+
+- 런타임 코드 (타입 선언 전용)
 
 ### `db`
 
@@ -232,7 +259,7 @@ export function useOrder(id: string) {
 
 **Contains**
 
-- DB 클라이언트 팩토리·커넥션 헬퍼 — `src/lib/db/*.ts`
+- DB 클라이언트 팩토리·커넥션 헬퍼 — `src/db/*.ts`
 
 **Forbids**
 
@@ -249,7 +276,7 @@ export function useOrder(id: string) {
 
 **Forbids**
 
-- api-hook 호출 (데이터 페칭은 page-component에서)
+- http-hook 호출 (데이터 페칭은 page-component에서)
 - `React.FC` / `React.FunctionComponent` (baseRestrictedSyntax)
 
 ```ts
@@ -262,7 +289,7 @@ export function OrderSummary({ order }: { order: Order }) {
 
 ### `page-component`
 
-**Role** — 페이지 전용 Client Component. `src/app/[locale]/**/_components/`에 콜로케이션. api-hook으로 데이터 조회 + shared-ui 조합.
+**Role** — 페이지 전용 Client Component. `src/app/[locale]/**/_components/`에 콜로케이션. http-hook으로 데이터 조회 + shared-ui 조합.
 
 **Contains**
 
@@ -270,7 +297,7 @@ export function OrderSummary({ order }: { order: Order }) {
 
 **Forbids**
 
-- domain-service 직접 호출 (→ api-hook을 통해서)
+- domain-service 직접 호출 (→ http-hook을 통해서)
 - `React.FC` 사용 (baseRestrictedSyntax)
 
 ```ts
@@ -293,32 +320,7 @@ export function OrderList() {
 
 **Forbids**
 
-- 도메인/API 레이어 import (설정 전달에만 집중)
-
-### `dictionary`
-
-**Role** — i18n 사전. 로케일별 메시지 객체 + 타입 안전 키 (shared-type과 상호 참조).
-
-**Contains**
-
-- 사전 파일 — `src/common/dictionaries/*.ts`
-- 로케일 loader — `src/app/[locale]/dictionaries.ts`
-
-**Forbids**
-
-- 런타임 비즈니스 로직 (순수 데이터 객체)
-
-### `shared-type`
-
-**Role** — 프로젝트 전역 타입 선언 (i18n 키 타입 등). `src/common/types/**`에 배치.
-
-**Contains**
-
-- 전역 타입 선언 — `src/common/types/*.ts`
-
-**Forbids**
-
-- 런타임 코드 (타입 선언 전용)
+- 도메인/HTTP 레이어 import (설정 전달에만 집중)
 
 ### `email-template`
 
@@ -326,11 +328,11 @@ export function OrderList() {
 
 **Contains**
 
-- React Email 컴포넌트 — `src/lib/email-templates/*.tsx`
+- React Email 컴포넌트 — `src/email-templates/*.tsx`
 
 **Forbids**
 
-- 도메인/API 레이어 import (서버 전용 로직 유출 방지)
+- 도메인/HTTP 레이어 import (서버 전용 로직 유출 방지)
 
 ### `route-handler`
 
@@ -369,7 +371,7 @@ export async function GET(
 **Forbids**
 
 - Hook 호출 (Server Component는 `use*` 호출 금지; baseServerComponentRules)
-- domain-service/api-hook 직접 호출 (→ page-component를 거쳐야 함)
+- domain-service/http-hook 직접 호출 (→ page-component를 거쳐야 함)
 
 ## 의존성 규칙 (Dependency Rules)
 
@@ -386,16 +388,16 @@ export async function GET(
 | `domain-error` | `domain-error` |
 | `domain-port` | `domain-model` |
 | `domain-service` | `domain-model`, `domain-port`, `domain-error`, `domain-service` |
-| `api-client` | _(no layer imports)_ |
-| `api-endpoint` | _(no layer imports)_ |
-| `api-dto` | _(no layer imports)_ |
-| `api-mapper` | `domain-model`, `api-dto` |
-| `api-repository` | `api-client`, `api-endpoint`, `api-mapper`, `domain-port`, `domain-error`, `domain-model`, `db` |
-| `api-hook` | `domain-service` |
+| `http-client` | _(no layer imports)_ |
+| `http-endpoint` | _(no layer imports)_ |
+| `http-dto` | _(no layer imports)_ |
+| `http-mapper` | `domain-model`, `http-dto` |
+| `http-repository` | `http-client`, `http-endpoint`, `http-dto`, `http-mapper`, `domain-port`, `domain-error`, `domain-model`, `db` |
+| `http-hook` | `domain-service` |
 | `lib-shared` | _(no layer imports)_ |
 | `db` | _(no layer imports)_ |
 | `shared-ui` | `domain-model`, `shared-ui`, `shared-type` |
-| `page-component` | `api-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
+| `page-component` | `http-hook`, `shared-ui`, `domain-model`, `page-component`, `lib-shared`, `shared-type` |
 | `page-provider` | `lib-shared` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `shared-type` | `dictionary` |
@@ -426,7 +428,7 @@ AST selector 기반 금지 구문.
 
 ## Domain Purity (도메인 순수성)
 
-도메인 레이어(`src/lib/domain/**`)에서 import 금지 패키지.
+도메인 레이어(`src/domain/**`)에서 import 금지 패키지.
 프레임워크 비의존 유지. 스택별로 UI 라이브러리 추가 차단.
 
 ### 도메인 레이어 금지 패키지
@@ -460,5 +462,6 @@ Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
 ### 무시 패턴 목록
 
 - **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`
-- **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/common/types/**`
+- **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/lib/types/**`
+- **특수 경로**: `specs/**`
 - **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`

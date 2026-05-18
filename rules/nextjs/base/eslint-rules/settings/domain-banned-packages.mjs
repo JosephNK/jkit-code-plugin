@@ -1,5 +1,5 @@
 /**
- * 도메인 레이어(`src/lib/domain/**`)에서 import 금지 패키지.
+ * 도메인 레이어(`src/domain/**`)에서 import 금지 패키지.
  * 프레임워크 비의존 유지. 스택별로 UI 라이브러리 추가 차단.
  */
 export const baseDomainBannedPackages = [

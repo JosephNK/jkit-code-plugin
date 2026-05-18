@@ -6,20 +6,22 @@ Hexagonal Architecture (Ports and Adapters) + Next.js App Router colocated compo
 Domain logic is pure TypeScript with no framework dependencies.
 Pages are Server Components (data loading, i18n). Client Components are colocated in `_components/` directories.
 
+레이어는 **feature-first**로 묶는다 — 같은 비즈니스 컨텍스트(예: `user`, `order`, `product`)에 속한 model/port/service/mapper/repository/hook이 같은 폴더 아래 모인다. 한 feature의 변경이 한 폴더에서 끝나도록.
+
 ## Layer Diagram
 
 ```
-[page]             app/[locale]/        Server Component (data fetching, i18n)
+[page]             app/[locale]/          Server Component (data fetching, i18n)
     |
-[_components]      _components/         Client Component ('use client', event handling)
+[_components]      _components/           Client Component ('use client', event handling)
     |
-[hook]             lib/api/hooks/       TanStack Query (useQuery/useMutation)
+[hook]             http/<feature>/hook.ts        TanStack Query (useQuery/useMutation)
     |
-[service]          lib/domain/services/ Business logic (pure TS, depends only on Ports)
+[service]          domain/<feature>/service.ts   Business logic (pure TS, depends only on Ports)
     |
-[port]             lib/domain/ports/    Interface (Repository contracts)
+[port]             domain/<feature>/port.ts      Interface (Repository contracts)
     |
-[repository]       lib/api/repositories/ Port implementation (API calls via client)
+[repository]       http/<feature>/repository.ts  Port implementation (HTTP calls via client)
     |
 Backend API
 ```
@@ -47,7 +49,7 @@ Backend API
 ```
 Backend API
     |  HTTP Response (JSON)
-API DTO             Raw backend response shape
+HTTP DTO            Raw backend response shape (http/_generated/types.ts, generator 산출물)
     |
 Repository Impl     Applies Mapper internally
     |  Mapper       DTO to Domain conversion
@@ -76,4 +78,4 @@ Page (SC) -> _components/ (CC) -> Hook -> Service -> Port (interface) <- Reposit
 
 ## Layer Details
 
-> 이 문서는 개념/흐름에 집중하고, 실제 레이어별 세부는 단일 소스에서 관리한다.
+> 이 문서는 개념/흐름에 집중하고, 실제 레이어별 세부(경로 패턴·import 매트릭스)는 lint 룰의 단일 소스(`baseBoundaryElements`, `baseBoundaryRules`, `baseLayerSemantics`)에서 관리한다.

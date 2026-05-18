@@ -15,13 +15,13 @@ graph LR
     domain_port["domain-port"]
     domain_service["domain-service"]
   end
-  subgraph g_api [api]
-    api_client["api-client"]
-    api_endpoint["api-endpoint"]
-    api_dto["api-dto"]
-    api_mapper["api-mapper"]
-    api_repository["api-repository"]
-    api_hook["api-hook"]
+  subgraph g_http [http]
+    http_client["http-client"]
+    http_endpoint["http-endpoint"]
+    http_dto["http-dto"]
+    http_mapper["http-mapper"]
+    http_repository["http-repository"]
+    http_hook["http-hook"]
   end
   subgraph g_shared [shared]
     shared_ui["shared-ui"]
@@ -41,19 +41,20 @@ graph LR
   domain_service --> domain_model
   domain_service --> domain_port
   domain_service --> domain_error
-  api_mapper --> domain_model
-  api_mapper --> api_dto
-  api_repository --> api_client
-  api_repository --> api_endpoint
-  api_repository --> api_mapper
-  api_repository --> domain_port
-  api_repository --> domain_error
-  api_repository --> domain_model
-  api_repository --> db
-  api_hook --> domain_service
+  http_mapper --> domain_model
+  http_mapper --> http_dto
+  http_repository --> http_client
+  http_repository --> http_endpoint
+  http_repository --> http_dto
+  http_repository --> http_mapper
+  http_repository --> domain_port
+  http_repository --> domain_error
+  http_repository --> domain_model
+  http_repository --> db
+  http_hook --> domain_service
   shared_ui --> domain_model
   shared_ui --> shared_type
-  page_component --> api_hook
+  page_component --> http_hook
   page_component --> shared_ui
   page_component --> domain_model
   page_component --> lib_shared

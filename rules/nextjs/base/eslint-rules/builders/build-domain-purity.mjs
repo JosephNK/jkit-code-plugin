@@ -3,14 +3,14 @@ import { defineConfig } from 'eslint/config';
 import { baseRestrictedPatterns } from '../settings/restricted-patterns.mjs';
 
 /**
- * 도메인 순수성 룰 생성기 (`src/lib/domain/**`).
+ * 도메인 순수성 룰 생성기 (`src/domain/**`).
  * 프레임워크 import + 브라우저 글로벌(fetch/window/document/storage) 차단.
  * 데이터는 domain-port를 통해 repository에서 주입.
  */
 export function buildDomainPurity(domainBannedPackages, restrictedPatterns = baseRestrictedPatterns) {
   return defineConfig([
     {
-      files: ['src/lib/domain/**/*.ts'],
+      files: ['src/domain/**/*.ts'],
       rules: {
         'no-restricted-imports': [
           'error',

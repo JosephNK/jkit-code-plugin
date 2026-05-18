@@ -36,11 +36,11 @@ import {
 // ─── Helper: patch additional allow rules into base boundary rules ────────────
 /**
  * base 규칙의 `allow` 배열에 스택별 추가 허용 항목을 덧붙인다.
- * 예: MongoDB 스택이 "api-repository → db" 허용을 추가하고 싶을 때
- *     기존 api-repository 룰을 그대로 두고 allow에만 `{ to: { type: 'db' } }`를 append.
+ * 예: MongoDB 스택이 "http-repository → db" 허용을 추가하고 싶을 때
+ *     기존 http-repository 룰을 그대로 두고 allow에만 `{ to: { type: 'db' } }`를 append.
  *
  * patches 예시:
- *   [{ from: 'api-repository', allow: { to: { type: 'db' } } }]
+ *   [{ from: 'http-repository', allow: { to: { type: 'db' } } }]
  */
 function patchBoundaryRules(rules, patches) {
   return rules.map((rule) => {
@@ -80,7 +80,7 @@ const eslintConfig = [
   // [3] 전역 import 제한 (base + 스택)
   ...buildRestrictedImports(allRestrictedPatterns),
 
-  // [4] 도메인 순수성 — src/lib/domain/**에만 적용. 프레임워크/브라우저 글로벌 차단
+  // [4] 도메인 순수성 — src/domain/**에만 적용. 프레임워크/브라우저 글로벌 차단
   ...buildDomainPurity(
     [
       ...baseDomainBannedPackages,

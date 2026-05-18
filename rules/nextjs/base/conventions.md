@@ -21,7 +21,7 @@
 
 - **Code duplication MUST stay below 5%** (enforced by `jscpd` with `.jscpd.json` threshold)
 - Run `npm run lint:cpd` to check duplication rate
-- **Shared infrastructure MUST be extracted into a named file and imported, not re-implemented** — when two sites need the same helper (error wrapper, DTO serializer, guard, etc.), extract it to a single module under the appropriate layer (`api-mapper`, `api-repository`, or a project-level type) rather than copy-pasting.
+- **Shared infrastructure MUST be extracted into a named file and imported, not re-implemented** — when two sites need the same helper (error wrapper, DTO serializer, guard, etc.), extract it to a single module under the appropriate layer (`http-mapper`, `http-repository`, or a project-level type) rather than copy-pasting.
 
 ## Page + Colocated Components Pattern
 
@@ -61,14 +61,14 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 ## Server Component / Client Component Boundary
 
 - Push `'use client'` boundary as deep (leaf-level) as possible
-- `src/lib/domain/`, `src/lib/api/types.ts`, `src/lib/api/mappers/` can be used in both server and client (pure TS)
+- `src/domain/`, `src/http/_generated/types.ts`, `src/http/<feature>/mapper.ts` can be used in both server and client (pure TS)
 
 ## Error Handling Strategy
 
 ### Service Layer
 
 - Throws domain errors on business rule violations (e.g., `InsufficientStockError`)
-- Domain errors are pure TS classes defined in `src/lib/domain/errors/`
+- Domain errors are pure TS classes defined per feature in `src/domain/<feature>/errors.ts`
 
 ### Repository Layer
 
@@ -91,7 +91,7 @@ export function ProductsContent({ dict }: { dict: Dictionary['Products'] }) {
 
 ## Internationalization (next-intl)
 
-- `en.json` is the source of truth for dictionary keys — `ko.json` must match its structure (located in `src/common/dictionaries/`)
+- `en.json` is the source of truth for dictionary keys — `ko.json` must match its structure (located in `src/lib/dictionaries/`)
 - Dictionary keys are organized by feature/page (e.g., `Products`, `Navigation`)
 - Client Components receive translated strings as props (no dictionary access inside `_components/`)
 - Type safety: `Dictionary` type is derived from `en.json` via `typeof import`

@@ -16,23 +16,24 @@ export const baseBoundaryRules = [
       { to: { type: 'domain-service' } },
     ],
   },
-  // API 원시 계층: 외부에서만 주입받아 쓰므로 import 0개 (순수 데이터/통신 경계)
-  { from: { type: 'api-client' }, allow: [] },
-  { from: { type: 'api-endpoint' }, allow: [] },
-  { from: { type: 'api-dto' }, allow: [] },
+  // HTTP 원시 계층: 외부에서만 주입받아 쓰므로 import 0개 (순수 데이터/통신 경계)
+  { from: { type: 'http-client' }, allow: [] },
+  { from: { type: 'http-endpoint' }, allow: [] },
+  { from: { type: 'http-dto' }, allow: [] },
   {
     // Mapper: DTO → Domain 변환 전용. 두 타입 모두 참조 필요
-    from: { type: 'api-mapper' },
-    allow: [{ to: { type: 'domain-model' } }, { to: { type: 'api-dto' } }],
+    from: { type: 'http-mapper' },
+    allow: [{ to: { type: 'domain-model' } }, { to: { type: 'http-dto' } }],
   },
   {
     // Repository: Port 구현체. 모든 원시 통신 요소 + domain 사용.
     // db는 DB 드라이버 래퍼(MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관) — Repository는 실제 DB 호출을 담당하므로 허용.
-    from: { type: 'api-repository' },
+    from: { type: 'http-repository' },
     allow: [
-      { to: { type: 'api-client' } },
-      { to: { type: 'api-endpoint' } },
-      { to: { type: 'api-mapper' } },
+      { to: { type: 'http-client' } },
+      { to: { type: 'http-endpoint' } },
+      { to: { type: 'http-dto' } },         // type-safe `client.get<UserDto>(...)` 호출용
+      { to: { type: 'http-mapper' } },
       { to: { type: 'domain-port' } },
       { to: { type: 'domain-error' } },
       { to: { type: 'domain-model' } },
@@ -40,7 +41,7 @@ export const baseBoundaryRules = [
     ],
   },
   // Hook: UI에 제공되는 데이터 페칭 훅. UseCase(domain-service)만 호출 (Repository 직접 호출 금지)
-  { from: { type: 'api-hook' }, allow: [{ to: { type: 'domain-service' } }] },
+  { from: { type: 'http-hook' }, allow: [{ to: { type: 'domain-service' } }] },
   // lib-shared: src/lib 루트 공용 유틸. 내부 의존 0개 (순수 유틸만)
   { from: { type: 'lib-shared' }, allow: [] },
   // db: DB 드라이버 래퍼 — 프로젝트 내 어떤 element도 import 하지 않는다 (순수 래퍼).
@@ -59,7 +60,7 @@ export const baseBoundaryRules = [
     // 페이지 전용 컴포넌트: hook으로 데이터 조회 + UI 조합 + 공용 유틸 사용
     from: { type: 'page-component' },
     allow: [
-      { to: { type: 'api-hook' } },
+      { to: { type: 'http-hook' } },
       { to: { type: 'shared-ui' } },
       { to: { type: 'domain-model' } },
       { to: { type: 'page-component' } },
@@ -81,7 +82,7 @@ export const baseBoundaryRules = [
   { from: { type: 'shared-type' }, allow: [{ to: { type: 'dictionary' } }] },
   {
     // 이메일 템플릿: i18n 사전과 공통 타입만 접근 가능.
-    // 도메인/API 레이어를 직접 import하면 서버 전용 로직이 이메일 렌더 경로로 새게 된다.
+    // 도메인/HTTP 레이어를 직접 import하면 서버 전용 로직이 이메일 렌더 경로로 새게 된다.
     // 필요한 데이터는 호출자(route-handler 등)가 props로 주입해야 한다.
     from: { type: 'email-template' },
     allow: [{ to: { type: 'dictionary' } }, { to: { type: 'shared-type' } }],
@@ -99,7 +100,7 @@ export const baseBoundaryRules = [
   },
   {
     // Page (최상위 컨슈머): 페이지 조립에 필요한 거의 모든 레이어 사용 가능
-    // (단, domain-service/repository/api-hook 직접 호출 금지 — 컴포넌트를 거쳐야 함)
+    // (단, domain-service/repository/http-hook 직접 호출 금지 — 컴포넌트를 거쳐야 함)
     from: { type: 'page' },
     allow: [
       { to: { type: 'page-component' } },

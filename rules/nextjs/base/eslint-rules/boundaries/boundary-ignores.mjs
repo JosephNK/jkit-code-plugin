@@ -11,8 +11,9 @@ export const baseBoundaryIgnores = [
   '*.ts',
   '*.d.ts',
   'types/**',
-  'src/common/types/**',
+  'src/lib/types/**',
   '.jkit/**',
   'scripts/**',
   'e2e/**',
+  'specs/**',
 ];
