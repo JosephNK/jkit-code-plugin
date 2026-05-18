@@ -1,6 +1,6 @@
-import { defineConfig } from 'eslint/config';
+import { defineConfig } from "eslint/config";
 
-import jkitLocalPlugin from '../../custom-rules/index.mjs';
+import jkitLocalPlugin from "../../custom-rules/index.mjs";
 
 /**
  * 표준 ESLint 룰로 표현 불가능한 프로젝트 고유 규칙 (`local/*` plugin).
@@ -13,10 +13,20 @@ export const baseCustomRules = defineConfig(
 
   // JSX inline style prop: 디자인 토큰 리터럴 차단
   {
-    files: ['src/**/*.{ts,tsx}'],
-    ignores: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"],
     rules: {
-      'local/no-inline-style-tokens': 'error',
+      "local/no-inline-style-tokens": "error",
+    },
+  },
+
+  // src/{domain,http}/<feature>/ 직속 하위 디렉토리 금지 (flat-only).
+  // boundaries/no-unknown-files가 잡지 못하는 빈 폴더·구조 위반을 보강.
+  {
+    files: ["src/domain/**/*.{ts,tsx}", "src/http/**/*.{ts,tsx}"],
+    ignores: ["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "local/no-nested-feature-dir": "error",
     },
   },
 
