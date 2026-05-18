@@ -473,7 +473,7 @@ export async function GET(
 | `page-component` | `http-hook`, `shared-ui`, `shared-hook`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type`, `i18n-config` |
 | `page-provider` | `lib-shared`, `lib-shared-barrel`, `shared-hook` |
 | `dictionary` | `shared-type`, `dictionary` |
-| `i18n-config` | `dictionary` |
+| `i18n-config` | `dictionary`, `i18n-config` |
 | `shared-type` | `dictionary` |
 | `email-template` | `dictionary`, `shared-type` |
 | `route-handler` | `domain-model`, `domain-error`, `domain-service`, `shared-type` |

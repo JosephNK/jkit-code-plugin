@@ -108,10 +108,11 @@ export const baseBoundaryRules = [
     allow: [{ to: { type: "shared-type" } }, { to: { type: "dictionary" } }],
   },
   {
-    // i18n 런타임 설정 (next-intl routing/request/navigation): 사전(dictionary) 참조만 허용.
+    // i18n 런타임 설정 (next-intl routing/request/navigation): 사전(dictionary) + 동일 레이어 참조 허용.
     // 도메인/HTTP/UI 레이어 import 금지 — 설정 파일은 외부 패키지(next-intl)와 사전만 다룬다.
+    // self-allow: request.ts가 routing.ts의 locales를 참조하는 등 동일 레이어 내 협력이 필수.
     from: { type: "i18n-config" },
-    allow: [{ to: { type: "dictionary" } }],
+    allow: [{ to: { type: "dictionary" } }, { to: { type: "i18n-config" } }],
   },
   // 전역 타입: i18n 키 타입 조회를 위해 dictionary 참조 허용
   { from: { type: "shared-type" }, allow: [{ to: { type: "dictionary" } }] },
