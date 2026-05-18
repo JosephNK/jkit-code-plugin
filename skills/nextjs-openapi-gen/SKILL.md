@@ -28,12 +28,14 @@ Generates `src/http/_generated/types.ts` (DTO interfaces) and `src/http/_generat
    (cd ${CLAUDE_PLUGIN_ROOT} && [ -d node_modules/yaml ] || npm install)
    ```
    `${CLAUDE_PLUGIN_ROOT}`가 fresh checkout이면 `node_modules`가 없어 후속 node 실행이 실패한다 — 누락 시 자동 설치한다.
-3. **Generate API code**:
+3. **Generate API code** (반드시 프로젝트 루트에서 실행, `cd ${CLAUDE_PLUGIN_ROOT}` 금지):
    ```bash
-   cd ${CLAUDE_PLUGIN_ROOT} && node scripts/nextjs/openapi/generate-api.mjs {spec} [--dry-run]
+   node ${CLAUDE_PLUGIN_ROOT}/scripts/nextjs/openapi/generate-api.mjs {spec} [--dry-run]
    ```
+   - 스크립트는 `process.cwd()`를 프로젝트 루트로 사용하므로 cwd를 plugin 디렉토리로 옮기면 출력 파일이 plugin cache에 만들어진다.
    - URL spec은 `specs/openapi.{yaml,json}`으로 프로젝트 루트에 저장된다 (VCS 추적용).
    - 출력은 항상 프로젝트의 `src/http/_generated/types.ts` + `src/http/_generated/endpoints.ts`.
+   - Swagger UI URL(`/api-docs`)을 그대로 넘겨도 스크립트가 HTML 응답을 감지해 `/api-docs-json`, `/v3/api-docs` 등 일반 spec 엔드포인트로 자동 fallback 한다.
 4. **Format generated files** (skip if --dry-run):
    ```bash
    npx prettier --write src/http/_generated/types.ts src/http/_generated/endpoints.ts

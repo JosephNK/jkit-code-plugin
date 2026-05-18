@@ -69,23 +69,133 @@ function isUrl(s) {
   return s.startsWith("http://") || s.startsWith("https://");
 }
 
+async function fetchText(url) {
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { Accept: "application/json, application/yaml, text/yaml" },
+      signal: AbortSignal.timeout(30000),
+    });
+  } catch (e) {
+    return { error: `fetch failed: ${e.message}` };
+  }
+  if (!res.ok) {
+    return { error: `HTTP ${res.status} ${res.statusText}` };
+  }
+  const text = await res.text();
+  const contentType = (res.headers.get("content-type") || "").toLowerCase();
+  return { text, contentType };
+}
+
+function looksLikeHtml(text, contentType) {
+  if (contentType.includes("text/html")) return true;
+  const t = text.trimStart().toLowerCase();
+  return (
+    t.startsWith("<!doctype") || t.startsWith("<html") || t.startsWith("<")
+  );
+}
+
+function tryParseSpec(text) {
+  const trimmed = text.trim();
+  const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+  try {
+    const obj = isJson ? JSON.parse(text) : YAML.parse(text);
+    if (obj && typeof obj === "object" && typeof obj.openapi === "string") {
+      return { spec: obj, isJson };
+    }
+  } catch {
+    // not parseable
+  }
+  return null;
+}
+
+/**
+ * Derive common OpenAPI spec endpoint candidates from a Swagger UI URL.
+ * 입력이 NestJS `/api-docs`처럼 HTML을 반환할 때 자동 fallback 대상으로 사용.
+ */
+function deriveSpecCandidates(originalUrl) {
+  let parsed;
+  try {
+    parsed = new URL(originalUrl);
+  } catch {
+    return [];
+  }
+  const base = `${parsed.protocol}//${parsed.host}`;
+  const orig = parsed.pathname.replace(/\/$/, "");
+  const candidates = new Set();
+  // Sibling-of-input first (e.g. /api-docs → /api-docs-json, /api-docs.json)
+  if (orig) {
+    candidates.add(`${base}${orig}-json`);
+    candidates.add(`${base}${orig}.json`);
+    candidates.add(`${base}${orig}-yaml`);
+    candidates.add(`${base}${orig}.yaml`);
+  }
+  // Host-level common patterns (NestJS, SpringDoc, FastAPI 등)
+  for (const p of [
+    "/api-docs-json",
+    "/api-json",
+    "/api-docs.json",
+    "/swagger-json",
+    "/swagger.json",
+    "/openapi.json",
+    "/openapi.yaml",
+    "/v3/api-docs",
+    "/v3/api-docs.yaml",
+  ]) {
+    candidates.add(`${base}${p}`);
+  }
+  candidates.delete(originalUrl);
+  return [...candidates];
+}
+
 async function loadSpec(specArg, projectRoot) {
   let text;
   let source;
+  let isJson;
+  let spec;
+
   if (isUrl(specArg)) {
-    let res;
-    try {
-      res = await fetch(specArg, {
-        headers: { Accept: "application/json, application/yaml, text/yaml" },
-        signal: AbortSignal.timeout(30000),
-      });
-    } catch (e) {
-      fail(`fetch failed: ${e.message}`);
+    let res = await fetchText(specArg);
+    let parsed =
+      !res.error && !looksLikeHtml(res.text, res.contentType)
+        ? tryParseSpec(res.text)
+        : null;
+
+    // 초기 URL이 (a) HTTP 에러 (b) HTML 응답 (c) OpenAPI가 아닌 텍스트 중 하나면
+    // sibling/host-level 엔드포인트(/api-docs-json, /v3/api-docs 등)를 순차 탐지.
+    if (!parsed) {
+      const candidates = deriveSpecCandidates(specArg);
+      const reason = res.error
+        ? `Spec URL failed (${res.error})`
+        : `Spec URL did not return OpenAPI JSON/YAML`;
+      if (candidates.length) {
+        console.log(`${reason}. Probing common endpoints...`);
+        for (const url of candidates) {
+          const r = await fetchText(url);
+          if (r.error) continue;
+          if (looksLikeHtml(r.text, r.contentType)) continue;
+          const p = tryParseSpec(r.text);
+          if (p) {
+            res = r;
+            parsed = p;
+            console.log(`Found spec at: ${url}`);
+            break;
+          }
+        }
+      }
+      if (!parsed) {
+        fail(
+          `${reason}` +
+            (candidates.length
+              ? ` (also tried: ${candidates.join(", ")})`
+              : ""),
+        );
+      }
     }
-    if (!res.ok) fail(`fetch failed: HTTP ${res.status} ${res.statusText}`);
-    text = await res.text();
-    const trimmed = text.trim();
-    const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+
+    text = res.text;
+    spec = parsed.spec;
+    isJson = parsed.isJson;
     const ext = isJson ? "json" : "yaml";
     const specsDir = path.join(projectRoot, "specs");
     fs.mkdirSync(specsDir, { recursive: true });
@@ -96,15 +206,14 @@ async function loadSpec(specArg, projectRoot) {
     source = path.resolve(specArg);
     if (!fs.existsSync(source)) fail(`spec not found: ${specArg}`);
     text = fs.readFileSync(source, "utf8");
+    try {
+      spec = source.endsWith(".json") ? JSON.parse(text) : YAML.parse(text);
+    } catch (e) {
+      fail(`failed to parse spec: ${e.message}`);
+    }
+    if (!spec || typeof spec !== "object") fail("spec is empty or invalid");
   }
 
-  let spec;
-  try {
-    spec = source.endsWith(".json") ? JSON.parse(text) : YAML.parse(text);
-  } catch (e) {
-    fail(`failed to parse spec: ${e.message}`);
-  }
-  if (!spec || typeof spec !== "object") fail("spec is empty or invalid");
   return { spec, source };
 }
 
