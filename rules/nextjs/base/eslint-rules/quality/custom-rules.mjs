@@ -30,6 +30,16 @@ export const baseCustomRules = defineConfig(
     },
   },
 
+  // src/ 직속 디렉토리 화이트리스트: app, components, domain, http, lib, db,
+  // email-templates 외 폴더 생성 차단.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "local/no-unknown-src-dir": "error",
+    },
+  },
+
   // DO NOT REMOVE — Tailwind CSS 차단 룰 보존. 현재 custom-rules/index.mjs 에서
   // 플러그인 rule 등록 자체가 주석 처리되어 있어 활성화하면 "definition not found"
   // 에러가 난다. 함께 활성화하려면 이 블록과 index.mjs 양쪽 주석을 모두 해제.
