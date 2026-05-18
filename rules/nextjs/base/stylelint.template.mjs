@@ -14,7 +14,32 @@ const config = {
   rules: {
     ...stylelintBaseConfig.rules,
     // ─── Project-specific overrides below ───
-    // 예: stylelint-config-standard 일부 룰을 완화하고 싶을 때
+    // Tailwind CSS v4 at-rules 화이트리스트 — `@theme`, `@apply`, `@layer` 등
+    // stylelint-config-standard의 `at-rule-no-unknown: true`가 Tailwind directive를
+    // 차단하므로 보강. Tailwind를 쓰지 않으면 이 블록은 제거해도 무방.
+    "at-rule-no-unknown": [
+      true,
+      {
+        ignoreAtRules: [
+          "theme",
+          "tailwind",
+          "apply",
+          "layer",
+          "variants",
+          "screen",
+          "config",
+          "plugin",
+          "source",
+          "utility",
+          "custom-variant",
+          "reference",
+        ],
+      },
+    ],
+    // Tailwind v4는 `@import "tailwindcss"` 문자열 형식 사용 — stylelint-config-standard의
+    // `import-notation: "url"` 강제와 충돌하므로 해제.
+    "import-notation": "string",
+    // 추가 프로젝트별 override 예시:
     // 'selector-class-pattern': null,
     // 'no-descending-specificity': null,
   },
