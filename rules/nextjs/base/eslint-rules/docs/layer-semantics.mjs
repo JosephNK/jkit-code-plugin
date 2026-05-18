@@ -280,12 +280,38 @@ export const baseLayerSemantics = {
 
   // ─── Common resources ─────────────────────────────────────────────────────
   dictionary: {
-    role: "i18n 사전. 로케일별 메시지 객체 + 타입 안전 키 (shared-type과 상호 참조).",
+    role: "i18n 사전. 로케일별 메시지 객체·JSON + 타입 안전 키 (shared-type과 상호 참조).",
     contains: [
-      "사전 파일 — `src/lib/dictionaries/*.ts`",
+      "사전 파일 — `src/i18n/dictionaries/*.{json,ts}` (예: `en.json`, `ko.json`)",
       "로케일 loader — `src/app/[locale]/dictionaries.ts`",
     ],
-    forbids: ["런타임 비즈니스 로직 (순수 데이터 객체)"],
+    forbids: [
+      "런타임 비즈니스 로직 (순수 데이터 객체)",
+      "next-intl 설정 파일 동거 (`routing.ts`/`request.ts`/`navigation.ts`는 `i18n-config` 레이어로)",
+    ],
+  },
+
+  "i18n-config": {
+    role: "next-intl 런타임 설정 — routing(로케일/기본 로케일/prefix), request(서버 메시지 로드), navigation(Link/useRouter 헬퍼). 외부 패키지(next-intl)와 dictionary만 다루는 설정 경계.",
+    contains: [
+      "`src/i18n/routing.ts` — `defineRouting({ locales, defaultLocale, localePrefix })`",
+      "`src/i18n/request.ts` — `getRequestConfig` 기반 서버 메시지 로더",
+      "`src/i18n/navigation.ts` — `createNavigation(routing)` 결과 (Link·redirect·useRouter)",
+    ],
+    forbids: [
+      "도메인/HTTP/UI 레이어 import (설정 경계 — 사전만 참조)",
+      "사전 데이터를 `src/lib/dictionaries/`에 두는 패턴 (모두 `src/i18n/dictionaries/`로 통일)",
+    ],
+    example: [
+      "// src/i18n/routing.ts",
+      "import { defineRouting } from 'next-intl/routing';",
+      "export const routing = defineRouting({",
+      "  locales: ['en', 'ko'] as const,",
+      "  defaultLocale: 'en',",
+      "  localePrefix: 'always',",
+      "});",
+      "export type Locale = (typeof routing.locales)[number];",
+    ].join("\n"),
   },
 
   "shared-type": {

@@ -39,8 +39,16 @@ export const baseBoundaryElements = [
   {
     type: "dictionary",
     mode: "full",
-    pattern: ["src/lib/dictionaries/*", "src/app/\\[locale\\]/dictionaries.ts"],
-  }, // i18n 사전
+    pattern: [
+      "src/i18n/dictionaries/*",
+      "src/app/\\[locale\\]/dictionaries.ts",
+    ],
+  }, // i18n 사전 (로케일 메시지 JSON·TS)
+  {
+    type: "i18n-config",
+    mode: "full",
+    pattern: ["src/i18n/*.ts"],
+  }, // next-intl 런타임 설정 (routing/request/navigation)
   { type: "shared-type", pattern: ["src/lib/types"] }, // 전역 타입
   // DB driver wrapper — 클라이언트 초기화·커넥션 풀·트랜잭션 관리 등 DB 인프라 전담
   // (MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관. 실제 드라이버 선택은 프로젝트 재량)

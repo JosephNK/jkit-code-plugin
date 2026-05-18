@@ -5,7 +5,7 @@
 //
 // 허용:
 //   src/app, src/components, src/domain, src/http, src/hooks, src/lib,
-//   src/db, src/email-templates
+//   src/db, src/email-templates, src/i18n
 //
 // 위반 예:
 //   src/utils/...     ❌ (utils/ 디렉토리)
@@ -20,6 +20,7 @@
 //   src/lib/...       ✅
 //   src/db/...        ✅
 //   src/email-templates/... ✅
+//   src/i18n/...      ✅ (next-intl 런타임 설정 + 로케일 사전)
 //
 // 적용 범위:
 //   src/<dir>/        — 화이트리스트 외 디렉토리 차단
@@ -42,6 +43,7 @@ const ALLOWED_SRC_DIRS = new Set([
   "lib",
   "db",
   "email-templates",
+  "i18n",
 ]);
 
 const SRC_MARKER = "/src/";
@@ -54,11 +56,11 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Allow only whitelisted directories directly under src/ (app, components, domain, http, hooks, lib, db, email-templates)",
+        "Allow only whitelisted directories directly under src/ (app, components, domain, http, hooks, lib, db, email-templates, i18n)",
     },
     messages: {
       unknownDir:
-        '"src/{{ subdir }}/" is not allowed. Only these top-level folders are permitted under src/: app, components, domain, http, hooks, lib, db, email-templates.',
+        '"src/{{ subdir }}/" is not allowed. Only these top-level folders are permitted under src/: app, components, domain, http, hooks, lib, db, email-templates, i18n.',
     },
     schema: [],
   },

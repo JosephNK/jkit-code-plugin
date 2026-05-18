@@ -243,16 +243,43 @@ export function useOrder(id: string) {
 
 ### `dictionary`
 
-**Role** — i18n 사전. 로케일별 메시지 객체 + 타입 안전 키 (shared-type과 상호 참조).
+**Role** — i18n 사전. 로케일별 메시지 객체·JSON + 타입 안전 키 (shared-type과 상호 참조).
 
 **Contains**
 
-- 사전 파일 — `src/lib/dictionaries/*.ts`
+- 사전 파일 — `src/i18n/dictionaries/*.{json,ts}` (예: `en.json`, `ko.json`)
 - 로케일 loader — `src/app/[locale]/dictionaries.ts`
 
 **Forbids**
 
 - 런타임 비즈니스 로직 (순수 데이터 객체)
+- next-intl 설정 파일 동거 (`routing.ts`/`request.ts`/`navigation.ts`는 `i18n-config` 레이어로)
+
+### `i18n-config`
+
+**Role** — next-intl 런타임 설정 — routing(로케일/기본 로케일/prefix), request(서버 메시지 로드), navigation(Link/useRouter 헬퍼). 외부 패키지(next-intl)와 dictionary만 다루는 설정 경계.
+
+**Contains**
+
+- `src/i18n/routing.ts` — `defineRouting({ locales, defaultLocale, localePrefix })`
+- `src/i18n/request.ts` — `getRequestConfig` 기반 서버 메시지 로더
+- `src/i18n/navigation.ts` — `createNavigation(routing)` 결과 (Link·redirect·useRouter)
+
+**Forbids**
+
+- 도메인/HTTP/UI 레이어 import (설정 경계 — 사전만 참조)
+- 사전 데이터를 `src/lib/dictionaries/`에 두는 패턴 (모두 `src/i18n/dictionaries/`로 통일)
+
+```ts
+// src/i18n/routing.ts
+import { defineRouting } from 'next-intl/routing';
+export const routing = defineRouting({
+  locales: ['en', 'ko'] as const,
+  defaultLocale: 'en',
+  localePrefix: 'always',
+});
+export type Locale = (typeof routing.locales)[number];
+```
 
 ### `shared-type`
 
@@ -442,23 +469,26 @@ export async function GET(
 | `lib-shared-barrel` | `lib-shared` |
 | `db` | _(no layer imports)_ |
 | `shared-hook` | `lib-shared`, `lib-shared-barrel`, `shared-type`, `domain-model`, `shared-hook` |
-| `shared-ui` | `domain-model`, `shared-ui`, `shared-hook`, `shared-type` |
-| `page-component` | `http-hook`, `shared-ui`, `shared-hook`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type` |
+| `shared-ui` | `domain-model`, `shared-ui`, `shared-hook`, `shared-type`, `i18n-config` |
+| `page-component` | `http-hook`, `shared-ui`, `shared-hook`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type`, `i18n-config` |
 | `page-provider` | `lib-shared`, `lib-shared-barrel`, `shared-hook` |
 | `dictionary` | `shared-type`, `dictionary` |
+| `i18n-config` | `dictionary` |
 | `shared-type` | `dictionary` |
 | `email-template` | `dictionary`, `shared-type` |
 | `route-handler` | `domain-model`, `domain-error`, `domain-service`, `shared-type` |
-| `page` | `page-component`, `page-provider`, `shared-ui`, `dictionary`, `shared-type`, `page` |
+| `page` | `page-component`, `page-provider`, `shared-ui`, `dictionary`, `shared-type`, `i18n-config`, `page` |
 
 ## Restricted Patterns (Import 금지 패턴)
 
 전역 no-restricted-imports 패턴. 깊은 상대경로(`../../**`) 금지로 폴더 구조
 리팩토링 시 import 파손 방지 + `@/*` path alias 사용 강제.
+더불어 deprecated 경로(`@/lib/dictionaries/**`)를 `@/i18n/**`로 이동시키도록 차단.
 
 | 패턴 | 메시지 |
 | --- | --- |
 | `../../**` | Use @/* path alias instead of deep relative parent imports. |
+| `@/lib/dictionaries/*`, `@/lib/dictionaries/**` | Move i18n to src/i18n/: dictionaries → @/i18n/dictionaries/*, routing/request/navigation → @/i18n/*. |
 
 ## Restricted Syntax (AST 금지 구문)
 

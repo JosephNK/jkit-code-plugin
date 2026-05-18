@@ -58,9 +58,14 @@
     │   │   ├── mapper.ts         # http-mapper — DTO ↔ Domain 변환
     │   │   └── repository.ts     # http-repository — Port 구현체
     │   └── client.ts             # http-client — HTTP 클라이언트
+    ├── i18n/
+    │   ├── *.ts                  # i18n-config — next-intl 런타임 설정 (routing/request/navigation)
+    │   ├── dictionaries/         # 로케일별 i18n 사전 (`<locale>.json` 또는 `<locale>.ts`)
+    │   │   └── <locale>.json     # 예: `en.json`, `ko.json`
+    │   ├── navigation.ts         # next-intl `createNavigation(routing)` — Link/redirect/useRouter
+    │   ├── request.ts            # next-intl `getRequestConfig` — 서버 메시지 로더
+    │   └── routing.ts            # next-intl `defineRouting` — locales/defaultLocale/localePrefix
     └── lib/
-        ├── dictionaries/
-        │   └── *                 # dictionary — i18n 사전
         ├── types/                # shared-type — 전역 타입
         └── utils/
             ├── *.ts              # lib-shared — 공용 유틸 함수
@@ -83,7 +88,8 @@
 | `http-hook` | `src/http/*/hook.ts` | `full` | TanStack Query 훅 |
 | `lib-shared-barrel` | `src/lib/utils/index.ts` | `full` | 공용 유틸 barrel (re-export 전용) |
 | `lib-shared` | `src/lib/utils/*.ts` | `full` | 공용 유틸 함수 |
-| `dictionary` | `src/lib/dictionaries/*` / `src/app/\[locale\]/dictionaries.ts` | `full` | i18n 사전 |
+| `dictionary` | `src/i18n/dictionaries/*` / `src/app/\[locale\]/dictionaries.ts` | `full` | i18n 사전 (로케일 메시지 JSON·TS) |
+| `i18n-config` | `src/i18n/*.ts` | `full` | next-intl 런타임 설정 (routing/request/navigation) |
 | `shared-type` | `src/lib/types` | — | 전역 타입 |
 | `db` | `src/db` | — | DB 드라이버 래퍼 |
 | `shared-hook` | `src/hooks` | — | 전역 재사용 React hook |

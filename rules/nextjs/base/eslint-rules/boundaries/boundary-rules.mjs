@@ -67,16 +67,19 @@ export const baseBoundaryRules = [
   },
   {
     // 전역 재사용 UI: 도메인 모델은 타입 표현용으로만 참조. API 호출 금지 (domain-service 접근 불가)
+    // next-intl navigation(Link/useRouter) 사용을 위해 i18n-config 허용.
     from: { type: "shared-ui" },
     allow: [
       { to: { type: "domain-model" } },
       { to: { type: "shared-ui" } },
       { to: { type: "shared-hook" } },
       { to: { type: "shared-type" } },
+      { to: { type: "i18n-config" } },
     ],
   },
   {
     // 페이지 전용 컴포넌트: hook으로 데이터 조회 + UI 조합 + 공용 유틸 사용
+    // next-intl navigation 사용을 위해 i18n-config 허용.
     from: { type: "page-component" },
     allow: [
       { to: { type: "http-hook" } },
@@ -87,6 +90,7 @@ export const baseBoundaryRules = [
       { to: { type: "lib-shared" } },
       { to: { type: "lib-shared-barrel" } },
       { to: { type: "shared-type" } },
+      { to: { type: "i18n-config" } },
     ],
   },
   {
@@ -102,6 +106,12 @@ export const baseBoundaryRules = [
     // i18n 사전: 타입과 다른 사전 참조만 허용
     from: { type: "dictionary" },
     allow: [{ to: { type: "shared-type" } }, { to: { type: "dictionary" } }],
+  },
+  {
+    // i18n 런타임 설정 (next-intl routing/request/navigation): 사전(dictionary) 참조만 허용.
+    // 도메인/HTTP/UI 레이어 import 금지 — 설정 파일은 외부 패키지(next-intl)와 사전만 다룬다.
+    from: { type: "i18n-config" },
+    allow: [{ to: { type: "dictionary" } }],
   },
   // 전역 타입: i18n 키 타입 조회를 위해 dictionary 참조 허용
   { from: { type: "shared-type" }, allow: [{ to: { type: "dictionary" } }] },
@@ -126,6 +136,7 @@ export const baseBoundaryRules = [
   {
     // Page (최상위 컨슈머): 페이지 조립에 필요한 거의 모든 레이어 사용 가능
     // (단, domain-service/repository/http-hook 직접 호출 금지 — 컴포넌트를 거쳐야 함)
+    // layout/page에서 next-intl routing·navigation 사용을 위해 i18n-config 허용.
     from: { type: "page" },
     allow: [
       { to: { type: "page-component" } },
@@ -133,6 +144,7 @@ export const baseBoundaryRules = [
       { to: { type: "shared-ui" } },
       { to: { type: "dictionary" } },
       { to: { type: "shared-type" } },
+      { to: { type: "i18n-config" } },
       { to: { type: "page" } },
     ],
   },
