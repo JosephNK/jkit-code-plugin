@@ -14,6 +14,7 @@
 //   {{BOUNDARY_RULES}}      — 추가 boundary from/allow 규칙
 //   {{BOUNDARY_PATCHES}}    — 기존 base 규칙에 allow를 덧붙이는 패치
 //   {{BOUNDARY_IGNORES}}    — boundary 검사 제외 경로 추가분
+//   {{CUSTOM_CONFIG}}       — 스택별 custom config 블록(룰 override 등) 주입 지점
 // =============================================================================
 
 import {
@@ -128,6 +129,9 @@ const eslintConfig = [
   // [8] 프로젝트 공용 custom 룰 (conventions.md 강제)
   //     JSX 인라인 토큰 하드코딩 차단, Tailwind CSS import 차단
   ...baseCustomRules,
+
+  // [8-1] 스택별 custom config (per-path rule override 등)
+  // {{CUSTOM_CONFIG}}
 
   // ─── Project-specific rules below ───
   // 프로젝트 개별 override는 이 아래에 추가한다.

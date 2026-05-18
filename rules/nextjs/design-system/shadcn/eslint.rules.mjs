@@ -1,8 +1,12 @@
 // =============================================================================
 // JKit Next.js — shadcn/ui 스택 규칙
 //
-// {{STACK_IMPORTS}} / {{RESTRICTED_PATTERNS}} / {{DOMAIN_BANNED}}에 주입.
+// {{STACK_IMPORTS}} / {{RESTRICTED_PATTERNS}} / {{DOMAIN_BANNED}} /
+// {{BOUNDARY_PATCHES}} / {{CUSTOM_CONFIG}}에 주입.
 // =============================================================================
+
+import { defineConfig } from "eslint/config";
+import sonarjs from "eslint-plugin-sonarjs";
 
 /**
  * 다른 런타임 CSS-in-JS 차단 — shadcn은 Tailwind utility class + CSS 변수 기반이라
@@ -40,3 +44,16 @@ export const shadcnBoundaryAllowPatches = [
   { from: "shared-ui", allow: { to: { type: "lib-shared" } } },
   { from: "shared-ui", allow: { to: { type: "lib-shared-barrel" } } },
 ];
+
+/**
+ * `src/components/ui/**` 경로의 모든 `sonarjs/*` 룰 비활성화 — shadcn CLI가 생성·동기화하는
+ * 외부 컴포넌트(Radix wrapper, CVA variants 등)는 SonarJS 코드 스멜 규칙을 자주 위반한다
+ * (인지 복잡도, 중첩 분기, 큰 함수 등). 사용자 코드가 아니므로 해당 경로에서만 일괄 off.
+ * 프로젝트 작성 코드(`src/components/<own>/**`)에는 영향이 없다.
+ */
+export const shadcnDisableSonarjsForUi = defineConfig({
+  files: ["src/components/ui/**/*.{ts,tsx}"],
+  rules: Object.fromEntries(
+    Object.keys(sonarjs.rules).map((name) => [`sonarjs/${name}`, "off"]),
+  ),
+});

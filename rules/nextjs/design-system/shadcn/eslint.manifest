@@ -1,6 +1,7 @@
 --- import ---
 import {
   shadcnBoundaryAllowPatches,
+  shadcnDisableSonarjsForUi,
   shadcnDomainBannedPackages,
   shadcnRestrictedPatterns,
 } from '@jkit/code-plugin/nextjs/design-system/shadcn/eslint.rules.mjs';
@@ -14,3 +15,5 @@ import {
 --- patches ---
         ...shadcnBoundaryAllowPatches,
 --- ignores ---
+--- custom ---
+  ...shadcnDisableSonarjsForUi,
