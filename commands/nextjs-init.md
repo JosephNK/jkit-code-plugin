@@ -230,9 +230,38 @@ esac
 >
 > 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
 >
+> **Next.js 16+ 충돌 회피**: `eslint-config-next@16+`는 `typescript-eslint` (unified meta 패키지)를 직접 의존성으로 가져온다. 이 상태에서 top-level에 `typescript-eslint`를 명시 설치하면 `@typescript-eslint` 플러그인이 두 인스턴스로 등록되어 flat config가 거부한다. 따라서 `eslint-config-next` 메이저 버전을 감지해 `typescript-eslint`는 v15 이하에서만 명시 설치한다 (v16+은 transitive로 따라온다).
+>
 > ```bash
 > cd "$PROJECT_ROOT"
-> NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs typescript-eslint eslint-config-prettier eslint-config-next"
+>
+> detect_next_major() {
+>   # 1) installed node_modules
+>   if [ -f node_modules/eslint-config-next/package.json ]; then
+>     jq -r '.version' node_modules/eslint-config-next/package.json | cut -d. -f1
+>     return
+>   fi
+>   # 2) package.json의 (dev)Dependencies 범위에서 첫 정수 추출
+>   for field in devDependencies dependencies; do
+>     v=$(jq -r ".${field}[\"eslint-config-next\"] // empty" package.json 2>/dev/null)
+>     if [ -n "$v" ]; then
+>       echo "$v" | grep -oE '[0-9]+' | head -1
+>       return
+>     fi
+>   done
+>   # 3) 신규 프로젝트 — 최신 메이저로 가정
+>   echo "16"
+> }
+>
+> NEXT_MAJOR=$(detect_next_major)
+>
+> NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs eslint-config-prettier eslint-config-next"
+>
+> # typescript-eslint: v15 이하에서만 명시 설치 (v16+은 eslint-config-next가 transitive로 가져옴)
+> if [ "$NEXT_MAJOR" -le 15 ]; then
+>   NEXTJS_PEERS="$NEXTJS_PEERS typescript-eslint"
+> fi
+>
 > case "$PM" in
 >   npm)  npm install -D $NEXTJS_PEERS ;;
 >   yarn) yarn add -D $NEXTJS_PEERS ;;
