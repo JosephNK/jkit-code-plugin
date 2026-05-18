@@ -50,17 +50,16 @@ outline: 2px solid var(--mantine-primary-color-filled, #005da7);
 
 디자인 토큰 리터럴 차단 — `var(--token)` 또는 design-token 참조만 허용 (컨벤션 C13).
 
+Note: `ignoreFunctions`는 `boolean | { [prop]: boolean }`, `message`는 `${property}`
+`${value}` `${types}` placeholder를 받는 string. 배열/함수 형태는 v1.11 이후
+"Invalid Option" 경고와 함께 exit code 2를 유발한다.
+
 ### Configuration
 
 - **Enforced properties**: `/color$/`, `fill`, `stroke`, `font-family`, `border-radius`, `box-shadow`
 - **Allowed values (ignoreValues)**: `/^var\(/`, `transparent`, `inherit`, `currentColor`, `unset`, `initial`, `none`, `0`, `auto`
-- **Allowed functions (ignoreFunctions)**: `var`
-- **Stylelint message (fn)**:
-  ```js
-  (property) =>
-            `Expected \`var(--token, <fallback>)\` or design-token reference for \`${property}\`. ` +
-            'Hardcoded values bypass theme tokens (src/theme.ts) and break dark/light switching.'
-  ```
+- **Stylelint message**:
+  > Expected `var(--token, <fallback>)` or design-token reference for ${property}. Hardcoded ${value} bypasses theme tokens (src/theme.ts) and breaks dark/light switching.
 
 ### Why
 

@@ -84,15 +84,19 @@ export const stylelintBaseConfig = {
      *
      * Bad: `color: #ff0000; border-radius: 12px;`
      * Good: `color: var(--mantine-color-text, #1a1a1a); border-radius: var(--mantine-radius-md, 8px);`
+     *
+     * Note: `ignoreFunctions`는 `boolean | { [prop]: boolean }`, `message`는 `${property}`
+     * `${value}` `${types}` placeholder를 받는 string. 배열/함수 형태는 v1.11 이후
+     * "Invalid Option" 경고와 함께 exit code 2를 유발한다.
      */
     "scale-unlimited/declaration-strict-value": [
       STRICT_VALUE_PROPS,
       {
         ignoreValues: STRICT_VALUE_IGNORES,
-        ignoreFunctions: ["var"],
-        message: (property) =>
-          `Expected \`var(--token, <fallback>)\` or design-token reference for \`${property}\`. ` +
-          "Hardcoded values bypass theme tokens (src/theme.ts) and break dark/light switching.",
+        ignoreFunctions: true,
+        message:
+          "Expected `var(--token, <fallback>)` or design-token reference for ${property}. " +
+          "Hardcoded ${value} bypasses theme tokens (src/theme.ts) and breaks dark/light switching.",
       },
     ],
   },
