@@ -276,6 +276,16 @@ function main() {
   const old = dev["@jkit/code-plugin"];
   dev["@jkit/code-plugin"] = gitDep;
 
+  // Next.js 16+ baseline: eslint-config-next가 typescript-eslint(unified meta)를
+  // transitive로 가져오므로 top-level에 명시되어 있으면 @typescript-eslint 플러그인이
+  // 두 인스턴스로 등록되어 flat config가 거부한다. 항목이 있으면 제거한다.
+  let tseslintNote = null;
+  if (args.framework === "nextjs" && "typescript-eslint" in dev) {
+    const removed = dev["typescript-eslint"];
+    delete dev["typescript-eslint"];
+    tseslintNote = `  Removed:   typescript-eslint (${removed}) — pulled transitively via eslint-config-next; explicit top-level entry causes plugin duplicate registration`;
+  }
+
   // Sort devDependencies alphabetically to keep diffs minimal.
   const sortedDev = {};
   for (const k of Object.keys(dev).sort()) sortedDev[k] = dev[k];
@@ -290,6 +300,7 @@ function main() {
   } else {
     process.stdout.write(`  Added:     @jkit/code-plugin → ${gitDep}\n`);
   }
+  if (tseslintNote) process.stdout.write(tseslintNote + "\n");
 
   process.stdout.write("\n");
   process.stdout.write(`Next step: run 'npm install' in ${args.outputDir}\n`);

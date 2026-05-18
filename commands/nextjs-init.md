@@ -224,43 +224,17 @@ esac
 > - `eslint-plugin-simple-import-sort` — import 순서 자동 정렬
 > - `eslint-plugin-unused-imports` — 미사용 import 제거
 > - `eslint-plugin-sonarjs` — 코드 스멜 / 복잡도 검사 (optional peer; nextjs base에서 사용)
-> - `typescript-eslint` — TypeScript 룰셋 (`tseslint.configs.*`)
 > - `eslint-config-prettier` — prettier와 충돌하는 ESLint 룰 비활성화 (optional peer; nextjs base에서 사용)
 > - `eslint-config-next` — Next.js core-web-vitals / typescript 프리셋 (optional peer; Next.js 스캐폴드가 기본 포함)
 >
-> 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
+> `typescript-eslint`는 `eslint-config-next@16+`가 transitive로 가져오므로 top-level에 명시하지 않는다. 명시 설치 시 `@typescript-eslint` 플러그인이 두 인스턴스로 등록되어 flat config가 거부한다. `gen-eslint.mjs`가 user `package.json`에 항목이 남아 있으면 자동으로 제거한다.
 >
-> **Next.js 16+ 충돌 회피**: `eslint-config-next@16+`는 `typescript-eslint` (unified meta 패키지)를 직접 의존성으로 가져온다. 이 상태에서 top-level에 `typescript-eslint`를 명시 설치하면 `@typescript-eslint` 플러그인이 두 인스턴스로 등록되어 flat config가 거부한다. 따라서 `eslint-config-next` 메이저 버전을 감지해 `typescript-eslint`는 v15 이하에서만 명시 설치한다 (v16+은 transitive로 따라온다).
+> 프로젝트에 없으면 Step 7에서 결정된 `PM`에 맞춰 추가 설치합니다. npm 7+ / pnpm / yarn berry는 `npm install` 단계에서 peer를 자동 설치하지만, yarn classic / bun 호환을 위해 명시 install을 권장합니다.
 >
 > ```bash
 > cd "$PROJECT_ROOT"
 >
-> detect_next_major() {
->   # 1) installed node_modules
->   if [ -f node_modules/eslint-config-next/package.json ]; then
->     jq -r '.version' node_modules/eslint-config-next/package.json | cut -d. -f1
->     return
->   fi
->   # 2) package.json의 (dev)Dependencies 범위에서 첫 정수 추출
->   for field in devDependencies dependencies; do
->     v=$(jq -r ".${field}[\"eslint-config-next\"] // empty" package.json 2>/dev/null)
->     if [ -n "$v" ]; then
->       echo "$v" | grep -oE '[0-9]+' | head -1
->       return
->     fi
->   done
->   # 3) 신규 프로젝트 — 최신 메이저로 가정
->   echo "16"
-> }
->
-> NEXT_MAJOR=$(detect_next_major)
->
 > NEXTJS_PEERS="eslint-plugin-boundaries eslint-plugin-import eslint-import-resolver-typescript eslint-plugin-simple-import-sort eslint-plugin-unused-imports eslint-plugin-sonarjs eslint-config-prettier eslint-config-next"
->
-> # typescript-eslint: v15 이하에서만 명시 설치 (v16+은 eslint-config-next가 transitive로 가져옴)
-> if [ "$NEXT_MAJOR" -le 15 ]; then
->   NEXTJS_PEERS="$NEXTJS_PEERS typescript-eslint"
-> fi
 >
 > case "$PM" in
 >   npm)  npm install -D $NEXTJS_PEERS ;;
