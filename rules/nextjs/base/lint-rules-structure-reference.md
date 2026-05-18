@@ -21,7 +21,7 @@
     │   │   ├── _components/      # page-component — Page-colocated Client Components ('use client')
     │   │   ├── _providers/       # page-provider — Page-colocated Providers ('use client')
     │   │   ├── (group)/          # Next.js route group — 괄호가 진짜 폴더명. URL 미포함. 실제: `(protected)`, `(auth)` 등
-    │   │   ├── <feature>/        # doc placeholder — 실제 폴더는 구체 이름 (예: `users/`, `products/`, `dashboard/`)
+    │   │   ├── <feature>/        # feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)
     │   │   │   ├── _components/  # page-component — 이 레벨에도 가능 (glob `**` 매칭)
     │   │   │   ├── [id]/         # Next.js 동적 세그먼트 — 브래킷이 진짜 폴더명. 안의 이름은 가변 (`[id]`, `[slug]`, `[orderId]` 등)
     │   │   │   │   └── page.tsx
@@ -32,8 +32,8 @@
     │   │   ├── loading.tsx       # Suspense fallback UI (선택)
     │   │   ├── not-found.tsx     # 404 페이지 (선택)
     │   │   └── page.tsx          # Home page (Server Component)
-    │   └── api/                  # Route Handlers 관용 위치 — `/api/*`
-    │       └── <resource>/       # doc placeholder — 실제 폴더는 구체 자원명 (예: `users/`, `auth/`, `projects/`)
+    │   └── api/                  # Route Handlers — `/api/*` 관례 위치
+    │       └── <resource>/       # API resource — 실제 이름 가변 (예: `users/`, `auth/`, `projects/`)
     │           ├── [...slug]/    # Next.js catch-all 세그먼트 — 폴더명이 그대로 `[...slug]` (예: `auth/[...nextauth]`)
     │           │   └── route.ts  # route-handler — API 진입점 (얇은 HTTP 어댑터)
     │           ├── [id]/         # Next.js 동적 세그먼트 — 폴더명이 그대로 `[id]` 또는 `[slug]` 등
@@ -42,7 +42,7 @@
     ├── components/               # shared-ui — 전역 재사용 컴포넌트
     ├── db/                       # db — DB 드라이버 래퍼
     ├── domain/
-    │   └── *
+    │   └── <feature>/            # feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)
     │       ├── errors.ts         # domain-error — 도메인 에러
     │       ├── model.ts          # domain-model — Entity·VO
     │       ├── port.ts           # domain-port — Repository 인터페이스
@@ -52,7 +52,7 @@
     │   ├── _generated/
     │   │   ├── endpoints.ts      # http-endpoint — (generated) URL 헬퍼
     │   │   └── types.ts          # http-dto — (generated) DTO 타입
-    │   ├── *
+    │   ├── <feature>/            # feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)
     │   │   ├── hook.ts           # http-hook — TanStack Query 훅
     │   │   ├── mapper.ts         # http-mapper — DTO ↔ Domain 변환
     │   │   └── repository.ts     # http-repository — Port 구현체

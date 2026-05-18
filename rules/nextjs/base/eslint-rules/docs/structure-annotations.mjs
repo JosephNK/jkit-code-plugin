@@ -30,7 +30,7 @@ export const baseStructureAnnotations = {
           {
             name: '<feature>',
             placeholder: true,
-            note: 'doc placeholder — 실제 폴더는 구체 이름 (예: `users/`, `products/`, `dashboard/`)',
+            note: 'feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)',
             children: [
               { name: 'page.tsx' },
               { name: '_components', note: '이 레벨에도 가능 (glob `**` 매칭)' },
@@ -45,12 +45,12 @@ export const baseStructureAnnotations = {
       },
       {
         name: 'api',
-        note: 'Route Handlers 관용 위치 — `/api/*` URL prefix용 (Next.js는 `api/` 자체를 강제하지 않음, `app/**/route.ts` 어디든 OK)',
+        note: 'Route Handlers — `/api/*` 관례 위치',
         children: [
           {
             name: '<resource>',
             placeholder: true,
-            note: 'doc placeholder — 실제 폴더는 구체 자원명 (예: `users/`, `auth/`, `projects/`)',
+            note: 'API resource — 실제 이름 가변 (예: `users/`, `auth/`, `projects/`)',
             children: [
               { name: 'route.ts', note: 'HTTP 핸들러 (GET/POST/PUT/DELETE export)' },
               {
@@ -65,6 +65,35 @@ export const baseStructureAnnotations = {
               },
             ],
           },
+        ],
+      },
+    ],
+  },
+  'src/domain': {
+    override: [
+      {
+        name: '<feature>',
+        placeholder: true,
+        note: 'feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)',
+        children: [
+          { name: 'model.ts' },
+          { name: 'errors.ts' },
+          { name: 'port.ts' },
+          { name: 'service.ts' },
+        ],
+      },
+    ],
+  },
+  'src/http': {
+    override: [
+      {
+        name: '<feature>',
+        placeholder: true,
+        note: 'feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)',
+        children: [
+          { name: 'mapper.ts' },
+          { name: 'repository.ts' },
+          { name: 'hook.ts' },
         ],
       },
     ],
