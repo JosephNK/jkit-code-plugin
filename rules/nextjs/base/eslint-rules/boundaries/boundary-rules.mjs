@@ -40,8 +40,15 @@ export const baseBoundaryRules = [
       { to: { type: "db" } },
     ],
   },
-  // Hook: UI에 제공되는 데이터 페칭 훅. UseCase(domain-service)만 호출 (Repository 직접 호출 금지)
-  { from: { type: "http-hook" }, allow: [{ to: { type: "domain-service" } }] },
+  // Hook: UI에 제공되는 데이터 페칭 훅 + Service 팩토리. 데이터 호출은 domain-service만, http-repository는 Service 팩토리에서 Port 구현체 주입 용도로만, domain-model은 useMutation/useQuery 타입 시그니처용으로 허용.
+  {
+    from: { type: "http-hook" },
+    allow: [
+      { to: { type: "domain-service" } },
+      { to: { type: "http-repository" } }, // Service 팩토리에서 Port 구현체 주입용 (데이터 호출 금지)
+      { to: { type: "domain-model" } }, // useMutation/useQuery 타입 시그니처용
+    ],
+  },
   // lib-shared: src/lib 루트 공용 유틸. 내부 의존 0개 (순수 유틸만)
   { from: { type: "lib-shared" }, allow: [] },
   // lib-shared-barrel: re-export 전용 (`src/lib/utils/index.ts`). barrel → leaf만 허용.

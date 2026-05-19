@@ -57,6 +57,8 @@ graph LR
   http_repository --> domain_model
   http_repository --> db
   http_hook --> domain_service
+  http_hook --> http_repository
+  http_hook --> domain_model
   lib_shared_barrel --> lib_shared
   shared_hook --> lib_shared
   shared_hook --> lib_shared_barrel

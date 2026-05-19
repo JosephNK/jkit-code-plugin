@@ -155,17 +155,26 @@ export const baseLayerSemantics = {
   },
 
   "http-hook": {
-    role: "UI에 제공되는 데이터 페칭 훅 (TanStack Query 등). domain-service만 호출 — Repository 직접 호출 금지.",
+    role: "UI에 제공되는 데이터 페칭 훅 (TanStack Query 등). 데이터 호출은 domain-service만 사용 — http-repository는 Service 팩토리에서 Port 구현체 주입 용도로만 import.",
     contains: [
       "한 feature의 React Query 훅 (useQuery/useMutation) — `src/http/<feature>/hook.ts`",
-      "Service 팩토리 훅도 같은 파일에 동거 가능",
+      "Service 팩토리 훅 (예: `useOrderService`)을 같은 파일에 동거. Port 구현체(`http-repository`)는 여기서만 주입.",
     ],
     forbids: [
-      "http-repository 직접 import (→ domain-service 경유)",
+      "http-repository를 데이터 호출에 직접 사용 (→ Service 메서드를 거쳐야 함)",
       "UI 컴포넌트 import (훅은 데이터 계약만)",
     ],
     example: [
       "// src/http/order/hook.ts",
+      "import { useMemo } from 'react';",
+      "import { useQuery } from '@tanstack/react-query';",
+      "import { OrderService } from '@/domain/order/service';",
+      "import { OrderRepository } from '@/http/order/repository';",
+      "",
+      "function useOrderService() {",
+      "  return useMemo(() => new OrderService(new OrderRepository()), []);",
+      "}",
+      "",
       "export function useOrder(id: string) {",
       "  const service = useOrderService();",
       "  return useQuery({",
