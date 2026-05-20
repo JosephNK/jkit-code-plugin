@@ -19,6 +19,7 @@ graph LR
     http_client["http-client"]
     http_endpoint["http-endpoint"]
     http_dto["http-dto"]
+    http_service["http-service"]
     http_mapper["http-mapper"]
     http_repository["http-repository"]
     http_hook["http-hook"]
@@ -46,11 +47,14 @@ graph LR
   domain_service --> domain_model
   domain_service --> domain_port
   domain_service --> domain_error
+  http_service --> http_endpoint
+  http_service --> http_dto
   http_mapper --> domain_model
   http_mapper --> http_dto
   http_repository --> http_client
   http_repository --> http_endpoint
   http_repository --> http_dto
+  http_repository --> http_service
   http_repository --> http_mapper
   http_repository --> domain_port
   http_repository --> domain_error

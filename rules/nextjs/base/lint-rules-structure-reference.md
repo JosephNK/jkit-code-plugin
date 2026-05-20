@@ -52,6 +52,8 @@
     ├── http/
     │   ├── _generated/
     │   │   ├── endpoints.ts      # http-endpoint — (generated) URL 헬퍼
+    │   │   ├── services/
+    │   │   │   └── *.ts          # http-service — (generated) tag별 API 서비스 클래스
     │   │   └── types.ts          # http-dto — (generated) DTO 타입
     │   ├── <feature>/            # feature module — 실제 이름 가변 (예: `users/`, `products/`, `dashboard/`)
     │   │   ├── hook.ts           # http-hook — TanStack Query 훅
@@ -83,6 +85,7 @@
 | `http-client` | `src/http/client.ts` | `full` | HTTP 클라이언트 |
 | `http-endpoint` | `src/http/_generated/endpoints.ts` | `full` | (generated) URL 헬퍼 |
 | `http-dto` | `src/http/_generated/types.ts` | `full` | (generated) DTO 타입 |
+| `http-service` | `src/http/_generated/services/*.ts` | `full` | (generated) tag별 API 서비스 클래스 |
 | `http-mapper` | `src/http/*/mapper.ts` | `full` | DTO ↔ Domain 변환 |
 | `http-repository` | `src/http/*/repository.ts` | `full` | Port 구현체 |
 | `http-hook` | `src/http/*/hook.ts` | `full` | TanStack Query 훅 |

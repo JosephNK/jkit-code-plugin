@@ -113,6 +113,29 @@ export const baseLayerSemantics = {
     ],
   },
 
+  "http-service": {
+    role: "OpenAPI tag별 자동 생성 API 서비스 클래스. operation = 메서드 1개로 매핑되어 KyInstance·endpoints·DTO를 조립한 HTTP 호출 + `.json<Dto>()` 반환을 담당. 도메인 변환은 하지 않음 (→ http-repository에서 mapper 호출).",
+    contains: [
+      "tag별 서비스 클래스 — `src/http/_generated/services/<tag-kebab>.ts` (generator 산출물)",
+      "query param 객체를 URLSearchParams로 정규화하는 private helper",
+    ],
+    forbids: [
+      "수기 편집 (jkit:nextjs-openapi-gen으로만 갱신)",
+      "도메인 모델 import (DTO만 반환 — 변환은 repository 책임)",
+      "다른 레이어 import (allow: http-endpoint, http-dto만)",
+    ],
+    example: [
+      "// src/http/_generated/services/o-auth.ts (generated)",
+      "export class OAuthService {",
+      "  constructor(private readonly api: KyInstance) {}",
+      "",
+      "  async oAuthAuthControllerLogin(body: OAuthLoginDto): Promise<{ success: boolean; data: OAuthAuthDataResponseDto }> {",
+      "    return this.api.post(endpoints.oAuthAuthControllerLogin(), { json: body }).json<{...}>();",
+      "  }",
+      "}",
+    ].join("\n"),
+  },
+
   "http-mapper": {
     role: "DTO ↔ Domain Model 변환 전담. snake_case → camelCase, nullable 정규화, enum 매핑 등.",
     contains: [

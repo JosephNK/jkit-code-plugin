@@ -1,6 +1,6 @@
 ---
 name: nextjs-openapi-gen
-description: Generates TypeScript DTO types and endpoint helpers from an OpenAPI 3.x spec into src/http/_generated/. Use for requests like "Generate API types", "Create types from spec", "Set up API from swagger".
+description: Generates TypeScript DTO types, endpoint helpers, and tag-grouped API service classes from an OpenAPI 3.x spec into src/http/_generated/. Use for requests like "Generate API types", "Create types from spec", "Set up API from swagger".
 argument-hint: "<spec> [--dry-run]"
 ---
 
@@ -11,9 +11,13 @@ OpenAPI 3.x specification files for code generation.
 
 # Next.js OpenAPI Code Generator Skill
 
-Generates `src/http/_generated/types.ts` (DTO interfaces) and `src/http/_generated/endpoints.ts` (URL helpers) from an OpenAPI 3.x spec.
+Generates three artifacts from an OpenAPI 3.x spec:
 
-**Generated files are fully overwritten on every run.** `src/http/client.ts` 그리고 feature-first 디렉토리 `src/http/<feature>/{mapper,repository,hook}.ts`는 user-authored — generator는 절대 손대지 않는다 (변환 규칙·Port 설계·캐시 정책 등 spec에서 도출 불가한 비즈니스 결정 영역).
+- `src/http/_generated/types.ts` — DTO interfaces (`components/schemas`)
+- `src/http/_generated/endpoints.ts` — URL helpers (operation별 path 템플릿)
+- `src/http/_generated/services/<tag-kebab>.ts` — tag별 API 서비스 클래스 (operation 1개 = 메서드 1개, `KyInstance` 주입, 반환은 raw DTO)
+
+**Generated files are fully overwritten on every run.** Stale service files for renamed tags are also removed on each run. `src/http/client.ts` 그리고 feature-first 디렉토리 `src/http/<feature>/{mapper,repository,hook}.ts`는 user-authored — generator는 절대 손대지 않는다 (변환 규칙·Port 설계·캐시 정책 등 spec에서 도출 불가한 비즈니스 결정 영역).
 
 ## Arguments
 
@@ -38,9 +42,9 @@ Generates `src/http/_generated/types.ts` (DTO interfaces) and `src/http/_generat
    - Swagger UI URL(`/api-docs`)을 그대로 넘겨도 스크립트가 HTML 응답을 감지해 `/api-docs-json`, `/v3/api-docs` 등 일반 spec 엔드포인트로 자동 fallback 한다.
 4. **Format generated files** (skip if --dry-run):
    ```bash
-   npx prettier --write src/http/_generated/types.ts src/http/_generated/endpoints.ts
+   npx prettier --write 'src/http/_generated/types.ts' 'src/http/_generated/endpoints.ts' 'src/http/_generated/services/*.ts'
    ```
-5. **Report**: schema·operation 개수와 생성 파일 경로 출력.
+5. **Report**: schema·operation 개수, tag별 service 파일 경로 출력.
 
 ## Generated File Structure
 
@@ -48,11 +52,14 @@ Generates `src/http/_generated/types.ts` (DTO interfaces) and `src/http/_generat
 src/http/
 ├── _generated/                    # ← generator 전용 (수기 편집 금지)
 │   ├── types.ts                   # ← GENERATED — DTO interfaces
-│   └── endpoints.ts               # ← GENERATED — URL helpers
+│   ├── endpoints.ts               # ← GENERATED — URL helpers
+│   └── services/                  # ← GENERATED — tag별 API 서비스 클래스
+│       ├── <tag-kebab>.ts         #   operation 1개 = 메서드 1개
+│       └── ...
 ├── client.ts                      # user-authored — HTTP client config
 ├── <feature>/                     # user-authored — feature-first
 │   ├── mapper.ts                  #   DTO ↔ Domain conversion
-│   ├── repository.ts              #   Port implementation
+│   ├── repository.ts              #   Port implementation (uses generated service)
 │   └── hook.ts                    #   TanStack Query hooks
 └── ...
 ```
@@ -96,6 +103,30 @@ export const endpoints = {
 } as const;
 ```
 
+### `src/http/_generated/services/<tag-kebab>.ts` 예시
+
+```ts
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+import type { KyInstance } from "ky";
+import { endpoints } from "../endpoints";
+import type { UserDto, CreateUserDto } from "../types";
+
+export class UsersService {
+  constructor(private readonly api: KyInstance) {}
+
+  async getUser(id: string): Promise<UserDto> {
+    return this.api.get(endpoints.getUser(id)).json<UserDto>();
+  }
+
+  async createUser(body: CreateUserDto): Promise<UserDto> {
+    return this.api.post(endpoints.createUser(), { json: body }).json<UserDto>();
+  }
+}
+```
+
+Tag → 파일/클래스명 매핑은 kebab-case (파일) / PascalCase + `Service` suffix (클래스). 예: `"User Profile"` → `user-profile.ts` + `UserProfileService`.
+
 ## Mapping Rules
 
 | OpenAPI | TypeScript |
@@ -113,9 +144,15 @@ export const endpoints = {
 | `allOf` | intersection (`A & B`) |
 | `$ref: '#/components/schemas/Foo'` | `FooDto` |
 | `required: [...]` 외 필드 | `?:` optional |
-| operation w/ `operationId` | `endpoints.<operationId>(...)` |
+| operation w/ `operationId` | `endpoints.<operationId>(...)` + 서비스 메서드명 |
 | operation w/o `operationId` | `endpoints.<method><PathPascal>(...)` fallback |
 | `parameters[in=path]` | 함수 인자 (타입은 schema 기반, 기본 `string`) |
+| `parameters[in=query]` | 서비스 메서드 `query?: { ... }` 인자 (모든 query가 required면 non-optional) |
+| `requestBody.content['application/json']` | 서비스 메서드 `body: BodyDto` 인자 + `{ json: body }` 전달 |
+| `responses['200'\|'201'\|'202'\|'2XX']` content | 서비스 메서드 반환 타입 |
+| 응답 schema 없음 / 204 | 메서드 반환 `Promise<void>` (`.json<T>()` 호출 생략) |
+| `operation.tags[0]` | 서비스 파일/클래스 그룹핑 키 (없으면 `Default`) |
+| query에 array (`string[]`) 포함 | 서비스 클래스 내 `private toSearchParams(q)` helper 자동 emit |
 
 ## Limitations
 
@@ -123,7 +160,9 @@ export const endpoints = {
 - **`components/schemas`만 DTO 추출** — `paths` 내 inline schema(`$ref` 아닌)는 제외. 모든 응답/요청 타입은 `components/schemas`에 정의해야 한다.
 - **이미 `Dto`로 끝나는 schema명은 중복 suffix 안 붙임** (`UserDto` → `UserDto` 유지).
 - **`oneOf` + `discriminator`**: 단순 union만 생성. 타입 narrowing 헬퍼는 mapper 레이어에서 작성.
-- **client.ts·mappers·repositories·hooks·domain은 생성 안 함** — 자세한 이유는 SKILL.md 상단 참조.
+- **client.ts·mappers·repositories·hooks·domain은 생성 안 함** — 자세한 이유는 SKILL.md 상단 참조. (services는 spec에서 100% 도출 가능해 생성 대상)
+- **응답 envelope 가정 없음** — 백엔드가 `{ success, data: T }` 같은 wrapper를 쓰더라도 spec의 schema 그대로 반환. unwrap은 repository/mapper 레이어 책임.
+- **인증 헤더는 client 인터셉터로 처리** — `parameters[in=header]`는 무시 (서비스 메서드 인자에 등장하지 않음). 인증·트레이싱 헤더는 `src/http/client.ts`의 `beforeRequest` 훅에서 일괄 처리.
 
 ## Usage Examples
 

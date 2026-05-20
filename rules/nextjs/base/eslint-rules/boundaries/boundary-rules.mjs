@@ -21,6 +21,11 @@ export const baseBoundaryRules = [
   { from: { type: "http-endpoint" }, allow: [] },
   { from: { type: "http-dto" }, allow: [] },
   {
+    // Service: tag별 generated API 서비스 클래스. endpoints + DTO만 참조 (KyInstance는 외부 주입).
+    from: { type: "http-service" },
+    allow: [{ to: { type: "http-endpoint" } }, { to: { type: "http-dto" } }],
+  },
+  {
     // Mapper: DTO → Domain 변환 전용. 두 타입 모두 참조 필요
     from: { type: "http-mapper" },
     allow: [{ to: { type: "domain-model" } }, { to: { type: "http-dto" } }],
@@ -28,11 +33,13 @@ export const baseBoundaryRules = [
   {
     // Repository: Port 구현체. 모든 원시 통신 요소 + domain 사용.
     // db는 DB 드라이버 래퍼(MongoDB/PostgreSQL/Redis/TypeORM 등 드라이버 무관) — Repository는 실제 DB 호출을 담당하므로 허용.
+    // http-service는 generated tag별 클래스 — Repository가 instantiate해서 사용.
     from: { type: "http-repository" },
     allow: [
       { to: { type: "http-client" } },
       { to: { type: "http-endpoint" } },
       { to: { type: "http-dto" } }, // type-safe `client.get<UserDto>(...)` 호출용
+      { to: { type: "http-service" } }, // generated 서비스 인스턴스화
       { to: { type: "http-mapper" } },
       { to: { type: "domain-port" } },
       { to: { type: "domain-error" } },

@@ -21,6 +21,11 @@ export const baseBoundaryElements = [
     pattern: ["src/http/_generated/endpoints.ts"],
   }, // (generated) URL 헬퍼
   { type: "http-dto", mode: "full", pattern: ["src/http/_generated/types.ts"] }, // (generated) DTO 타입
+  {
+    type: "http-service",
+    mode: "full",
+    pattern: ["src/http/_generated/services/*.ts"],
+  }, // (generated) tag별 API 서비스 클래스
   { type: "http-mapper", mode: "full", pattern: ["src/http/*/mapper.ts"] }, // DTO ↔ Domain 변환
   {
     type: "http-repository",

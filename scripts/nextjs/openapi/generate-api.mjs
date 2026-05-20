@@ -502,8 +502,13 @@ function extractPathParams(pathStr, op, pathItem) {
   });
 }
 
-function renderEndpoint({ path: pathStr, method, op, pathItem }, used) {
-  const opName = deriveOpName(op, method, pathStr, used);
+function renderEndpoint({
+  path: pathStr,
+  method: _method,
+  op,
+  pathItem,
+  opName,
+}) {
   const params = extractPathParams(pathStr, op, pathItem);
   const args = params.map((p) => `${p.name}: ${p.type}`).join(", ");
   const template = pathStr.replace(/\{([^}]+)\}/g, (_, n) => {
@@ -511,6 +516,193 @@ function renderEndpoint({ path: pathStr, method, op, pathItem }, used) {
     return "${" + safe + "}";
   });
   return `  ${opName}: (${args}) => \`${template}\`,`;
+}
+
+// Assign a unique camelCase method name to each operation, shared between
+// endpoints.ts entries and service class methods (so service method calls
+// `endpoints.X(...)` resolve to the matching helper).
+function assignOpNames(operations) {
+  const used = new Set();
+  return operations.map((opData) => ({
+    ...opData,
+    opName: deriveOpName(opData.op, opData.method, opData.path, used),
+  }));
+}
+
+// ─── Services rendering ─────────────────────────────────────────────────────
+
+function extractRequestBodyType(op) {
+  const json = op.requestBody?.content?.["application/json"];
+  if (!json || !json.schema) return null;
+  return renderType(json.schema);
+}
+
+function extractSuccessResponseType(op) {
+  const r = op.responses || {};
+  for (const code of ["200", "201", "202", "2XX"]) {
+    const resp = r[code];
+    if (!resp) continue;
+    const json = resp.content?.["application/json"];
+    if (!json || !json.schema) return "void";
+    return renderType(json.schema);
+  }
+  return "void";
+}
+
+function extractQueryParams(op, pathItem) {
+  const all = [...(pathItem.parameters || []), ...(op.parameters || [])];
+  return all
+    .filter((p) => p && p.in === "query" && p.name)
+    .map((p) => ({
+      name: p.name,
+      required: Boolean(p.required),
+      type: renderType(p.schema || { type: "string" }),
+    }));
+}
+
+function renderQueryParamType(params) {
+  const parts = params.map((p) => {
+    const safe = isSafeIdent(p.name) ? p.name : `'${escapeSingle(p.name)}'`;
+    const optional = p.required ? "" : "?";
+    return `${safe}${optional}: ${p.type}`;
+  });
+  return compactInlineObject(
+    `{\n${parts.map((p) => `    ${p};`).join("\n")}\n  }`,
+  );
+}
+
+// Collapse short multi-line object literals to single line for service signatures.
+// `renderInlineObject` emits multi-line by default (good for top-level interfaces in
+// types.ts), but service method signatures benefit from compact inline forms.
+function compactInlineObject(typeStr) {
+  if (!typeStr) return typeStr;
+  if (!typeStr.startsWith("{") || !typeStr.endsWith("}")) return typeStr;
+  if (!typeStr.includes("\n")) return typeStr;
+  const inner = typeStr
+    .slice(1, -1)
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ");
+  const candidate = `{ ${inner} }`;
+  return candidate.length <= 80 ? candidate : typeStr;
+}
+
+function renderServiceMethod({ path: pathStr, method, op, pathItem, opName }) {
+  const pathParams = extractPathParams(pathStr, op, pathItem);
+  const queryParams = extractQueryParams(op, pathItem);
+  const bodyType = compactInlineObject(extractRequestBodyType(op));
+  const respType = compactInlineObject(extractSuccessResponseType(op));
+
+  const args = [];
+  for (const p of pathParams) args.push(`${p.name}: ${p.type}`);
+  if (bodyType) args.push(`body: ${indentNested(bodyType, 4)}`);
+  if (queryParams.length > 0) {
+    const queryRequired = queryParams.some((p) => p.required);
+    const optional = queryRequired ? "" : "?";
+    args.push(`query${optional}: ${renderQueryParamType(queryParams)}`);
+  }
+  const argStr = args.join(", ");
+
+  const endpointArgs = pathParams.map((p) => p.name).join(", ");
+  const urlExpr = `endpoints.${opName}(${endpointArgs})`;
+
+  const optsParts = [];
+  if (bodyType) optsParts.push("json: body");
+  if (queryParams.length > 0)
+    optsParts.push("searchParams: this.toSearchParams(query)");
+  const optsExpr = optsParts.length > 0 ? `, { ${optsParts.join(", ")} }` : "";
+
+  const httpMethod = method.toLowerCase();
+  const body =
+    respType === "void"
+      ? `    await this.api.${httpMethod}(${urlExpr}${optsExpr});`
+      : `    return this.api.${httpMethod}(${urlExpr}${optsExpr}).json<${respType}>();`;
+
+  return `  async ${opName}(${argStr}): Promise<${respType}> {\n${body}\n  }`;
+}
+
+function collectMethodDtos(opData) {
+  const dtos = new Set();
+  const bodyType = extractRequestBodyType(opData.op);
+  const respType = extractSuccessResponseType(opData.op);
+  const queryParams = extractQueryParams(opData.op, opData.pathItem);
+  const allTypes = [bodyType, respType, ...queryParams.map((q) => q.type)];
+  for (const t of allTypes) {
+    if (!t) continue;
+    for (const m of t.matchAll(/\b([A-Z][a-zA-Z0-9]*Dto)\b/g)) {
+      dtos.add(m[1]);
+    }
+  }
+  return dtos;
+}
+
+function kebabCase(s) {
+  return String(s)
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .trim()
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+}
+
+function groupOperationsByTag(namedOperations) {
+  const groups = new Map();
+  for (const opData of namedOperations) {
+    const tag = opData.op.tags?.[0] || "Default";
+    if (!groups.has(tag)) groups.set(tag, []);
+    groups.get(tag).push(opData);
+  }
+  return groups;
+}
+
+function renderServiceFile(tag, ops) {
+  const className = `${toPascalCase(tag)}Service`;
+
+  const dtoSet = new Set();
+  for (const op of ops) {
+    for (const name of collectMethodDtos(op)) dtoSet.add(name);
+  }
+  const dtoNames = [...dtoSet].sort();
+  const dtoImport =
+    dtoNames.length > 0
+      ? `\nimport type {\n${dtoNames.map((n) => `  ${n},`).join("\n")}\n} from "../types";\n`
+      : "";
+
+  const hasQueryParams = ops.some(
+    (op) => extractQueryParams(op.op, op.pathItem).length > 0,
+  );
+  const searchParamsHelper = hasQueryParams
+    ? `\n  private toSearchParams(q: Record<string, unknown> | undefined): URLSearchParams {
+    const p = new URLSearchParams();
+    if (!q) return p;
+    for (const [k, v] of Object.entries(q)) {
+      if (v === undefined || v === null) continue;
+      if (Array.isArray(v)) for (const item of v) p.append(k, String(item));
+      else p.set(k, String(v));
+    }
+    return p;
+  }
+`
+    : "";
+
+  const methods = ops.map(renderServiceMethod).join("\n\n");
+
+  return [
+    GEN_HEADER,
+    "",
+    `import type { KyInstance } from "ky";`,
+    "",
+    `import { endpoints } from "../endpoints";`,
+    dtoImport,
+    `export class ${className} {`,
+    `  constructor(private readonly api: KyInstance) {}`,
+    searchParamsHelper,
+    methods,
+    `}`,
+    "",
+  ].join("\n");
 }
 
 // ─── File renderers ─────────────────────────────────────────────────────────
@@ -530,12 +722,11 @@ function renderTypesFile(schemas) {
   return `${GEN_HEADER}\n\n${blocks.join("\n\n")}\n`;
 }
 
-function renderEndpointsFile(operations) {
-  if (operations.length === 0) {
+function renderEndpointsFile(namedOperations) {
+  if (namedOperations.length === 0) {
     return `${GEN_HEADER}\n\nexport const endpoints = {} as const;\n`;
   }
-  const used = new Set();
-  const lines = operations.map((o) => renderEndpoint(o, used));
+  const lines = namedOperations.map(renderEndpoint);
   return `${GEN_HEADER}\n\nexport const endpoints = {\n${lines.join("\n")}\n} as const;\n`;
 }
 
@@ -549,25 +740,24 @@ async function main() {
 
   const schemas = spec.components?.schemas ?? {};
   const operations = collectOperations(spec.paths ?? {});
+  const namedOperations = assignOpNames(operations);
 
   const typesContent = renderTypesFile(schemas);
-  const endpointsContent = renderEndpointsFile(operations);
+  const endpointsContent = renderEndpointsFile(namedOperations);
+  const serviceGroups = groupOperationsByTag(namedOperations);
 
-  const typesPath = path.join(
-    projectRoot,
-    "src",
-    "http",
-    "_generated",
-    "types.ts",
-  );
-  const endpointsPath = path.join(
-    projectRoot,
-    "src",
-    "http",
-    "_generated",
-    "endpoints.ts",
-  );
+  const genDir = path.join(projectRoot, "src", "http", "_generated");
+  const typesPath = path.join(genDir, "types.ts");
+  const endpointsPath = path.join(genDir, "endpoints.ts");
+  const servicesDir = path.join(genDir, "services");
   const schemaCount = Object.keys(schemas).length;
+
+  const serviceFiles = [...serviceGroups.entries()].map(([tag, ops]) => ({
+    tag,
+    count: ops.length,
+    path: path.join(servicesDir, `${kebabCase(tag)}.ts`),
+    content: renderServiceFile(tag, ops),
+  }));
 
   if (args.dryRun) {
     console.log(
@@ -576,13 +766,29 @@ async function main() {
     console.log(
       `[dry-run] would write: ${path.relative(projectRoot, endpointsPath)} (${operations.length} operations)`,
     );
+    for (const f of serviceFiles) {
+      console.log(
+        `[dry-run] would write: ${path.relative(projectRoot, f.path)} (${f.count} methods, tag: ${f.tag})`,
+      );
+    }
     console.log(`Spec: ${path.relative(projectRoot, source)}`);
     return;
   }
 
-  fs.mkdirSync(path.dirname(typesPath), { recursive: true });
+  fs.mkdirSync(genDir, { recursive: true });
   fs.writeFileSync(typesPath, typesContent);
   fs.writeFileSync(endpointsPath, endpointsContent);
+
+  // Clear stale service files (tag renames between runs would otherwise leave orphans)
+  fs.mkdirSync(servicesDir, { recursive: true });
+  for (const entry of fs.readdirSync(servicesDir)) {
+    if (entry.endsWith(".ts")) {
+      fs.unlinkSync(path.join(servicesDir, entry));
+    }
+  }
+  for (const f of serviceFiles) {
+    fs.writeFileSync(f.path, f.content);
+  }
 
   console.log(
     `Generated: ${path.relative(projectRoot, typesPath)} (${schemaCount} schemas)`,
@@ -590,6 +796,11 @@ async function main() {
   console.log(
     `Generated: ${path.relative(projectRoot, endpointsPath)} (${operations.length} operations)`,
   );
+  for (const f of serviceFiles) {
+    console.log(
+      `Generated: ${path.relative(projectRoot, f.path)} (${f.count} methods)`,
+    );
+  }
   console.log(`Spec: ${path.relative(projectRoot, source)}`);
 }
 
