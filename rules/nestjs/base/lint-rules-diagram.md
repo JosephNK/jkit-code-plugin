@@ -54,6 +54,7 @@ graph LR
   provider --> common
   provider --> common_pure
   provider --> infrastructure
+  provider --> libs
   dto --> model
   dto --> common
   dto --> common_pure

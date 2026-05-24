@@ -11,48 +11,48 @@
 
 ## 프로젝트 구조
 
-> 아래 트리는 **대표 구조 예시**입니다. lint는 glob(`**`, `*`) 기반으로 유연하게 매칭하므로 `[feature]`, `(group)`, `[id]` 같은 placeholder 세그먼트의 실제 이름은 프로젝트마다 다를 수 있습니다. `[locale]`처럼 리터럴 bracket은 lint가 강제합니다.
+> 아래 트리는 **대표 구조 예시**입니다. 표기 컨벤션: `<name>` = doc placeholder (실제 폴더는 구체 이름, 예: `<feature>` → `users/`/`products/`). `[name]`/`[...name]`/`(name)` = Next.js 라우팅 컨벤션 (브래킷/괄호가 진짜 폴더명의 일부). lint는 glob(`**`, `*`)로 유연 매칭, `[locale]`처럼 명시된 literal bracket은 그대로 강제합니다.
 
 ```
 └── src/
-    ├── modules/
-    │   └── <group>/                    # (선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능
-    │       └── <domain>/               # Domain module — 실제 이름 가변 (예: profile, order)
-    │           ├── model/              # Entity, Value Object, pure domain functions
-    │           ├── port/               # All Port interfaces (inbound + outbound)
-    │           ├── service/            # Inbound-port implementation (business logic)
-    │           ├── controller/         # Driving Adapter (HTTP)
-    │           ├── strategy/           # Inbound Adapter (Passport 인증 전략 등) 또는 가변 알고리즘 (Strategy 패턴)
-    │           ├── provider/           # Outbound Adapter (DB, external services)
-    │           ├── dto/                # Input/output DTOs
-    │           ├── exception/          # Domain-specific exceptions
-    │           ├── common/             # (선택) 도메인 내부 공용 — boundary 검사 제외 (escape hatch)
-    │           └── <domain>.module.ts  # NestJS module (DI assembly) — lint ignored via **/*.module.ts
     ├── common/
     │   ├── authentication/             # Auth-related (Passport strategies, auth utils)
-    │   ├── guards/                     # Route Guards (@UseGuards 대상)
+    │   ├── config/                     # App-level configuration (env, ConfigModule schemas)
+    │   ├── constants/                  # Shared constants (enums, magic numbers, tokens)
+    │   ├── decorators/                 # Custom decorators (@CurrentUser, @Public 등)
+    │   ├── dtos/                       # Shared DTOs
+    │   ├── events/                     # Domain/integration event payloads & listeners
     │   ├── exceptions/                 # Exception Filters, domain exception base
+    │   ├── guards/                     # Route Guards (@UseGuards 대상)
+    │   ├── interceptors/               # Global Interceptors (logging, transform, timeout)
     │   ├── interfaces/                 # Shared interfaces
     │   ├── middlewares/                # Global middlewares
     │   ├── pipes/                      # Validation Pipes
-    │   ├── interceptors/               # Global Interceptors (logging, transform, timeout)
-    │   ├── decorators/                 # Custom decorators (@CurrentUser, @Public 등)
-    │   ├── events/                     # Domain/integration event payloads & listeners
-    │   ├── dtos/                       # Shared DTOs
-    │   ├── config/                     # App-level configuration (env, ConfigModule schemas)
-    │   ├── constants/                  # Shared constants (enums, magic numbers, tokens)
     │   └── utils/                      # Pure utility functions (no framework deps)
     ├── infrastructure/
+    │   ├── cache/                      # Cache configuration
     │   ├── database/                   # Database configuration
+    │   ├── email/                      # Email delivery infrastructure
+    │   ├── external/                   # External service clients (3rd-party SDK, HTTP client wrappers)
     │   ├── i18n/                       # Internationalization
     │   ├── logger/                     # Logging
     │   ├── metrics/                    # Prometheus metrics
-    │   ├── cache/                      # Cache configuration
-    │   ├── email/                      # Email delivery infrastructure
-    │   ├── transaction/                # Transaction management
-    │   └── external/                   # External service clients (3rd-party SDK, HTTP client wrappers)
-    └── libs/
-        └── **                          # libs — 독립 라이브러리
+    │   └── transaction/                # Transaction management
+    ├── libs/
+    │   └── **                          # libs — 독립 라이브러리
+    └── modules/
+        └── <group>/                    # (선택) Group prefix — 실제 이름 가변 (예: user, admin). 단층 구조면 생략 가능
+            └── <domain>/               # Domain module — 실제 이름 가변 (예: profile, order)
+                ├── <domain>.module.ts  # NestJS module (DI assembly) — lint ignored via **/*.module.ts
+                ├── common/             # (선택) 도메인 내부 공용 — boundary 검사 제외 (escape hatch)
+                ├── controller/         # Driving Adapter (HTTP)
+                ├── dto/                # Input/output DTOs
+                ├── exception/          # Domain-specific exceptions
+                ├── model/              # Entity, Value Object, pure domain functions
+                ├── port/               # All Port interfaces (inbound + outbound)
+                ├── provider/           # Outbound Adapter (DB, external services)
+                ├── service/            # Inbound-port implementation (business logic)
+                └── strategy/           # Inbound Adapter (Passport 인증 전략 등) 또는 가변 알고리즘 (Strategy 패턴)
 ```
 
 ## 레이어별 경로 매핑

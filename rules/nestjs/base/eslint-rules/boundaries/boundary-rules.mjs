@@ -72,6 +72,7 @@ export const baseBoundaryRules = [
     },
   },
   // provider — Port 구현체. ORM 엔티티 간 상호 참조로 provider→provider 허용
+  // libs는 외부 SDK/유틸 wrapper로, provider 구현 시 직접 호출 허용
   {
     from: { type: "provider" },
     allow: {
@@ -83,6 +84,7 @@ export const baseBoundaryRules = [
           "common-pure",
           "infrastructure",
           "provider",
+          "libs",
         ],
       },
     },

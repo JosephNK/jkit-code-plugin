@@ -325,7 +325,7 @@ export class CreateOrderRequestDto {
 | `service` | `model`, `port`, `exception`, `common`, `common-pure`, `infrastructure` |
 | `controller` | `port`, `dto`, `model`, `exception`, `common`, `common-pure`, `libs` |
 | `strategy` | `port`, `dto`, `model`, `exception`, `common`, `common-pure`, `libs` |
-| `provider` | `port`, `model`, `common`, `common-pure`, `infrastructure`, `provider` |
+| `provider` | `port`, `model`, `common`, `common-pure`, `infrastructure`, `provider`, `libs` |
 | `dto` | `model`, `common`, `common-pure`, `dto` |
 | `common` | `common`, `common-pure` |
 | `common-pure` | `common-pure` |
