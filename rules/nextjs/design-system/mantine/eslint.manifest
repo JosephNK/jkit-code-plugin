@@ -12,3 +12,4 @@ import {
 --- rules ---
 --- patches ---
 --- ignores ---
+      'src/theme.ts',
