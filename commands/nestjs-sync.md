@@ -6,7 +6,7 @@ description: Sync JKit docs and lint config in NestJS project
 
 NestJS 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`), `eslint.config.mjs`, `.husky/` 훅을 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `commitlint.config.mjs`는 건드리지 않습니다. (`package.json`의 husky/@commitlint/lint-staged devDeps와 `scripts.prepare`, `.husky/` 훅은 sync 대상.) 최초 셋업은 `/jkit-nestjs-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`은 건드리지 않습니다. `commitlint.config.mjs`도 있으면 보존하며, 없을 때만 husky 훅 정합성을 위해 새로 생성합니다. (`package.json`의 husky/@commitlint/lint-staged devDeps와 `scripts.prepare`, `.husky/` 훅은 sync 대상.) 최초 셋업은 `/jkit-nestjs-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -96,6 +96,10 @@ $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
 # 7. Husky hooks (.husky/* 덮어쓰기 + package.json husky/@commitlint/lint-staged devDeps와 scripts.prepare 패치)
 $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
+
+# 8. commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
+#    init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
+[ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
 해당 생성기에 사용자가 선택한 스택이 없으면 `--with` 인자를 생략합니다.

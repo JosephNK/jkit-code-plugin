@@ -6,7 +6,7 @@ description: Sync JKit docs and lint config in Flutter project
 
 Flutter 프로젝트의 JKit docs(`GIT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, `LINT.md`), `architecture_lint` pin, `.husky/` 훅을 플러그인 최신 버전과 동기화합니다.
 
-> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `commitlint.config.mjs`는 건드리지 않습니다. (`package.json`의 husky/@commitlint devDeps와 `scripts.prepare`, `.husky/` 훅은 sync 대상.) 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
+> 이 커맨드는 init이 아닙니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`는 건드리지 않습니다. `commitlint.config.mjs`도 있으면 보존하며, 없을 때만 husky 훅 정합성을 위해 새로 생성합니다. (`package.json`의 husky/@commitlint devDeps와 `scripts.prepare`, `.husky/` 훅은 sync 대상.) 최초 셋업은 `/jkit-flutter-init`를 사용하세요.
 
 ## 플러그인 경로 확인
 
@@ -112,6 +112,10 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 ```bash
 cd "$PROJECT_ROOT"
 $JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
+
+# commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
+# init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
+[ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
 > `package.json`이 없으면 스크립트가 fail합니다 — Flutter 프로젝트에 husky를 처음 적용하려면 `/jkit-flutter-init`을 먼저 실행하세요.
