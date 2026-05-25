@@ -45,6 +45,15 @@ export const baseConfig = defineConfig([
       "@typescript-eslint/no-base-to-string": "off",
       "@typescript-eslint/unbound-method": "off",
       "@typescript-eslint/no-deprecated": "error", // @deprecated API 사용 시 error — 마이그레이션 강제
+      // TypeScript 5.x가 `Error`를 lib.es5.d.ts + lib.es2022.error.d.ts 두 파일에
+      // declaration merging으로 분산 정의하면서, typescript-eslint 8.x의 builtin symbol
+      // 인식 로직이 이 multi-declaration 패턴을 완전히 처리하지 못한다. 결과:
+      // 모든 `throw new Error(...)`가 차단됨. `allow`로 Error 글로벌을 명시 허용해
+      // 룰 의도(non-Error throw 차단)는 유지하면서 환경 이슈만 우회.
+      "@typescript-eslint/only-throw-error": [
+        "error",
+        { allow: [{ from: "lib", name: "Error" }] },
+      ],
     },
   },
 
