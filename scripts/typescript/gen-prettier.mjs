@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 // =============================================================================
-// Copies rules/<framework>/base/stylelint.template.mjs to
-// <output-dir>/stylelint.config.mjs and patches <output-dir>/package.json:
-//   - devDependencies: stylelint, stylelint-config-standard,
-//     stylelint-declaration-strict-value, @jkit/code-plugin
-//   - scripts.lint:css
-//   - lint-staged glob for CSS files
+// Copies rules/<framework>/base/prettier.template.mjs to
+// <output-dir>/prettier.config.mjs and patches <output-dir>/package.json:
+//   - devDependencies: prettier (+ prettier-plugin-tailwindcss for nextjs)
+//   - scripts.format
+//   - lint-staged glob for code (TS/JS) — merged after `eslint --fix`
+//   - lint-staged glob for data (JSON/MD/YAML)
+//
+// Note: CSS/SCSS는 stylelint가 담당하므로 prettier glob에서 제외.
 //
 // Usage:
-//   gen-stylelint.mjs <framework> -p <output-dir>
+//   gen-prettier.mjs <framework> -p <output-dir>
 // =============================================================================
 
 import fs from "node:fs";
@@ -18,24 +20,30 @@ import { fileURLToPath } from "node:url";
 
 import { patchLintStaged, setDep } from "../common.mjs";
 
-const HELP = `Usage: gen-stylelint.mjs <framework> -p <output-dir>
+const HELP = `Usage: gen-prettier.mjs <framework> -p <output-dir>
 
-Copies the framework's stylelint template to <output-dir>/stylelint.config.mjs
+Copies the framework's prettier template to <output-dir>/prettier.config.mjs
 and patches <output-dir>/package.json with:
-  - devDependencies: stylelint, stylelint-config-standard, @jkit/code-plugin
-  - scripts.lint:css
-  - lint-staged glob for CSS files
+  - devDependencies: prettier (+ prettier-plugin-tailwindcss for nextjs)
+  - scripts.format
+  - lint-staged TS/JS glob (merged after eslint --fix)
+  - lint-staged JSON/MD/YAML glob
 
 Arguments:
-  <framework>    Framework name (e.g. nextjs)
+  <framework>    Framework name (e.g. nextjs, nestjs)
 
 Options:
   -p <dir>       Output directory (required)
   -h, --help     Show this help
 
 Examples:
-  ./scripts/typescript/gen-stylelint.mjs nextjs -p ./my-project
+  ./scripts/typescript/gen-prettier.mjs nextjs -p ./my-project
+  ./scripts/typescript/gen-prettier.mjs nestjs -p ./my-project
 `;
+
+// Pinned versions — bump together when needed.
+const PRETTIER_VERSION = "^3.6.2";
+const PRETTIER_PLUGIN_TAILWINDCSS_VERSION = "^0.6.14";
 
 function usage(code = 1) {
   (code === 0 ? process.stdout : process.stderr).write(HELP);
@@ -88,31 +96,17 @@ function main() {
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const pluginRoot = path.resolve(scriptDir, "..", "..");
   const rulesDir = path.join(pluginRoot, "rules", args.framework);
-  const template = path.join(rulesDir, "base", "stylelint.template.mjs");
+  const template = path.join(rulesDir, "base", "prettier.template.mjs");
 
   if (!fs.existsSync(template)) {
-    process.stderr.write(`Error: Stylelint template not found: ${template}\n`);
+    process.stderr.write(`Error: Prettier template not found: ${template}\n`);
     process.exit(1);
   }
 
-  // Copy template to stylelint.config.mjs.
   fs.mkdirSync(args.outputDir, { recursive: true });
-  const outputFile = path.join(args.outputDir, "stylelint.config.mjs");
+  const outputFile = path.join(args.outputDir, "prettier.config.mjs");
   fs.copyFileSync(template, outputFile);
   process.stdout.write(`Generated: ${outputFile}\n`);
-
-  // Resolve plugin version.
-  const pluginJson = path.join(pluginRoot, ".claude-plugin", "plugin.json");
-  if (!fs.existsSync(pluginJson)) {
-    process.stderr.write(`Error: plugin.json not found at ${pluginJson}\n`);
-    process.exit(1);
-  }
-  const pluginMeta = JSON.parse(fs.readFileSync(pluginJson, "utf8"));
-  if (!pluginMeta.version) {
-    process.stderr.write(`Error: version missing in ${pluginJson}\n`);
-    process.exit(1);
-  }
-  const gitDep = `github:JosephNK/jkit-code-plugin#v${pluginMeta.version}`;
 
   const userPkgPath = path.join(args.outputDir, "package.json");
   if (!fs.existsSync(userPkgPath)) {
@@ -128,44 +122,58 @@ function main() {
   // ── devDependencies ─────────────────────────────────────────────────────
   const dev = pkg.devDependencies || {};
   const devChanges = [];
-  // stylelint 17.x (Node 18+) — stylelint-config-standard 40.x is 17-compatible.
-  devChanges.push(setDep(dev, "stylelint", "^17.11.1"));
-  devChanges.push(setDep(dev, "stylelint-config-standard", "^40.0.0"));
-  // Enforces token usage (stylelint.rules.mjs uses scale-unlimited/declaration-strict-value).
-  // v1.11+ requires `ignoreFunctions: boolean` and string `message` (see stylelint.rules.mjs).
-  devChanges.push(setDep(dev, "stylelint-declaration-strict-value", "^1.11.1"));
-  // gen-eslint.mjs already pins @jkit/code-plugin; re-sync here for idempotency.
-  devChanges.push(setDep(dev, "@jkit/code-plugin", gitDep));
+  devChanges.push(setDep(dev, "prettier", PRETTIER_VERSION));
+  if (args.framework === "nextjs") {
+    devChanges.push(
+      setDep(
+        dev,
+        "prettier-plugin-tailwindcss",
+        PRETTIER_PLUGIN_TAILWINDCSS_VERSION,
+      ),
+    );
+  }
 
   const sortedDev = {};
   for (const k of Object.keys(dev).sort()) sortedDev[k] = dev[k];
   pkg.devDependencies = sortedDev;
 
-  // ── scripts.lint:css ────────────────────────────────────────────────────
+  // ── scripts.format ──────────────────────────────────────────────────────
   const scripts = pkg.scripts || {};
-  const cssGlob = "**/*.{css,scss}";
-  const cssCmd = `stylelint "${cssGlob}" --fix`;
+  const formatCmd =
+    'prettier --write "**/*.{ts,tsx,js,jsx,mjs,json,md,yml,yaml}"';
   let scriptNote;
-  if (!("lint:css" in scripts)) {
-    scripts["lint:css"] = cssCmd;
-    scriptNote = `  Added:     scripts.lint:css`;
+  if (!("format" in scripts)) {
+    scripts["format"] = formatCmd;
+    scriptNote = `  Added:     scripts.format`;
   } else {
-    scriptNote = `  Unchanged: scripts.lint:css (already defined)`;
+    scriptNote = `  Unchanged: scripts.format (already defined)`;
   }
   pkg.scripts = scripts;
 
   // ── lint-staged ─────────────────────────────────────────────────────────
+  // Code files: append after eslint --fix (eslint first, then prettier formats final).
+  // Data files: prettier --write only.
   const lintStaged = pkg["lint-staged"] || {};
-  const lintGlob = "*.{css,scss}";
-  const lintCmd = "stylelint --fix";
-  const lsNote = patchLintStaged(lintStaged, lintGlob, lintCmd, "stylelint");
+  const codeNote = patchLintStaged(
+    lintStaged,
+    "*.{ts,tsx,js,jsx,mjs}",
+    "prettier --write",
+    "prettier",
+  );
+  const dataNote = patchLintStaged(
+    lintStaged,
+    "*.{json,md,yml,yaml}",
+    "prettier --write",
+    "prettier",
+  );
   pkg["lint-staged"] = lintStaged;
 
   fs.writeFileSync(userPkgPath, JSON.stringify(pkg, null, 2) + "\n");
 
   for (const line of devChanges) process.stdout.write(line + "\n");
   process.stdout.write(scriptNote + "\n");
-  process.stdout.write(lsNote + "\n");
+  process.stdout.write(codeNote + "\n");
+  process.stdout.write(dataNote + "\n");
 
   process.stdout.write("\n");
   process.stdout.write(

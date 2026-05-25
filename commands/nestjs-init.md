@@ -142,16 +142,23 @@ $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 $JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
 # 6. ESLint config (Step 6에서 package.json 존재를 보장한 뒤 실행)
+#    - eslint.config.mjs 생성
+#    - package.json: @jkit/code-plugin devDep 핀 + TS/JS 대상 lint-staged glob 자동 주입
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
-# 7. tsconfig.json patch
+# 7. Prettier config (항상 실행, 스택 선택 없음)
+#    - prettier.config.mjs 생성
+#    - package.json: prettier devDep + scripts.format + lint-staged TS/JS·데이터 글로브 자동 주입
+$JKIT_DIR/scripts/typescript/gen-prettier.mjs nestjs -p .
+
+# 8. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with <tsconfig-stacks>
 
-# 8. Husky hooks
+# 9. Husky hooks
 #    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
 
-# 9. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 10. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 

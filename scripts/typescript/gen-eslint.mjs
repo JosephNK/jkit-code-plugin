@@ -4,8 +4,11 @@
 // by replacing `// {{MARKER}}` placeholders with concatenated snippets from
 // each `--with` stack's eslint.manifest.
 //
-// Also pins the `@jkit/code-plugin` git dependency in the user's package.json
-// to `v<plugin-version>` (read from .claude-plugin/plugin.json).
+// Also patches the user's package.json:
+//   - devDependencies: pins `@jkit/code-plugin` to `v<plugin-version>`
+//     (read from .claude-plugin/plugin.json)
+//   - lint-staged: ensures `*.{ts,tsx,js,jsx,mjs}: eslint --fix` is wired
+//     so pre-commit hook actually runs ESLint on staged TS/JS files
 //
 // Manifest format (plaintext):
 //   --- <section> ---
@@ -34,6 +37,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+
+import { patchLintStaged } from "../common.mjs";
 
 const HELP = `Usage: gen-eslint.mjs <framework> -p <output-dir> [--with stack1,stack2,...]
 
@@ -276,6 +281,16 @@ function main() {
   const old = dev["@jkit/code-plugin"];
   dev["@jkit/code-plugin"] = gitDep;
 
+  // ── lint-staged: ESLint glob ────────────────────────────────────────────
+  // gen-stylelint이 CSS/SCSS glob을 주입하는 것과 동일한 패턴으로 TS/JS glob을 등록.
+  // husky의 pre-commit이 lint-staged를 호출하므로, 이 항목이 없으면 type 에러나
+  // 룰 위반이 ESLint를 거치지 않고 커밋에 통과한다. 등록 후 재실행해도 멱등.
+  const lintStaged = pkg["lint-staged"] || {};
+  const lintGlob = "*.{ts,tsx,js,jsx,mjs}";
+  const lintCmd = "eslint --fix";
+  const lsNote = patchLintStaged(lintStaged, lintGlob, lintCmd, "eslint");
+  pkg["lint-staged"] = lintStaged;
+
   // Next.js 16+ baseline: eslint-config-next가 typescript-eslint(unified meta)를
   // transitive로 가져오므로 top-level에 명시되어 있으면 @typescript-eslint 플러그인이
   // 두 인스턴스로 등록되어 flat config가 거부한다. 항목이 있으면 제거한다.
@@ -301,6 +316,7 @@ function main() {
     process.stdout.write(`  Added:     @jkit/code-plugin → ${gitDep}\n`);
   }
   if (tseslintNote) process.stdout.write(tseslintNote + "\n");
+  process.stdout.write(lsNote + "\n");
 
   process.stdout.write("\n");
   process.stdout.write(`Next step: run 'npm install' in ${args.outputDir}\n`);

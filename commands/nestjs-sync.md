@@ -91,13 +91,16 @@ $JKIT_DIR/scripts/gen-conventions.mjs nestjs -p docs --with <conventions-stacks>
 # 5. LINT.md (base + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs --with <eslint-stacks>
 
-# 6. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
+# 6. ESLint config (package.json의 @jkit/code-plugin git ref + TS/JS lint-staged glob 갱신)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p . --with <eslint-stacks>
 
-# 7. Husky hooks (.husky/* 덮어쓰기 + package.json husky/@commitlint/lint-staged devDeps와 scripts.prepare 패치)
+# 7. Prettier config (prettier.config.mjs 덮어쓰기 + lint-staged 글로브 갱신)
+$JKIT_DIR/scripts/typescript/gen-prettier.mjs nestjs -p .
+
+# 8. Husky hooks (.husky/* 덮어쓰기 + package.json husky/@commitlint/lint-staged devDeps와 scripts.prepare 패치)
 $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .
 
-# 8. commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
+# 9. commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
 #    init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
 [ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```

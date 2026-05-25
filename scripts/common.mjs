@@ -10,6 +10,8 @@
 //   ensureGitRepo(p)              → throws if <p> is not a git repo root
 //   ensureFlutterRoot(root, entry)→ throws unless <root>/<entry>/pubspec.yaml exists
 //   setDep(dev, name, version)    → upsert a devDep and return a log line
+//   pyReprStr(s)                  → Python `repr()`-style single-quoted string
+//   patchLintStaged(ls, glob, cmd, token) → idempotent lint-staged entry upsert
 // =============================================================================
 
 import fs from "node:fs";
@@ -73,4 +75,49 @@ export function ensureFlutterRoot(root, entry) {
     ].join("\n");
     throw new Error(msg);
   }
+}
+
+// Repr a JS string the way Python's `repr()` of a str does:
+//   'x' -> "'x'",  with embedded ' escaped as \'.
+// Used in log lines that want single-quoted JSON keys (e.g. lint-staged globs).
+export function pyReprStr(s) {
+  return `'${s.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+}
+
+// Idempotently upsert a lint-staged glob → command entry.
+// `detectToken` (e.g. "eslint", "stylelint") identifies an "already wired" command
+// so re-runs report "Unchanged" instead of duplicating.
+// Behavior:
+//   - glob missing            → set to cmd                    ("Added")
+//   - existing string + token → no-op                          ("Unchanged")
+//   - existing string         → wrap into [existing, cmd]      ("Merged")
+//   - existing array + token  → no-op                          ("Unchanged")
+//   - existing array          → append cmd                     ("Appended")
+//   - existing other type     → no-op                          ("Skipped")
+// Returns a one-line log string describing what happened.
+export function patchLintStaged(lintStaged, lintGlob, lintCmd, detectToken) {
+  const existing = lintStaged[lintGlob];
+  if (existing === undefined) {
+    lintStaged[lintGlob] = lintCmd;
+    return `  Added:     lint-staged[${pyReprStr(lintGlob)}]`;
+  }
+  if (typeof existing === "string") {
+    if (existing.includes(detectToken)) {
+      return `  Unchanged: lint-staged[${pyReprStr(lintGlob)}] (${detectToken} already wired)`;
+    }
+    lintStaged[lintGlob] = [existing, lintCmd];
+    return `  Merged:    lint-staged[${pyReprStr(lintGlob)}] with existing command`;
+  }
+  if (Array.isArray(existing)) {
+    if (
+      existing.some(
+        (cmd) => typeof cmd === "string" && cmd.includes(detectToken),
+      )
+    ) {
+      return `  Unchanged: lint-staged[${pyReprStr(lintGlob)}] (${detectToken} already wired)`;
+    }
+    lintStaged[lintGlob] = [...existing, lintCmd];
+    return `  Appended:  lint-staged[${pyReprStr(lintGlob)}]`;
+  }
+  return `  Skipped:   lint-staged[${pyReprStr(lintGlob)}] (unexpected type: ${typeof existing})`;
 }

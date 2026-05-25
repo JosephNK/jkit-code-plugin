@@ -107,17 +107,22 @@ fi
 # 5. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
 $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
 
-# 6. ESLint config (package.json의 @jkit/code-plugin git ref도 갱신됨)
+# 6. ESLint config (package.json의 @jkit/code-plugin git ref + TS/JS lint-staged glob 갱신)
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 
 # 7. Stylelint config (항상 실행, 스택 선택 없음)
 $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 
-# 8. Husky hooks (.husky/* 덮어쓰기 + package.json husky/@commitlint/lint-staged devDeps와 scripts.prepare 패치)
+# 8. Prettier config (항상 실행, 스택 선택 없음)
+#    - prettier.config.mjs 덮어쓰기
+#    - package.json: prettier(+plugin-tailwindcss) devDeps + scripts.format + lint-staged 글로브 갱신
+$JKIT_DIR/scripts/typescript/gen-prettier.mjs nextjs -p .
+
+# 9. Husky hooks (.husky/* 덮어쓰기 + package.json husky/@commitlint/lint-staged devDeps와 scripts.prepare 패치)
 $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .
 
-# 9. commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
-#    init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
+# 10. commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
+#     init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
 [ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 

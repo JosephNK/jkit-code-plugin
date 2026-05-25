@@ -180,6 +180,8 @@ fi
 $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
 
 # 6. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
+#    - eslint.config.mjs 생성
+#    - package.json: @jkit/code-plugin devDep 핀 + TS/JS 대상 lint-staged glob 자동 주입
 $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 
 # 7. Stylelint config (항상 실행, 스택 선택 없음)
@@ -187,14 +189,19 @@ $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
 #    - package.json: devDeps + scripts.lint:css + lint-staged 자동 주입
 $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
 
-# 8. tsconfig.json patch
+# 8. Prettier config (항상 실행, 스택 선택 없음)
+#    - prettier.config.mjs 생성 (nextjs는 prettier-plugin-tailwindcss 포함)
+#    - package.json: devDeps + scripts.format + lint-staged TS/JS·데이터 글로브 자동 주입
+$JKIT_DIR/scripts/typescript/gen-prettier.mjs nextjs -p .
+
+# 9. tsconfig.json patch
 $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
 
-# 9. Husky hooks
-#    + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
+# 10. Husky hooks
+#     + package.json에 husky/lint-staged/@commitlint devDeps와 scripts.prepare 주입
 $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .
 
-# 10. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
+# 11. commitlint.config.mjs (Conventional Commits + 프로젝트 허용 타입 강제)
 $JKIT_DIR/scripts/gen-commitlint.mjs -p .
 ```
 
@@ -262,7 +269,8 @@ esac
 - `CONVENTIONS.PROJECT.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nextjs/*` import)
 - `stylelint.config.mjs` — Stylelint 설정 (`stylelint-config-standard` extends + jkit baseline 규칙)
-- `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.prepare: "husky"` + CSS 대상 `lint-staged` glob
+- `prettier.config.mjs` — Prettier 설정 (`prettier-plugin-tailwindcss` 포함)
+- `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `prettier`, `prettier-plugin-tailwindcss`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.format` + `scripts.prepare: "husky"` + `lint-staged` glob (TS/JS · CSS/SCSS · 데이터 파일)
 - `tsconfig.json` — 프레임워크별 설정으로 패치됨
 - `.husky/pre-commit` — `npx lint-staged`
 - `.husky/commit-msg` — `npx --no -- commitlint --edit $1`
