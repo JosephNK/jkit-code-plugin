@@ -10,4 +10,8 @@
 **BEFORE committing or using git/GitHub commands, you MUST first read:**
 - [Git]({{DOCS_DIR}}GIT.md) — Git & GitHub guide with commit conventions
 
+### Rule Modifications
+
+**If you need to modify rules (lint · conventions · architecture), DO NOT proceed on your own — you MUST ask the user first.** This applies equally to changing `analysis_options.yaml`, modifying `architecture_lint` rules, adding `// ignore:` comments, or otherwise bypassing or disabling rules.
+
 See @AGENTS.PROJECT.md for project-specific required reading.
