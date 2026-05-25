@@ -3,15 +3,20 @@
 // Next.js OpenAPI Code Generator
 // -----------------------------------------------------------------------------
 // Reads an OpenAPI 3.x spec and emits:
-//   - <project-root>/src/http/_generated/types.ts      DTO interfaces (components/schemas)
-//   - <project-root>/src/http/_generated/endpoints.ts  URL helpers (paths)
+//   - <project-root>/src/http/_generated/types.ts        DTO interfaces (components/schemas)
+//   - <project-root>/src/http/_generated/endpoints.ts    URL helpers (paths)
+//   - <project-root>/src/http/_generated/services/*.ts   tag별 API 서비스 클래스
 //
-// Both files are overwritten on every run. client.ts (src/http/) and per-feature
-// mapper.ts / repository.ts / hook.ts (src/http/<feature>/) are user-authored
-// and never touched by this script.
+// Generated files are overwritten on every run. Stale service files for renamed
+// tags are removed each run.
+//
+// Additionally, scaffolds <project-root>/src/http/client.ts if it does not exist
+// (services depend on its KyInstance). Existing client.ts is preserved unless
+// --force-client is passed. Per-feature mapper.ts / repository.ts / hook.ts
+// (src/http/<feature>/) are user-authored and never touched by this script.
 //
 // Usage:
-//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run]
+//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run] [--force-client]
 //
 // <spec> is a file path or HTTP(S) URL. URL specs are saved to
 // <project-root>/specs/openapi.{yaml,json} for VCS tracking.
@@ -25,14 +30,15 @@ import YAML from "yaml";
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
 function printHelp() {
-  console.log(`Usage: generate-api.mjs <spec> [--dry-run]
+  console.log(`Usage: generate-api.mjs <spec> [--dry-run] [--force-client]
 
 Arguments:
-  <spec>        OpenAPI 3.x spec file path or URL
+  <spec>            OpenAPI 3.x spec file path or URL
 
 Options:
-  --dry-run     Preview only — no files written
-  -h, --help    Show this help
+  --dry-run         Preview only — no files written
+  --force-client    Overwrite existing src/http/client.ts scaffold
+  -h, --help        Show this help
 `);
 }
 
@@ -42,9 +48,10 @@ function fail(msg) {
 }
 
 function parseArgs(argv) {
-  const args = { spec: null, dryRun: false };
+  const args = { spec: null, dryRun: false, forceClient: false };
   for (const a of argv.slice(2)) {
     if (a === "--dry-run") args.dryRun = true;
+    else if (a === "--force-client") args.forceClient = true;
     else if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
@@ -730,6 +737,60 @@ function renderEndpointsFile(namedOperations) {
   return `${GEN_HEADER}\n\nexport const endpoints = {\n${lines.join("\n")}\n} as const;\n`;
 }
 
+// ─── client.ts scaffold ─────────────────────────────────────────────────────
+//
+// services는 `KyInstance` 주입을 요구하므로 client.ts가 없으면 컴파일 불가.
+// 처음 init 시점에만 최소 스캐폴드를 깔아주고, 이후 사용자가 직접 401 refresh ·
+// 인증 헤더 · 인터셉터 등 비즈니스 로직을 채워넣는다. 기존 파일은 보존
+// (--force-client 명시 시에만 덮어쓰기).
+
+function renderClientScaffold() {
+  return `import ky, { type KyInstance } from "ky";
+
+const API_PROXY_PATH = "/api/proxy";
+
+function getPrefix(): string {
+  if (typeof window !== "undefined") {
+    return \`\${window.location.origin}\${API_PROXY_PATH}\`;
+  }
+
+  const apiUrl = process.env.NEST_API_URL;
+  if (!apiUrl) {
+    throw new Error("NEST_API_URL is required for server-side API calls");
+  }
+  return apiUrl;
+}
+
+function createApiInstance(): KyInstance {
+  return ky.create({
+    prefix: getPrefix(),
+    retry: {
+      limit: 2,
+      methods: ["get"],
+      statusCodes: [408, 429, 500, 502, 503, 504],
+    },
+    timeout: 30_000,
+    headers: {
+      Accept: "application/json",
+    },
+  });
+}
+
+let api: KyInstance | null = null;
+
+export function getApi(): KyInstance {
+  if (api === null) {
+    api = createApiInstance();
+  }
+  return api;
+}
+
+export function resetApiInstance(): void {
+  api = null;
+}
+`;
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -746,7 +807,9 @@ async function main() {
   const endpointsContent = renderEndpointsFile(namedOperations);
   const serviceGroups = groupOperationsByTag(namedOperations);
 
-  const genDir = path.join(projectRoot, "src", "http", "_generated");
+  const httpDir = path.join(projectRoot, "src", "http");
+  const clientPath = path.join(httpDir, "client.ts");
+  const genDir = path.join(httpDir, "_generated");
   const typesPath = path.join(genDir, "types.ts");
   const endpointsPath = path.join(genDir, "endpoints.ts");
   const servicesDir = path.join(genDir, "services");
@@ -759,7 +822,27 @@ async function main() {
     content: renderServiceFile(tag, ops),
   }));
 
+  const clientExists = fs.existsSync(clientPath);
+  const clientAction = clientExists
+    ? args.forceClient
+      ? "overwrite"
+      : "skip"
+    : "create";
+
   if (args.dryRun) {
+    if (clientAction === "create") {
+      console.log(
+        `[dry-run] would create: ${path.relative(projectRoot, clientPath)} (scaffold)`,
+      );
+    } else if (clientAction === "overwrite") {
+      console.log(
+        `[dry-run] would overwrite: ${path.relative(projectRoot, clientPath)} (--force-client)`,
+      );
+    } else {
+      console.log(
+        `[dry-run] keep existing: ${path.relative(projectRoot, clientPath)} (pass --force-client to overwrite)`,
+      );
+    }
     console.log(
       `[dry-run] would write: ${path.relative(projectRoot, typesPath)} (${schemaCount} schemas)`,
     );
@@ -773,6 +856,11 @@ async function main() {
     }
     console.log(`Spec: ${path.relative(projectRoot, source)}`);
     return;
+  }
+
+  fs.mkdirSync(httpDir, { recursive: true });
+  if (clientAction === "create" || clientAction === "overwrite") {
+    fs.writeFileSync(clientPath, renderClientScaffold());
   }
 
   fs.mkdirSync(genDir, { recursive: true });
@@ -790,6 +878,19 @@ async function main() {
     fs.writeFileSync(f.path, f.content);
   }
 
+  if (clientAction === "create") {
+    console.log(
+      `Generated: ${path.relative(projectRoot, clientPath)} (scaffold)`,
+    );
+  } else if (clientAction === "overwrite") {
+    console.log(
+      `Overwrote: ${path.relative(projectRoot, clientPath)} (--force-client)`,
+    );
+  } else {
+    console.log(
+      `Skipped:   ${path.relative(projectRoot, clientPath)} (already exists — pass --force-client to overwrite)`,
+    );
+  }
   console.log(
     `Generated: ${path.relative(projectRoot, typesPath)} (${schemaCount} schemas)`,
   );
