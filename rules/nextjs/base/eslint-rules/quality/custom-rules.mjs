@@ -31,7 +31,7 @@ export const baseCustomRules = defineConfig(
   },
 
   // src/ 직속 디렉토리 화이트리스트: app, components, domain, http, hooks, lib,
-  // db, email-templates 외 폴더 생성 차단.
+  // db, email-templates, i18n, styles 외 폴더 생성 차단.
   {
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"],

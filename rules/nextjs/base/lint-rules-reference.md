@@ -568,7 +568,7 @@ export async function GET(
 | `page-component` | `http-hook`, `shared-ui`, `shared-hook`, `domain-model`, `page-component`, `lib-shared`, `lib-shared-barrel`, `shared-type`, `i18n-config`, `style`, `theme` |
 | `page-provider` | `lib-shared`, `lib-shared-barrel`, `shared-hook`, `style`, `theme` |
 | `style` | `style` |
-| `theme` | `style` |
+| `theme` | `style`, `theme` |
 | `dictionary` | `shared-type`, `dictionary` |
 | `i18n-config` | `dictionary`, `i18n-config` |
 | `shared-type` | `dictionary` |

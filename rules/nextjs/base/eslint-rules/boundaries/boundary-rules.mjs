@@ -128,9 +128,13 @@ export const baseBoundaryRules = [
   // style: 전역 CSS·디자인 토큰 리소스. 다른 레이어 import 금지 — 동일 레이어 cross-ref만 허용
   // (CSS @import는 ESLint 미검사; TS 토큰 파일 간 조합용).
   { from: { type: "style" }, allow: [{ to: { type: "style" } }] },
-  // theme: 디자인 시스템 테마 설정 단일 파일. TS 디자인 토큰(style)만 참조 — 도메인/HTTP/UI 레이어 import 금지.
+  // theme: 디자인 시스템 테마 설정. TS 디자인 토큰(style) + 동일 레이어(theme) 참조만 — 도메인/HTTP/UI 레이어 import 금지.
+  // self-allow: `theme.ts`가 generator 산출물 `theme.generated.ts`를 import하는 경우(둘 다 `type: "theme"`)를 위해 필요.
   // 외부 디자인 시스템 패키지(mantine/antd/shadcn 등)는 element 규칙 대상 아님.
-  { from: { type: "theme" }, allow: [{ to: { type: "style" } }] },
+  {
+    from: { type: "theme" },
+    allow: [{ to: { type: "style" } }, { to: { type: "theme" } }],
+  },
   {
     // i18n 사전: 타입과 다른 사전 참조만 허용
     from: { type: "dictionary" },
