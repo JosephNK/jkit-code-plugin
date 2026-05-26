@@ -266,6 +266,61 @@ export const baseLayerSemantics = {
     ].join("\n"),
   },
 
+  // ─── Style layer ──────────────────────────────────────────────────────────
+  style: {
+    role: "전역 CSS·디자인 토큰 리소스. CSS custom property(`:root { --color-* }`)와 TS 토큰(타입 안전 참조)을 한곳에 모아 page/UI 레이어가 import해 쓴다.",
+    contains: [
+      "전역 CSS — `src/styles/globals.css` (layout.tsx에서 side-effect import)",
+      "CSS 토큰 — `src/styles/tokens.css` (palette/typography/spacing custom property)",
+      "타이포그래피 CSS — `src/styles/typography.css`",
+      "TS 디자인 토큰 (선택) — `src/styles/tokens.ts` (컴포넌트에서 타입 안전 참조)",
+    ],
+    forbids: [
+      "다른 레이어 import (domain/http/UI 컴포넌트 참조 금지 — 순수 리소스 경계)",
+      "런타임 비즈니스 로직 (CSS 변수 정의·토큰 객체에만 집중)",
+    ],
+    example: [
+      "/* src/styles/tokens.css */",
+      ":root {",
+      "  --color-surface: oklch(98% 0 0);",
+      "  --color-text: oklch(18% 0 0);",
+      "  --text-base: clamp(1rem, 0.92rem + 0.4vw, 1.125rem);",
+      "  --space-section: clamp(4rem, 3rem + 5vw, 10rem);",
+      "}",
+      "",
+      "// src/app/[locale]/layout.tsx",
+      "import '@/styles/globals.css';",
+    ].join("\n"),
+  },
+
+  // ─── Theme layer ──────────────────────────────────────────────────────────
+  theme: {
+    role: "디자인 시스템 테마 설정 파일 (`src/theme.ts` + generator 산출물 `src/theme.generated.ts`). Mantine `createTheme()`, Ant Design `ConfigProvider.theme` 객체, shadcn 토큰 등 디자인 시스템 라이브러리에 주입할 테마 객체를 export. layout/Provider 레이어가 import해 ThemeProvider에 전달.",
+    contains: [
+      "수기 테마 객체 export — `src/theme.ts`",
+      "generator 산출물 — `src/theme.generated.ts` (디자인 토큰 추출/변환 도구가 갱신)",
+      "필요 시 `src/styles`의 TS 디자인 토큰을 조합해 테마 객체 구성",
+    ],
+    forbids: [
+      "도메인/HTTP/UI 레이어 import (설정 경계 — style만 참조)",
+      "런타임 비즈니스 로직 (테마 객체 정의에만 집중)",
+      "`theme.generated.ts` 수기 편집 (generator가 덮어씀)",
+      "복수 파일로 분리 (`src/theme/` 디렉토리 X — 위 두 파일만 유지)",
+    ],
+    example: [
+      "// src/theme.ts (Mantine 예시)",
+      "import { createTheme } from '@mantine/core';",
+      "export const theme = createTheme({",
+      "  primaryColor: 'blue',",
+      "  fontFamily: 'Inter, sans-serif',",
+      "});",
+      "",
+      "// src/app/[locale]/layout.tsx",
+      "import { theme } from '@/theme';",
+      "// <MantineProvider theme={theme}>...</MantineProvider>",
+    ].join("\n"),
+  },
+
   // ─── UI layer ─────────────────────────────────────────────────────────────
   "shared-ui": {
     role: "전역 재사용 Client Component. 도메인 모델은 타입 표현용으로만 참조 — domain-service 호출 금지.",

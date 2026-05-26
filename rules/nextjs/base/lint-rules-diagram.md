@@ -39,7 +39,9 @@ graph LR
     page["page"]
   end
   db["db"]
+  style["style"]
   i18n_config["i18n-config"]
+  theme["theme"]
   dictionary["dictionary"]
   email_template["email-template"]
   route_handler["route-handler"]
@@ -68,10 +70,13 @@ graph LR
   shared_hook --> lib_shared_barrel
   shared_hook --> shared_type
   shared_hook --> domain_model
+  shared_hook --> style
   shared_ui --> domain_model
   shared_ui --> shared_hook
   shared_ui --> shared_type
   shared_ui --> i18n_config
+  shared_ui --> style
+  shared_ui --> theme
   page_component --> http_hook
   page_component --> shared_ui
   page_component --> shared_hook
@@ -80,9 +85,14 @@ graph LR
   page_component --> lib_shared_barrel
   page_component --> shared_type
   page_component --> i18n_config
+  page_component --> style
+  page_component --> theme
   page_provider --> lib_shared
   page_provider --> lib_shared_barrel
   page_provider --> shared_hook
+  page_provider --> style
+  page_provider --> theme
+  theme --> style
   dictionary --> shared_type
   i18n_config --> dictionary
   shared_type --> dictionary
@@ -98,4 +108,6 @@ graph LR
   page --> dictionary
   page --> shared_type
   page --> i18n_config
+  page --> style
+  page --> theme
 ```

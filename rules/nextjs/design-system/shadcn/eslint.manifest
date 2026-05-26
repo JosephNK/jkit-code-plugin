@@ -15,6 +15,5 @@ import {
 --- patches ---
         ...shadcnBoundaryAllowPatches,
 --- ignores ---
-      'src/theme.ts',
 --- custom ---
   ...shadcnDisableSonarjsForUi,

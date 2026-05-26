@@ -110,6 +110,23 @@ export const baseStructureAnnotations = {
       },
     ],
   },
+  "src/styles": {
+    override: [
+      {
+        name: "globals.css",
+        note: "전역 스타일 (layout.tsx에서 side-effect import)",
+      },
+      {
+        name: "tokens.css",
+        note: "CSS custom property 토큰 (palette/typography/spacing)",
+      },
+      { name: "typography.css", note: "타이포그래피 정의 (선택)" },
+      {
+        name: "tokens.ts",
+        note: "TS 디자인 토큰 (타입 안전 참조; 선택)",
+      },
+    ],
+  },
   "src/i18n": {
     override: [
       {

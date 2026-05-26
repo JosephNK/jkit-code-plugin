@@ -67,11 +67,18 @@
     │   ├── navigation.ts         # next-intl `createNavigation(routing)` — Link/redirect/useRouter
     │   ├── request.ts            # next-intl `getRequestConfig` — 서버 메시지 로더
     │   └── routing.ts            # next-intl `defineRouting` — locales/defaultLocale/localePrefix
-    └── lib/
-        ├── types/                # shared-type — 전역 타입
-        └── utils/
-            ├── *.ts              # lib-shared — 공용 유틸 함수
-            └── index.ts          # lib-shared-barrel — 공용 유틸 barrel (re-export 전용)
+    ├── lib/
+    │   ├── types/                # shared-type — 전역 타입
+    │   └── utils/
+    │       ├── *.ts              # lib-shared — 공용 유틸 함수
+    │       └── index.ts          # lib-shared-barrel — 공용 유틸 barrel (re-export 전용)
+    ├── styles/                   # style — 전역 스타일·토큰 리소스
+    │   ├── globals.css           # 전역 스타일 (layout.tsx에서 side-effect import)
+    │   ├── tokens.css            # CSS custom property 토큰 (palette/typography/spacing)
+    │   ├── tokens.ts             # TS 디자인 토큰 (타입 안전 참조; 선택)
+    │   └── typography.css        # 타이포그래피 정의 (선택)
+    ├── theme.generated.ts        # theme — 디자인 시스템 테마 설정
+    └── theme.ts                  # theme — 디자인 시스템 테마 설정
 ```
 
 ## 레이어별 경로 매핑
@@ -96,6 +103,8 @@
 | `shared-type` | `src/lib/types` | — | 전역 타입 |
 | `db` | `src/db` | — | DB 드라이버 래퍼 |
 | `shared-hook` | `src/hooks` | — | 전역 재사용 React hook |
+| `style` | `src/styles` | — | 전역 스타일·토큰 리소스 |
+| `theme` | `src/theme.ts` / `src/theme.generated.ts` | `full` | 디자인 시스템 테마 설정 |
 | `shared-ui` | `src/components` | — | 전역 재사용 컴포넌트 |
 | `page-component` | `src/app/\[locale\]/**/_components` | — | 페이지 전용 컴포넌트 ([locale] 아래) |
 | `page-provider` | `src/app/\[locale\]/**/_providers` | — | 페이지 전용 Provider ([locale] 아래) |

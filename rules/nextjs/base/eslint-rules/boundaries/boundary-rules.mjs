@@ -70,6 +70,7 @@ export const baseBoundaryRules = [
   {
     // 공용 React hook: UI/HTTP 비의존 — domain-service/http-hook 호출 금지.
     // 도메인 모델은 타입 표현용으로만 참조. 다른 공용 hook 조합 허용.
+    // style은 TS 디자인 토큰(예: tokens.ts) 참조용으로만 허용.
     from: { type: "shared-hook" },
     allow: [
       { to: { type: "lib-shared" } },
@@ -77,11 +78,13 @@ export const baseBoundaryRules = [
       { to: { type: "shared-type" } },
       { to: { type: "domain-model" } },
       { to: { type: "shared-hook" } },
+      { to: { type: "style" } },
     ],
   },
   {
     // 전역 재사용 UI: 도메인 모델은 타입 표현용으로만 참조. API 호출 금지 (domain-service 접근 불가)
     // next-intl navigation(Link/useRouter) 사용을 위해 i18n-config 허용.
+    // style은 컴포넌트 스코프 CSS·디자인 토큰 참조용. theme은 디자인 시스템 토큰 참조용.
     from: { type: "shared-ui" },
     allow: [
       { to: { type: "domain-model" } },
@@ -89,6 +92,8 @@ export const baseBoundaryRules = [
       { to: { type: "shared-hook" } },
       { to: { type: "shared-type" } },
       { to: { type: "i18n-config" } },
+      { to: { type: "style" } },
+      { to: { type: "theme" } },
     ],
   },
   {
@@ -105,17 +110,27 @@ export const baseBoundaryRules = [
       { to: { type: "lib-shared-barrel" } },
       { to: { type: "shared-type" } },
       { to: { type: "i18n-config" } },
+      { to: { type: "style" } },
+      { to: { type: "theme" } },
     ],
   },
   {
-    // 페이지 Provider: 설정/컨텍스트 래퍼. 공용 유틸·hook만
+    // 페이지 Provider: 설정/컨텍스트 래퍼. 공용 유틸·hook + 테마 토큰 적용용 style/theme 허용.
     from: { type: "page-provider" },
     allow: [
       { to: { type: "lib-shared" } },
       { to: { type: "lib-shared-barrel" } },
       { to: { type: "shared-hook" } },
+      { to: { type: "style" } },
+      { to: { type: "theme" } },
     ],
   },
+  // style: 전역 CSS·디자인 토큰 리소스. 다른 레이어 import 금지 — 동일 레이어 cross-ref만 허용
+  // (CSS @import는 ESLint 미검사; TS 토큰 파일 간 조합용).
+  { from: { type: "style" }, allow: [{ to: { type: "style" } }] },
+  // theme: 디자인 시스템 테마 설정 단일 파일. TS 디자인 토큰(style)만 참조 — 도메인/HTTP/UI 레이어 import 금지.
+  // 외부 디자인 시스템 패키지(mantine/antd/shadcn 등)는 element 규칙 대상 아님.
+  { from: { type: "theme" }, allow: [{ to: { type: "style" } }] },
   {
     // i18n 사전: 타입과 다른 사전 참조만 허용
     from: { type: "dictionary" },
@@ -152,6 +167,8 @@ export const baseBoundaryRules = [
     // Page (최상위 컨슈머): 페이지 조립에 필요한 거의 모든 레이어 사용 가능
     // (단, domain-service/repository/http-hook 직접 호출 금지 — 컴포넌트를 거쳐야 함)
     // layout/page에서 next-intl routing·navigation 사용을 위해 i18n-config 허용.
+    // layout.tsx의 `import '@/styles/globals.css'` 같은 side-effect import 위해 style 허용.
+    // layout.tsx에서 디자인 시스템 ThemeProvider에 주입하기 위해 theme 허용.
     from: { type: "page" },
     allow: [
       { to: { type: "page-component" } },
@@ -160,6 +177,8 @@ export const baseBoundaryRules = [
       { to: { type: "dictionary" } },
       { to: { type: "shared-type" } },
       { to: { type: "i18n-config" } },
+      { to: { type: "style" } },
+      { to: { type: "theme" } },
       { to: { type: "page" } },
     ],
   },

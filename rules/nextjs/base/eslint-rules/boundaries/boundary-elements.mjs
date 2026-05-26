@@ -60,6 +60,15 @@ export const baseBoundaryElements = [
   { type: "db", pattern: ["src/db"] }, // DB 드라이버 래퍼
   // Shared client hooks — UI/HTTP 비의존 공용 React hook
   { type: "shared-hook", pattern: ["src/hooks"] }, // 전역 재사용 React hook
+  // Style layer — 전역 CSS·디자인 토큰 (CSS custom property + TS 토큰)
+  { type: "style", pattern: ["src/styles"] }, // 전역 스타일·토큰 리소스
+  // Theme layer — 디자인 시스템 테마 설정 (Mantine `createTheme()`, Ant Design `ConfigProvider.theme`, shadcn 토큰 등)
+  // 수기 작성한 `theme.ts` + generator 산출물 `theme.generated.ts` 두 파일을 함께 인정.
+  {
+    type: "theme",
+    mode: "full",
+    pattern: ["src/theme.ts", "src/theme.generated.ts"],
+  }, // 디자인 시스템 테마 설정
   // UI layer
   { type: "shared-ui", pattern: ["src/components"] }, // 전역 재사용 컴포넌트
   { type: "page-component", pattern: ["src/app/\\[locale\\]/**/_components"] }, // 페이지 전용 컴포넌트 ([locale] 아래)
