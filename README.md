@@ -123,6 +123,17 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 | `/jkit:typeorm-migration` | TypeORM 마이그레이션 SQL 생성 (dev/prod 분리) |
 | `/jkit:update-plugin-ref` | JKit 의존성 git ref 일괄 업데이트 (`code-plugin` / `architecture-lint` / `leaf-kit`) |
 
+### Monorepo (Next.js / NestJS)
+
+`jkit.workspaces.json` 매니페스트로 모노레포의 여러 워크스페이스를 한 번에 init/sync. 앱별 스택 선택을 매니페스트에 보관해 반복 실행 시 프롬프트 없이 재현 가능.
+
+| Command | Description |
+|---------|-------------|
+| `/jkit:workspaces-init` | 매니페스트 기반 일괄 init. 매니페스트 없으면 워크스페이스 자동 탐색 후 부트스트랩 |
+| `/jkit:workspaces-sync` | 매니페스트 기반 일괄 sync. docs/lint config + husky 훅 갱신 |
+
+단일 워크스페이스만 갱신할 때는 기존 `/jkit:nextjs-init [path]`, `/jkit:nextjs-sync [path]`, `/jkit:nestjs-init [path]`, `/jkit:nestjs-sync [path]` 도 그대로 사용 가능합니다.
+
 ## Generator Scripts
 
 Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.
