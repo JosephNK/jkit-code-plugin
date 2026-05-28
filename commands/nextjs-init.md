@@ -1,10 +1,17 @@
 ---
 description: Initialize JKit in Next.js project
+argument-hint: '[project-path]'
 ---
 
 # JKit Next.js Init
 
 Next.js 프로젝트에 JKit 설정을 초기화합니다. 생성 스크립트로 동작합니다.
+
+## Arguments
+
+**$ARGUMENTS**
+
+- `[project-path]` (선택): 모노레포 환경에서 Next.js 앱 경로 (예: `apps/web`). 생략 시 현재 디렉토리(`pwd`) 사용.
 
 ## 플러그인 경로 확인
 
@@ -20,8 +27,22 @@ JKIT_DIR=$(jq -r '.plugins["jkit@jkit"][0].installPath' ~/.claude/plugins/instal
 
 **중요**: 모든 스텝을 실행하기 **전**에 프로젝트 루트를 캡처하고, 스크립트를 실행하는 모든 스텝 시작 시점에 해당 디렉토리로 `cd` 합니다. cwd drift는 잘못된 디렉토리 버그의 가장 흔한 원인입니다 (예: 서브디렉토리 안에서 `AGENTS.md`가 생성되는 문제 등).
 
+커맨드 인자로 프로젝트 경로를 받습니다 (모노레포 지원). 인자가 없으면 현재 디렉토리(`pwd`)를 사용합니다.
+
 ```bash
-PROJECT_ROOT="$(pwd)"   # 의도한 프로젝트 루트에서 실행
+# 사용자가 전달한 프로젝트 경로 인자. 예: "apps/web"(상대) 또는 "/abs/path"(절대). 비어 있으면 cwd.
+PROJECT_PATH="<argument-or-empty>"
+
+if [ -n "$PROJECT_PATH" ]; then
+  case "$PROJECT_PATH" in
+    /*) PROJECT_ROOT="$PROJECT_PATH" ;;
+    *)  PROJECT_ROOT="$(pwd)/$PROJECT_PATH" ;;
+  esac
+else
+  PROJECT_ROOT="$(pwd)"
+fi
+
+[ -d "$PROJECT_ROOT" ] || { echo "Error: Project path not found: $PROJECT_ROOT" >&2; exit 1; }
 ```
 
 아래 모든 shell 블록은 `cd "$PROJECT_ROOT"`가 해당 스텝에서 이미 실행된 상태를 전제로 합니다.
