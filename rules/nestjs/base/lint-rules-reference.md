@@ -356,12 +356,12 @@ ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 
 ## Ignored Paths (무시 경로)
 
 Boundary 검사 제외 — 테스트, DI 조립(*.module.ts), 부트스트랩(main/app),
-헬스체크, 모듈 내부 common.
+헬스체크, 모듈 내부 common, 모노레포 sibling workspace로 resolve된 import.
 
 ### 무시 패턴 목록
 
 - **테스트/설정 파일**: `**/*.spec.ts`, `**/*.test.ts`, `src/test/**`, `test/**`
 - **NestJS DI 조립**: `**/*.module.ts`
 - **앱 부트스트랩**: `src/main.ts`, `src/app.*.ts`
-- **특수 경로**: `src/modules/health/**`, `src/modules/**/common/**`
+- **특수 경로**: `src/modules/health/**`, `src/modules/**/common/**`, `**/packages/**`
 - **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `eslint.config.mjs`, `eslint-rules/**`, `dist/**`, `coverage/**`, `migrations/**`

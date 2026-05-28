@@ -630,11 +630,12 @@ ESLint 오버라이드 중 **LLM이 코드 작성 시 명시적으로 따라야 
 ## Ignored Paths (무시 경로)
 
 Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
-테스트/스펙/설정, 루트 메타 파일, scripts/e2e 빌드 유틸, 전역 타입 등.
+테스트/스펙/설정, 루트 메타 파일, scripts/e2e 빌드 유틸, 전역 타입,
+모노레포 sibling workspace로 resolve된 import 등.
 
 ### 무시 패턴 목록
 
 - **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`
 - **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/lib/types/**`
-- **특수 경로**: `specs/**`, `src/http/_generated/**`, `src/theme.generated.ts`
+- **특수 경로**: `specs/**`, `**/packages/**`, `src/http/_generated/**`, `src/theme.generated.ts`
 - **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`
