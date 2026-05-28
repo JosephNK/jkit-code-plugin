@@ -148,9 +148,8 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
         $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p .
       fi                                                                                                                     && \
       $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .                                                              && \
-      $JKIT_DIR/scripts/typescript/gen-prettier.mjs nextjs -p .                                                               && \
-      $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .                                                                             && \
-      { [ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .; }
+      $JKIT_DIR/scripts/typescript/gen-prettier.mjs nextjs -p .
+      # gen-husky, gen-commitlint는 monorepo 루트에서만 관리 (워크스페이스 호출 X)
       ;;
     nestjs)
       $JKIT_DIR/scripts/gen-git.mjs -p docs                                                                                  && \
@@ -168,9 +167,8 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
         $JKIT_DIR/scripts/gen-lint.mjs nestjs -p docs                                                                        && \
         $JKIT_DIR/scripts/typescript/gen-eslint.mjs nestjs -p .
       fi                                                                                                                     && \
-      $JKIT_DIR/scripts/typescript/gen-prettier.mjs nestjs -p .                                                               && \
-      $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .                                                                             && \
-      { [ -f commitlint.config.mjs ] || $JKIT_DIR/scripts/gen-commitlint.mjs -p .; }
+      $JKIT_DIR/scripts/typescript/gen-prettier.mjs nestjs -p .
+      # gen-husky, gen-commitlint는 monorepo 루트에서만 관리 (워크스페이스 호출 X)
       ;;
     *)
       echo "[skip] $WS_PATH: unsupported framework '$WS_FRAMEWORK'"
@@ -189,7 +187,7 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
 done
 ```
 
-> 각 워크스페이스는 해당 framework의 `*-sync` 커맨드와 동일한 generator 시퀀스를 실행합니다. `commitlint.config.mjs`는 없을 때만 부트스트랩하고 있으면 보존합니다. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`은 sync 대상이 아닙니다.
+> 각 워크스페이스는 해당 framework의 `*-sync` 커맨드와 동일한 generator 시퀀스를 실행합니다. **단, `gen-husky`/`gen-commitlint`는 워크스페이스에서 호출하지 않습니다** — husky 훅과 commitlint config는 monorepo 루트 한 곳에서만 관리해야 root와 중복·충돌이 없습니다. 필요하면 monorepo 루트에서 직접 `node $JKIT_DIR/scripts/gen-husky.mjs <framework> -p .` 및 `node $JKIT_DIR/scripts/gen-commitlint.mjs -p .`을 한 번 실행하세요. `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`은 sync 대상이 아닙니다.
 
 ### 3. 의존성 재설치 (모노레포 루트에서 한 번)
 

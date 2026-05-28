@@ -28,22 +28,40 @@ export function normalizePath(p) {
   return path.isAbsolute(p) ? path.normalize(p) : path.resolve(base, p);
 }
 
-// Fail unless <p> is the top level of a git repository, i.e. <p>/.git exists
-// (directory or file, the latter for worktrees/submodules).
-// We deliberately do not treat "inside a git work tree" as sufficient — the
-// guardrail's purpose is to reject cases like running from `app/` when the
-// script should run at the repo root.
+// Accept <p> as a valid project root if either:
+//   (1) <p>/.git exists — single-project repo (file or directory; latter for
+//       worktrees/submodules)
+//   (2) <p>/package.json exists AND .git exists in some ancestor — monorepo
+//       workspace (e.g., apps/web/ inside a repo with .git at root)
+//
+// Original guardrail intent — rejecting random subdirs like `app/` that have
+// no project metadata — is preserved: a subdir without package.json still fails.
 export function ensureGitRepo(p = ".") {
   if (!fs.existsSync(p)) {
     throw new Error(`path does not exist: ${p}`);
   }
-  if (!fs.existsSync(path.join(p, ".git"))) {
-    const msg = [
-      `${p} is not a git repository root (missing ${p}/.git)`,
-      "Hint: pass -p <project-root> or cd into the project root first.",
-    ].join("\n");
-    throw new Error(msg);
+
+  // (1) Local .git → traditional single-project mode
+  if (fs.existsSync(path.join(p, ".git"))) return;
+
+  // (2) Monorepo workspace: own package.json + .git in ancestor
+  if (fs.existsSync(path.join(p, "package.json"))) {
+    let current = path.resolve(p);
+    const root = path.parse(current).root;
+    while (current !== root) {
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      if (fs.existsSync(path.join(parent, ".git"))) return;
+      current = parent;
+    }
   }
+
+  const msg = [
+    `${p} is not a git repository root (missing ${p}/.git)`,
+    "Hint: pass -p <project-root> or cd into the project root first.",
+    "      (monorepo workspaces are accepted if <p>/package.json exists and .git is in an ancestor)",
+  ].join("\n");
+  throw new Error(msg);
 }
 
 // Upsert `name` → `version` in a devDependencies-like object.

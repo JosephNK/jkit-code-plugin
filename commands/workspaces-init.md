@@ -262,9 +262,8 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
       fi                                                                                                      && \
       $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .                                               && \
       $JKIT_DIR/scripts/typescript/gen-prettier.mjs nextjs -p .                                                && \
-      $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .                                                && \
-      $JKIT_DIR/scripts/gen-husky.mjs nextjs -p .                                                              && \
-      $JKIT_DIR/scripts/gen-commitlint.mjs -p .
+      $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nextjs -p .
+      # gen-husky, gen-commitlint는 monorepo 루트에서만 관리 (워크스페이스 호출 X)
       ;;
     nestjs)
       [ "$WS_GEN_AGENTS" = "true" ] && $JKIT_DIR/scripts/gen-agents.mjs nestjs -p . -n "$WS_NAME" --docs-dir docs
@@ -289,9 +288,8 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
         $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p . --with "$WS_TSCONFIG_STACKS"
       else
         $JKIT_DIR/scripts/typescript/gen-tsconfig.mjs nestjs -p .
-      fi                                                                                                      && \
-      $JKIT_DIR/scripts/gen-husky.mjs nestjs -p .                                                              && \
-      $JKIT_DIR/scripts/gen-commitlint.mjs -p .
+      fi
+      # gen-husky, gen-commitlint는 monorepo 루트에서만 관리 (워크스페이스 호출 X)
       ;;
     *)
       echo "[skip] $WS_PATH: unsupported framework '$WS_FRAMEWORK'"
@@ -348,7 +346,38 @@ for i in $(seq 0 $((WS_COUNT - 1))); do
 done
 ```
 
-### 9. 보고
+### 9. 모노레포 루트 husky / commitlint 자동 setup (없을 때만)
+
+워크스페이스에는 husky/commitlint를 설치하지 않습니다 (루트와 중복·충돌 방지). 대신 monorepo 루트에 없을 때만 자동으로 setup합니다 — **이미 존재하면 건드리지 않습니다** (사용자 커스텀 보존).
+
+```bash
+cd "$MONOREPO_ROOT"
+
+# framework: 매니페스트 첫 번째 워크스페이스의 framework 사용
+# (nextjs/nestjs 혼재라도 husky devDeps와 hook 템플릿이 사실상 동일하므로 결과 동일)
+ROOT_FRAMEWORK=$(jq -r ".workspaces[0].framework" "$MANIFEST_PATH")
+
+if [ ! -d .husky ]; then
+  echo ""
+  echo "[setup] monorepo 루트에 .husky가 없어 자동 setup합니다 ($ROOT_FRAMEWORK 템플릿)..."
+  $JKIT_DIR/scripts/gen-husky.mjs "$ROOT_FRAMEWORK" -p .
+else
+  echo "[skip] monorepo 루트에 이미 .husky가 있어 setup을 건너뜁니다 (기존 설정 보존)."
+fi
+
+if [ ! -f commitlint.config.mjs ]; then
+  echo "[setup] monorepo 루트에 commitlint.config.mjs가 없어 자동 setup합니다..."
+  $JKIT_DIR/scripts/gen-commitlint.mjs -p .
+else
+  echo "[skip] monorepo 루트에 이미 commitlint.config.mjs가 있어 setup을 건너뜁니다."
+fi
+```
+
+> setup 시 루트 `package.json`의 `devDependencies`에 `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional` 4개가 추가되고 `scripts.prepare = "husky"`가 설정됩니다 (`scripts.prepare`에 이미 다른 값이 있으면 보존). `.husky/pre-commit`, `.husky/commit-msg`도 생성됩니다.
+
+> `/jkit:workspaces-sync`는 루트 husky/commitlint를 절대 손대지 않습니다. 갱신이 필요하면 monorepo 루트에서 `node $JKIT_DIR/scripts/gen-husky.mjs <framework> -p .`을 명시적으로 실행하세요.
+
+### 10. 보고
 
 처리 결과 정리:
 
@@ -357,4 +386,4 @@ done
 - **Skipped**: 디렉터리 없음/미지원 (`$SKIPPED_WS`)
 - **매니페스트 위치**: `$MANIFEST_PATH` — git에 커밋해 두면 다음 init/sync는 프롬프트 없이 일괄 재현 가능
 
-워크스페이스별로 생성된 파일 목록은 해당 framework의 `*-init` 커맨드 "보고" 섹션 참조.
+워크스페이스별로 생성된 파일 목록은 해당 framework의 `*-init` 커맨드 "보고" 섹션 참조. 단, **`.husky/*`, `commitlint.config.mjs`, `husky`/`@commitlint/*` devDeps는 워크스페이스에 생성되지 않습니다** (Step 9 참조).
