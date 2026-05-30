@@ -635,7 +635,7 @@ Boundary 검사 제외 (boundaries/no-unknown-files 오탐 방지).
 
 ### 무시 패턴 목록
 
-- **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`
+- **테스트/설정 파일**: `**/*.test.ts`, `**/*.test.tsx`, `**/*.spec.ts`, `**/*.spec.tsx`, `*.config.*`, `prettier.config.mjs`, `commitlint.config.mjs`
 - **타입/메타 파일**: `*.ts`, `*.d.ts`, `types/**`, `src/lib/types/**`
 - **특수 경로**: `specs/**`, `**/packages/**`, `src/http/_generated/**`, `src/theme.generated.ts`
-- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`
+- **빌드/툴 산출물 (코드 작성 무관)**: `.jkit/**`, `scripts/**`, `e2e/**`, `eslint.config.mjs`, `.next/**`, `out/**`, `build/**`, `coverage/**`, `next-env.d.ts`
