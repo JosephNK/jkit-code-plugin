@@ -134,6 +134,39 @@ Init 커맨드 실행 시 AGENTS.md, GIT.md, ARCHITECTURE.md, CONVENTIONS.md 등
 
 단일 워크스페이스만 갱신할 때는 기존 `/jkit:nextjs-init [path]`, `/jkit:nextjs-sync [path]`, `/jkit:nestjs-init [path]`, `/jkit:nestjs-sync [path]` 도 그대로 사용 가능합니다.
 
+### 단일 프로젝트 매니페스트 (`jkit.project.json`)
+
+`jkit.workspaces.json`의 단일 프로젝트 버전. 프로젝트 루트에 두면 `nextjs/nestjs/flutter`의 `-init`·`-sync`가 스택 선택 프롬프트 없이 매니페스트 값으로 **무인 재현**합니다. 셋업이 어떤 스택으로 구성됐는지 기록되어 `-sync` 반복 시 드리프트가 없습니다.
+
+```jsonc
+// nextjs/nestjs
+{
+  "framework": "nextjs",
+  "projectName": "web",
+  "conventionStacks": ["design-system/mantine"],
+  "eslintStacks": ["design-system/mantine", "tanstack-query"],
+  "tsconfigStacks": [],
+  "generateAgents": true
+}
+// flutter — eslint/tsconfig 대신 entryDir
+{
+  "framework": "flutter",
+  "projectName": "my_app",
+  "conventionStacks": ["freezed", "leaf-kit"],
+  "entryDir": "app",
+  "generateAgents": true
+}
+```
+
+동작 (매니페스트 존재 여부로 분기):
+
+| | 있음 | 없음 |
+|---|---|---|
+| `-init` | 무인 재현 (프롬프트 생략) | 대화형 진행 후 매니페스트 **자동 작성** |
+| `-sync` | 무인 재현 (프롬프트 생략) | 대화형 진행 (기존과 동일) + 작성 **제안** |
+
+매니페스트가 없으면 기존 대화형 동작이 그대로 유지되므로 하위 호환됩니다. (모노레포의 `jkit.workspaces.json`은 워크스페이스별 동일 필드 집합을 배열로 보관합니다.)
+
 ## Generator Scripts
 
 Init 커맨드 외에 개별 스크립트로도 실행 가능합니다.

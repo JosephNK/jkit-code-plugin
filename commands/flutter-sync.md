@@ -36,7 +36,38 @@ PROJECT_ROOT="$(pwd)"   # 의도한 프로젝트 루트에서 실행
 
 아래 모든 shell 블록은 `cd "$PROJECT_ROOT"`가 해당 스텝에서 이미 실행된 상태를 전제로 합니다.
 
+## 매니페스트 (`jkit.project.json`)
+
+프로젝트 루트에 `jkit.project.json`이 **있으면** 스택·엔트리 프롬프트를 건너뛰고 매니페스트 값으로 무인 재현합니다. **없으면** 지금처럼 대화형으로 진행하며, 끝에 작성을 제안합니다(강제 아님). 스펙은 `/jkit:flutter-init` 문서 참조.
+
+### 매니페스트 분기
+
+```bash
+cd "$PROJECT_ROOT"
+MANIFEST_PATH="$PROJECT_ROOT/jkit.project.json"
+
+if [ -f "$MANIFEST_PATH" ]; then
+  MF_FRAMEWORK=$(jq -r '.framework // ""' "$MANIFEST_PATH")
+  if [ "$MF_FRAMEWORK" != "flutter" ]; then
+    echo "Error: jkit.project.json framework='$MF_FRAMEWORK' (expected 'flutter')" >&2
+    exit 1
+  fi
+  USER_CONV_STACKS=$(jq -r '(.conventionStacks // []) | join(",")' "$MANIFEST_PATH")
+  ENTRY_DIR=$(jq -r '.entryDir // "app"' "$MANIFEST_PATH")
+  MANIFEST_MODE="apply"
+  echo "[manifest] apply mode — conv=[$USER_CONV_STACKS] entryDir=$ENTRY_DIR"
+else
+  MANIFEST_MODE="prompt"
+  echo "[manifest] prompt mode — jkit.project.json 없음. 대화형 진행."
+fi
+```
+
+- **`MANIFEST_MODE=apply`** → 아래 Step 1~2(스택·엔트리)를 건너뛰고 로드된 `USER_CONV_STACKS`, `ENTRY_DIR`를 사용합니다.
+- **`MANIFEST_MODE=prompt`** → 기존대로 프롬프트하고, 마지막에 매니페스트 작성을 제안합니다.
+
 ## 단계
+
+> **`MANIFEST_MODE=apply`인 경우** 아래 Step 1~2를 건너뛰고 로드된 변수를 사용하세요. 생성 스텝의 `<conventions-stacks>`/`<entry-dir>` 자리에는 각각 `$USER_CONV_STACKS`/`$ENTRY_DIR`를 사용합니다.
 
 ### 1. 컨벤션 스택 선택
 
@@ -50,7 +81,7 @@ PROJECT_ROOT="$(pwd)"   # 의도한 프로젝트 루트에서 실행
 
 ### 2. Flutter 엔트리 디렉토리 확인
 
-사용자에게 Flutter 엔트리 디렉토리를 묻습니다. 기본값: `app`. (`pubspec.yaml`이 위치한 디렉토리)
+사용자에게 Flutter 엔트리 디렉토리를 묻습니다. 기본값: `app`. (`pubspec.yaml`이 위치한 디렉토리) 입력값을 `ENTRY_DIR`로 보관합니다. (apply 모드면 이미 로드돼 있으니 묻지 않습니다.)
 
 ### 3. Docs 재생성
 
@@ -66,11 +97,23 @@ $JKIT_DIR/scripts/gen-architecture.mjs flutter -p docs
 # 3. STRUCTURE.md (lint-rules-structure-reference 복사)
 $JKIT_DIR/scripts/gen-structure.mjs flutter -p docs
 
+# prompt 모드: Step 1/2 선택값을 변수에 대입. apply 모드: 매니페스트 분기에서 이미 설정됨.
+[ "$MANIFEST_MODE" = "prompt" ] && USER_CONV_STACKS="<conventions-stacks>"
+[ "$MANIFEST_MODE" = "prompt" ] && ENTRY_DIR="<entry-dir>"
+
 # 4. CONVENTIONS.md (PROJECT는 절대 건드리지 않음 — 없어도 새로 만들지 않음)
-$JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with <conventions-stacks> --no-project-init
+if [ -n "$USER_CONV_STACKS" ]; then
+  $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --with "$USER_CONV_STACKS" --no-project-init
+else
+  $JKIT_DIR/scripts/gen-conventions.mjs flutter -p docs --no-project-init
+fi
 
 # 5. LINT.md (base + 선택 stack lint-rules)
-$JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
+if [ -n "$USER_CONV_STACKS" ]; then
+  $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with "$USER_CONV_STACKS"
+else
+  $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs
+fi
 ```
 
 해당 생성기에 사용자가 선택한 스택이 없으면 `--with` 인자를 생략합니다.
@@ -81,7 +124,7 @@ $JKIT_DIR/scripts/gen-lint.mjs flutter -p docs --with <conventions-stacks>
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-analysis-options.mjs flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/flutter/gen-analysis-options.mjs flutter -p . -entry "$ENTRY_DIR"
 ```
 
 이 스크립트는 `plugins:` 섹션을 작성하지 않습니다. 다음 스텝의 `gen-custom-lint.mjs`가 같은 파일에 `plugins:`를 YAML round-trip으로 추가합니다 (템플릿 컨텐츠 보존).
@@ -92,7 +135,11 @@ $JKIT_DIR/scripts/flutter/gen-analysis-options.mjs flutter -p . -entry <entry-di
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry <entry-dir> --stacks <conventions-stacks>
+if [ -n "$USER_CONV_STACKS" ]; then
+  $JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry "$ENTRY_DIR" --stacks "$USER_CONV_STACKS"
+else
+  $JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry "$ENTRY_DIR"
+fi
 ```
 
 사용자가 선택한 스택이 없으면 `--stacks` 인자를 생략합니다. base의 `architecture_lint`만 sync됩니다.
@@ -102,7 +149,7 @@ $JKIT_DIR/scripts/flutter/gen-custom-lint.mjs flutter -p . -entry <entry-dir> --
 ref가 바뀌어 pubspec이 갱신된 경우, 엔트리 디렉토리에서 `dart pub get`을 실행합니다:
 
 ```bash
-cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
+cd "$PROJECT_ROOT/$ENTRY_DIR" && dart pub get && cd "$PROJECT_ROOT"
 ```
 
 ### 6. Husky 훅 sync
@@ -111,7 +158,7 @@ cd "$PROJECT_ROOT/<entry-dir>" && dart pub get && cd "$PROJECT_ROOT"
 
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry <entry-dir>
+$JKIT_DIR/scripts/gen-husky.mjs flutter -p . -entry "$ENTRY_DIR"
 
 # commitlint.config.mjs 부트스트랩 (이미 있으면 보존)
 # init을 거치지 않은 프로젝트에서 commit-msg 훅이 commitlint config 부재로 실패하는 것을 방지.
@@ -149,7 +196,24 @@ case "$PM" in
 esac
 ```
 
-### 7. 보고
+### 7. 매니페스트 작성 제안 (`MANIFEST_MODE=prompt`인 경우만)
+
+prompt 모드로 진행했다면, 다음 sync부터 무인 재현되도록 `jkit.project.json` 작성을 **제안**합니다. sync는 강제하지 않으므로 사용자가 동의할 때만 작성합니다. `projectName`은 디렉토리명, `generateAgents`는 `true`를 기본값으로 넣고 사용자가 나중에 조정할 수 있다고 안내합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+# 사용자가 작성에 동의한 경우에만 실행:
+to_arr() { [ -z "$1" ] && echo "[]" || jq -cn --arg s "$1" '$s | split(",")'; }
+jq -n \
+  --arg name "$(basename "$PROJECT_ROOT")" \
+  --argjson conv "$(to_arr "$USER_CONV_STACKS")" \
+  --arg entry "${ENTRY_DIR:-app}" \
+  '{framework:"flutter", projectName:$name, conventionStacks:$conv, entryDir:$entry, generateAgents:true}' \
+  > "$MANIFEST_PATH"
+echo "[manifest] 작성: $MANIFEST_PATH"
+```
+
+### 8. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
 
@@ -162,4 +226,4 @@ esac
 - `.husky/pre-commit`, `.husky/commit-msg` — husky 훅 (덮어쓰기, 엔트리 디렉토리 인라인 치환)
 - `package.json` — `devDependencies`(`husky`, `@commitlint/cli`, `@commitlint/config-conventional`)와 `scripts.prepare` 패치 (그 외 필드는 보존)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `commitlint.config.mjs`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `commitlint.config.mjs`, `jkit.project.json`.

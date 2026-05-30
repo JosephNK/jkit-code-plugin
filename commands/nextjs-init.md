@@ -47,11 +47,59 @@ fi
 
 아래 모든 shell 블록은 `cd "$PROJECT_ROOT"`가 해당 스텝에서 이미 실행된 상태를 전제로 합니다.
 
+## 매니페스트 (`jkit.project.json`)
+
+프로젝트 루트의 `jkit.project.json`은 init/sync가 쓰는 셋업 source-of-truth입니다. **있으면** 아래 프롬프트 스텝(이름·스택 선택·AGENTS 생성 여부)을 건너뛰고 매니페스트 값으로 무인 재현합니다. **없으면** 지금처럼 대화형으로 진행하고, 마지막에 수집한 값으로 매니페스트를 작성합니다.
+
+스펙 (Next.js):
+
+```jsonc
+{
+  "framework": "nextjs",
+  "projectName": "web",
+  "conventionStacks": ["design-system/mantine"],
+  "eslintStacks": ["design-system/mantine", "tanstack-query"],
+  "tsconfigStacks": [],
+  "generateAgents": true
+}
+```
+
+### 매니페스트 분기
+
+```bash
+cd "$PROJECT_ROOT"
+MANIFEST_PATH="$PROJECT_ROOT/jkit.project.json"
+
+if [ -f "$MANIFEST_PATH" ]; then
+  MF_FRAMEWORK=$(jq -r '.framework // ""' "$MANIFEST_PATH")
+  if [ "$MF_FRAMEWORK" != "nextjs" ]; then
+    echo "Error: jkit.project.json framework='$MF_FRAMEWORK' (expected 'nextjs')" >&2
+    exit 1
+  fi
+  PROJECT_NAME=$(jq -r '.projectName // ""' "$MANIFEST_PATH")
+  USER_CONV_STACKS=$(jq -r '(.conventionStacks // []) | join(",")' "$MANIFEST_PATH")
+  USER_ESLINT_STACKS=$(jq -r '(.eslintStacks // []) | join(",")' "$MANIFEST_PATH")
+  USER_TSCONFIG_STACKS=$(jq -r '(.tsconfigStacks // []) | join(",")' "$MANIFEST_PATH")
+  GEN_AGENTS=$(jq -r '.generateAgents // true' "$MANIFEST_PATH")
+  MANIFEST_MODE="apply"
+  echo "[manifest] apply mode — jkit.project.json 로드:"
+  echo "  projectName=$PROJECT_NAME conv=[$USER_CONV_STACKS] eslint=[$USER_ESLINT_STACKS] tsconfig=[$USER_TSCONFIG_STACKS] agents=$GEN_AGENTS"
+else
+  MANIFEST_MODE="prompt"
+  echo "[manifest] prompt mode — jkit.project.json 없음. 대화형 진행 후 작성합니다."
+fi
+```
+
+- **`MANIFEST_MODE=apply`** → 아래 프롬프트 스텝(프로젝트 이름·컨벤션/ESLint/tsconfig 스택·AGENTS 생성 여부)을 **모두 건너뛰고** 로드된 변수(`PROJECT_NAME`, `USER_CONV_STACKS`, `USER_ESLINT_STACKS`, `USER_TSCONFIG_STACKS`, `GEN_AGENTS`)로 생성 스텝을 진행합니다. PM 감지 단계의 확인 프롬프트도 생략하고 감지값을 그대로 사용합니다.
+- **`MANIFEST_MODE=prompt`** → 기존대로 프롬프트 스텝을 수행하고, 생성 후 매니페스트를 작성합니다.
+
 ## 단계
+
+> **`MANIFEST_MODE=apply`인 경우** 아래 Step 1~5(이름·스택·AGENTS 여부)를 건너뛰고 로드된 변수를 그대로 사용하세요. **`prompt`인 경우만** 아래 프롬프트를 수행합니다.
 
 ### 1. 프로젝트 이름 확인
 
-사용자에게 프로젝트 이름을 묻습니다. 기본값: 현재 디렉토리 이름.
+사용자에게 프로젝트 이름을 묻습니다. 기본값: 현재 디렉토리 이름. 입력값을 `PROJECT_NAME`으로 보관합니다. (apply 모드면 이미 로드돼 있으니 묻지 않습니다.)
 
 ### 2. 컨벤션 스택 선택
 
@@ -87,12 +135,12 @@ fi
 ### 5. AGENTS.md 생성 여부
 
 사용자에게 `AGENTS.md` 및 `CLAUDE.md` 심볼릭 링크 생성 여부를 묻습니다.
-이 파일들은 사용자가 커스터마이즈할 수 있으므로 선택 스텝입니다.
+이 파일들은 사용자가 커스터마이즈할 수 있으므로 선택 스텝입니다. 선택 결과를 `GEN_AGENTS`(`true`/`false`)로 보관합니다. (apply 모드면 이미 로드돼 있으니 묻지 않습니다.)
 
-Yes 선택 시:
+`GEN_AGENTS=true`이면:
 ```bash
 cd "$PROJECT_ROOT"
-$JKIT_DIR/scripts/gen-agents.mjs nextjs -p . -n "<project-name>" --docs-dir docs
+$JKIT_DIR/scripts/gen-agents.mjs nextjs -p . -n "$PROJECT_NAME" --docs-dir docs
 ```
 
 ### 6. `src/app` 레이아웃 보장
@@ -190,20 +238,32 @@ $JKIT_DIR/scripts/gen-architecture.mjs nextjs -p docs
 $JKIT_DIR/scripts/gen-structure.mjs nextjs -p docs
 
 # 4. CONVENTIONS.md — 사용자 선택 스택만 사용 (base에는 stylelint 섹션 없음)
-USER_CONV_STACKS="<conventions-stacks>"   # Step 2의 사용자 선택값
+# prompt 모드: Step 2 선택값을 USER_CONV_STACKS에 대입. apply 모드: 매니페스트 분기에서 이미 설정됨.
+[ "$MANIFEST_MODE" = "prompt" ] && USER_CONV_STACKS="<conventions-stacks>"
 if [ -n "$USER_CONV_STACKS" ]; then
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --with "$USER_CONV_STACKS"
 else
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs
 fi
 
+# prompt 모드: Step 3 선택값을 USER_ESLINT_STACKS에 대입. apply 모드: 이미 설정됨.
+[ "$MANIFEST_MODE" = "prompt" ] && USER_ESLINT_STACKS="<eslint-stacks>"
+
 # 5. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
-$JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
+if [ -n "$USER_ESLINT_STACKS" ]; then
+  $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with "$USER_ESLINT_STACKS"
+else
+  $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs
+fi
 
 # 6. ESLint config (Step 7에서 package.json 존재를 보장한 뒤 실행)
 #    - eslint.config.mjs 생성
 #    - package.json: @jkit/code-plugin devDep 핀 + TS/JS 대상 lint-staged glob 자동 주입
-$JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
+if [ -n "$USER_ESLINT_STACKS" ]; then
+  $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with "$USER_ESLINT_STACKS"
+else
+  $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p .
+fi
 
 # 7. Stylelint config (항상 실행, 스택 선택 없음)
 #    - stylelint.config.mjs 생성
@@ -277,9 +337,30 @@ esac
 > esac
 > ```
 
-### 10. 보고
+### 10. 매니페스트 작성 (`MANIFEST_MODE=prompt`인 경우만)
+
+prompt 모드로 진행했다면 수집한 값으로 `jkit.project.json`을 작성합니다. 작성 직전 사용자에게 내용을 보여주고 확인을 받습니다. 다음 init/sync는 이 파일로 무인 재현됩니다. (apply 모드면 이미 매니페스트가 있으므로 건너뜁니다.)
+
+```bash
+cd "$PROJECT_ROOT"
+if [ "$MANIFEST_MODE" = "prompt" ]; then
+  to_arr() { [ -z "$1" ] && echo "[]" || jq -cn --arg s "$1" '$s | split(",")'; }
+  jq -n \
+    --arg name "$PROJECT_NAME" \
+    --argjson conv "$(to_arr "$USER_CONV_STACKS")" \
+    --argjson eslint "$(to_arr "$USER_ESLINT_STACKS")" \
+    --argjson ts "$(to_arr "$USER_TSCONFIG_STACKS")" \
+    --argjson agents "${GEN_AGENTS:-true}" \
+    '{framework:"nextjs", projectName:$name, conventionStacks:$conv, eslintStacks:$eslint, tsconfigStacks:$ts, generateAgents:$agents}' \
+    > "$MANIFEST_PATH"
+  echo "[manifest] 작성: $MANIFEST_PATH"
+fi
+```
+
+### 11. 보고
 
 사용자에게 생성된 항목을 보고합니다:
+- `jkit.project.json` — JKit 셋업 매니페스트 (prompt 모드에서 신규 작성; 다음 init/sync 무인 재현용)
 - `AGENTS.md` — AI 에이전트 엔트리 포인트
 - `CLAUDE.md` → `AGENTS.md` 심볼릭 링크
 - `AGENTS.PROJECT.md` — 사용자 소유 프로젝트 고유 가이드 (최초 1회만 생성, 이후 보존)

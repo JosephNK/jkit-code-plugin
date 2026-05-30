@@ -47,7 +47,38 @@ fi
 
 아래 모든 shell 블록은 `cd "$PROJECT_ROOT"`가 해당 스텝에서 이미 실행된 상태를 전제로 합니다.
 
+## 매니페스트 (`jkit.project.json`)
+
+프로젝트 루트에 `jkit.project.json`이 **있으면** 스택 선택 프롬프트를 건너뛰고 매니페스트 값으로 무인 재현합니다. **없으면** 지금처럼 대화형으로 진행하며, 끝에 작성을 제안합니다(강제 아님). 스펙은 `/jkit:nextjs-init` 문서 참조.
+
+### 매니페스트 분기
+
+```bash
+cd "$PROJECT_ROOT"
+MANIFEST_PATH="$PROJECT_ROOT/jkit.project.json"
+
+if [ -f "$MANIFEST_PATH" ]; then
+  MF_FRAMEWORK=$(jq -r '.framework // ""' "$MANIFEST_PATH")
+  if [ "$MF_FRAMEWORK" != "nextjs" ]; then
+    echo "Error: jkit.project.json framework='$MF_FRAMEWORK' (expected 'nextjs')" >&2
+    exit 1
+  fi
+  USER_CONV_STACKS=$(jq -r '(.conventionStacks // []) | join(",")' "$MANIFEST_PATH")
+  USER_ESLINT_STACKS=$(jq -r '(.eslintStacks // []) | join(",")' "$MANIFEST_PATH")
+  MANIFEST_MODE="apply"
+  echo "[manifest] apply mode — conv=[$USER_CONV_STACKS] eslint=[$USER_ESLINT_STACKS]"
+else
+  MANIFEST_MODE="prompt"
+  echo "[manifest] prompt mode — jkit.project.json 없음. 대화형 진행."
+fi
+```
+
+- **`MANIFEST_MODE=apply`** → 아래 Step 1~2(스택 선택)를 건너뛰고 로드된 변수를 사용합니다. PM 감지(Step 3)의 확인 프롬프트도 생략하고 감지값을 그대로 씁니다.
+- **`MANIFEST_MODE=prompt`** → 기존대로 프롬프트하고, 마지막에 매니페스트 작성을 제안합니다.
+
 ## 단계
+
+> **`MANIFEST_MODE=apply`인 경우** 아래 Step 1~2를 건너뛰고 로드된 `USER_CONV_STACKS`, `USER_ESLINT_STACKS`를 사용하세요.
 
 ### 1. 컨벤션 스택 선택
 
@@ -118,18 +149,30 @@ $JKIT_DIR/scripts/gen-architecture.mjs nextjs -p docs
 $JKIT_DIR/scripts/gen-structure.mjs nextjs -p docs
 
 # 4. CONVENTIONS.md (PROJECT는 절대 건드리지 않음 — 없어도 새로 만들지 않음)
-USER_CONV_STACKS="<conventions-stacks>"   # Step 1의 사용자 선택값
+# prompt 모드: Step 1 선택값을 대입. apply 모드: 매니페스트 분기에서 이미 설정됨.
+[ "$MANIFEST_MODE" = "prompt" ] && USER_CONV_STACKS="<conventions-stacks>"
 if [ -n "$USER_CONV_STACKS" ]; then
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --with "$USER_CONV_STACKS" --no-project-init
 else
   $JKIT_DIR/scripts/gen-conventions.mjs nextjs -p docs --no-project-init
 fi
 
+# prompt 모드: Step 2 선택값을 대입. apply 모드: 이미 설정됨.
+[ "$MANIFEST_MODE" = "prompt" ] && USER_ESLINT_STACKS="<eslint-stacks>"
+
 # 5. LINT.md (lint-rules + structure-reference + stylelint-rules + 선택 stack lint-rules)
-$JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with <eslint-stacks>
+if [ -n "$USER_ESLINT_STACKS" ]; then
+  $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs --with "$USER_ESLINT_STACKS"
+else
+  $JKIT_DIR/scripts/gen-lint.mjs nextjs -p docs
+fi
 
 # 6. ESLint config (package.json의 @jkit/code-plugin git ref + TS/JS lint-staged glob 갱신)
-$JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with <eslint-stacks>
+if [ -n "$USER_ESLINT_STACKS" ]; then
+  $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p . --with "$USER_ESLINT_STACKS"
+else
+  $JKIT_DIR/scripts/typescript/gen-eslint.mjs nextjs -p .
+fi
 
 # 7. Stylelint config (항상 실행, 스택 선택 없음)
 $JKIT_DIR/scripts/typescript/gen-stylelint.mjs nextjs -p .
@@ -184,7 +227,24 @@ case "$PM" in
 esac
 ```
 
-### 6. 보고
+### 6. 매니페스트 작성 제안 (`MANIFEST_MODE=prompt`인 경우만)
+
+prompt 모드로 진행했다면, 다음 sync부터 무인 재현되도록 `jkit.project.json` 작성을 **제안**합니다. sync는 강제하지 않으므로 사용자가 동의할 때만 작성합니다. `projectName`은 디렉토리명, `generateAgents`는 `true`를 기본값으로 넣고 사용자가 나중에 조정할 수 있다고 안내합니다.
+
+```bash
+cd "$PROJECT_ROOT"
+# 사용자가 작성에 동의한 경우에만 실행:
+to_arr() { [ -z "$1" ] && echo "[]" || jq -cn --arg s "$1" '$s | split(",")'; }
+jq -n \
+  --arg name "$(basename "$PROJECT_ROOT")" \
+  --argjson conv "$(to_arr "$USER_CONV_STACKS")" \
+  --argjson eslint "$(to_arr "$USER_ESLINT_STACKS")" \
+  '{framework:"nextjs", projectName:$name, conventionStacks:$conv, eslintStacks:$eslint, tsconfigStacks:[], generateAgents:true}' \
+  > "$MANIFEST_PATH"
+echo "[manifest] 작성: $MANIFEST_PATH"
+```
+
+### 7. 보고
 
 사용자에게 갱신된 항목을 보고합니다:
 
@@ -198,4 +258,4 @@ esac
 - `.husky/pre-commit`, `.husky/commit-msg` — husky 훅 (덮어쓰기)
 - `package.json` — `@jkit/code-plugin` git ref + `devDependencies`(`husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.prepare` 갱신 (그 외 필드는 보존)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `commitlint.config.mjs`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `commitlint.config.mjs`, `jkit.project.json`.
