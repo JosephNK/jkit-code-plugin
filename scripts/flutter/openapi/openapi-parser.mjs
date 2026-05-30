@@ -509,6 +509,24 @@ function parseParameter(spec, param) {
 // Endpoint parsing
 // ──────────────────────────────────────────────
 
+// Returns the referenced schema name for a success-wrapper `data` property,
+// supporting both `data: $ref` and `data: { type: array, items: $ref }`.
+// Returns null when `data` references nothing concrete.
+function responseDataRefName(dataProp) {
+  if (dataProp && "$ref" in dataProp) {
+    return dataProp.$ref.split("/").pop();
+  }
+  if (
+    dataProp &&
+    dataProp.type === "array" &&
+    dataProp.items &&
+    "$ref" in dataProp.items
+  ) {
+    return dataProp.items.$ref.split("/").pop();
+  }
+  return null;
+}
+
 function extractResponseSchema(spec, responses, statusRange) {
   for (const code of Object.keys(responses)) {
     const codeStr = String(code);
@@ -539,10 +557,11 @@ function extractResponseSchema(spec, responses, statusRange) {
       }
       const props = schema.properties || {};
       const dataProp = props.data || {};
-      if ("$ref" in dataProp) {
+      const dataRefName = responseDataRefName(dataProp);
+      if (dataRefName) {
         const title = schema.title;
         if (title) return title;
-        return dataProp.$ref.split("/").pop();
+        return dataRefName;
       }
       return null;
     }
@@ -672,7 +691,7 @@ function collectInlineResponseSchemas(spec) {
 
         const props = schema.properties || {};
         const dataProp = props.data || {};
-        if (!("$ref" in dataProp)) continue;
+        if (!responseDataRefName(dataProp)) continue;
 
         if (schemas.has(title)) continue;
 
