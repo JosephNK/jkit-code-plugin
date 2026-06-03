@@ -709,13 +709,37 @@ function generateBarrel(
 // Main orchestration
 // ──────────────────────────────────────────────
 
+// Resolve the consuming project's root from the output directory.
+// Walking up from the script location is wrong when this plugin is installed
+// in a shared cache (e.g. ~/.claude/plugins/cache/...), where the script does
+// not live inside the project. The project root is derived from --output-dir
+// instead: walk up looking for a `.git` dir or `melos.yaml` (the most reliable
+// monorepo markers — a bare `pubspec.yaml` is NOT reliable since every package
+// in a melos workspace has one). Falls back to the conventional
+// `<root>/packages/<pkg>/lib` layout (three levels up from the output dir).
+function findProjectRoot(outputDir) {
+  let dir = path.resolve(outputDir);
+  while (true) {
+    if (
+      fs.existsSync(path.join(dir, ".git")) ||
+      fs.existsSync(path.join(dir, "melos.yaml"))
+    ) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break; // reached filesystem root
+    dir = parent;
+  }
+  // Fallback: assume the documented `<root>/packages/<pkg>/lib` layout.
+  return path.resolve(outputDir, "..", "..", "..");
+}
+
 async function generate(specPath, apiName, outputDirStr, dryRun = false) {
   const outputDir = outputDirStr;
 
   const packageName = path.basename(path.dirname(outputDir));
 
-  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const projectRoot = path.resolve(scriptDir, "..", "..", "..", "..");
+  const projectRoot = findProjectRoot(outputDir);
   const specsDir = path.join(projectRoot, "specs");
 
   process.stdout.write(`\nOpenAPI Code Generator\n`);
