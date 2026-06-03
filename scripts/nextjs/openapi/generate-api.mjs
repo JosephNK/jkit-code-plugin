@@ -793,9 +793,28 @@ export function resetApiInstance(): void {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
+// Resolve the consuming project's root, starting from the current working
+// directory. The script is referenced via ${CLAUDE_PLUGIN_ROOT} while cwd stays
+// in the project (see SKILL.md), so cwd is the natural anchor — but walking up
+// to the nearest `package.json` makes it robust to being run from a
+// subdirectory. Stops at the first `package.json` (the Next.js app root) rather
+// than `.git`, so it does not overshoot to a monorepo root. Falls back to cwd.
+function findProjectRoot(startDir) {
+  let dir = path.resolve(startDir);
+  while (true) {
+    if (fs.existsSync(path.join(dir, "package.json"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break; // reached filesystem root
+    dir = parent;
+  }
+  return path.resolve(startDir);
+}
+
 async function main() {
   const args = parseArgs(process.argv);
-  const projectRoot = process.cwd();
+  const projectRoot = findProjectRoot(process.cwd());
   const { spec, source } = await loadSpec(args.spec, projectRoot);
   validateOpenApi(spec);
 
