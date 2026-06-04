@@ -4,6 +4,11 @@
 // by replacing `// {{MARKER}}` placeholders with concatenated snippets from
 // each `--with` stack's eslint.manifest.
 //
+// Also bootstraps <output-dir>/eslint.project.config.mjs — a user-owned ESLint
+// override file that the generated config imports and spreads after the base
+// rules. Created with a stub only when absent; preserved on re-run (sync), like
+// commitlint.config.mjs.
+//
 // Also patches the user's package.json:
 //   - devDependencies: pins `@jkit/code-plugin` to `v<plugin-version>`
 //     (read from .claude-plugin/plugin.json)
@@ -59,6 +64,47 @@ function usage(code = 1) {
   (code === 0 ? process.stdout : process.stderr).write(HELP);
   process.exit(code);
 }
+
+// 사용자 소유 ESLint override 파일의 초기 스텁.
+// `eslint.config.mjs`(생성물)가 이 배열을 base 룰 뒤에 spread하므로,
+// 여기에 추가한 블록이 가장 마지막에 적용되어 base 룰을 override한다.
+// init이 없을 때만 생성하고, sync는 보존한다(덮어쓰지 않음) — commitlint.config.mjs와 동일.
+const PROJECT_CONFIG_STUB = `// =============================================================================
+// JKit — 프로젝트 개별 ESLint override (사용자 소유)
+// -----------------------------------------------------------------------------
+// 이 파일은 *-sync가 덮어쓰지 않습니다. 최초 1회만 생성됩니다.
+// \`eslint.config.mjs\`가 이 배열을 base 룰 뒤에 spread하므로, 여기 블록이
+// 가장 마지막에 적용되어 base 룰을 override합니다.
+//
+// 필요한 플러그인 import는 아래 상단에 추가하고, 이 프로젝트의
+// devDependencies에 직접 설치하세요. (예: npm i -D eslint-plugin-import)
+// =============================================================================
+
+// import groupDepPlugin from "eslint-plugin-import";
+
+/** @type {import('eslint').Linter.Config[]} */
+const projectConfig = [
+  // 예) 그룹(바운디드 컨텍스트) 간 의존 방향 차단 — 위 import 주석을 함께 해제
+  // {
+  //   files: ["src/**/*.ts"],
+  //   ignores: ["**/*.spec.ts"],
+  //   plugins: { groupdep: groupDepPlugin },
+  //   rules: {
+  //     "groupdep/no-restricted-paths": ["error", {
+  //       zones: [
+  //         {
+  //           target: "./src/modules/forwarder",
+  //           from: "./src/modules/consumer",
+  //           message: "forwarder 그룹은 consumer 그룹에 의존할 수 없습니다.",
+  //         },
+  //       ],
+  //     }],
+  //   },
+  // },
+];
+
+export default projectConfig;
+`;
 
 function parseArgs(argv) {
   const args = { framework: "", outputDir: "", stacks: "" };
@@ -253,6 +299,20 @@ function main() {
   const outputFile = path.join(args.outputDir, "eslint.config.mjs");
   fs.writeFileSync(outputFile, content);
   process.stdout.write(`Generated: ${outputFile}\n`);
+
+  // ── Bootstrap eslint.project.config.mjs (user-owned, preserved on sync) ──
+  // 생성물 eslint.config.mjs가 이 파일을 import하므로 반드시 존재해야 ESLint가
+  // 로드된다. 없을 때만 스텁을 생성하고, 있으면 사용자 수정분을 보존한다.
+  const projectConfigFile = path.join(
+    args.outputDir,
+    "eslint.project.config.mjs",
+  );
+  if (fs.existsSync(projectConfigFile)) {
+    process.stdout.write(`  Preserved: ${projectConfigFile} (user-owned)\n`);
+  } else {
+    fs.writeFileSync(projectConfigFile, PROJECT_CONFIG_STUB);
+    process.stdout.write(`  Created:   ${projectConfigFile} (user-owned)\n`);
+  }
 
   // ── Patch user's package.json with git dependency ───────────────────────
   const pluginJson = path.join(pluginRoot, ".claude-plugin", "plugin.json");

@@ -251,7 +251,8 @@ echo "[manifest] 작성: $MANIFEST_PATH"
 - `docs/CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (덮어쓰기, 하단 `CONVENTIONS.PROJECT.md` 링크 포함)
 - `docs/LINT.md` — Lint 규칙 참조 (덮어쓰기)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (덮어쓰기)
+- `eslint.project.config.mjs` — 사용자 소유 프로젝트 개별 ESLint override (있으면 보존, 없을 때만 스텁 생성)
 - `.husky/pre-commit`, `.husky/commit-msg` — husky 훅 (덮어쓰기)
 - `package.json` — `@jkit/code-plugin` git ref + `devDependencies`(`husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.prepare` 갱신 (그 외 필드는 보존)
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `commitlint.config.mjs`, `jkit.project.json`.
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `eslint.project.config.mjs`, `tsconfig.json`, `commitlint.config.mjs`, `jkit.project.json`.

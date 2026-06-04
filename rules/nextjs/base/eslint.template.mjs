@@ -34,6 +34,9 @@ import {
 } from "@jkit/code-plugin/nextjs/base/eslint.rules.mjs";
 // {{STACK_IMPORTS}}
 
+// 프로젝트 개별 override (사용자 소유 — init이 스텁 생성, sync는 보존하며 덮어쓰지 않음)
+import projectConfig from "./eslint.project.config.mjs";
+
 // ─── Helper: patch additional allow rules into base boundary rules ────────────
 /**
  * base 규칙의 `allow` 배열에 스택별 추가 허용 항목을 덧붙인다.
@@ -133,8 +136,10 @@ const eslintConfig = [
   // [8-1] 스택별 custom config (per-path rule override 등)
   // {{CUSTOM_CONFIG}}
 
-  // ─── Project-specific rules below ───
-  // 프로젝트 개별 override는 이 아래에 추가한다.
+  // ─── Project-specific overrides (eslint.project.config.mjs) ───
+  //     사용자 소유 파일. base 룰 뒤에 spread되어 가장 마지막에 적용 → override 가능.
+  //     sync가 덮어쓰지 않으므로 프로젝트 개별 룰은 그 파일에서 관리한다.
+  ...projectConfig,
 
   // [9] 전역 ignore (빌드 산출물 등) — 맨 마지막에 위치
   baseIgnores,

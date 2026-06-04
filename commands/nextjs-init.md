@@ -370,6 +370,7 @@ fi
 - `CONVENTIONS.md` — 선택한 스택이 반영된 컨벤션 (하단에 `CONVENTIONS.PROJECT.md` 링크 포함)
 - `CONVENTIONS.PROJECT.md` — 사용자 소유 프로젝트 고유 컨벤션 (최초 1회만 생성, 이후 보존)
 - `eslint.config.mjs` — 선택한 스택이 반영된 ESLint 설정 (`@jkit/code-plugin/nextjs/*` import)
+- `eslint.project.config.mjs` — 사용자 소유 프로젝트 개별 ESLint override (최초 1회만 스텁 생성, 이후 보존). `eslint.config.mjs`가 base 룰 뒤에 spread함
 - `stylelint.config.mjs` — Stylelint 설정 (`stylelint-config-standard` extends + jkit baseline 규칙)
 - `prettier.config.mjs` — Prettier 설정 (`prettier-plugin-tailwindcss` 포함)
 - `package.json` — `devDependencies`(`@jkit/code-plugin`, `stylelint`, `stylelint-config-standard`, `stylelint-declaration-strict-value`, `prettier`, `prettier-plugin-tailwindcss`, `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`) + `scripts.lint:css` + `scripts.format` + `scripts.prepare: "husky"` + `lint-staged` glob (TS/JS · CSS/SCSS · 데이터 파일)
