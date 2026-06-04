@@ -246,4 +246,4 @@ done
 
 각 워크스페이스에서 갱신되는 파일은 해당 framework의 `*-sync` 커맨드 "보고" 섹션과 동일합니다.
 
-> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `tsconfig.json`, `commitlint.config.mjs` (이미 있는 경우).
+> 보존된 사용자 소유 파일: `AGENTS.md`, `AGENTS.PROJECT.md`, `CONVENTIONS.PROJECT.md`, `eslint.project.config.mjs`, `tsconfig.json`, `commitlint.config.mjs` (이미 있는 경우).

@@ -386,4 +386,4 @@ fi
 - **Skipped**: 디렉터리 없음/미지원 (`$SKIPPED_WS`)
 - **매니페스트 위치**: `$MANIFEST_PATH` — git에 커밋해 두면 다음 init/sync는 프롬프트 없이 일괄 재현 가능
 
-워크스페이스별로 생성된 파일 목록은 해당 framework의 `*-init` 커맨드 "보고" 섹션 참조. 단, **`.husky/*`, `commitlint.config.mjs`, `husky`/`@commitlint/*` devDeps는 워크스페이스에 생성되지 않습니다** (Step 9 참조).
+워크스페이스별로 생성된 파일 목록은 해당 framework의 `*-init` 커맨드 "보고" 섹션 참조. 각 워크스페이스에는 사용자 소유 `eslint.project.config.mjs`가 최초 1회만 스텁으로 생성되며 이후 sync에서 보존됩니다(워크스페이스별 ESLint override 지점). 단, **`.husky/*`, `commitlint.config.mjs`, `husky`/`@commitlint/*` devDeps는 워크스페이스에 생성되지 않습니다** (Step 9 참조).
