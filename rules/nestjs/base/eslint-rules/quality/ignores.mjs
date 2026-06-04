@@ -9,6 +9,7 @@ import { globalIgnores } from "eslint/config";
  */
 export const baseIgnores = globalIgnores([
   "eslint.config.mjs",
+  "eslint.project.config.mjs",
   "prettier.config.mjs",
   "commitlint.config.mjs",
   "eslint-rules/**",

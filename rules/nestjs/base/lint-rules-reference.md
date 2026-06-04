@@ -360,7 +360,7 @@ Boundary 검사 제외 — 테스트, DI 조립(*.module.ts), 부트스트랩(ma
 
 ### 무시 패턴 목록
 
-- **테스트/설정 파일**: `**/*.spec.ts`, `**/*.test.ts`, `src/test/**`, `test/**`, `prettier.config.mjs`, `commitlint.config.mjs`
+- **테스트/설정 파일**: `**/*.spec.ts`, `**/*.test.ts`, `src/test/**`, `test/**`, `eslint.project.config.mjs`, `prettier.config.mjs`, `commitlint.config.mjs`
 - **NestJS DI 조립**: `**/*.module.ts`
 - **앱 부트스트랩**: `src/main.ts`, `src/app.*.ts`
 - **특수 경로**: `src/modules/health/**`, `src/modules/**/common/**`, `**/packages/**`
