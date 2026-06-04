@@ -11,7 +11,7 @@
 //   service/    : *.service.ts, *.listener.ts
 //   controller/ : *.controller.ts
 //   strategy/   : *.strategy.ts
-//   provider/   : *.adapter.ts, *.orm-entity.ts
+//   provider/   : *.adapter.ts, *.orm-entity.ts, *.mapper.ts, *.scheduler.ts
 //   dto/        : *.dto.ts (create-*.dto.ts, *.request.dto.ts 포함)
 //   exception/  : *.error.ts
 //
@@ -40,7 +40,7 @@ const LAYER_ALLOWED = {
     exact: [],
   },
   provider: {
-    suffixes: [".adapter.ts", ".orm-entity.ts"],
+    suffixes: [".adapter.ts", ".orm-entity.ts", ".mapper.ts", ".scheduler.ts"],
     exact: [],
   },
   dto: {

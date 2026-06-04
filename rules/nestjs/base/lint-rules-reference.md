@@ -167,6 +167,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 - Port 구현 adapter 클래스 (@Injectable) — `*.adapter.ts`
 - ORM 엔티티 (@Entity) — `*.orm-entity.ts`
 - ORM ↔ Domain 매퍼 (선택) — `*.mapper.ts`
+- cron·스케줄 작업 (선택) — `*.scheduler.ts`
 
 **Forbids**
 

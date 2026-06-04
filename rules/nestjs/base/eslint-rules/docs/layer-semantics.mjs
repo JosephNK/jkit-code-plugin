@@ -81,9 +81,7 @@ export const baseLayerSemantics = {
 
   controller: {
     role: "HTTP 인바운드 어댑터. 요청 수신 → DTO 검증 → Inbound Port 호출 → Response DTO 변환.",
-    contains: [
-      "NestJS Controller 클래스 (@Controller) — `*.controller.ts`",
-    ],
+    contains: ["NestJS Controller 클래스 (@Controller) — `*.controller.ts`"],
     forbids: [
       "Entity 직접 return (→ Response DTO로 매핑; local/no-entity-return)",
       "catch 블록의 예외 미매핑 (local/require-map-domain-exception)",
@@ -142,6 +140,7 @@ export const baseLayerSemantics = {
       "Port 구현 adapter 클래스 (@Injectable) — `*.adapter.ts`",
       "ORM 엔티티 (@Entity) — `*.orm-entity.ts`",
       "ORM ↔ Domain 매퍼 (선택) — `*.mapper.ts`",
+      "cron·스케줄 작업 (선택) — `*.scheduler.ts`",
     ],
     forbids: [
       "ORM 엔티티를 도메인 Entity로 재사용 (model과 분리, 매퍼로 변환)",
@@ -169,9 +168,7 @@ export const baseLayerSemantics = {
     contains: [
       "도메인 예외 클래스 (extends common의 base error) — `*.error.ts`",
     ],
-    forbids: [
-      "`HttpException` 등 NestJS HTTP 타입 상속 (도메인 순수성 유지)",
-    ],
+    forbids: ["`HttpException` 등 NestJS HTTP 타입 상속 (도메인 순수성 유지)"],
     example: [
       "// exception/order-not-found.error.ts",
       "export class OrderNotFoundError extends DomainError {",
@@ -261,9 +258,7 @@ export const baseLayerSemantics = {
 
   libs: {
     role: "독립 라이브러리성 모듈 — 앱 조립 수준에서 재사용할 수 있는 단위. 모든 레이어 참조 가능 (catch-all).",
-    contains: [
-      "라이브러리성 모듈 (내부 구조 자유) — `src/libs/**`",
-    ],
+    contains: ["라이브러리성 모듈 (내부 구조 자유) — `src/libs/**`"],
     forbids: [
       "모듈 도메인 로직 이관 (원래 속한 `src/modules/<domain>/`로 유지)",
     ],
