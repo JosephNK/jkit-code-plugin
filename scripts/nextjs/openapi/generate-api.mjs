@@ -2,18 +2,17 @@
 // =============================================================================
 // Next.js OpenAPI Code Generator
 // -----------------------------------------------------------------------------
-// Reads an OpenAPI 3.x spec and emits:
-//   - <project-root>/src/http/_generated/types.ts        DTO interfaces (components/schemas)
-//   - <project-root>/src/http/_generated/endpoints.ts    URL helpers (paths)
-//   - <project-root>/src/http/_generated/services/*.ts   tag별 API 서비스 클래스
+// Reads an OpenAPI 3.x spec and emits (all under <project-root>/src/http/_generated/):
+//   - _generated/types.ts        DTO interfaces (components/schemas)
+//   - _generated/endpoints.ts    URL helpers (paths)
+//   - _generated/services/*.ts   tag별 API 서비스 클래스
+//   - _generated/client.ts       config-injection factory
+//   - _generated/index.ts        public barrel (import surface: @/http/_generated)
 //
-// Generated files are overwritten on every run. Stale service files for renamed
-// tags are removed each run.
-//
-// Also generates <project-root>/src/http/client.ts (config-injection factory)
-// and <project-root>/src/http/index.ts (public barrel). Both are GENERATED and
-// overwritten every run — per-app auth/hooks/prefix are injected at call sites
-// via createApiClient(config), not edited here. Per-feature mapper.ts /
+// Every file lives in _generated/ and is overwritten on each run. Stale service
+// files for renamed tags are removed each run. client.ts/index.ts are GENERATED
+// too — per-app auth/hooks/prefix are injected at call sites via
+// createApiClient(config), not edited here. Per-feature mapper.ts /
 // repository.ts / hook.ts (src/http/<feature>/) are user-authored and never
 // touched by this script.
 //
@@ -822,23 +821,24 @@ function renderEndpointsFile(namedOperations) {
   return `${GEN_HEADER}\n\nexport const endpoints = {\n${lines.join("\n")}\n} as const;\n`;
 }
 
-// ─── client.ts / index.ts (GENERATED, overwritten every run) ─────────────────
+// ─── _generated/client.ts · _generated/index.ts (GENERATED, overwritten) ─────
 //
 // client.ts는 config 주입 팩토리라 비즈니스 로직(인증·hooks·prefix)을 담지 않는다 —
 // 앱이 createApiClient(config)로 주입한다. 따라서 결정적이며 매 실행 덮어써도 안전.
 // index.ts도 generated 산출물(client 헬퍼·endpoints·types·services)만 re-export한다.
 
-// src/http/index.ts barrel: client 헬퍼 + endpoints + 전체 DTO 타입 + 모든 service를
-// re-export. services는 spec에 따라 늘고 줄므로 _generated/services/index.ts를 거쳐
-// 끌어와 항상 동기화된다.
+// _generated/index.ts barrel: client 헬퍼 + endpoints + 전체 DTO 타입 + 모든 service를
+// re-export (공개 import 표면 = @/http/_generated). client/endpoints/types/services가
+// 모두 같은 _generated/ 안에 있으므로 상대 경로는 형제 참조다. services는 spec에 따라
+// 늘고 줄므로 services/index.ts를 거쳐 끌어와 항상 동기화된다.
 function renderIndexFile() {
   return `${GEN_HEADER}
 
 export { getApi, resetApiInstance, createApiClient } from "./client";
 export type { ApiClientConfig } from "./client";
-export { endpoints } from "./_generated/endpoints";
-export type * from "./_generated/types";
-export * from "./_generated/services";
+export { endpoints } from "./endpoints";
+export type * from "./types";
+export * from "./services";
 `;
 }
 
@@ -961,9 +961,9 @@ async function runOne({ spec: specArg, outDir, dryRun }) {
   const serviceGroups = groupOperationsByTag(namedOperations);
 
   const httpDir = path.join(projectRoot, "src", "http");
-  const clientPath = path.join(httpDir, "client.ts");
-  const indexPath = path.join(httpDir, "index.ts");
   const genDir = path.join(httpDir, "_generated");
+  const clientPath = path.join(genDir, "client.ts");
+  const indexPath = path.join(genDir, "index.ts");
   const typesPath = path.join(genDir, "types.ts");
   const endpointsPath = path.join(genDir, "endpoints.ts");
   const servicesDir = path.join(genDir, "services");
@@ -1002,10 +1002,8 @@ async function runOne({ spec: specArg, outDir, dryRun }) {
     return;
   }
 
-  fs.mkdirSync(httpDir, { recursive: true });
-  fs.writeFileSync(clientPath, renderClientFile());
-
   fs.mkdirSync(genDir, { recursive: true });
+  fs.writeFileSync(clientPath, renderClientFile());
   fs.writeFileSync(typesPath, typesContent);
   fs.writeFileSync(endpointsPath, endpointsContent);
 

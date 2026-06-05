@@ -104,14 +104,15 @@ export class OrderService {
 
 ### `http-client`
 
-**Role** — HTTP 클라이언트 단일 파일 (axios/fetch/ky 래퍼). baseURL·인터셉터·에러 포맷팅 공통화.
+**Role** — HTTP 클라이언트 팩토리 (ky 래퍼). createApiClient(config)로 prefix·retry·hooks를 주입받아 KyInstance 생성 — 인증·prefix 같은 비즈니스 로직은 호출부가 주입.
 
 **Contains**
 
-- client 인스턴스 export — `src/http/client.ts` (단일 파일)
+- createApiClient 팩토리·getApi 싱글톤 export — `src/http/_generated/client.ts` (generator 산출물)
 
 **Forbids**
 
+- 수기 편집 (jkit:nextjs-openapi-gen으로만 갱신)
 - 이 파일에서 다른 레이어 import (순수 통신 경계; allow: [])
 
 ### `http-endpoint`

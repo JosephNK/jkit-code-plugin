@@ -1,6 +1,6 @@
 ---
 name: nextjs-openapi-gen
-description: Generates TypeScript DTO types, endpoint helpers, and tag-grouped API service classes from an OpenAPI 3.x spec into src/http/_generated/. Also generates src/http/client.ts (config-injection factory) and src/http/index.ts (barrel), overwritten every run. Use for requests like "Generate API types", "Create types from spec", "Set up API from swagger".
+description: Generates TypeScript DTO types, endpoint helpers, and tag-grouped API service classes from an OpenAPI 3.x spec into src/http/_generated/. Also generates src/http/_generated/client.ts (config-injection factory) and src/http/_generated/index.ts (barrel — import surface @/http/_generated), overwritten every run. Use for requests like "Generate API types", "Create types from spec", "Set up API from swagger".
 argument-hint: "<spec> [--dry-run] [--out-dir <dir>] | --config <file>"
 ---
 
@@ -11,13 +11,15 @@ OpenAPI 3.x specification files for code generation.
 
 # Next.js OpenAPI Code Generator Skill
 
-Generates three artifacts from an OpenAPI 3.x spec:
+모든 산출물을 `src/http/_generated/` 한 폴더에 생성한다:
 
 - `src/http/_generated/types.ts` — DTO interfaces (`components/schemas`)
 - `src/http/_generated/endpoints.ts` — URL helpers (operation별 path 템플릿)
 - `src/http/_generated/services/<tag-kebab>.ts` — tag별 API 서비스 클래스 (operation 1개 = 메서드 1개, `KyInstance` 주입, 반환은 raw DTO)
+- `src/http/_generated/client.ts` — config 주입 팩토리
+- `src/http/_generated/index.ts` — 공개 배럴 (import 표면 = `@/http/_generated`)
 
-추가로 `src/http/client.ts`(config 주입 팩토리)와 `src/http/index.ts`(공개 배럴)를 생성한다. 둘 다 **GENERATED 산출물이라 매 실행 덮어쓴다.** client.ts는 `createApiClient(config)` 팩토리만 담고 인증·hooks·prefix 같은 비즈니스 로직은 갖지 않는다 — 그건 앱이 호출부에서 `createApiClient({ hooks, apiUrl, ... })`로 주입하므로 client.ts는 결정적이고 재생성해도 안전하다. index.ts는 client 헬퍼·endpoints·types·모든 service를 re-export한다.
+`client.ts`·`index.ts`도 다른 generated 산출물과 동일하게 **`_generated/` 안에 있고 매 실행 덮어쓴다.** client.ts는 `createApiClient(config)` 팩토리만 담고 인증·hooks·prefix 같은 비즈니스 로직은 갖지 않는다 — 그건 앱이 호출부에서 `createApiClient({ hooks, apiUrl, ... })`로 주입하므로 client.ts는 결정적이고 재생성해도 안전하다. index.ts는 client 헬퍼·endpoints·types·모든 service를 re-export하며, 소비 측은 `@/http/_generated`로 한 번에 import한다.
 
 **Generated files are fully overwritten on every run.** Stale service files for renamed tags are also removed on each run. Feature-first 디렉토리 `src/http/<feature>/{mapper,repository,hook}.ts`만 user-authored — generator는 절대 손대지 않는다 (변환 규칙·Port 설계·캐시 정책 등 spec에서 도출 불가한 비즈니스 결정 영역). 따라서 인증/hooks/prefix는 client.ts가 아니라 이 feature 코드(또는 앱 부트스트랩)에서 `createApiClient`로 주입한다.
 
@@ -66,13 +68,13 @@ Generates three artifacts from an OpenAPI 3.x spec:
    - 모노레포에서 특정 패키지로 출력하려면 `--out-dir <pkg-dir>`를 넘긴다 (cwd 기준 해석). 예: 모노레포 루트에서 `--out-dir packages/http` → `packages/http/src/http/_generated/...`. 각 패키지가 자체 `package.json`을 가져 import 가능한 구조에 적합하다.
    - `--config`는 매니페스트의 각 타깃을 cwd 기준으로 순차 생성한다 (`spec`/`outDir`는 타깃별). **Config Manifest** 섹션 참조.
    - URL spec은 해당 타깃의 `<outDir>/specs/openapi.{yaml,json}`(단일 모드는 `specs/`)에 저장된다 (VCS 추적용).
-   - 출력(모두 **매 실행 덮어쓰기**): `src/http/_generated/{types,endpoints}.ts` + `src/http/_generated/services/*.ts` + `src/http/_generated/services/index.ts`(service 배럴) + `src/http/client.ts`(팩토리) + `src/http/index.ts`(배럴).
+   - 출력(모두 `src/http/_generated/` 안, **매 실행 덮어쓰기**): `_generated/{types,endpoints,client,index}.ts` + `_generated/services/*.ts` + `_generated/services/index.ts`(service 배럴).
    - Swagger UI URL(`/api-docs`)을 그대로 넘겨도 스크립트가 HTML 응답을 감지해 `/api-docs-json`, `/v3/api-docs` 등 일반 spec 엔드포인트로 자동 fallback 한다.
-4. **Format generated files** (skip if --dry-run): 각 출력 루트의 `src/http`를 `BASE`로 잡아 prettier를 돌린다.
+4. **Format generated files** (skip if --dry-run): 각 출력 루트의 `src/http/_generated`를 `BASE`로 잡아 prettier를 돌린다.
    ```bash
-   # 단일: --out-dir 미사용 시 BASE=src/http, 사용 시 BASE=<out-dir>/src/http
-   # 멀티: 매니페스트의 각 outDir마다 BASE=<outDir>/src/http 로 반복
-   npx prettier --write "${BASE}/_generated/types.ts" "${BASE}/_generated/endpoints.ts" "${BASE}/_generated/services/*.ts" "${BASE}/client.ts" "${BASE}/index.ts"
+   # 단일: --out-dir 미사용 시 BASE=src/http/_generated, 사용 시 BASE=<out-dir>/src/http/_generated
+   # 멀티: 매니페스트의 각 outDir마다 BASE=<outDir>/src/http/_generated 로 반복
+   npx prettier --write "${BASE}/types.ts" "${BASE}/endpoints.ts" "${BASE}/services/*.ts" "${BASE}/client.ts" "${BASE}/index.ts"
    ```
    매니페스트 모드에서 outDir 목록은 설정 파일에서 추출한다: `jq -r '(.targets // .)[].outDir' {config}`.
    모든 출력이 매 실행 덮어쓰기되므로 prettier는 항상 생성 직후의 파일을 포맷한다 (동일 spec → idempotent).
@@ -82,15 +84,15 @@ Generates three artifacts from an OpenAPI 3.x spec:
 
 ```
 src/http/
-├── _generated/                    # ← generator 전용 (수기 편집 금지)
+├── _generated/                    # ← generator 전용 (수기 편집 금지) · import 표면 @/http/_generated
 │   ├── types.ts                   # ← GENERATED — DTO interfaces
 │   ├── endpoints.ts               # ← GENERATED — URL helpers
+│   ├── client.ts                  # ← GENERATED — config 주입 팩토리 (매 실행 덮어쓰기)
+│   ├── index.ts                   # ← GENERATED — 공개 배럴 (매 실행 덮어쓰기)
 │   └── services/                  # ← GENERATED — tag별 API 서비스 클래스
 │       ├── <tag-kebab>.ts         #   operation 1개 = 메서드 1개
 │       ├── index.ts               # ← GENERATED — service 배럴 (매 실행 재생성)
 │       └── ...
-├── index.ts                       # ← GENERATED — 공개 배럴 (매 실행 덮어쓰기)
-├── client.ts                      # ← GENERATED — config 주입 팩토리 (매 실행 덮어쓰기)
 ├── <feature>/                     # user-authored — feature-first
 │   ├── mapper.ts                  #   DTO ↔ Domain conversion
 │   ├── repository.ts              #   Port implementation (uses generated service)
@@ -98,7 +100,7 @@ src/http/
 └── ...
 ```
 
-### `src/http/index.ts` 배럴 (GENERATED — 매 실행 덮어쓰기)
+### `src/http/_generated/index.ts` 배럴 (GENERATED — 매 실행 덮어쓰기)
 
 ```ts
 // GENERATED CODE - DO NOT MODIFY BY HAND
@@ -106,12 +108,12 @@ src/http/
 
 export { getApi, resetApiInstance, createApiClient } from "./client";
 export type { ApiClientConfig } from "./client";
-export { endpoints } from "./_generated/endpoints";
-export type * from "./_generated/types";
-export * from "./_generated/services";
+export { endpoints } from "./endpoints";
+export type * from "./types";
+export * from "./services";
 ```
 
-`export * from "./_generated/services"`는 아래 GENERATED 배럴을 가리킨다 (매 실행 재생성 → service 추가/삭제 즉시 반영):
+client·endpoints·types·services가 모두 같은 `_generated/` 안에 있으므로 배럴의 상대 경로는 형제 참조(`./client`, `./endpoints`, …)다. `export * from "./services"`는 아래 GENERATED 배럴을 가리킨다 (매 실행 재생성 → service 추가/삭제 즉시 반영):
 
 ```ts
 // _generated/services/index.ts  (GENERATED — DO NOT MODIFY BY HAND)
@@ -119,11 +121,11 @@ export * from "./order-items";
 export * from "./users";
 ```
 
-소비 측은 `@/http`로 한 번에 import: `import { createApiClient, endpoints, UsersService, type UserDto } from "@/http";`. index.ts는 매 실행 덮어쓰기되므로 직접 수정하지 않는다 — feature 배럴이 필요하면 별도 파일(`src/http/<feature>/index.ts` 등)에 둔다.
+소비 측은 `@/http/_generated`로 한 번에 import: `import { createApiClient, endpoints, UsersService, type UserDto } from "@/http/_generated";`. index.ts는 매 실행 덮어쓰기되므로 직접 수정하지 않는다 — feature 배럴이 필요하면 별도 파일(`src/http/<feature>/index.ts` 등)에 둔다.
 
-### `src/http/client.ts` 팩토리 (GENERATED — 매 실행 덮어쓰기)
+### `src/http/_generated/client.ts` 팩토리 (GENERATED — 매 실행 덮어쓰기)
 
-`client.ts`도 `_generated/` 산출물과 동일하게 `// GENERATED CODE - DO NOT MODIFY BY HAND` + `// Source: jkit nextjs-openapi-gen` 헤더를 가지며 매 실행 덮어쓴다. 인증·hooks·prefix 같은 비즈니스 로직은 이 파일이 아니라 호출부의 `createApiClient(config)`로 주입하므로, client.ts는 결정적 보일러플레이트가 되어 재생성해도 안전하다.
+`client.ts`도 나머지 `_generated/` 산출물과 동일하게 `// GENERATED CODE - DO NOT MODIFY BY HAND` + `// Source: jkit nextjs-openapi-gen` 헤더를 가지며 매 실행 덮어쓴다. 인증·hooks·prefix 같은 비즈니스 로직은 이 파일이 아니라 호출부의 `createApiClient(config)`로 주입하므로, client.ts는 결정적 보일러플레이트가 되어 재생성해도 안전하다.
 
 ```ts
 // GENERATED CODE - DO NOT MODIFY BY HAND
@@ -310,9 +312,9 @@ Tag → 파일/클래스명 매핑은 kebab-case (파일) / PascalCase + `Servic
 - **이미 `Dto`로 끝나는 schema명은 중복 suffix 안 붙임** (`UserDto` → `UserDto` 유지).
 - **`oneOf` + `discriminator`**: 단순 union만 생성. 타입 narrowing 헬퍼는 mapper 레이어에서 작성.
 - **mappers·repositories·hooks·domain은 생성 안 함** — 자세한 이유는 SKILL.md 상단 참조. (services는 spec에서 100% 도출 가능해 생성 대상)
-- **client.ts·index.ts는 GENERATED — 매 실행 덮어쓰기.** 직접 수정 금지(다음 생성 때 사라짐). 인증·401 refresh·hooks·prefix 같은 비즈니스 로직은 client.ts가 아니라 호출부의 `createApiClient(config)`로 주입한다.
+- **client.ts·index.ts도 `src/http/_generated/` 안의 GENERATED 파일 — 매 실행 덮어쓰기.** 직접 수정 금지(다음 생성 때 사라짐). 인증·401 refresh·hooks·prefix 같은 비즈니스 로직은 client.ts가 아니라 호출부의 `createApiClient(config)`로 주입한다. 공개 import 표면은 `@/http/_generated`다.
 - **응답 envelope 가정 없음** — 백엔드가 `{ success, data: T }` 같은 wrapper를 쓰더라도 spec의 schema 그대로 반환. unwrap은 repository/mapper 레이어 책임.
-- **인증 헤더는 client 인터셉터로 처리** — `parameters[in=header]`는 무시 (서비스 메서드 인자에 등장하지 않음). 인증·트레이싱 헤더는 `src/http/client.ts`의 `beforeRequest` 훅에서 일괄 처리.
+- **인증 헤더는 createApiClient hooks로 주입** — `parameters[in=header]`는 무시 (서비스 메서드 인자에 등장하지 않음). 인증·트레이싱 헤더는 호출부에서 `createApiClient({ hooks: { beforeRequest: [...] } })`로 주입한다 (`src/http/_generated/client.ts`는 그 config를 받기만 함).
 
 ## Usage Examples
 

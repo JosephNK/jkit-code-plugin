@@ -14,7 +14,11 @@ export const baseBoundaryElements = [
     pattern: ["src/domain/*/service.ts"],
   }, // UseCase/서비스
   // HTTP adapter layer — feature-first, transport 명시. `src/http/<feature>/...`
-  { type: "http-client", mode: "full", pattern: ["src/http/client.ts"] }, // HTTP 클라이언트
+  {
+    type: "http-client",
+    mode: "full",
+    pattern: ["src/http/_generated/client.ts"],
+  }, // (generated) HTTP 클라이언트 팩토리
   {
     type: "http-endpoint",
     mode: "full",
