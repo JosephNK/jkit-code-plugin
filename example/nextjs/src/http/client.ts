@@ -5,6 +5,9 @@ import ky, { type Hooks, type KyInstance, type Options } from "ky";
 
 const API_PROXY_PATH = "/api/proxy";
 
+// 재시도는 ky(transport) 레이어에 일원화한다. ky는 SSR·route handler·브라우저 등
+// 모든 호출부를 덮으므로 단일 권위로 두기 적합하다. TanStack Query를 쓰면 RQ의 기본
+// 재시도(3회)와 곱해져 요청이 폭증하므로, QueryClient에서 `retry: false`로 끈다.
 const DEFAULT_RETRY: Options["retry"] = {
   limit: 2,
   methods: ["get"],
