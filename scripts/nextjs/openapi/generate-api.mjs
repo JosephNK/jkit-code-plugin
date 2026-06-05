@@ -16,10 +16,25 @@
 // (src/http/<feature>/) are user-authored and never touched by this script.
 //
 // Usage:
-//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run] [--force-client]
+//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run] [--force-client] [--out-dir <dir>]
+//   node scripts/nextjs/openapi/generate-api.mjs --config <file> [--dry-run]
 //
 // <spec> is a file path or HTTP(S) URL. URL specs are saved to
 // <project-root>/specs/openapi.{yaml,json} for VCS tracking.
+//
+// By default <project-root> is the nearest package.json above cwd. In a
+// monorepo, pass --out-dir <pkg-dir> to target a specific package — output then
+// goes to <out-dir>/src/http/... and the spec to <out-dir>/specs/ (e.g.
+// --out-dir packages/http → packages/http/src/http/_generated/...).
+//
+// --config <file> runs multiple spec→outDir targets in one pass. The file is a
+// JSON manifest read relative to cwd:
+//   { "targets": [ { "spec": "<path|url>", "outDir": "<dir>", "forceClient": false } ] }
+// Each target's spec/outDir is resolved from cwd (monorepo root). outDir is
+// required per target so each goes to its own package. --config cannot be mixed
+// with <spec>/--out-dir/--force-client (those live per-target in the manifest).
+//
+// With no <spec> and no --config, ./jkit.openapi.json is auto-used if it exists.
 // =============================================================================
 
 import fs from "node:fs";
@@ -27,10 +42,14 @@ import path from "node:path";
 import process from "node:process";
 import YAML from "yaml";
 
+// Default manifest auto-detected (relative to cwd) when no <spec>/--config given.
+const DEFAULT_CONFIG = "jkit.openapi.json";
+
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
 function printHelp() {
-  console.log(`Usage: generate-api.mjs <spec> [--dry-run] [--force-client]
+  console.log(`Usage: generate-api.mjs <spec> [--dry-run] [--force-client] [--out-dir <dir>]
+       generate-api.mjs --config <file> [--dry-run]
 
 Arguments:
   <spec>            OpenAPI 3.x spec file path or URL
@@ -38,7 +57,15 @@ Arguments:
 Options:
   --dry-run         Preview only — no files written
   --force-client    Overwrite existing src/http/client.ts scaffold
+  --out-dir <dir>   Output project root (contains src/http). Resolved from cwd.
+                    Default: nearest package.json above cwd. Use in monorepos to
+                    target a package, e.g. --out-dir packages/http
+  --config <file>   JSON manifest with a "targets" array; runs each spec→outDir
+                    in one pass. Mutually exclusive with <spec>/--out-dir/
+                    --force-client (those are set per target in the manifest).
   -h, --help        Show this help
+
+With no <spec> and no --config, ./jkit.openapi.json is auto-used if present.
 `);
 }
 
@@ -48,11 +75,35 @@ function fail(msg) {
 }
 
 function parseArgs(argv) {
-  const args = { spec: null, dryRun: false, forceClient: false };
-  for (const a of argv.slice(2)) {
+  const args = {
+    spec: null,
+    dryRun: false,
+    forceClient: false,
+    outDir: null,
+    config: null,
+  };
+  const rest = argv.slice(2);
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i];
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--force-client") args.forceClient = true;
-    else if (a === "-h" || a === "--help") {
+    else if (a === "--config" || a === "-c") {
+      const v = rest[++i];
+      if (!v || v.startsWith("-")) fail(`${a} requires a file argument`);
+      args.config = v;
+    } else if (a.startsWith("--config=")) {
+      const v = a.slice("--config=".length);
+      if (!v) fail(`--config requires a file argument`);
+      args.config = v;
+    } else if (a === "--out-dir" || a === "-o") {
+      const v = rest[++i];
+      if (!v || v.startsWith("-")) fail(`${a} requires a directory argument`);
+      args.outDir = v;
+    } else if (a.startsWith("--out-dir=")) {
+      const v = a.slice("--out-dir=".length);
+      if (!v) fail(`--out-dir requires a directory argument`);
+      args.outDir = v;
+    } else if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
     } else if (a.startsWith("-")) {
@@ -63,11 +114,53 @@ function parseArgs(argv) {
       fail(`unexpected argument: ${a}`);
     }
   }
-  if (!args.spec) {
-    printHelp();
-    process.exit(1);
+  if (args.config) {
+    if (args.spec) fail(`cannot combine <spec> with --config`);
+    if (args.outDir)
+      fail(`cannot combine --out-dir with --config (set outDir per target)`);
+    if (args.forceClient)
+      fail(
+        `cannot combine --force-client with --config (set forceClient per target)`,
+      );
+  } else if (!args.spec) {
+    // No <spec> and no --config: auto-use ./jkit.openapi.json if present.
+    if (fs.existsSync(path.resolve(process.cwd(), DEFAULT_CONFIG))) {
+      args.config = DEFAULT_CONFIG;
+    } else {
+      printHelp();
+      process.exit(1);
+    }
   }
   return args;
+}
+
+// ─── Config manifest ─────────────────────────────────────────────────────────
+
+function loadConfig(configPath) {
+  const resolved = path.resolve(process.cwd(), configPath);
+  if (!fs.existsSync(resolved)) fail(`config not found: ${configPath}`);
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(resolved, "utf8"));
+  } catch (e) {
+    fail(`failed to parse config ${configPath}: ${e.message}`);
+  }
+  const targets = Array.isArray(parsed) ? parsed : parsed?.targets;
+  if (!Array.isArray(targets) || targets.length === 0) {
+    fail(`config ${configPath} must have a non-empty "targets" array`);
+  }
+  targets.forEach((t, i) => {
+    if (!t || typeof t.spec !== "string" || !t.spec) {
+      fail(`config targets[${i}]: "spec" (string) is required`);
+    }
+    if (typeof t.outDir !== "string" || !t.outDir) {
+      fail(`config targets[${i}]: "outDir" (string) is required`);
+    }
+    if (t.forceClient != null && typeof t.forceClient !== "boolean") {
+      fail(`config targets[${i}]: "forceClient" must be a boolean`);
+    }
+  });
+  return targets;
 }
 
 // ─── Spec loading ───────────────────────────────────────────────────────────
@@ -744,43 +837,100 @@ function renderEndpointsFile(namedOperations) {
 // 인증 헤더 · 인터셉터 등 비즈니스 로직을 채워넣는다. 기존 파일은 보존
 // (--force-client 명시 시에만 덮어쓰기).
 
+const CLIENT_HEADER =
+  "// SCAFFOLD — generated once by jkit nextjs-openapi-gen, then yours to edit.\n" +
+  "// Source: jkit nextjs-openapi-gen\n" +
+  "// 인증 헤더·401 refresh·인터셉터 등 비즈니스 로직을 여기에 채워넣으세요.\n" +
+  "// 재실행 시 보존되며, --force-client 명시 시에만 덮어씁니다.";
+
+const INDEX_HEADER =
+  "// PUBLIC SURFACE — generated once by jkit nextjs-openapi-gen, then yours to extend.\n" +
+  "// Source: jkit nextjs-openapi-gen\n" +
+  "// src/http 공개 진입점. feature export를 아래에 추가하세요. 존재 시 보존(재생성 안 됨).";
+
+// src/http/index.ts barrel: client 헬퍼 + endpoints + 전체 DTO 타입 + 모든 service를
+// re-export. services는 spec에 따라 늘고 줄므로 _generated/services/index.ts(매 실행
+// 재생성)를 거쳐 끌어와 항상 동기화 — index.ts 자체는 보존되어도 services는 최신.
+function renderIndexScaffold() {
+  return `${INDEX_HEADER}
+
+export { getApi, resetApiInstance, createApiClient } from "./client";
+export type { ApiClientConfig } from "./client";
+export { endpoints } from "./_generated/endpoints";
+export type * from "./_generated/types";
+export * from "./_generated/services";
+`;
+}
+
+// _generated/services/index.ts: 모든 service 파일을 re-export하는 GENERATED 배럴.
+// 매 실행 덮어쓰기되어 tag 추가/삭제가 즉시 반영된다.
+function renderServicesBarrel(serviceFiles) {
+  if (serviceFiles.length === 0) {
+    return `${GEN_HEADER}\n\nexport {};\n`;
+  }
+  const lines = [...serviceFiles]
+    .map((f) => path.basename(f.path, ".ts"))
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => `export * from "./${name}";`);
+  return `${GEN_HEADER}\n\n${lines.join("\n")}\n`;
+}
+
 function renderClientScaffold() {
-  return `import ky, { type KyInstance } from "ky";
+  return `${CLIENT_HEADER}
+
+import ky, { type Hooks, type KyInstance, type Options } from "ky";
 
 const API_PROXY_PATH = "/api/proxy";
 
-function getPrefix(): string {
+const DEFAULT_RETRY: Options["retry"] = {
+  limit: 2,
+  methods: ["get"],
+  statusCodes: [408, 429, 500, 502, 503, 504],
+};
+
+// 앱별로 다르게 주입하는 설정. 모노레포에서 공유 패키지를 쓸 때 apps/a·apps/b가
+// 각자 apiUrl·proxyPath·hooks(인증·401 refresh·인터셉터)를 넘겨 동일 service를
+// 서로 다른 설정으로 공유한다.
+export interface ApiClientConfig {
+  apiUrl?: string; // 서버사이드 base URL (브라우저는 proxyPath를 거치므로 무시)
+  proxyPath?: string; // 브라우저 프록시 경로 (기본 \`/api/proxy\`)
+  hooks?: Hooks; // ky hooks — 인증 헤더·401 refresh·인터셉터
+  retry?: Options["retry"]; // 기본 override
+  timeout?: Options["timeout"];
+  headers?: Record<string, string>;
+}
+
+// 브라우저는 proxyPath를 거치므로 apiUrl을 무시하고, 서버(SSR·route handler)에서만
+// apiUrl로 백엔드에 직통한다.
+function getPrefix(apiUrl: string, proxyPath: string): string {
   if (typeof window !== "undefined") {
-    return \`\${window.location.origin}\${API_PROXY_PATH}\`;
+    return \`\${window.location.origin}\${proxyPath}\`;
   }
 
-  const apiUrl = process.env.NEST_API_URL;
   if (!apiUrl) {
-    throw new Error("NEST_API_URL is required for server-side API calls");
+    throw new Error("server-side API base URL is required");
   }
   return apiUrl;
 }
 
-function createApiInstance(): KyInstance {
+// config를 주입받아 KyInstance를 만든다. 멀티 앱은 각 앱이 자기 config로 호출한다.
+export function createApiClient(config: ApiClientConfig = {}): KyInstance {
   return ky.create({
-    prefix: getPrefix(),
-    retry: {
-      limit: 2,
-      methods: ["get"],
-      statusCodes: [408, 429, 500, 502, 503, 504],
-    },
-    timeout: 30_000,
-    headers: {
-      Accept: "application/json",
-    },
+    prefix: getPrefix(config.apiUrl ?? "", config.proxyPath ?? API_PROXY_PATH),
+    retry: config.retry ?? DEFAULT_RETRY,
+    timeout: config.timeout ?? 30_000,
+    headers: { Accept: "application/json", ...config.headers },
+    hooks: config.hooks,
   });
 }
 
+// 단일 앱 편의용 싱글톤. 최초 1회 config로 초기화되고 이후 동일 인스턴스를 반환한다.
+// 멀티 앱이면 각 앱이 createApiClient(config)로 자기 인스턴스를 만들어 쓰는 걸 권장.
 let api: KyInstance | null = null;
 
-export function getApi(): KyInstance {
+export function getApi(config?: ApiClientConfig): KyInstance {
   if (api === null) {
-    api = createApiInstance();
+    api = createApiClient(config);
   }
   return api;
 }
@@ -812,10 +962,11 @@ function findProjectRoot(startDir) {
   return path.resolve(startDir);
 }
 
-async function main() {
-  const args = parseArgs(process.argv);
-  const projectRoot = findProjectRoot(process.cwd());
-  const { spec, source } = await loadSpec(args.spec, projectRoot);
+async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
+  const projectRoot = outDir
+    ? path.resolve(process.cwd(), outDir)
+    : findProjectRoot(process.cwd());
+  const { spec, source } = await loadSpec(specArg, projectRoot);
   validateOpenApi(spec);
 
   const schemas = spec.components?.schemas ?? {};
@@ -828,10 +979,12 @@ async function main() {
 
   const httpDir = path.join(projectRoot, "src", "http");
   const clientPath = path.join(httpDir, "client.ts");
+  const indexPath = path.join(httpDir, "index.ts");
   const genDir = path.join(httpDir, "_generated");
   const typesPath = path.join(genDir, "types.ts");
   const endpointsPath = path.join(genDir, "endpoints.ts");
   const servicesDir = path.join(genDir, "services");
+  const servicesIndexPath = path.join(servicesDir, "index.ts");
   const schemaCount = Object.keys(schemas).length;
 
   const serviceFiles = [...serviceGroups.entries()].map(([tag, ops]) => ({
@@ -843,12 +996,16 @@ async function main() {
 
   const clientExists = fs.existsSync(clientPath);
   const clientAction = clientExists
-    ? args.forceClient
+    ? forceClient
       ? "overwrite"
       : "skip"
     : "create";
 
-  if (args.dryRun) {
+  // index.ts is a create-once barrel (re-exports user-editable client.ts and is
+  // a natural place for users to add feature exports) — preserved if it exists.
+  const indexAction = fs.existsSync(indexPath) ? "skip" : "create";
+
+  if (dryRun) {
     if (clientAction === "create") {
       console.log(
         `[dry-run] would create: ${path.relative(projectRoot, clientPath)} (scaffold)`,
@@ -873,6 +1030,18 @@ async function main() {
         `[dry-run] would write: ${path.relative(projectRoot, f.path)} (${f.count} methods, tag: ${f.tag})`,
       );
     }
+    console.log(
+      `[dry-run] would write: ${path.relative(projectRoot, servicesIndexPath)} (${serviceFiles.length} services barrel)`,
+    );
+    if (indexAction === "create") {
+      console.log(
+        `[dry-run] would create: ${path.relative(projectRoot, indexPath)} (barrel)`,
+      );
+    } else {
+      console.log(
+        `[dry-run] keep existing: ${path.relative(projectRoot, indexPath)} (barrel preserved)`,
+      );
+    }
     console.log(`Spec: ${path.relative(projectRoot, source)}`);
     return;
   }
@@ -895,6 +1064,11 @@ async function main() {
   }
   for (const f of serviceFiles) {
     fs.writeFileSync(f.path, f.content);
+  }
+  fs.writeFileSync(servicesIndexPath, renderServicesBarrel(serviceFiles));
+
+  if (indexAction === "create") {
+    fs.writeFileSync(indexPath, renderIndexScaffold());
   }
 
   if (clientAction === "create") {
@@ -921,7 +1095,45 @@ async function main() {
       `Generated: ${path.relative(projectRoot, f.path)} (${f.count} methods)`,
     );
   }
+  console.log(
+    `Generated: ${path.relative(projectRoot, servicesIndexPath)} (${serviceFiles.length} services barrel)`,
+  );
+  if (indexAction === "create") {
+    console.log(`Generated: ${path.relative(projectRoot, indexPath)} (barrel)`);
+  } else {
+    console.log(
+      `Skipped:   ${path.relative(projectRoot, indexPath)} (already exists — barrel preserved)`,
+    );
+  }
   console.log(`Spec: ${path.relative(projectRoot, source)}`);
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+
+  if (args.config) {
+    const targets = loadConfig(args.config);
+    console.log(
+      `Config: ${args.config} — ${targets.length} target${targets.length === 1 ? "" : "s"}`,
+    );
+    for (const t of targets) {
+      console.log(`\n=== ${t.spec} → ${t.outDir} ===`);
+      await runOne({
+        spec: t.spec,
+        outDir: t.outDir,
+        forceClient: t.forceClient ?? false,
+        dryRun: args.dryRun,
+      });
+    }
+    return;
+  }
+
+  await runOne({
+    spec: args.spec,
+    outDir: args.outDir,
+    forceClient: args.forceClient,
+    dryRun: args.dryRun,
+  });
 }
 
 main().catch((err) => {
