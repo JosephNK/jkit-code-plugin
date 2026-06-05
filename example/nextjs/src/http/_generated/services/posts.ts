@@ -5,9 +5,7 @@ import type { KyInstance } from "ky";
 
 import { endpoints } from "../endpoints";
 
-import type {
-  PostDto,
-} from "../types";
+import type { PostDto } from "../types";
 
 export class PostsService {
   constructor(private readonly api: KyInstance) {}

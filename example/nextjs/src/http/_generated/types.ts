@@ -18,4 +18,4 @@ export interface UserDto {
   createdAt?: string;
 }
 
-export type UserStatusDto = 'active' | 'inactive' | 'banned';
+export type UserStatusDto = "active" | "inactive" | "banned";

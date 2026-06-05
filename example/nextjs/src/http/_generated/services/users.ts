@@ -5,16 +5,14 @@ import type { KyInstance } from "ky";
 
 import { endpoints } from "../endpoints";
 
-import type {
-  CreateUserDto,
-  UserDto,
-  UserStatusDto,
-} from "../types";
+import type { CreateUserDto, UserDto, UserStatusDto } from "../types";
 
 export class UsersService {
   constructor(private readonly api: KyInstance) {}
 
-  private toSearchParams(q: Record<string, unknown> | undefined): URLSearchParams {
+  private toSearchParams(
+    q: Record<string, unknown> | undefined,
+  ): URLSearchParams {
     const p = new URLSearchParams();
     if (!q) return p;
     for (const [k, v] of Object.entries(q)) {
@@ -25,12 +23,16 @@ export class UsersService {
     return p;
   }
 
-  async listUsers(query?: { status?: UserStatusDto; }): Promise<UserDto[]> {
-    return this.api.get(endpoints.listUsers(), { searchParams: this.toSearchParams(query) }).json<UserDto[]>();
+  async listUsers(query?: { status?: UserStatusDto }): Promise<UserDto[]> {
+    return this.api
+      .get(endpoints.listUsers(), { searchParams: this.toSearchParams(query) })
+      .json<UserDto[]>();
   }
 
   async createUser(body: CreateUserDto): Promise<UserDto> {
-    return this.api.post(endpoints.createUser(), { json: body }).json<UserDto>();
+    return this.api
+      .post(endpoints.createUser(), { json: body })
+      .json<UserDto>();
   }
 
   async getUser(id: string): Promise<UserDto> {

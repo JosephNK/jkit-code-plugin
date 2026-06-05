@@ -1,7 +1,5 @@
-// SCAFFOLD — generated once by jkit nextjs-openapi-gen, then yours to edit.
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // Source: jkit nextjs-openapi-gen
-// 인증 헤더·401 refresh·인터셉터 등 비즈니스 로직을 여기에 채워넣으세요.
-// 재실행 시 보존되며, --force-client 명시 시에만 덮어씁니다.
 
 import ky, { type Hooks, type KyInstance, type Options } from "ky";
 

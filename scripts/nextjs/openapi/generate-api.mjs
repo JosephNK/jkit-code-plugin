@@ -10,13 +10,15 @@
 // Generated files are overwritten on every run. Stale service files for renamed
 // tags are removed each run.
 //
-// Additionally, scaffolds <project-root>/src/http/client.ts if it does not exist
-// (services depend on its KyInstance). Existing client.ts is preserved unless
-// --force-client is passed. Per-feature mapper.ts / repository.ts / hook.ts
-// (src/http/<feature>/) are user-authored and never touched by this script.
+// Also generates <project-root>/src/http/client.ts (config-injection factory)
+// and <project-root>/src/http/index.ts (public barrel). Both are GENERATED and
+// overwritten every run — per-app auth/hooks/prefix are injected at call sites
+// via createApiClient(config), not edited here. Per-feature mapper.ts /
+// repository.ts / hook.ts (src/http/<feature>/) are user-authored and never
+// touched by this script.
 //
 // Usage:
-//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run] [--force-client] [--out-dir <dir>]
+//   node scripts/nextjs/openapi/generate-api.mjs <spec> [--dry-run] [--out-dir <dir>]
 //   node scripts/nextjs/openapi/generate-api.mjs --config <file> [--dry-run]
 //
 // <spec> is a file path or HTTP(S) URL. URL specs are saved to
@@ -29,10 +31,10 @@
 //
 // --config <file> runs multiple spec→outDir targets in one pass. The file is a
 // JSON manifest read relative to cwd:
-//   { "targets": [ { "spec": "<path|url>", "outDir": "<dir>", "forceClient": false } ] }
+//   { "targets": [ { "spec": "<path|url>", "outDir": "<dir>" } ] }
 // Each target's spec/outDir is resolved from cwd (monorepo root). outDir is
 // required per target so each goes to its own package. --config cannot be mixed
-// with <spec>/--out-dir/--force-client (those live per-target in the manifest).
+// with <spec>/--out-dir.
 //
 // With no <spec> and no --config, ./jkit.openapi.json is auto-used if it exists.
 // =============================================================================
@@ -48,7 +50,7 @@ const DEFAULT_CONFIG = "jkit.openapi.json";
 // ─── CLI ────────────────────────────────────────────────────────────────────
 
 function printHelp() {
-  console.log(`Usage: generate-api.mjs <spec> [--dry-run] [--force-client] [--out-dir <dir>]
+  console.log(`Usage: generate-api.mjs <spec> [--dry-run] [--out-dir <dir>]
        generate-api.mjs --config <file> [--dry-run]
 
 Arguments:
@@ -56,13 +58,12 @@ Arguments:
 
 Options:
   --dry-run         Preview only — no files written
-  --force-client    Overwrite existing src/http/client.ts scaffold
   --out-dir <dir>   Output project root (contains src/http). Resolved from cwd.
                     Default: nearest package.json above cwd. Use in monorepos to
                     target a package, e.g. --out-dir packages/http
   --config <file>   JSON manifest with a "targets" array; runs each spec→outDir
-                    in one pass. Mutually exclusive with <spec>/--out-dir/
-                    --force-client (those are set per target in the manifest).
+                    in one pass. Mutually exclusive with <spec>/--out-dir
+                    (set outDir per target in the manifest).
   -h, --help        Show this help
 
 With no <spec> and no --config, ./jkit.openapi.json is auto-used if present.
@@ -78,7 +79,6 @@ function parseArgs(argv) {
   const args = {
     spec: null,
     dryRun: false,
-    forceClient: false,
     outDir: null,
     config: null,
   };
@@ -86,7 +86,6 @@ function parseArgs(argv) {
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a === "--dry-run") args.dryRun = true;
-    else if (a === "--force-client") args.forceClient = true;
     else if (a === "--config" || a === "-c") {
       const v = rest[++i];
       if (!v || v.startsWith("-")) fail(`${a} requires a file argument`);
@@ -118,10 +117,6 @@ function parseArgs(argv) {
     if (args.spec) fail(`cannot combine <spec> with --config`);
     if (args.outDir)
       fail(`cannot combine --out-dir with --config (set outDir per target)`);
-    if (args.forceClient)
-      fail(
-        `cannot combine --force-client with --config (set forceClient per target)`,
-      );
   } else if (!args.spec) {
     // No <spec> and no --config: auto-use ./jkit.openapi.json if present.
     if (fs.existsSync(path.resolve(process.cwd(), DEFAULT_CONFIG))) {
@@ -155,9 +150,6 @@ function loadConfig(configPath) {
     }
     if (typeof t.outDir !== "string" || !t.outDir) {
       fail(`config targets[${i}]: "outDir" (string) is required`);
-    }
-    if (t.forceClient != null && typeof t.forceClient !== "boolean") {
-      fail(`config targets[${i}]: "forceClient" must be a boolean`);
     }
   });
   return targets;
@@ -830,29 +822,17 @@ function renderEndpointsFile(namedOperations) {
   return `${GEN_HEADER}\n\nexport const endpoints = {\n${lines.join("\n")}\n} as const;\n`;
 }
 
-// ─── client.ts scaffold ─────────────────────────────────────────────────────
+// ─── client.ts / index.ts (GENERATED, overwritten every run) ─────────────────
 //
-// services는 `KyInstance` 주입을 요구하므로 client.ts가 없으면 컴파일 불가.
-// 처음 init 시점에만 최소 스캐폴드를 깔아주고, 이후 사용자가 직접 401 refresh ·
-// 인증 헤더 · 인터셉터 등 비즈니스 로직을 채워넣는다. 기존 파일은 보존
-// (--force-client 명시 시에만 덮어쓰기).
-
-const CLIENT_HEADER =
-  "// SCAFFOLD — generated once by jkit nextjs-openapi-gen, then yours to edit.\n" +
-  "// Source: jkit nextjs-openapi-gen\n" +
-  "// 인증 헤더·401 refresh·인터셉터 등 비즈니스 로직을 여기에 채워넣으세요.\n" +
-  "// 재실행 시 보존되며, --force-client 명시 시에만 덮어씁니다.";
-
-const INDEX_HEADER =
-  "// PUBLIC SURFACE — generated once by jkit nextjs-openapi-gen, then yours to extend.\n" +
-  "// Source: jkit nextjs-openapi-gen\n" +
-  "// src/http 공개 진입점. feature export를 아래에 추가하세요. 존재 시 보존(재생성 안 됨).";
+// client.ts는 config 주입 팩토리라 비즈니스 로직(인증·hooks·prefix)을 담지 않는다 —
+// 앱이 createApiClient(config)로 주입한다. 따라서 결정적이며 매 실행 덮어써도 안전.
+// index.ts도 generated 산출물(client 헬퍼·endpoints·types·services)만 re-export한다.
 
 // src/http/index.ts barrel: client 헬퍼 + endpoints + 전체 DTO 타입 + 모든 service를
-// re-export. services는 spec에 따라 늘고 줄므로 _generated/services/index.ts(매 실행
-// 재생성)를 거쳐 끌어와 항상 동기화 — index.ts 자체는 보존되어도 services는 최신.
-function renderIndexScaffold() {
-  return `${INDEX_HEADER}
+// re-export. services는 spec에 따라 늘고 줄므로 _generated/services/index.ts를 거쳐
+// 끌어와 항상 동기화된다.
+function renderIndexFile() {
+  return `${GEN_HEADER}
 
 export { getApi, resetApiInstance, createApiClient } from "./client";
 export type { ApiClientConfig } from "./client";
@@ -875,8 +855,8 @@ function renderServicesBarrel(serviceFiles) {
   return `${GEN_HEADER}\n\n${lines.join("\n")}\n`;
 }
 
-function renderClientScaffold() {
-  return `${CLIENT_HEADER}
+function renderClientFile() {
+  return `${GEN_HEADER}
 
 import ky, { type Hooks, type KyInstance, type Options } from "ky";
 
@@ -962,7 +942,7 @@ function findProjectRoot(startDir) {
   return path.resolve(startDir);
 }
 
-async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
+async function runOne({ spec: specArg, outDir, dryRun }) {
   const projectRoot = outDir
     ? path.resolve(process.cwd(), outDir)
     : findProjectRoot(process.cwd());
@@ -994,31 +974,10 @@ async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
     content: renderServiceFile(tag, ops),
   }));
 
-  const clientExists = fs.existsSync(clientPath);
-  const clientAction = clientExists
-    ? forceClient
-      ? "overwrite"
-      : "skip"
-    : "create";
-
-  // index.ts is a create-once barrel (re-exports user-editable client.ts and is
-  // a natural place for users to add feature exports) — preserved if it exists.
-  const indexAction = fs.existsSync(indexPath) ? "skip" : "create";
-
   if (dryRun) {
-    if (clientAction === "create") {
-      console.log(
-        `[dry-run] would create: ${path.relative(projectRoot, clientPath)} (scaffold)`,
-      );
-    } else if (clientAction === "overwrite") {
-      console.log(
-        `[dry-run] would overwrite: ${path.relative(projectRoot, clientPath)} (--force-client)`,
-      );
-    } else {
-      console.log(
-        `[dry-run] keep existing: ${path.relative(projectRoot, clientPath)} (pass --force-client to overwrite)`,
-      );
-    }
+    console.log(
+      `[dry-run] would write: ${path.relative(projectRoot, clientPath)} (client factory)`,
+    );
     console.log(
       `[dry-run] would write: ${path.relative(projectRoot, typesPath)} (${schemaCount} schemas)`,
     );
@@ -1033,23 +992,15 @@ async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
     console.log(
       `[dry-run] would write: ${path.relative(projectRoot, servicesIndexPath)} (${serviceFiles.length} services barrel)`,
     );
-    if (indexAction === "create") {
-      console.log(
-        `[dry-run] would create: ${path.relative(projectRoot, indexPath)} (barrel)`,
-      );
-    } else {
-      console.log(
-        `[dry-run] keep existing: ${path.relative(projectRoot, indexPath)} (barrel preserved)`,
-      );
-    }
+    console.log(
+      `[dry-run] would write: ${path.relative(projectRoot, indexPath)} (barrel)`,
+    );
     console.log(`Spec: ${path.relative(projectRoot, source)}`);
     return;
   }
 
   fs.mkdirSync(httpDir, { recursive: true });
-  if (clientAction === "create" || clientAction === "overwrite") {
-    fs.writeFileSync(clientPath, renderClientScaffold());
-  }
+  fs.writeFileSync(clientPath, renderClientFile());
 
   fs.mkdirSync(genDir, { recursive: true });
   fs.writeFileSync(typesPath, typesContent);
@@ -1066,24 +1017,11 @@ async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
     fs.writeFileSync(f.path, f.content);
   }
   fs.writeFileSync(servicesIndexPath, renderServicesBarrel(serviceFiles));
+  fs.writeFileSync(indexPath, renderIndexFile());
 
-  if (indexAction === "create") {
-    fs.writeFileSync(indexPath, renderIndexScaffold());
-  }
-
-  if (clientAction === "create") {
-    console.log(
-      `Generated: ${path.relative(projectRoot, clientPath)} (scaffold)`,
-    );
-  } else if (clientAction === "overwrite") {
-    console.log(
-      `Overwrote: ${path.relative(projectRoot, clientPath)} (--force-client)`,
-    );
-  } else {
-    console.log(
-      `Skipped:   ${path.relative(projectRoot, clientPath)} (already exists — pass --force-client to overwrite)`,
-    );
-  }
+  console.log(
+    `Generated: ${path.relative(projectRoot, clientPath)} (client factory)`,
+  );
   console.log(
     `Generated: ${path.relative(projectRoot, typesPath)} (${schemaCount} schemas)`,
   );
@@ -1098,13 +1036,7 @@ async function runOne({ spec: specArg, outDir, forceClient, dryRun }) {
   console.log(
     `Generated: ${path.relative(projectRoot, servicesIndexPath)} (${serviceFiles.length} services barrel)`,
   );
-  if (indexAction === "create") {
-    console.log(`Generated: ${path.relative(projectRoot, indexPath)} (barrel)`);
-  } else {
-    console.log(
-      `Skipped:   ${path.relative(projectRoot, indexPath)} (already exists — barrel preserved)`,
-    );
-  }
+  console.log(`Generated: ${path.relative(projectRoot, indexPath)} (barrel)`);
   console.log(`Spec: ${path.relative(projectRoot, source)}`);
 }
 
@@ -1118,22 +1050,12 @@ async function main() {
     );
     for (const t of targets) {
       console.log(`\n=== ${t.spec} → ${t.outDir} ===`);
-      await runOne({
-        spec: t.spec,
-        outDir: t.outDir,
-        forceClient: t.forceClient ?? false,
-        dryRun: args.dryRun,
-      });
+      await runOne({ spec: t.spec, outDir: t.outDir, dryRun: args.dryRun });
     }
     return;
   }
 
-  await runOne({
-    spec: args.spec,
-    outDir: args.outDir,
-    forceClient: args.forceClient,
-    dryRun: args.dryRun,
-  });
+  await runOne({ spec: args.spec, outDir: args.outDir, dryRun: args.dryRun });
 }
 
 main().catch((err) => {
