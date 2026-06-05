@@ -4,10 +4,18 @@ node_modules/
 .pytest_cache/
 __pycache__/
 .venv/
-example/*
 settings.local.json
 code-harness/
 /docs/
+
+# Example projects: track source, ignore build/generated output
+# (node_modules/ and .dart_tool/ are already ignored above)
+example/**/.next/
+example/**/out/
+example/**/dist/
+example/**/build/
+example/**/ephemeral/
+example/**/.last_build_id
 
 # Office docs (presentations, lock files)
 *.pptx
