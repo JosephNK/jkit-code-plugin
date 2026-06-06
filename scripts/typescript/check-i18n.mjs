@@ -17,9 +17,10 @@
 //   -h, --help         도움말
 //
 // 탐지 전략:
-//   1) *.error.ts 파일들에서 SCREAMING_SNAKE_CASE 문자열 리터럴을 수집
-//      (예: 'ORDER_NOT_FOUND', "USER_ALREADY_EXISTS")
-//      — 단어 사이 `_`가 있는 것만 채택 (단일 단어 대문자 상수는 false-positive 방지)
+//   1) *.error.ts 파일들에서 snake_case 문자열 리터럴을 수집
+//      SCREAMING_SNAKE_CASE (예: 'ORDER_NOT_FOUND') 와
+//      lower_snake_case (예: 'order_not_found') 를 모두 채택
+//      — 단어 사이 `_`가 있는 것만 채택 (단일 단어 상수는 false-positive 방지)
 //   2) locales/<lang>/error.json 각각을 JSON 로드 → 중첩 키를 평탄화
 //   3) 1의 각 코드가 모든 로케일의 키에 존재하는지 검사
 //
@@ -42,7 +43,8 @@ Verifies that every SCREAMING_SNAKE error code in src/modules/**/exception/**/*.
 exists as a key in each src/infrastructure/i18n/locales/<lang>/error.json.
 `;
 
-const CODE_PATTERN = /['"]([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)['"]/g;
+const CODE_PATTERN =
+  /['"]([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+|[a-z][a-z0-9]*(?:_[a-z0-9]+)+)['"]/g;
 
 function walk(dir, predicate, results = []) {
   if (!fs.existsSync(dir)) return results;
